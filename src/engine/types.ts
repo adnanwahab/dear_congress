@@ -1,0 +1,152 @@
+export type Stance = -2 | -1 | 0 | 1 | 2;
+
+export interface NeedDef {
+  id: string;
+  label: string;
+  value: string;
+  goal: string;
+  metric: string;
+  level: string;
+  keywords: string[];
+}
+
+export interface Proposal {
+  id: string;
+  needId: string;
+  title: string;
+  mechanism: string;
+  authority: string;
+  jurisdiction: string;
+  /** Annual cost in $B (illustrative). null = not yet costed (emergent idea). */
+  costB: number | null;
+  /** 0 = administrative … 6 = constitutional amendment */
+  changeLevel: number;
+  reversibility: number; // 0..1
+  evidence: number; // 0..1
+  effectiveness: number; // 0..1, how much it moves the need's goal
+  keywords: string[];
+  metrics: string[];
+  legalChange: string;
+  benefitsFiscal?: boolean;
+  /** If set, the proposal violates a hard rights constraint and can never be selected. */
+  rightsIssue?: string;
+  emergent?: boolean;
+  sourceText?: string;
+}
+
+export interface Extraction {
+  needs: { id: string; confidence: number }[];
+  importance: number;
+  concerns: string[];
+  constraints: string[];
+  proposalIds: string[];
+}
+
+export interface JournalEntry {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+  extraction: Extraction;
+  corrected: boolean;
+  seeded?: boolean;
+}
+
+export interface UserVote {
+  proposalId: string;
+  stance: Stance;
+  importance: number; // 0..1
+  acceptCompromise: boolean;
+  concern: string;
+  changeMind: string;
+}
+
+export interface OpenAnswer {
+  id: string;
+  needId: string;
+  text: string;
+  proposalId: string;
+  createdAt: string;
+}
+
+export interface DB {
+  entries: JournalEntry[];
+  votes: Record<string, UserVote>;
+  allocation: Record<string, number>;
+  goalVotes: Record<string, boolean>;
+  answers: OpenAnswer[];
+  emergent: Proposal[];
+}
+
+export interface Weights {
+  support: number;
+  welfare: number;
+  fairness: number;
+  feasibility: number;
+  reversibility: number;
+  evidence: number;
+}
+
+export interface Objection {
+  key: string;
+  text: string;
+  mitigation: string;
+  share: number; // share of opposed voters citing it
+}
+
+export interface ProposalStats {
+  n: number;
+  support: number;
+  neutral: number;
+  oppose: number;
+  strongOppose: number;
+  objections: Objection[];
+}
+
+export interface NeedDemand {
+  journalScore: number;
+  journalCount: number;
+  avgPoints: number;
+  demand: number; // 0..1 blended
+}
+
+export interface ScoreParts {
+  support: number;
+  welfare: number;
+  fairness: number;
+  feasibility: number;
+  reversibility: number;
+  evidence: number;
+}
+
+export interface PlanItem {
+  proposal: Proposal;
+  needLabel: string;
+  score: number;
+  parts: ScoreParts;
+  changeCost: number;
+  stats: ProposalStats;
+  demand: NeedDemand;
+  mechanismShare: number;
+  quotes: { author: string; text: string }[];
+  yourAnswers: string[];
+  mitigations: string[];
+  rollout: string;
+  newAgency: boolean;
+  handoff: Record<string, unknown>;
+}
+
+export interface PackageResult {
+  id: string;
+  name: string;
+  description: string;
+  items: PlanItem[];
+  totalCost: number;
+  budget: number;
+  avgSupport: number;
+  avgChange: number;
+  deferred: { title: string; costB: number; support: number; reason: string }[];
+  blocked: { title: string; support: number; issue: string }[];
+  emerging: { title: string; answers: number }[];
+  unfundedPopularCost: number;
+}

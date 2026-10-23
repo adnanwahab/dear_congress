@@ -1,0 +1,343 @@
+import { CHANGE_LEVELS, NEEDS, PROPOSALS } from "./catalog";
+import type {
+  DB, Extraction, JournalEntry, NeedDemand, Objection, PackageResult, PlanItem,
+  Proposal, ProposalStats, ScoreParts, Stance, Weights,
+} from "./types";
+
+/* ------------------------------------------------------------------ */
+/* Extraction: journal text → needs, concerns, constraints, proposals  */
+/* Rule-based so the prototype runs offline. Swap `extract` for an LLM */
+/* call; everything downstream only depends on the Extraction shape.   */
+/* ------------------------------------------------------------------ */
+
+const STOP = new Set(["that", "this", "with", "have", "from", "they", "will", "would", "should", "there", "their", "about", "more", "make", "into", "than", "then", "them", "what", "when", "which", "just", "like", "because", "been", "were", "also", "only", "some", "your", "does", "for", "and", "the", "our", "but", "not", "are", "can", "all"]);
+export const tokens = (s: string) => (s.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []).filter((w) => !STOP.has(w));
+
+const INTENSIFIERS = ["awful", "terrible", "can't", "cannot", "impossible", "eating", "desperate", "scared", "every month", "every time", "struggling", "two jobs", "exhausted", "please", "worst", "again", "barely", "half my income", "worse"];
+
+export function extract(text: string, proposals: Proposal[] = PROPOSALS): Extraction {
+  const t = text.toLowerCase();
+  const needs = NEEDS.map((n) => {
+    const hits = n.keywords.filter((k) => t.includes(k)).length;
+    return { id: n.id, confidence: hits ? Math.min(1, 0.45 + hits * 0.2) : 0 };
+  })
+    .filter((n) => n.confidence > 0)
+    .sort((a, b) => b.confidence - a.confidence);
+
+  const intens = INTENSIFIERS.filter((w) => t.includes(w)).length;
+  const importance = Math.min(0.98, 0.45 + intens * 0.1 + (/\$\s?\d/.test(text) ? 0.1 : 0) + (text.includes("!") ? 0.05 : 0));
+
+  const sentences = text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+  const concerns = sentences.filter((s) => /\b(don't|do not|worried|worry|afraid|concern|shouldn't|too high|too much|not just)\b/i.test(s));
+
+  const constraints: string[] = [];
+  for (const m of text.matchAll(/(?:don't|do not) want to ([^.,!?]+)/gi)) constraints.push(`wants to avoid: ${m[1]!.trim()}`);
+  for (const m of text.matchAll(/(?:want|wants) to (choose|keep|stay) ([^.,!?]+)/gi)) constraints.push(`wants to ${m[1]} ${m[2]!.trim()}`);
+
+  const proposalIds = proposals.filter((p) => p.keywords.some((k) => t.includes(k)) && needs.some((n) => n.id === p.needId)).map((p) => p.id);
+
+  return { needs, importance: round(importance), concerns, constraints, proposalIds };
+}
+
+/** Map an open-ended "how should we fix it?" answer to an existing proposal cluster, or null if it's new. */
+export function clusterAnswer(text: string, needId: string, proposals: Proposal[]): string | null {
+  const t = text.toLowerCase();
+  const tk = new Set(tokens(text));
+  let best: string | null = null;
+  let bestScore = 0;
+  for (const p of proposals.filter((p) => p.needId === needId)) {
+    const kw = p.keywords.filter((k) => t.includes(k)).length;
+    const pt = new Set(tokens(p.title + " " + (p.sourceText ?? "")));
+    const inter = [...tk].filter((w) => pt.has(w)).length;
+    const jac = inter / Math.max(1, new Set([...tk, ...pt]).size);
+    const score = kw + jac * 3;
+    if (score > bestScore) { bestScore = score; best = p.id; }
+  }
+  return bestScore >= 0.75 ? best : null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Simulated population — stands in for millions of participants.     */
+/* Deterministic so results are reproducible.                          */
+/* ------------------------------------------------------------------ */
+
+function mulberry32(a: number) {
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function hash(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+const noise = (voter: number, key: string) => mulberry32(hash(`${key}:${voter}`))() - 0.5;
+const clamp = (x: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
+const round = (x: number, d = 3) => Math.round(x * 10 ** d) / 10 ** d;
+
+export const ARCHETYPES = [
+  { name: "Working parents", share: 0.24, fiscal: 0.35, change: 0.3, pri: { childcare: 0.32, housing: 0.18, healthcare: 0.14, transit: 0.1, fiscal: 0.06 } },
+  { name: "Urban renters", share: 0.2, fiscal: 0.2, change: 0.2, pri: { housing: 0.34, transit: 0.28, mental_health: 0.1, healthcare: 0.08, streets: 0.06 } },
+  { name: "Small-business owners", share: 0.14, fiscal: 0.8, change: 0.6, pri: { small_business: 0.36, fiscal: 0.24, insurance: 0.1, streets: 0.08, healthcare: 0.08 } },
+  { name: "Flood-zone homeowners", share: 0.22, fiscal: 0.6, change: 0.5, pri: { flooding: 0.34, insurance: 0.28, streets: 0.1, fiscal: 0.12 } },
+  { name: "Health & caregiving", share: 0.2, fiscal: 0.35, change: 0.35, pri: { healthcare: 0.32, mental_health: 0.28, childcare: 0.08, housing: 0.08 } },
+] as const;
+
+export interface Voter { id: number; archetype: string; pri: Record<string, number>; fiscal: number; change: number }
+
+export function makePopulation(n = 600, seed = 42): Voter[] {
+  const r = mulberry32(seed);
+  const voters: Voter[] = [];
+  for (let i = 0; i < n; i++) {
+    let x = r();
+    const a = ARCHETYPES.find((a) => (x -= a.share) < 0) ?? ARCHETYPES[0];
+    const raw: Record<string, number> = {};
+    for (const need of NEEDS) raw[need.id] = ((a.pri as Record<string, number>)[need.id] ?? 0.03) * (0.5 + r());
+    const sum = Object.values(raw).reduce((s, v) => s + v, 0);
+    for (const k in raw) raw[k] = raw[k]! / sum;
+    voters.push({ id: i, archetype: a.name, pri: raw, fiscal: clamp(a.fiscal + (r() - 0.5) * 0.4), change: clamp(a.change + (r() - 0.5) * 0.4) });
+  }
+  return voters;
+}
+
+export const POPULATION = makePopulation();
+
+export function utility(v: Voter, p: Proposal): number {
+  const cost = p.costB ?? 3;
+  let u = 4 * (v.pri[p.needId] ?? 0) * p.effectiveness + 0.35;
+  u -= (v.fiscal * Math.min(cost, 80)) / 40;
+  u -= (v.change * p.changeLevel) / 5;
+  if (p.benefitsFiscal) u += v.fiscal * 1.6 - (1 - v.fiscal) * 0.6;
+  if (p.rightsIssue) u += 0.5; // deliberately popular: shows the hard constraint working
+  return u + noise(v.id, p.id);
+}
+
+export function stanceOf(u: number): Stance {
+  if (u > 1.0) return 2;
+  if (u > 0.4) return 1;
+  if (u > -0.15) return 0;
+  if (u > -0.7) return -1;
+  return -2;
+}
+
+export function objectionsFor(p: Proposal): Omit<Objection, "share">[] {
+  const o: Omit<Objection, "share">[] = [];
+  if ((p.costB ?? 3) >= 5) o.push({ key: "cost", text: "Spending is too high — who pays for it?", mitigation: "Income-targeted eligibility, annual cost review, and a 5-year sunset unless renewed" });
+  if (p.changeLevel >= 3) o.push({ key: "change", text: "Too big a change to existing law", mitigation: "Start as a 24-month pilot in 5 jurisdictions before full rollout" });
+  if (p.benefitsFiscal && (p.costB ?? 0) > 1) o.push({ key: "services", text: "Cuts revenue for services people rely on", mitigation: "Phase in only when revenue targets are met" });
+  if (["childcare", "housing"].includes(p.needId) && (p.costB ?? 0) > 1) o.push({ key: "prices", text: "Subsidies may just push prices up", mitigation: "Provider price monitoring, paired with supply-side measures in the same package" });
+  if (p.needId === "childcare" && p.id !== "cc_licensing") o.push({ key: "choice", text: "May disadvantage stay-at-home parents or limit choice", mitigation: "Benefit usable at any licensed provider, including home-based care" });
+  o.push({ key: "reach", text: "Benefits may not reach the people who need them", mitigation: "Publish outcome metrics quarterly and auto-adjust eligibility" });
+  return o;
+}
+
+function pickObjection(v: Voter, objs: Omit<Objection, "share">[], pid: string) {
+  const has = (k: string) => objs.find((o) => o.key === k);
+  if (v.fiscal > 0.55 && has("cost")) return "cost";
+  if (v.change > 0.5 && has("change")) return "change";
+  if (v.fiscal < 0.4 && has("services")) return "services";
+  const n = noise(v.id, pid + ":obj");
+  if (n > 0.1 && has("prices")) return "prices";
+  if (n < -0.1 && has("choice")) return "choice";
+  return "reach";
+}
+
+/* ------------------------------------------------------------------ */
+/* Aggregation                                                         */
+/* ------------------------------------------------------------------ */
+
+export interface Context {
+  proposals: Proposal[];
+  stats: Record<string, ProposalStats>;
+  demand: Record<string, NeedDemand>;
+  mechanismShare: Record<string, number>;
+  goalSupport: Record<string, number>;
+  entries: JournalEntry[];
+  db: DB;
+}
+
+export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
+  const proposals = [...PROPOSALS, ...db.emergent];
+  const stats: Record<string, ProposalStats> = {};
+  for (const p of proposals) {
+    const objs = objectionsFor(p);
+    const objCount: Record<string, number> = {};
+    let sup = 0, neu = 0, opp = 0, strong = 0;
+    for (const v of voters) {
+      const s = stanceOf(utility(v, p));
+      if (s > 0) sup++; else if (s === 0) neu++; else {
+        opp++; if (s === -2) strong++;
+        const k = pickObjection(v, objs, p.id);
+        objCount[k] = (objCount[k] ?? 0) + 1;
+      }
+    }
+    const uv = db.votes[p.id];
+    if (uv) {
+      if (uv.stance > 0) sup++; else if (uv.stance === 0) neu++; else { opp++; if (uv.stance === -2) strong++; }
+    }
+    const n = voters.length + (uv ? 1 : 0);
+    stats[p.id] = {
+      n,
+      support: round(sup / n), neutral: round(neu / n), oppose: round(opp / n), strongOppose: round(strong / n),
+      objections: objs.map((o) => ({ ...o, share: round((objCount[o.key] ?? 0) / Math.max(1, opp)) })).sort((a, b) => b.share - a.share),
+    };
+  }
+
+  // Which mechanism each simulated voter would prefer for each need (the "31% tax credit, 24% subsidy…" table)
+  const mechCount: Record<string, number> = {};
+  const goalYes: Record<string, number> = {};
+  for (const v of voters) {
+    for (const need of NEEDS) {
+      let best: Proposal | null = null, bu = -Infinity;
+      for (const p of proposals) if (p.needId === need.id) { const u = utility(v, p); if (u > bu) { bu = u; best = p; } }
+      if (best) mechCount[best.id] = (mechCount[best.id] ?? 0) + 1;
+      if (4 * (v.pri[need.id] ?? 0) + 0.55 - v.fiscal * 0.25 + noise(v.id, "goal:" + need.id) > 0.3) goalYes[need.id] = (goalYes[need.id] ?? 0) + 1;
+    }
+  }
+  const mechanismShare: Record<string, number> = {};
+  for (const p of proposals) mechanismShare[p.id] = round((mechCount[p.id] ?? 0) / voters.length);
+  const goalSupport: Record<string, number> = {};
+  for (const need of NEEDS) {
+    const uv = db.goalVotes[need.id];
+    goalSupport[need.id] = round(((goalYes[need.id] ?? 0) + (uv === undefined ? 0 : uv ? 1 : 0)) / (voters.length + (uv === undefined ? 0 : 1)));
+  }
+
+  return { proposals, stats, demand: computeDemand(db, voters), mechanismShare, goalSupport, entries: db.entries, db };
+}
+
+export function computeDemand(db: DB, voters: Voter[]): Record<string, NeedDemand> {
+  const out: Record<string, NeedDemand> = {};
+  const userAlloc = Object.values(db.allocation).reduce((s, v) => s + v, 0) > 0;
+  for (const need of NEEDS) {
+    let js = 0, jc = 0;
+    for (const e of db.entries) {
+      const hit = e.extraction.needs.find((n) => n.id === need.id);
+      if (hit) { js += e.extraction.importance * hit.confidence; jc++; }
+    }
+    let pts = voters.reduce((s, v) => s + (v.pri[need.id] ?? 0) * 100, 0);
+    if (userAlloc) pts += db.allocation[need.id] ?? 0;
+    out[need.id] = { journalScore: round(js), journalCount: jc, avgPoints: round(pts / (voters.length + (userAlloc ? 1 : 0)), 1), demand: 0 };
+  }
+  const maxJ = Math.max(...Object.values(out).map((d) => d.journalScore), 1e-9);
+  const maxP = Math.max(...Object.values(out).map((d) => d.avgPoints), 1e-9);
+  for (const d of Object.values(out)) d.demand = round(0.5 * (d.journalScore / maxJ) + 0.5 * (d.avgPoints / maxP));
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Synthesis: score → minimal-change, budget-constrained package       */
+/* ------------------------------------------------------------------ */
+
+export const DEFAULT_WEIGHTS: Weights = { support: 0.3, welfare: 0.25, fairness: 0.15, feasibility: 0.1, reversibility: 0.1, evidence: 0.1 };
+
+interface Row { p: Proposal; parts: ScoreParts; changeCost: number; score: number }
+
+export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
+  const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
+  return ctx.proposals.map((p) => {
+    const st = ctx.stats[p.id]!;
+    const parts: ScoreParts = {
+      support: st.support,
+      welfare: round(ctx.demand[p.needId]!.demand * p.effectiveness),
+      fairness: round(clamp(1 - 2.5 * st.strongOppose)),
+      feasibility: round(1 - p.changeLevel / 6),
+      reversibility: p.reversibility,
+      evidence: p.evidence,
+    };
+    const base = (Object.keys(w) as (keyof Weights)[]).reduce((s, k) => s + w[k] * parts[k], 0) / wsum;
+    const changeCost = round((lambda * p.changeLevel) / 6);
+    return { p, parts, changeCost, score: round(base - changeCost) };
+  });
+}
+
+export function synthesizePackage(
+  ctx: Context,
+  opts: { id: string; name: string; description: string; weights: Weights; lambda: number; budget: number; perNeed?: number; minScore?: number; minSupport?: number },
+): PackageResult {
+  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3 } = opts;
+  const rows = scoreAll(ctx, opts.weights, opts.lambda).sort((a, b) => b.score - a.score);
+  const items: PlanItem[] = [];
+  const deferred: PackageResult["deferred"] = [];
+  const blocked: PackageResult["blocked"] = [];
+  const emerging: PackageResult["emerging"] = [];
+  const perNeedCount: Record<string, number> = {};
+  let spent = 0;
+
+  for (const r of rows) {
+    const st = ctx.stats[r.p.id]!;
+    if (r.p.rightsIssue) { blocked.push({ title: r.p.title, support: st.support, issue: r.p.rightsIssue }); continue; }
+    if (r.p.costB === null) { emerging.push({ title: r.p.title, answers: ctx.db.answers.filter((a) => a.proposalId === r.p.id).length }); continue; }
+    if (st.support <= st.oppose) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "More opposition than support" }); continue; }
+    if (st.support < minSupport) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Below democratic support floor" }); continue; }
+    if (r.score < minScore) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Low overall score" }); continue; }
+    if ((perNeedCount[r.p.needId] ?? 0) >= perNeed) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Need already addressed by higher-scoring items" }); continue; }
+    if (spent + r.p.costB > budget) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Doesn't fit the remaining budget" }); continue; }
+    spent += r.p.costB;
+    perNeedCount[r.p.needId] = (perNeedCount[r.p.needId] ?? 0) + 1;
+    items.push(buildItem(ctx, r));
+  }
+
+  const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
+  return {
+    id: opts.id, name: opts.name, description: opts.description,
+    items, totalCost: round(spent, 2), budget,
+    avgSupport: round(items.reduce((s, i) => s + i.stats.support, 0) / Math.max(1, items.length)),
+    avgChange: round(items.reduce((s, i) => s + i.proposal.changeLevel, 0) / Math.max(1, items.length), 2),
+    deferred, blocked, emerging, unfundedPopularCost: round(unfundedPopularCost, 2),
+  };
+}
+
+function buildItem(ctx: Context, r: Row): PlanItem {
+  const p = r.p;
+  const st = ctx.stats[p.id]!;
+  const need = NEEDS.find((n) => n.id === p.needId)!;
+  const quotes = ctx.entries
+    .filter((e) => e.extraction.needs.some((n) => n.id === p.needId))
+    .sort((a, b) => Number(!!a.seeded) - Number(!!b.seeded) || b.extraction.importance - a.extraction.importance)
+    .slice(0, 3)
+    .map((e) => ({ author: e.author, text: e.text }));
+  const mitigations = st.objections.filter((o) => o.share >= 0.15).map((o) => o.mitigation);
+  const rollout = p.changeLevel >= 3 || p.reversibility < 0.5
+    ? "Pilot in 5 jurisdictions for 24 months, then review against metrics"
+    : "Roll out through the existing mechanism, with a 24-month review";
+  return {
+    proposal: p,
+    needLabel: need.label,
+    score: r.score, parts: r.parts, changeCost: r.changeCost,
+    stats: st,
+    demand: ctx.demand[p.needId]!,
+    mechanismShare: ctx.mechanismShare[p.id] ?? 0,
+    quotes,
+    yourAnswers: ctx.db.answers.filter((a) => a.proposalId === p.id).map((a) => a.text),
+    mitigations,
+    rollout,
+    newAgency: p.changeLevel >= 5,
+    handoff: {
+      proposal: p.title,
+      citizen_support: st.support,
+      citizen_opposition: st.oppose,
+      need_addressed: need.label,
+      cost_usd: Math.round((p.costB ?? 0) * 1e9),
+      implementation: { authority: p.authority, mechanism: p.mechanism, jurisdiction: p.jurisdiction, new_agency_required: p.changeLevel >= 5 },
+      legal_change: { type: CHANGE_LEVELS[p.changeLevel], detail: p.legalChange },
+      amendments_from_dissent: mitigations,
+      metrics: p.metrics,
+      review_period: "24 months",
+    },
+  };
+}
+
+export function synthesize(ctx: Context, weights: Weights, lambda: number, budget: number): PackageResult[] {
+  return [
+    synthesizePackage(ctx, { id: "A", name: "Balanced", description: "Your weights and change penalty", weights, lambda, budget }),
+    synthesizePackage(ctx, { id: "B", name: "Minimal change", description: "Same weights, strong penalty on institutional disruption", weights, lambda: lambda * 3 + 0.3, budget }),
+    synthesizePackage(ctx, { id: "C", name: "Most popular", description: "Ranks purely by citizen support (rights constraints still apply)", weights: { support: 1, welfare: 0, fairness: 0, feasibility: 0, reversibility: 0, evidence: 0 }, lambda: 0, budget }),
+  ];
+}
+
+export function emptyDB(): DB {
+  return { entries: [], votes: {}, allocation: {}, goalVotes: {}, answers: [], emergent: [] };
+}
