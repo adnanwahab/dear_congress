@@ -62,7 +62,7 @@ function publishCorsHeaders(req: Request) {
   return {
     "access-control-allow-origin": corsAllowOrigin(req, PUBLISH_CORS_ALLOW_ORIGIN),
     "access-control-allow-methods": "POST, OPTIONS",
-    "access-control-allow-headers": "content-type, authorization",
+    "access-control-allow-headers": "content-type, authorization, x-voter-id",
     "access-control-max-age": "86400",
     vary: "origin",
   };
@@ -72,7 +72,7 @@ function readCorsHeaders(req: Request) {
   return {
     "access-control-allow-origin": corsAllowOrigin(req, READ_CORS_ALLOW_ORIGIN),
     "access-control-allow-methods": "GET, OPTIONS",
-    "access-control-allow-headers": "content-type, authorization",
+    "access-control-allow-headers": "content-type, authorization, x-voter-id",
     "access-control-max-age": "86400",
     vary: "origin",
   };
@@ -194,36 +194,44 @@ function ensureNeedCoverage(
   };
 }
 
-function upsertEmergentProposalFromDraft(needId: string, text: string, voterId?: string) {
+function recordAnswer(needId: string, text: string, voterId?: string) {
   const ctx = buildContext(db);
-  const proposalId = clusterAnswer(text, needId, ctx.proposals);
-  if (proposalId) {
-    db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId, createdAt: new Date().toISOString(), voterId });
-    return { proposalId, isNew: false };
+  let proposalId = clusterAnswer(text, needId, ctx.proposals);
+  let isNew = false;
+  if (!proposalId) {
+    isNew = true;
+    const emergent: Proposal = {
+      id: `emergent_${db.emergent.length + 1}`,
+      needId,
+      title: text.trim().length > 90 ? text.trim().slice(0, 87) + "…" : text.trim(),
+      mechanism: "To be determined",
+      authority: "Unassigned",
+      jurisdiction: "Unassigned",
+      costB: null,
+      changeLevel: 3,
+      reversibility: 0.5,
+      evidence: 0.3,
+      effectiveness: 0.5,
+      keywords: tokens(text).slice(0, 12),
+      metrics: [],
+      legalChange: "Needs legal analysis",
+      emergent: true,
+      sourceText: text.trim(),
+    };
+    db.emergent.push(emergent);
+    proposalId = emergent.id;
   }
 
-  const emergent: Proposal = {
-    id: `emergent_${db.emergent.length + 1}`,
+  db.answers.push({
+    id: crypto.randomUUID(),
     needId,
-    title: text.trim().length > 90 ? text.trim().slice(0, 87) + "…" : text.trim(),
-    mechanism: "To be determined",
-    authority: "Unassigned",
-    jurisdiction: "Unassigned",
-    costB: null,
-    changeLevel: 3,
-    reversibility: 0.5,
-    evidence: 0.3,
-    effectiveness: 0.5,
-    keywords: tokens(text).slice(0, 12),
-    metrics: [],
-    legalChange: "Needs legal analysis",
-    emergent: true,
-    sourceText: text.trim(),
-  };
+    text: text.trim(),
+    proposalId,
+    createdAt: new Date().toISOString(),
+    voterId,
+  });
 
-  db.emergent.push(emergent);
-  db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId: emergent.id, createdAt: new Date().toISOString(), voterId });
-  return { proposalId: emergent.id, isNew: true };
+  return { proposalId, isNew };
 }
 
 let db = await load();
@@ -239,7 +247,7 @@ function state(voterId = "anon") {
     ...Object.keys(db.votesByVoter),
     ...Object.keys(db.allocationByVoter),
     ...Object.keys(db.goalVotesByVoter),
-  ]).size;
+  ].filter((id) => id !== "anon" && id !== "legacy")).size;
 
   const userAnswers = db.answers.filter((a) => a.voterId === voterId || (voterId === "anon" && !a.voterId));
 
@@ -477,35 +485,9 @@ export const server = Bun.serve({
         const voterId = resolveVoterId(req);
         const { needId, text } = (await req.json()) as { needId: string; text: string };
         if (!text?.trim() || !currentNeeds().some((n) => n.id === needId)) return bad("needId and text are required");
-        const ctx = buildContext(db);
-        let proposalId = clusterAnswer(text, needId, ctx.proposals);
-        let isNew = false;
-        if (!proposalId) {
-          isNew = true;
-          const emergent: Proposal = {
-            id: `emergent_${db.emergent.length + 1}`,
-            needId,
-            title: text.trim().length > 90 ? text.trim().slice(0, 87) + "…" : text.trim(),
-            mechanism: "To be determined",
-            authority: "Unassigned",
-            jurisdiction: "Unassigned",
-            costB: null,
-            changeLevel: 3,
-            reversibility: 0.5,
-            evidence: 0.3,
-            effectiveness: 0.5,
-            keywords: [],
-            metrics: [],
-            legalChange: "Needs legal analysis",
-            emergent: true,
-            sourceText: text.trim(),
-          };
-          db.emergent.push(emergent);
-          proposalId = emergent.id;
-        }
-        db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId, createdAt: new Date().toISOString(), voterId });
+        const result = recordAnswer(needId, text, voterId);
         await save();
-        return Response.json({ proposalId, isNew });
+        return Response.json(result);
       },
     },
 
@@ -733,9 +715,9 @@ export const server = Bun.serve({
           secFetchMode,
         });
 
-        let body: { text?: string; author?: string; labels?: string[]; needs?: string[] };
+        let body: { text?: string; author?: string; labels?: string[]; needs?: string[]; kind?: "journal" | "answer"; needId?: string };
         try {
-          body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[] };
+          body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[]; kind?: "journal" | "answer"; needId?: string };
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           logPublishEvent("PUBLISH_DRAFT_REJECTED", {
@@ -760,6 +742,65 @@ export const server = Bun.serve({
           return publishBad(req, "text is required");
         }
 
+        const kind = body.kind ?? "journal";
+
+        if (kind === "answer") {
+          let targetNeedId = body.needId?.trim() || "";
+
+          if (!targetNeedId) {
+            const ctx = buildContext(db);
+            const llm = await extractWithLLM(body.text.trim(), ctx.proposals, ctx.needs);
+            const extraction = ensureNeedCoverage(body.text.trim(), llm.extraction, llm.proposedNeed);
+            targetNeedId = extraction.needs[0]?.id ?? "";
+
+            logPublishEvent("EXTRACT_PROVIDER", {
+              route: "/api/publish_draft",
+              provider: llm.provider,
+              matchedNeedIds: extraction.needs.map((n) => n.id),
+              mode: "answer:auto-need",
+            });
+          }
+
+          if (!targetNeedId || !currentNeeds().some((n) => n.id === targetNeedId)) {
+            logPublishEvent("PUBLISH_DRAFT_REJECTED", {
+              reason: "answer kind requires a valid needId or detectable need",
+              kind,
+              needId: body.needId ?? null,
+              origin,
+              referer,
+              remote,
+            });
+            return publishBad(req, "answer kind requires a valid needId or detectable need");
+          }
+
+          const result = recordAnswer(targetNeedId, body.text.trim(), voterId);
+          await save();
+
+          logPublishEvent("PUBLISH_DRAFT_OK", {
+            mode: "answer",
+            needId: targetNeedId,
+            proposalId: result.proposalId,
+            isNew: result.isNew,
+            textLength: body.text.trim().length,
+            textPreview: body.text.trim().slice(0, 120),
+            origin,
+            referer,
+            remote,
+          });
+
+          return withPublishCors(req, Response.json({
+            ok: true,
+            mode: "answer",
+            needId: targetNeedId,
+            proposalId: result.proposalId,
+            isNew: result.isNew,
+          }));
+        }
+
+        if (kind !== "journal") {
+          return publishBad(req, "kind must be 'journal' or 'answer'");
+        }
+
         const ctx = buildContext(db);
         const llm = await extractWithLLM(body.text.trim(), ctx.proposals, ctx.needs);
         let extraction = llm.extraction;
@@ -774,9 +815,8 @@ export const server = Bun.serve({
           route: "/api/publish_draft",
           provider: llm.provider,
           matchedNeedIds: extraction.needs.map((n) => n.id),
+          mode: "journal",
         });
-
-        const createdFromDraft = extraction.needs.map((n) => upsertEmergentProposalFromDraft(n.id, body!.text!.trim(), voterId));
 
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
@@ -791,6 +831,7 @@ export const server = Bun.serve({
         await save();
 
         logPublishEvent("PUBLISH_DRAFT_OK", {
+          mode: "journal",
           entryId: entry.id,
           author: entry.author,
           textLength: entry.text.length,
@@ -798,7 +839,6 @@ export const server = Bun.serve({
           acceptedNeedIds: labels.valid,
           ignoredNeedIds: labels.ignored,
           extractedNeedIds: extraction.needs.map((n) => n.id),
-          createdProposalIds: createdFromDraft.map((x) => x.proposalId),
           origin,
           referer,
           remote,
@@ -806,11 +846,10 @@ export const server = Bun.serve({
 
         return withPublishCors(req, Response.json({
           ok: true,
+          mode: "journal",
           entryId: entry.id,
           acceptedNeedIds: labels.valid,
           ignoredNeedIds: labels.ignored,
-          proposalIds: createdFromDraft.map((x) => x.proposalId),
-          createdNewCount: createdFromDraft.filter((x) => x.isNew).length,
           entry,
         }));
       },

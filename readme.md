@@ -51,8 +51,51 @@ src/client/styles.css
 - `PATCH /api/journal/:id` `{ needs: string[] }` (correction)
 - `POST /api/votes` `{ votes?, allocation?, goalVotes? }`
 - `POST /api/answers` `{ needId, text }`
+- `POST /api/publish_draft` (external clients; supports `kind` modes below)
+- `POST /api/publish_labels` `{ entryId, labels[] | needs[] }`
 - `POST /api/synthesize` `{ weights?, lambda?, budget? }`
 - `POST /api/reset`
+
+### External journal client: `publish_draft` modes
+
+For browser clients on another origin, send:
+
+- `Content-Type: application/json`
+- `x-voter-id: <stable-client-id>` (recommended; enables per-voter aggregation)
+
+#### 1) Journal mode (default)
+Creates a journal entry only (feeds Needs tab), and does **not** force-create a ballot option.
+
+```json
+{
+  "text": "Rent went up again and the bus to work takes over an hour.",
+  "author": "Jordan · East End",
+  "kind": "journal"
+}
+```
+
+You can omit `kind` and it defaults to `"journal"`.
+
+#### 2) Answer mode with explicit need
+Treats text as an open-ended policy answer and routes through the same path as `/api/answers`.
+
+```json
+{
+  "text": "Expand housing vouchers in high-cost areas.",
+  "kind": "answer",
+  "needId": "housing"
+}
+```
+
+#### 3) Answer mode without need
+Server auto-detects/creates need first, then records the answer.
+
+```json
+{
+  "text": "Create evening express buses for shift workers.",
+  "kind": "answer"
+}
+```
 
 ## Prototype shortcuts → next steps
 

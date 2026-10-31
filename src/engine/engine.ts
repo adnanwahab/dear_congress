@@ -183,14 +183,6 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
   const needs = [...NEEDS, ...db.emergentNeeds];
   const proposals = [...PROPOSALS, ...db.emergent];
 
-  const voterIds = new Set<string>([
-    ...Object.keys(db.votesByVoter ?? {}),
-    ...Object.keys(db.allocationByVoter ?? {}),
-    ...Object.keys(db.goalVotesByVoter ?? {}),
-  ]);
-  const realVoices = voterIds.size;
-  const wReal = blendWeight(realVoices);
-
   const stats: Record<string, ProposalStats> = {};
   for (const p of proposals) {
     const objs = objectionsFor(p);
@@ -224,8 +216,10 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
     const opposeReal = r.n ? r.opp / r.n : opposeSim;
     const strongOpposeReal = r.n ? r.strong / r.n : strongOpposeSim;
 
+    const wReal = blendWeight(r.n);
+
     stats[p.id] = {
-      n: voters.length + realVoices,
+      n: voters.length + r.n,
       support: round(wReal * supportReal + (1 - wReal) * supportSim),
       neutral: round(wReal * neutralReal + (1 - wReal) * neutralSim),
       oppose: round(wReal * opposeReal + (1 - wReal) * opposeSim),
@@ -252,12 +246,18 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
   }
 
   const mechanismShare: Record<string, number> = {};
-  for (const p of proposals) {
-    const simShare = round((mechCount[p.id] ?? 0) / Math.max(1, voters.length));
-    const realCount = db.answers.filter((a) => a.proposalId === p.id).length;
-    const totalAnswers = Math.max(1, db.answers.length);
-    const realShare = realCount / totalAnswers;
-    mechanismShare[p.id] = round(wReal * realShare + (1 - wReal) * simShare);
+  for (const need of needs) {
+    const needProposals = proposals.filter((p) => p.needId === need.id);
+    const needAnswers = db.answers.filter((a) => a.needId === need.id);
+    const realAnswerCount = needAnswers.length;
+    const wReal = blendWeight(realAnswerCount);
+
+    for (const p of needProposals) {
+      const simShare = (mechCount[p.id] ?? 0) / Math.max(1, voters.length);
+      const realCount = needAnswers.filter((a) => a.proposalId === p.id).length;
+      const realShare = realAnswerCount ? realCount / realAnswerCount : simShare;
+      mechanismShare[p.id] = round(wReal * realShare + (1 - wReal) * simShare);
+    }
   }
 
   const goalSupport: Record<string, number> = {};
@@ -266,6 +266,7 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
     const realVotes = Object.values(db.goalVotesByVoter ?? {})
       .map((m) => m?.[need.id])
       .filter((v): v is boolean => v !== undefined);
+    const wReal = blendWeight(realVotes.length);
     const real = realVotes.length ? realVotes.filter(Boolean).length / realVotes.length : sim;
     goalSupport[need.id] = round(wReal * real + (1 - wReal) * sim);
   }
