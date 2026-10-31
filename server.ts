@@ -7,6 +7,8 @@ import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 import { extractWithLLM } from "./src/server/llm-extract";
+import { journalClientSchema } from "./src/server/publish-draft";
+import { handlePublishDraftPost, PublishDraftInputError } from "./src/server/publish-draft-handler";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -14,6 +16,7 @@ const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
 const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "1") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
+const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
 
 function logRequest(req: Request, route: string) {
   if (!DEBUG_REQUEST_LOGS) return;
@@ -194,6 +197,19 @@ function ensureNeedCoverage(
   };
 }
 
+function createJournalEntry(input: { text: string; author?: string; extraction: JournalEntry["extraction"]; corrected: boolean }) {
+  const entry: JournalEntry = {
+    id: crypto.randomUUID(),
+    author: input.author?.trim() || "Journal Client",
+    text: input.text.trim(),
+    createdAt: new Date().toISOString(),
+    extraction: input.extraction,
+    corrected: input.corrected,
+  };
+  db.entries.push(entry);
+  return entry;
+}
+
 function recordAnswer(needId: string, text: string, voterId?: string) {
   const ctx = buildContext(db);
   let proposalId = clusterAnswer(text, needId, ctx.proposals);
@@ -293,8 +309,18 @@ interface ForkState {
 }
 
 const forks = new Map<string, ForkState>();
+const entryListeners = new Set<(payload: string) => void>();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function entriesPayload() {
+  return JSON.stringify({ entries: [...db.entries].reverse() });
+}
+
+function emitEntriesUpdate() {
+  const payload = entriesPayload();
+  for (const send of entryListeners) send(payload);
+}
 
 function emitForkEvent(fork: ForkState, ev: StageEvent) {
   fork.events.push(ev);
@@ -437,6 +463,7 @@ export const server = Bun.serve({
         };
         db.entries.push(entry);
         await save();
+        emitEntriesUpdate();
         return Response.json(entry);
       },
     },
@@ -493,19 +520,21 @@ export const server = Bun.serve({
 
     "/api/entries/events": {
       GET: (req) => {
+        let listener: ((payload: string) => void) | null = null;
+
         const stream = new ReadableStream({
           start(controller) {
             const encoder = new TextEncoder();
-            const write = () => {
-              const payload = JSON.stringify({ entries: [...db.entries].reverse() });
-              controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
-            };
+            const write = (payload: string) => controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
 
-            write();
-            const timer = setInterval(write, 1000);
+            // initial snapshot
+            write(entriesPayload());
+
+            listener = (payload: string) => write(payload);
+            entryListeners.add(listener);
 
             const cleanup = () => {
-              clearInterval(timer);
+              if (listener) entryListeners.delete(listener);
               try { controller.close(); } catch {
                 // already closed
               }
@@ -517,6 +546,9 @@ export const server = Bun.serve({
               return;
             }
             abort.addEventListener("abort", cleanup, { once: true });
+          },
+          cancel() {
+            if (listener) entryListeners.delete(listener);
           },
         });
 
@@ -569,6 +601,7 @@ export const server = Bun.serve({
 
         db.entries.push(entry);
         await save();
+        emitEntriesUpdate();
 
         const forkId = crypto.randomUUID();
         const fork: ForkState = {
@@ -644,6 +677,7 @@ export const server = Bun.serve({
         if (idx >= 0) {
           db.entries.splice(idx, 1);
           await save();
+          emitEntriesUpdate();
         }
         fork.undone = true;
         fork.done = true;
@@ -717,14 +751,10 @@ export const server = Bun.serve({
     },
 
     "/api/journal-client/schema": {
-      GET: () => Response.json({
-        version: 1,
-        endpoints: {
-          publish_draft: "/api/publish_draft",
-          publish_labels: "/api/publish_labels",
-        },
+      GET: () => Response.json(journalClientSchema({
+        defaultKind: PUBLISH_DRAFT_DEFAULT_KIND,
         needs: currentNeeds().map((n) => ({ id: n.id, label: n.label })),
-      }),
+      })),
     },
 
     // For external journal UIs: publish a draft entry into Civic Synthesis.
@@ -772,127 +802,53 @@ export const server = Bun.serve({
           return publishBad(req, "invalid json body");
         }
 
-        if (!body.text?.trim()) {
-          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-            reason: "text is required",
-            origin,
-            referer,
-            remote,
-            author: body.author?.trim() || null,
+        try {
+          const result = await handlePublishDraftPost(body, {
+            defaultKind: PUBLISH_DRAFT_DEFAULT_KIND,
+            voterId,
+            currentNeeds,
+            normalizeNeedIds,
+            buildContext: () => buildContext(db),
+            extractWithLLM,
+            ensureNeedCoverage,
+            recordAnswer,
+            createJournalEntry,
+            save,
+            onExtract: (meta) => {
+              logPublishEvent("EXTRACT_PROVIDER", {
+                route: "/api/publish_draft",
+                provider: meta.provider,
+                matchedNeedIds: meta.matchedNeedIds,
+                mode: meta.mode,
+              });
+            },
           });
-          return publishBad(req, "text is required");
-        }
 
-        const kind = body.kind ?? "journal";
-
-        if (kind === "answer") {
-          let targetNeedId = body.needId?.trim() || "";
-
-          if (!targetNeedId) {
-            const ctx = buildContext(db);
-            const llm = await extractWithLLM(body.text.trim(), ctx.proposals, ctx.needs);
-            const extraction = ensureNeedCoverage(body.text.trim(), llm.extraction, llm.proposedNeed);
-            targetNeedId = extraction.needs[0]?.id ?? "";
-
-            logPublishEvent("EXTRACT_PROVIDER", {
-              route: "/api/publish_draft",
-              provider: llm.provider,
-              matchedNeedIds: extraction.needs.map((n) => n.id),
-              mode: "answer:auto-need",
-            });
-          }
-
-          if (!targetNeedId || !currentNeeds().some((n) => n.id === targetNeedId)) {
-            logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-              reason: "answer kind requires a valid needId or detectable need",
-              kind,
-              needId: body.needId ?? null,
-              origin,
-              referer,
-              remote,
-            });
-            return publishBad(req, "answer kind requires a valid needId or detectable need");
-          }
-
-          const result = recordAnswer(targetNeedId, body.text.trim(), voterId);
-          await save();
+          if (result.mode === "journal") emitEntriesUpdate();
 
           logPublishEvent("PUBLISH_DRAFT_OK", {
-            mode: "answer",
-            needId: targetNeedId,
-            proposalId: result.proposalId,
-            isNew: result.isNew,
-            textLength: body.text.trim().length,
-            textPreview: body.text.trim().slice(0, 120),
+            ...result,
+            textLength: body.text?.trim().length ?? 0,
+            textPreview: body.text?.trim().slice(0, 120) ?? "",
             origin,
             referer,
             remote,
           });
 
-          return withPublishCors(req, Response.json({
-            ok: true,
-            mode: "answer",
-            needId: targetNeedId,
-            proposalId: result.proposalId,
-            isNew: result.isNew,
-          }));
+          return withPublishCors(req, Response.json(result));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          const reason = error instanceof PublishDraftInputError ? message : "publish draft failed";
+          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
+            reason,
+            message,
+            origin,
+            referer,
+            remote,
+            contentType,
+          });
+          return publishBad(req, reason);
         }
-
-        if (kind !== "journal") {
-          return publishBad(req, "kind must be 'journal' or 'answer'");
-        }
-
-        const ctx = buildContext(db);
-        const llm = await extractWithLLM(body.text.trim(), ctx.proposals, ctx.needs);
-        let extraction = llm.extraction;
-        const labels = normalizeNeedIds(body.labels ?? body.needs);
-        if (labels.valid.length > 0) {
-          extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
-        } else {
-          extraction = ensureNeedCoverage(body.text.trim(), extraction, llm.proposedNeed);
-        }
-
-        logPublishEvent("EXTRACT_PROVIDER", {
-          route: "/api/publish_draft",
-          provider: llm.provider,
-          matchedNeedIds: extraction.needs.map((n) => n.id),
-          mode: "journal",
-        });
-
-        const entry: JournalEntry = {
-          id: crypto.randomUUID(),
-          author: body.author?.trim() || "Journal Client",
-          text: body.text.trim(),
-          createdAt: new Date().toISOString(),
-          extraction,
-          corrected: labels.valid.length > 0,
-        };
-
-        db.entries.push(entry);
-        await save();
-
-        logPublishEvent("PUBLISH_DRAFT_OK", {
-          mode: "journal",
-          entryId: entry.id,
-          author: entry.author,
-          textLength: entry.text.length,
-          textPreview: entry.text.slice(0, 120),
-          acceptedNeedIds: labels.valid,
-          ignoredNeedIds: labels.ignored,
-          extractedNeedIds: extraction.needs.map((n) => n.id),
-          origin,
-          referer,
-          remote,
-        });
-
-        return withPublishCors(req, Response.json({
-          ok: true,
-          mode: "journal",
-          entryId: entry.id,
-          acceptedNeedIds: labels.valid,
-          ignoredNeedIds: labels.ignored,
-          entry,
-        }));
       },
     },
 
@@ -939,4 +895,4 @@ export const server = Bun.serve({
 });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);
-console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);
+console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | publishDraftDefaultKind=${PUBLISH_DRAFT_DEFAULT_KIND} | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);
