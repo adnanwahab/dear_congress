@@ -66,6 +66,7 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 const money = (b: number | null) => (b === null ? "Not costed" : b >= 1 ? `$${b.toFixed(1)}B` : b > 0 ? `$${Math.round(b * 1000)}M` : "$0");
 
 type Tab = "journal" | "needs" | "vote" | "synth";
+type LiveStatus = "connecting" | "live" | "reconnecting";
 const TABS: { id: Tab; n: string; label: string; hint: string }[] = [
   { id: "journal", n: "1", label: "Journal", hint: "Describe your life" },
   { id: "needs", n: "2", label: "Needs", hint: "What people share" },
@@ -86,12 +87,38 @@ export function App() {
   const [tab, setTab] = useState<Tab>("journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
+  const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
   const refresh = () => api<AppState>("/api/state").then(setState);
   useEffect(() => { refresh(); }, []);
   useEffect(() => {
     const onJournalCreated = () => { refresh(); };
     window.addEventListener("journal:created", onJournalCreated);
     return () => window.removeEventListener("journal:created", onJournalCreated);
+  }, []);
+
+  useEffect(() => {
+    const es = new EventSource("/api/entries/events");
+
+    es.onopen = () => {
+      setLiveStatus("live");
+    };
+
+    es.onerror = () => {
+      setLiveStatus("reconnecting");
+    };
+
+    es.onmessage = (m) => {
+      try {
+        const payload = JSON.parse(m.data) as { entries?: JournalEntry[] };
+        if (!Array.isArray(payload.entries)) return;
+        setState((prev) => prev ? { ...prev, entries: payload.entries } : prev);
+        setLiveStatus("live");
+      } catch {
+        // ignore malformed SSE payloads
+      }
+    };
+
+    return () => es.close();
   }, []);
 
   const onPublishStart = (forkId: string) => {
@@ -190,7 +217,7 @@ export function App() {
       </nav>
 
       <main>
-        {tab === "journal" && <JournalView state={state} refresh={refresh} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { setTab("needs"); setFocusNeedId(needId); }} />}
+        {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { setTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
         {tab === "vote" && <VoteView state={state} refresh={refresh} />}
         {tab === "synth" && <SynthView state={state} />}
@@ -240,12 +267,14 @@ const needLabel = (state: AppState, id: string) => state.needs.find((n) => n.id 
 function JournalView({
   state,
   refresh,
+  liveStatus,
   onPublishStart,
   onPublishEvent,
   onSeeNeed,
 }: {
   state: AppState;
   refresh: () => void;
+  liveStatus: LiveStatus;
   onPublishStart: (forkId: string) => void;
   onPublishEvent: (ev: StageEvent) => void;
   onSeeNeed: (needId: string) => void;
@@ -369,7 +398,10 @@ function JournalView({
       </section>
 
       <section className="card">
-        <h2>Recent entries <span className="count">{state.entries.length}</span></h2>
+        <h2>
+          Recent entries <span className="count">{state.entries.length}</span>{" "}
+          <span className={`badge live-status ${liveStatus === "live" ? "live ok" : "new"}`}>{liveStatus === "live" ? "Live" : liveStatus === "connecting" ? "Connecting…" : "Reconnecting…"}</span>
+        </h2>
         <p className="muted">Every interpretation stays attached to the original words.</p>
         <ul className="feed">
           {state.entries.map((e) => (

@@ -491,6 +491,47 @@ export const server = Bun.serve({
       },
     },
 
+    "/api/entries/events": {
+      GET: (req) => {
+        const stream = new ReadableStream({
+          start(controller) {
+            const encoder = new TextEncoder();
+            const write = () => {
+              const payload = JSON.stringify({ entries: [...db.entries].reverse() });
+              controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+            };
+
+            write();
+            const timer = setInterval(write, 1000);
+
+            const cleanup = () => {
+              clearInterval(timer);
+              try { controller.close(); } catch {
+                // already closed
+              }
+            };
+
+            const abort = req.signal;
+            if (abort.aborted) {
+              cleanup();
+              return;
+            }
+            abort.addEventListener("abort", cleanup, { once: true });
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            "content-type": "text/event-stream",
+            "cache-control": "no-cache, no-transform",
+            connection: "keep-alive",
+          },
+        });
+      },
+
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+    },
+
     "/api/entries": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => {

@@ -101,6 +101,23 @@ blockquote.mine { border-left-color: var(--new); }
 .badge.ok { background: var(--accent-soft); color: var(--accent); }
 .badge.bad { background: var(--bad-bg); color: var(--opp); border: 1px solid var(--bad-line); }
 .badge.new { background: transparent; color: var(--new); border: 1px solid var(--new); }
+.badge.live-status { display: inline-flex; align-items: center; gap: 6px; }
+.badge.live-status.live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .85;
+  animation: livePulse 1.8s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { transform: scale(1); opacity: .55; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge.live-status.live::before { animation: none; opacity: .85; }
+}
 ul.plain { margin: 0; padding-left: 18px; }
 ul.plain li { margin: 3px 0; }
 
