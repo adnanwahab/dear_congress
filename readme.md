@@ -56,7 +56,7 @@ src/client/styles.css
 
 ## Prototype shortcuts → next steps
 
-- **Extraction is keyword-based** so it runs offline. Replace `extract()` and `clusterAnswer()` in `engine.ts` with an LLM call and embeddings (pgvector); nothing downstream changes as long as the `Extraction` shape is kept.
+- **Extraction now supports LLM providers** with automatic fallback order `Gemini → OpenAI → Claude → local keyword extractor`. Set any of `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` (and optional model env vars `GEMINI_MODEL`, `OPENAI_MODEL`, `CLAUDE_MODEL`). If no keys are set, it stays fully offline.
 - **Opinions come from 600 simulated residents** (5 archetypes, deterministic) plus your own inputs. Replace `POPULATION` with real aggregated votes.
 - **Costs, support and legal details are illustrative**, not real estimates.
 - **Storage is a JSON file.** The Postgres schema in the design doc (journals, needs, proposals, votes, plans, experiments, outcomes) is the natural next step.

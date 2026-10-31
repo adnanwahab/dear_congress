@@ -6,6 +6,7 @@ import {
 import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
+import { extractWithLLM } from "./src/server/llm-extract";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -162,22 +163,26 @@ function toNeedId(label: string) {
     .slice(0, 36);
 }
 
-function ensureNeedCoverage(text: string, extraction: JournalEntry["extraction"]) {
+function ensureNeedCoverage(
+  text: string,
+  extraction: JournalEntry["extraction"],
+  proposedNeed?: { label: string; goal: string; metric: string; keywords?: string[]; value?: string; level?: string } | null,
+) {
   if (extraction.needs.length > 0) return extraction;
 
   const tk = tokens(text).filter((t) => t.length >= 4);
-  const labelCore = tk.slice(0, 3).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ") || "Community need";
+  const labelCore = proposedNeed?.label?.trim() || tk.slice(0, 3).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ") || "Community need";
   const base = toNeedId(labelCore) || "community_need";
   const id = `emergent_need_${base}_${db.emergentNeeds.length + 1}`;
 
   const emergentNeed: NeedDef = {
     id,
     label: labelCore,
-    value: "Community wellbeing",
-    goal: `Improve outcomes related to ${labelCore.toLowerCase()}`,
-    metric: `Tracked improvement in ${labelCore.toLowerCase()} concerns`,
-    level: "To be determined",
-    keywords: [...new Set(tk)].slice(0, 12),
+    value: proposedNeed?.value?.trim() || "Community wellbeing",
+    goal: proposedNeed?.goal?.trim() || `Improve outcomes related to ${labelCore.toLowerCase()}`,
+    metric: proposedNeed?.metric?.trim() || `Tracked improvement in ${labelCore.toLowerCase()} concerns`,
+    level: proposedNeed?.level?.trim() || "To be determined",
+    keywords: [...new Set([...(proposedNeed?.keywords ?? []), ...tk])].slice(0, 12),
     emergent: true,
     sourceText: text.slice(0, 240),
   };
@@ -405,7 +410,15 @@ export const server = Bun.serve({
         const { text, author } = (await req.json()) as { text?: string; author?: string };
         if (!text?.trim()) return bad("text is required");
         const ctx = buildContext(db);
-        const extraction = ensureNeedCoverage(text.trim(), extract(text, ctx.proposals, ctx.needs));
+        const llm = await extractWithLLM(text.trim(), ctx.proposals, ctx.needs);
+        const extraction = ensureNeedCoverage(text.trim(), llm.extraction, llm.proposedNeed);
+
+        logPublishEvent("EXTRACT_PROVIDER", {
+          route: "/api/journal",
+          provider: llm.provider,
+          matchedNeedIds: extraction.needs.map((n) => n.id),
+        });
+
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
           author: author?.trim() || "You",
@@ -507,13 +520,20 @@ export const server = Bun.serve({
         if (!body.text?.trim()) return bad("text is required");
 
         const baseCtx = buildContext(db);
-        let extraction = extract(body.text.trim(), baseCtx.proposals, baseCtx.needs);
+        const llm = await extractWithLLM(body.text.trim(), baseCtx.proposals, baseCtx.needs);
+        let extraction = llm.extraction;
         const labels = normalizeNeedIds(body.labels ?? body.needs);
         if (labels.valid.length > 0) {
           extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
         } else {
-          extraction = ensureNeedCoverage(body.text.trim(), extraction);
+          extraction = ensureNeedCoverage(body.text.trim(), extraction, llm.proposedNeed);
         }
+
+        logPublishEvent("EXTRACT_PROVIDER", {
+          route: "/api/entries",
+          provider: llm.provider,
+          matchedNeedIds: extraction.needs.map((n) => n.id),
+        });
 
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
@@ -741,13 +761,20 @@ export const server = Bun.serve({
         }
 
         const ctx = buildContext(db);
-        let extraction = extract(body.text.trim(), ctx.proposals, ctx.needs);
+        const llm = await extractWithLLM(body.text.trim(), ctx.proposals, ctx.needs);
+        let extraction = llm.extraction;
         const labels = normalizeNeedIds(body.labels ?? body.needs);
         if (labels.valid.length > 0) {
           extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
         } else {
-          extraction = ensureNeedCoverage(body.text.trim(), extraction);
+          extraction = ensureNeedCoverage(body.text.trim(), extraction, llm.proposedNeed);
         }
+
+        logPublishEvent("EXTRACT_PROVIDER", {
+          route: "/api/publish_draft",
+          provider: llm.provider,
+          matchedNeedIds: extraction.needs.map((n) => n.id),
+        });
 
         const createdFromDraft = extraction.needs.map((n) => upsertEmergentProposalFromDraft(n.id, body!.text!.trim(), voterId));
 
