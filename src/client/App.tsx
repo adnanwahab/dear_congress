@@ -28,18 +28,30 @@ interface AppState {
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
-  population: { n: number; archetypes: { name: string; share: number }[] };
+  population: { n: number; archetypes: { name: string; share: number }[]; realVoices?: number };
   user: { votes: Record<string, UserVote>; allocation: Record<string, number>; goalVotes: Record<string, boolean>; answers: { id: string; needId: string; text: string; proposalId: string }[] };
   defaultWeights: Weights;
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
+const VOTER_ID_KEY = "civic_synthesis_voter_id";
+
+function getVoterId() {
+  const existing = localStorage.getItem(VOTER_ID_KEY);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  localStorage.setItem(VOTER_ID_KEY, id);
+  return id;
+}
 
 async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "x-voter-id": getVoterId(),
+    },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
@@ -185,7 +197,7 @@ export function App() {
       </main>
 
       <footer>
-        Prototype. Opinions come from {state.user ? "your inputs plus " : ""}{state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
+        Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
     </div>
   );

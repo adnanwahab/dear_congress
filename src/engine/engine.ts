@@ -1,7 +1,7 @@
 import { CHANGE_LEVELS, NEEDS, PROPOSALS } from "./catalog";
 import type {
-  DB, Extraction, JournalEntry, NeedDemand, Objection, PackageResult, PlanItem,
-  Proposal, ProposalStats, ScoreParts, Stance, Weights,
+  DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageResult, PlanItem,
+  Proposal, ProposalStats, ScoreParts, Stance, UserVote, Weights,
 } from "./types";
 
 /* ------------------------------------------------------------------ */
@@ -15,9 +15,9 @@ export const tokens = (s: string) => (s.toLowerCase().match(/[a-z0-9]{3,}/g) ?? 
 
 const INTENSIFIERS = ["awful", "terrible", "can't", "cannot", "impossible", "eating", "desperate", "scared", "every month", "every time", "struggling", "two jobs", "exhausted", "please", "worst", "again", "barely", "half my income", "worse"];
 
-export function extract(text: string, proposals: Proposal[] = PROPOSALS): Extraction {
+export function extract(text: string, proposals: Proposal[] = PROPOSALS, needsCatalog: NeedDef[] = NEEDS): Extraction {
   const t = text.toLowerCase();
-  const needs = NEEDS.map((n) => {
+  const needs = needsCatalog.map((n) => {
     const hits = n.keywords.filter((k) => t.includes(k)).length;
     return { id: n.id, confidence: hits ? Math.min(1, 0.45 + hits * 0.2) : 0 };
   })
@@ -150,6 +150,7 @@ function pickObjection(v: Voter, objs: Omit<Objection, "share">[], pid: string) 
 /* ------------------------------------------------------------------ */
 
 export interface Context {
+  needs: NeedDef[];
   proposals: Proposal[];
   stats: Record<string, ProposalStats>;
   demand: Record<string, NeedDemand>;
@@ -159,68 +160,150 @@ export interface Context {
   db: DB;
 }
 
+const BLEND_K = 20;
+
+function blendWeight(realVoices: number) {
+  return realVoices / (realVoices + BLEND_K);
+}
+
+function classifyRealVotes(votes: UserVote[]) {
+  let sup = 0, neu = 0, opp = 0, strong = 0;
+  for (const uv of votes) {
+    if (uv.stance > 0) sup++;
+    else if (uv.stance === 0) neu++;
+    else {
+      opp++;
+      if (uv.stance === -2) strong++;
+    }
+  }
+  return { sup, neu, opp, strong, n: votes.length };
+}
+
 export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
+  const needs = [...NEEDS, ...db.emergentNeeds];
   const proposals = [...PROPOSALS, ...db.emergent];
+
+  const voterIds = new Set<string>([
+    ...Object.keys(db.votesByVoter ?? {}),
+    ...Object.keys(db.allocationByVoter ?? {}),
+    ...Object.keys(db.goalVotesByVoter ?? {}),
+  ]);
+  const realVoices = voterIds.size;
+  const wReal = blendWeight(realVoices);
+
   const stats: Record<string, ProposalStats> = {};
   for (const p of proposals) {
     const objs = objectionsFor(p);
     const objCount: Record<string, number> = {};
-    let sup = 0, neu = 0, opp = 0, strong = 0;
+    let supSim = 0; let neuSim = 0; let oppSim = 0; let strongSim = 0;
     for (const v of voters) {
       const s = stanceOf(utility(v, p));
-      if (s > 0) sup++; else if (s === 0) neu++; else {
-        opp++; if (s === -2) strong++;
+      if (s > 0) supSim++;
+      else if (s === 0) neuSim++;
+      else {
+        oppSim++;
+        if (s === -2) strongSim++;
         const k = pickObjection(v, objs, p.id);
         objCount[k] = (objCount[k] ?? 0) + 1;
       }
     }
-    const uv = db.votes[p.id];
-    if (uv) {
-      if (uv.stance > 0) sup++; else if (uv.stance === 0) neu++; else { opp++; if (uv.stance === -2) strong++; }
-    }
-    const n = voters.length + (uv ? 1 : 0);
+
+    const realVotes = Object.values(db.votesByVoter ?? {})
+      .map((m) => m?.[p.id])
+      .filter((v): v is UserVote => Boolean(v));
+    const r = classifyRealVotes(realVotes);
+
+    const simN = Math.max(1, voters.length);
+    const supportSim = supSim / simN;
+    const neutralSim = neuSim / simN;
+    const opposeSim = oppSim / simN;
+    const strongOpposeSim = strongSim / simN;
+
+    const supportReal = r.n ? r.sup / r.n : supportSim;
+    const neutralReal = r.n ? r.neu / r.n : neutralSim;
+    const opposeReal = r.n ? r.opp / r.n : opposeSim;
+    const strongOpposeReal = r.n ? r.strong / r.n : strongOpposeSim;
+
     stats[p.id] = {
-      n,
-      support: round(sup / n), neutral: round(neu / n), oppose: round(opp / n), strongOppose: round(strong / n),
-      objections: objs.map((o) => ({ ...o, share: round((objCount[o.key] ?? 0) / Math.max(1, opp)) })).sort((a, b) => b.share - a.share),
+      n: voters.length + realVoices,
+      support: round(wReal * supportReal + (1 - wReal) * supportSim),
+      neutral: round(wReal * neutralReal + (1 - wReal) * neutralSim),
+      oppose: round(wReal * opposeReal + (1 - wReal) * opposeSim),
+      strongOppose: round(wReal * strongOpposeReal + (1 - wReal) * strongOpposeSim),
+      objections: objs.map((o) => ({ ...o, share: round((objCount[o.key] ?? 0) / Math.max(1, oppSim)) })).sort((a, b) => b.share - a.share),
     };
   }
 
-  // Which mechanism each simulated voter would prefer for each need (the "31% tax credit, 24% subsidy…" table)
   const mechCount: Record<string, number> = {};
-  const goalYes: Record<string, number> = {};
+  const goalYesSim: Record<string, number> = {};
   for (const v of voters) {
-    for (const need of NEEDS) {
-      let best: Proposal | null = null, bu = -Infinity;
-      for (const p of proposals) if (p.needId === need.id) { const u = utility(v, p); if (u > bu) { bu = u; best = p; } }
+    for (const need of needs) {
+      let best: Proposal | null = null;
+      let bu = -Infinity;
+      for (const p of proposals) if (p.needId === need.id) {
+        const u = utility(v, p);
+        if (u > bu) { bu = u; best = p; }
+      }
       if (best) mechCount[best.id] = (mechCount[best.id] ?? 0) + 1;
-      if (4 * (v.pri[need.id] ?? 0) + 0.55 - v.fiscal * 0.25 + noise(v.id, "goal:" + need.id) > 0.3) goalYes[need.id] = (goalYes[need.id] ?? 0) + 1;
+      if (4 * (v.pri[need.id] ?? 0.03) + 0.55 - v.fiscal * 0.25 + noise(v.id, `goal:${need.id}`) > 0.3) {
+        goalYesSim[need.id] = (goalYesSim[need.id] ?? 0) + 1;
+      }
     }
   }
+
   const mechanismShare: Record<string, number> = {};
-  for (const p of proposals) mechanismShare[p.id] = round((mechCount[p.id] ?? 0) / voters.length);
-  const goalSupport: Record<string, number> = {};
-  for (const need of NEEDS) {
-    const uv = db.goalVotes[need.id];
-    goalSupport[need.id] = round(((goalYes[need.id] ?? 0) + (uv === undefined ? 0 : uv ? 1 : 0)) / (voters.length + (uv === undefined ? 0 : 1)));
+  for (const p of proposals) {
+    const simShare = round((mechCount[p.id] ?? 0) / Math.max(1, voters.length));
+    const realCount = db.answers.filter((a) => a.proposalId === p.id).length;
+    const totalAnswers = Math.max(1, db.answers.length);
+    const realShare = realCount / totalAnswers;
+    mechanismShare[p.id] = round(wReal * realShare + (1 - wReal) * simShare);
   }
 
-  return { proposals, stats, demand: computeDemand(db, voters), mechanismShare, goalSupport, entries: db.entries, db };
+  const goalSupport: Record<string, number> = {};
+  for (const need of needs) {
+    const sim = (goalYesSim[need.id] ?? 0) / Math.max(1, voters.length);
+    const realVotes = Object.values(db.goalVotesByVoter ?? {})
+      .map((m) => m?.[need.id])
+      .filter((v): v is boolean => v !== undefined);
+    const real = realVotes.length ? realVotes.filter(Boolean).length / realVotes.length : sim;
+    goalSupport[need.id] = round(wReal * real + (1 - wReal) * sim);
+  }
+
+  return { needs, proposals, stats, demand: computeDemand(db, voters, needs), mechanismShare, goalSupport, entries: db.entries, db };
 }
 
-export function computeDemand(db: DB, voters: Voter[]): Record<string, NeedDemand> {
+export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[]): Record<string, NeedDemand> {
   const out: Record<string, NeedDemand> = {};
-  const userAlloc = Object.values(db.allocation).reduce((s, v) => s + v, 0) > 0;
-  for (const need of NEEDS) {
-    let js = 0, jc = 0;
+  const allAllocs = Object.values(db.allocationByVoter ?? {});
+  const allocVoterCount = allAllocs.filter((a) => Object.values(a ?? {}).reduce((s, v) => s + v, 0) > 0).length;
+  const wReal = blendWeight(allocVoterCount);
+
+  for (const need of needs) {
+    let js = 0;
+    let jc = 0;
     for (const e of db.entries) {
       const hit = e.extraction.needs.find((n) => n.id === need.id);
-      if (hit) { js += e.extraction.importance * hit.confidence; jc++; }
+      if (hit) {
+        js += e.extraction.importance * hit.confidence;
+        jc++;
+      }
     }
-    let pts = voters.reduce((s, v) => s + (v.pri[need.id] ?? 0) * 100, 0);
-    if (userAlloc) pts += db.allocation[need.id] ?? 0;
-    out[need.id] = { journalScore: round(js), journalCount: jc, avgPoints: round(pts / (voters.length + (userAlloc ? 1 : 0)), 1), demand: 0 };
+
+    const simAvgPoints = voters.reduce((s, v) => s + (v.pri[need.id] ?? 0.03) * 100, 0) / Math.max(1, voters.length);
+    const allocTotals = allAllocs
+      .map((a) => a?.[need.id] ?? 0)
+      .reduce((s, v) => s + v, 0);
+    const realAvgPoints = allocVoterCount ? allocTotals / allocVoterCount : simAvgPoints;
+
+    out[need.id] = {
+      journalScore: round(js),
+      journalCount: jc,
+      avgPoints: round(wReal * realAvgPoints + (1 - wReal) * simAvgPoints, 1),
+      demand: 0,
+    };
   }
+
   const maxJ = Math.max(...Object.values(out).map((d) => d.journalScore), 1e-9);
   const maxP = Math.max(...Object.values(out).map((d) => d.avgPoints), 1e-9);
   for (const d of Object.values(out)) d.demand = round(0.5 * (d.journalScore / maxJ) + 0.5 * (d.avgPoints / maxP));
@@ -293,7 +376,7 @@ export function synthesizePackage(
 function buildItem(ctx: Context, r: Row): PlanItem {
   const p = r.p;
   const st = ctx.stats[p.id]!;
-  const need = NEEDS.find((n) => n.id === p.needId)!;
+  const need = ctx.needs.find((n) => n.id === p.needId) ?? NEEDS.find((n) => n.id === p.needId)!;
   const quotes = ctx.entries
     .filter((e) => e.extraction.needs.some((n) => n.id === p.needId))
     .sort((a, b) => Number(!!a.seeded) - Number(!!b.seeded) || b.extraction.importance - a.extraction.importance)
@@ -339,5 +422,16 @@ export function synthesize(ctx: Context, weights: Weights, lambda: number, budge
 }
 
 export function emptyDB(): DB {
-  return { entries: [], votes: {}, allocation: {}, goalVotes: {}, answers: [], emergent: [] };
+  return {
+    entries: [],
+    votes: {},
+    allocation: {},
+    goalVotes: {},
+    votesByVoter: {},
+    allocationByVoter: {},
+    goalVotesByVoter: {},
+    answers: [],
+    emergent: [],
+    emergentNeeds: [],
+  };
 }

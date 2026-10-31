@@ -1,10 +1,10 @@
 import index from "./index.html";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
-  ARCHETYPES, POPULATION, buildContext, clusterAnswer, emptyDB, extract, synthesize, DEFAULT_WEIGHTS,
+  ARCHETYPES, POPULATION, buildContext, clusterAnswer, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
 import type { Context } from "./src/engine/engine";
-import type { DB, JournalEntry, Proposal, UserVote, Weights } from "./src/engine/types";
+import type { DB, JournalEntry, NeedDef, Proposal, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
@@ -107,8 +107,27 @@ function entriesNewestFirst() {
 
 async function load(): Promise<DB> {
   const f = Bun.file(DB_PATH);
-  if (await f.exists()) return { ...emptyDB(), ...(await f.json()) };
-  return seed();
+  if (!(await f.exists())) return seed();
+
+  const loaded = { ...emptyDB(), ...(await f.json()) } as DB;
+
+  // Migrate legacy single-user fields into the multi-voter maps.
+  if (Object.keys(loaded.votesByVoter ?? {}).length === 0 && Object.keys(loaded.votes ?? {}).length > 0) {
+    loaded.votesByVoter = { legacy: { ...loaded.votes } };
+  }
+  if (Object.keys(loaded.allocationByVoter ?? {}).length === 0 && Object.keys(loaded.allocation ?? {}).length > 0) {
+    loaded.allocationByVoter = { legacy: { ...loaded.allocation } };
+  }
+  if (Object.keys(loaded.goalVotesByVoter ?? {}).length === 0 && Object.keys(loaded.goalVotes ?? {}).length > 0) {
+    loaded.goalVotesByVoter = { legacy: { ...loaded.goalVotes } };
+  }
+
+  loaded.votesByVoter = loaded.votesByVoter ?? {};
+  loaded.allocationByVoter = loaded.allocationByVoter ?? {};
+  loaded.goalVotesByVoter = loaded.goalVotesByVoter ?? {};
+  loaded.emergentNeeds = loaded.emergentNeeds ?? [];
+
+  return loaded;
 }
 
 function seed(): DB {
@@ -126,14 +145,101 @@ function seed(): DB {
   return db;
 }
 
+function resolveVoterId(req: Request) {
+  const fromHeader = req.headers.get("x-voter-id")?.trim();
+  return fromHeader || "anon";
+}
+
+function currentNeeds() {
+  return [...NEEDS, ...db.emergentNeeds];
+}
+
+function toNeedId(label: string) {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 36);
+}
+
+function ensureNeedCoverage(text: string, extraction: JournalEntry["extraction"]) {
+  if (extraction.needs.length > 0) return extraction;
+
+  const tk = tokens(text).filter((t) => t.length >= 4);
+  const labelCore = tk.slice(0, 3).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ") || "Community need";
+  const base = toNeedId(labelCore) || "community_need";
+  const id = `emergent_need_${base}_${db.emergentNeeds.length + 1}`;
+
+  const emergentNeed: NeedDef = {
+    id,
+    label: labelCore,
+    value: "Community wellbeing",
+    goal: `Improve outcomes related to ${labelCore.toLowerCase()}`,
+    metric: `Tracked improvement in ${labelCore.toLowerCase()} concerns`,
+    level: "To be determined",
+    keywords: [...new Set(tk)].slice(0, 12),
+    emergent: true,
+    sourceText: text.slice(0, 240),
+  };
+
+  db.emergentNeeds.push(emergentNeed);
+  return {
+    ...extraction,
+    needs: [{ id: emergentNeed.id, confidence: 1 }],
+  };
+}
+
+function upsertEmergentProposalFromDraft(needId: string, text: string, voterId?: string) {
+  const ctx = buildContext(db);
+  const proposalId = clusterAnswer(text, needId, ctx.proposals);
+  if (proposalId) {
+    db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId, createdAt: new Date().toISOString(), voterId });
+    return { proposalId, isNew: false };
+  }
+
+  const emergent: Proposal = {
+    id: `emergent_${db.emergent.length + 1}`,
+    needId,
+    title: text.trim().length > 90 ? text.trim().slice(0, 87) + "…" : text.trim(),
+    mechanism: "To be determined",
+    authority: "Unassigned",
+    jurisdiction: "Unassigned",
+    costB: null,
+    changeLevel: 3,
+    reversibility: 0.5,
+    evidence: 0.3,
+    effectiveness: 0.5,
+    keywords: tokens(text).slice(0, 12),
+    metrics: [],
+    legalChange: "Needs legal analysis",
+    emergent: true,
+    sourceText: text.trim(),
+  };
+
+  db.emergent.push(emergent);
+  db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId: emergent.id, createdAt: new Date().toISOString(), voterId });
+  return { proposalId: emergent.id, isNew: true };
+}
+
 let db = await load();
 const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
 await save();
 
-function state() {
+function state(voterId = "anon") {
   const ctx = buildContext(db);
+  const userVotes = db.votesByVoter[voterId] ?? {};
+  const userAllocation = db.allocationByVoter[voterId] ?? {};
+  const userGoalVotes = db.goalVotesByVoter[voterId] ?? {};
+  const realVoters = new Set([
+    ...Object.keys(db.votesByVoter),
+    ...Object.keys(db.allocationByVoter),
+    ...Object.keys(db.goalVotesByVoter),
+  ]).size;
+
+  const userAnswers = db.answers.filter((a) => a.voterId === voterId || (voterId === "anon" && !a.voterId));
+
   return {
-    needs: NEEDS,
+    needs: ctx.needs,
     changeLevels: CHANGE_LEVELS,
     proposals: ctx.proposals,
     stats: ctx.stats,
@@ -141,8 +247,12 @@ function state() {
     mechanismShare: ctx.mechanismShare,
     goalSupport: ctx.goalSupport,
     entries: [...db.entries].reverse(),
-    population: { n: POPULATION.length, archetypes: ARCHETYPES.map((a) => ({ name: a.name, share: a.share })) },
-    user: { votes: db.votes, allocation: db.allocation, goalVotes: db.goalVotes, answers: db.answers },
+    population: {
+      n: POPULATION.length,
+      archetypes: ARCHETYPES.map((a) => ({ name: a.name, share: a.share })),
+      realVoices: realVoters,
+    },
+    user: { votes: userVotes, allocation: userAllocation, goalVotes: userGoalVotes, answers: userAnswers },
     defaultWeights: DEFAULT_WEIGHTS,
   };
 }
@@ -179,7 +289,7 @@ function emitForkEvent(fork: ForkState, ev: StageEvent) {
 }
 
 function rankByNeedDemand(ctx: Context) {
-  const sorted = [...NEEDS].sort((a, b) => ctx.demand[b.id]!.demand - ctx.demand[a.id]!.demand);
+  const sorted = [...ctx.needs].sort((a, b) => ctx.demand[b.id]!.demand - ctx.demand[a.id]!.demand);
   return new Map(sorted.map((n, i) => [n.id, i + 1]));
 }
 
@@ -215,12 +325,12 @@ async function runPipeline(forkId: string) {
     await sleep(140);
     const ctxAfterEntry = buildContext(db);
     const matched = fork.labels.map((needId) => {
-      const def = NEEDS.find((n) => n.id === needId);
+      const def = ctxAfterEntry.needs.find((n) => n.id === needId);
       return {
         need_id: needId,
         name: def?.label ?? needId,
         voices: ctxAfterEntry.demand[needId]?.journalCount ?? 0,
-        isNew: false,
+        isNew: Boolean(def?.emergent),
       };
     });
     fork.matchedNeedIds = matched.map((m) => m.need_id);
@@ -231,9 +341,9 @@ async function runPipeline(forkId: string) {
     const afterRanks = rankByNeedDemand(ctxAfterEntry);
     const deltas = fork.matchedNeedIds.map((needId) => ({
       item_id: needId,
-      name: NEEDS.find((n) => n.id === needId)?.label ?? needId,
-      rankBefore: beforeRanks.get(needId) ?? NEEDS.length,
-      rankAfter: afterRanks.get(needId) ?? NEEDS.length,
+      name: ctxAfterEntry.needs.find((n) => n.id === needId)?.label ?? needId,
+      rankBefore: beforeRanks.get(needId) ?? ctxAfterEntry.needs.length,
+      rankAfter: afterRanks.get(needId) ?? ctxAfterEntry.needs.length,
     }));
     emitForkEvent(fork, { stage: "vote", status: "done", deltas });
 
@@ -256,12 +366,12 @@ async function runPipeline(forkId: string) {
   }
 }
 
-const NEED_IDS = new Set(NEEDS.map((n) => n.id));
 const toStringList = (v: unknown) => Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").map((s) => s.trim()).filter(Boolean) : [];
 const normalizeNeedIds = (v: unknown) => {
+  const needIds = new Set(currentNeeds().map((n) => n.id));
   const submitted = toStringList(v);
-  const valid = submitted.filter((id) => NEED_IDS.has(id));
-  const ignored = submitted.filter((id) => !NEED_IDS.has(id));
+  const valid = submitted.filter((id) => needIds.has(id));
+  const ignored = submitted.filter((id) => !needIds.has(id));
   return { submitted, valid, ignored };
 };
 
@@ -287,19 +397,21 @@ export const server = Bun.serve({
 
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
-      GET: (req) => withReadCors(req, Response.json(state())),
+      GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
     },
 
     "/api/journal": {
       POST: async (req) => {
         const { text, author } = (await req.json()) as { text?: string; author?: string };
         if (!text?.trim()) return bad("text is required");
+        const ctx = buildContext(db);
+        const extraction = ensureNeedCoverage(text.trim(), extract(text, ctx.proposals, ctx.needs));
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
           author: author?.trim() || "You",
           text: text.trim(),
           createdAt: new Date().toISOString(),
-          extraction: extract(text, buildContext(db).proposals),
+          extraction,
           corrected: false,
         };
         db.entries.push(entry);
@@ -314,7 +426,7 @@ export const server = Bun.serve({
         const entry = db.entries.find((e) => e.id === req.params.id);
         if (!entry) return bad("entry not found");
         const { needs } = (await req.json()) as { needs: string[] };
-        const valid = needs.filter((id) => NEEDS.some((n) => n.id === id));
+        const valid = needs.filter((id) => currentNeeds().some((n) => n.id === id));
         entry.extraction.needs = valid.map((id) => entry.extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
         entry.corrected = true;
         await save();
@@ -324,24 +436,34 @@ export const server = Bun.serve({
 
     "/api/votes": {
       POST: async (req) => {
+        const voterId = resolveVoterId(req);
         const body = (await req.json()) as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean> };
-        for (const v of body.votes ?? []) db.votes[v.proposalId] = v;
+
+        const existingVotes = db.votesByVoter[voterId] ?? {};
+        for (const v of body.votes ?? []) existingVotes[v.proposalId] = v;
+        db.votesByVoter[voterId] = existingVotes;
+
         if (body.allocation) {
           const total = Object.values(body.allocation).reduce((s, v) => s + v, 0);
           if (total > 100) return bad("allocation exceeds 100 points");
-          db.allocation = body.allocation;
+          db.allocationByVoter[voterId] = body.allocation;
         }
-        if (body.goalVotes) db.goalVotes = { ...db.goalVotes, ...body.goalVotes };
+
+        if (body.goalVotes) {
+          db.goalVotesByVoter[voterId] = { ...(db.goalVotesByVoter[voterId] ?? {}), ...body.goalVotes };
+        }
+
         await save();
-        return Response.json({ ok: true });
+        return Response.json({ ok: true, voterId });
       },
     },
 
     // Open-ended "how should we accomplish that?" answers
     "/api/answers": {
       POST: async (req) => {
+        const voterId = resolveVoterId(req);
         const { needId, text } = (await req.json()) as { needId: string; text: string };
-        if (!text?.trim() || !NEEDS.some((n) => n.id === needId)) return bad("needId and text are required");
+        if (!text?.trim() || !currentNeeds().some((n) => n.id === needId)) return bad("needId and text are required");
         const ctx = buildContext(db);
         let proposalId = clusterAnswer(text, needId, ctx.proposals);
         let isNew = false;
@@ -368,7 +490,7 @@ export const server = Bun.serve({
           db.emergent.push(emergent);
           proposalId = emergent.id;
         }
-        db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId, createdAt: new Date().toISOString() });
+        db.answers.push({ id: crypto.randomUUID(), needId, text: text.trim(), proposalId, createdAt: new Date().toISOString(), voterId });
         await save();
         return Response.json({ proposalId, isNew });
       },
@@ -385,10 +507,12 @@ export const server = Bun.serve({
         if (!body.text?.trim()) return bad("text is required");
 
         const baseCtx = buildContext(db);
-        const extraction = extract(body.text.trim(), baseCtx.proposals);
+        let extraction = extract(body.text.trim(), baseCtx.proposals, baseCtx.needs);
         const labels = normalizeNeedIds(body.labels ?? body.needs);
         if (labels.valid.length > 0) {
-          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+          extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
+        } else {
+          extraction = ensureNeedCoverage(body.text.trim(), extraction);
         }
 
         const entry: JournalEntry = {
@@ -507,17 +631,20 @@ export const server = Bun.serve({
         if (!body.text?.trim()) return Response.json({ labels: [], matched: [], deltas: [] });
 
         const baseCtx = buildContext(db);
-        const extraction = extract(body.text.trim(), baseCtx.proposals);
+        let extraction = extract(body.text.trim(), baseCtx.proposals, baseCtx.needs);
         const labels = normalizeNeedIds(body.labels ?? body.needs);
         if (labels.valid.length > 0) {
-          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+          extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
+        } else {
+          // Preview synthetic fallback without mutating DB.
+          if (extraction.needs.length === 0) extraction = { ...extraction, needs: [{ id: "emergent_preview", confidence: 1 }] };
         }
 
         const matched = extraction.needs.map((n) => ({
           need_id: n.id,
-          name: NEEDS.find((d) => d.id === n.id)?.label ?? n.id,
+          name: baseCtx.needs.find((d) => d.id === n.id)?.label ?? "Emerging need",
           voices: (baseCtx.demand[n.id]?.journalCount ?? 0) + 1,
-          isNew: false,
+          isNew: n.id === "emergent_preview",
         }));
 
         const beforeRanks = rankByNeedDemand(baseCtx);
@@ -537,12 +664,12 @@ export const server = Bun.serve({
         const afterRanks = rankByNeedDemand(afterCtx);
         const deltas = extraction.needs.map((n) => ({
           item_id: n.id,
-          name: NEEDS.find((d) => d.id === n.id)?.label ?? n.id,
-          rankBefore: beforeRanks.get(n.id) ?? NEEDS.length,
-          rankAfter: afterRanks.get(n.id) ?? NEEDS.length,
+          name: baseCtx.needs.find((d) => d.id === n.id)?.label ?? "Emerging need",
+          rankBefore: beforeRanks.get(n.id) ?? baseCtx.needs.length,
+          rankAfter: afterRanks.get(n.id) ?? afterCtx.needs.length,
         }));
 
-        return Response.json({ labels: extraction.needs.map((n) => n.id), matched, deltas });
+        return Response.json({ labels: extraction.needs.filter((n) => n.id !== "emergent_preview").map((n) => n.id), matched, deltas });
       },
     },
 
@@ -553,7 +680,7 @@ export const server = Bun.serve({
           publish_draft: "/api/publish_draft",
           publish_labels: "/api/publish_labels",
         },
-        needs: NEEDS.map((n) => ({ id: n.id, label: n.label })),
+        needs: currentNeeds().map((n) => ({ id: n.id, label: n.label })),
       }),
     },
 
@@ -570,6 +697,7 @@ export const server = Bun.serve({
         return new Response(null, { status: 204, headers: publishCorsHeaders(req) });
       },
       POST: async (req) => {
+        const voterId = resolveVoterId(req);
         const origin = req.headers.get("origin");
         const referer = req.headers.get("referer");
         const remote = req.headers.get("fly-client-ip") ?? req.headers.get("x-forwarded-for") ?? null;
@@ -612,11 +740,16 @@ export const server = Bun.serve({
           return publishBad(req, "text is required");
         }
 
-        const extraction = extract(body.text.trim(), buildContext(db).proposals);
+        const ctx = buildContext(db);
+        let extraction = extract(body.text.trim(), ctx.proposals, ctx.needs);
         const labels = normalizeNeedIds(body.labels ?? body.needs);
         if (labels.valid.length > 0) {
-          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+          extraction = { ...extraction, needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }) };
+        } else {
+          extraction = ensureNeedCoverage(body.text.trim(), extraction);
         }
+
+        const createdFromDraft = extraction.needs.map((n) => upsertEmergentProposalFromDraft(n.id, body!.text!.trim(), voterId));
 
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
@@ -638,12 +771,21 @@ export const server = Bun.serve({
           acceptedNeedIds: labels.valid,
           ignoredNeedIds: labels.ignored,
           extractedNeedIds: extraction.needs.map((n) => n.id),
+          createdProposalIds: createdFromDraft.map((x) => x.proposalId),
           origin,
           referer,
           remote,
         });
 
-        return withPublishCors(req, Response.json({ ok: true, entryId: entry.id, acceptedNeedIds: labels.valid, ignoredNeedIds: labels.ignored, entry }));
+        return withPublishCors(req, Response.json({
+          ok: true,
+          entryId: entry.id,
+          acceptedNeedIds: labels.valid,
+          ignoredNeedIds: labels.ignored,
+          proposalIds: createdFromDraft.map((x) => x.proposalId),
+          createdNewCount: createdFromDraft.filter((x) => x.isNew).length,
+          entry,
+        }));
       },
     },
 

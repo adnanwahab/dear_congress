@@ -8,6 +8,8 @@ export interface NeedDef {
   metric: string;
   level: string;
   keywords: string[];
+  emergent?: boolean;
+  sourceText?: string;
 }
 
 export interface Proposal {
@@ -67,15 +69,24 @@ export interface OpenAnswer {
   text: string;
   proposalId: string;
   createdAt: string;
+  voterId?: string;
 }
 
 export interface DB {
   entries: JournalEntry[];
+  // Legacy single-user fields (kept for migration/backward compatibility)
   votes: Record<string, UserVote>;
   allocation: Record<string, number>;
   goalVotes: Record<string, boolean>;
+
+  // Multi-voter storage
+  votesByVoter: Record<string, Record<string, UserVote>>;
+  allocationByVoter: Record<string, Record<string, number>>;
+  goalVotesByVoter: Record<string, Record<string, boolean>>;
+
   answers: OpenAnswer[];
   emergent: Proposal[];
+  emergentNeeds: NeedDef[];
 }
 
 export interface Weights {
