@@ -3,6 +3,22 @@ import type {
   JournalEntry, NeedDef, NeedDemand, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
 } from "../engine/types";
 
+type PublishStage = "journal" | "needs" | "vote" | "synthesize";
+type StageStatus = "idle" | "running" | "done" | "error";
+
+type StageEvent =
+  | { stage: "journal"; status: "done"; entry_id: string; labels: string[] }
+  | { stage: "needs"; status: "done"; matched: { need_id: string; name: string; voices: number; isNew: boolean }[] }
+  | { stage: "vote"; status: "done"; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] }
+  | { stage: "synthesize"; status: "running" | "done"; diff?: { added: string[]; removed: string[]; reinforced: string[]; nearMiss?: { item: string; entriesNeeded: number } } }
+  | { stage: string; status: "error"; message: string };
+
+interface PublishFlow {
+  forkId: string | null;
+  stages: Record<PublishStage, StageStatus>;
+  notes: Partial<Record<PublishStage, string>>;
+}
+
 interface AppState {
   needs: NeedDef[];
   changeLevels: string[];
@@ -17,14 +33,21 @@ interface AppState {
   defaultWeights: Weights;
 }
 
+const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
+
 async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
+  const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
-    method: method ?? (body === undefined ? "GET" : "POST"),
+    method: resolvedMethod,
     headers: { "content-type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-  return res.json();
+  const data = await res.json();
+  if (resolvedMethod === "POST" && JOURNAL_CREATE_ENDPOINTS.some((p) => path.startsWith(p))) {
+    window.dispatchEvent(new CustomEvent("journal:created", { detail: { path } }));
+  }
+  return data;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -38,11 +61,91 @@ const TABS: { id: Tab; n: string; label: string; hint: string }[] = [
   { id: "synth", n: "4", label: "Synthesize", hint: "One coherent plan" },
 ];
 
+const STAGE_BY_TAB: Record<Tab, PublishStage> = { journal: "journal", needs: "needs", vote: "vote", synth: "synthesize" };
+
+const EMPTY_FLOW: PublishFlow = {
+  forkId: null,
+  stages: { journal: "idle", needs: "idle", vote: "idle", synthesize: "idle" },
+  notes: {},
+};
+
 export function App() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>("journal");
+  const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
+  const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
   const refresh = () => api<AppState>("/api/state").then(setState);
   useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    const onJournalCreated = () => { refresh(); };
+    window.addEventListener("journal:created", onJournalCreated);
+    return () => window.removeEventListener("journal:created", onJournalCreated);
+  }, []);
+
+  const onPublishStart = (forkId: string) => {
+    setPublishFlow({
+      forkId,
+      stages: { journal: "running", needs: "idle", vote: "idle", synthesize: "idle" },
+      notes: {},
+    });
+  };
+
+  const onPublishEvent = (ev: StageEvent) => {
+    if (ev.stage === "needs" && ev.status === "done" && ev.matched[0]) setFocusNeedId(ev.matched[0].need_id);
+    setPublishFlow((prev) => {
+      const next: PublishFlow = {
+        ...prev,
+        stages: { ...prev.stages },
+        notes: { ...prev.notes },
+      };
+
+      if (ev.status === "error") {
+        if (ev.stage in next.stages) next.stages[ev.stage as PublishStage] = "error";
+        if (ev.stage === "journal") next.notes.journal = ev.message;
+        if (ev.stage === "needs") next.notes.needs = ev.message;
+        if (ev.stage === "vote") next.notes.vote = ev.message;
+        if (ev.stage === "synthesize") next.notes.synthesize = ev.message;
+        return next;
+      }
+
+      if (ev.stage === "journal") {
+        next.stages.journal = "done";
+        next.notes.journal = `Published with ${ev.labels.length} label${ev.labels.length === 1 ? "" : "s"}.`;
+      }
+      if (ev.stage === "needs") {
+        next.stages.needs = "done";
+        const first = ev.matched[0];
+        if (!first) next.notes.needs = "No need match found.";
+        else {
+          next.notes.needs = first.isNew
+            ? `Seeded new need: ${first.name}.`
+            : `Joined ${first.name}, now ${first.voices} voices.`;
+        }
+      }
+      if (ev.stage === "vote") {
+        next.stages.vote = "done";
+        const moved = ev.deltas.find((d) => d.rankAfter < d.rankBefore);
+        next.notes.vote = moved
+          ? `+1 to ${moved.name} (rank ${moved.rankBefore} → ${moved.rankAfter}).`
+          : (ev.deltas[0] ? `Added weight to ${ev.deltas[0].name}.` : "No ballot delta yet.");
+      }
+      if (ev.stage === "synthesize" && ev.status === "running") {
+        next.stages.synthesize = "running";
+        next.notes.synthesize = "Simulating plan delta…";
+      }
+      if (ev.stage === "synthesize" && ev.status === "done") {
+        next.stages.synthesize = "done";
+        const diff = ev.diff;
+        if (!diff) next.notes.synthesize = "Plan update queued.";
+        else if (diff.added.length > 0) next.notes.synthesize = `Moved “${diff.added[0]}” into the plan.`;
+        else if ((diff.reinforced?.length ?? 0) > 0) next.notes.synthesize = `Your entry reinforced ${diff.reinforced.length} existing plan item${diff.reinforced.length === 1 ? "" : "s"}.`;
+        else if (diff.nearMiss) next.notes.synthesize = `No change yet. ${diff.nearMiss.entriesNeeded} more similar entries would add “${diff.nearMiss.item}”.`;
+        else next.notes.synthesize = "No structural plan change yet.";
+      }
+
+      return next;
+    });
+  };
 
   if (!state) return <div className="loading">Loading…</div>;
 
@@ -60,18 +163,23 @@ export function App() {
       </header>
 
       <nav className="loop" aria-label="Steps">
-        {TABS.map((t, i) => (
-          <button key={t.id} className={`step ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
-            <span className="num">{t.n}</span>
-            <span><b>{t.label}</b><small>{t.hint}</small></span>
-            {i < TABS.length - 1 && <span className="arrow" aria-hidden>→</span>}
-          </button>
-        ))}
+        {TABS.map((t, i) => {
+          const stage = STAGE_BY_TAB[t.id];
+          const status = publishFlow.stages[stage];
+          const note = publishFlow.notes[stage] ?? t.hint;
+          return (
+            <button key={t.id} className={`step ${tab === t.id ? "on" : ""} ${status !== "idle" ? `step-${status}` : ""}`} onClick={() => setTab(t.id)}>
+              <span className="num">{status === "done" ? "✓" : status === "running" ? "…" : status === "error" ? "!" : t.n}</span>
+              <span><b>{t.label}</b><small>{note}</small></span>
+              {i < TABS.length - 1 && <span className="arrow" aria-hidden>→</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <main>
-        {tab === "journal" && <JournalView state={state} refresh={refresh} />}
-        {tab === "needs" && <NeedsView state={state} />}
+        {tab === "journal" && <JournalView state={state} refresh={refresh} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { setTab("needs"); setFocusNeedId(needId); }} />}
+        {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
         {tab === "vote" && <VoteView state={state} refresh={refresh} />}
         {tab === "synth" && <SynthView state={state} />}
       </main>
@@ -117,38 +225,97 @@ const needLabel = (state: AppState, id: string) => state.needs.find((n) => n.id 
 
 /* -------------------------------- Journal -------------------------------- */
 
-function JournalView({ state, refresh }: { state: AppState; refresh: () => void }) {
+function JournalView({
+  state,
+  refresh,
+  onPublishStart,
+  onPublishEvent,
+  onSeeNeed,
+}: {
+  state: AppState;
+  refresh: () => void;
+  onPublishStart: (forkId: string) => void;
+  onPublishEvent: (ev: StageEvent) => void;
+  onSeeNeed: (needId: string) => void;
+}) {
   const [text, setText] = useState("");
   const [author, setAuthor] = useState("");
   const [busy, setBusy] = useState(false);
   const [entry, setEntry] = useState<JournalEntry | null>(null);
-  const [draftNeeds, setDraftNeeds] = useState<string[]>([]);
+  const [preview, setPreview] = useState<{ labels: string[]; matched: { need_id: string; name: string; voices: number }[]; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] } | null>(null);
+  const [undo, setUndo] = useState<{ forkId: string; expiresAt: number; needId: string | null } | null>(null);
+  const [undoLeft, setUndoLeft] = useState(0);
+
+  useEffect(() => {
+    if (!text.trim()) {
+      setPreview(null);
+      return;
+    }
+    const t = setTimeout(async () => {
+      const res = await api<{ labels: string[]; matched: { need_id: string; name: string; voices: number }[]; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] }>("/api/entries/preview", { text });
+      setPreview(res);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [text]);
+
+  useEffect(() => {
+    if (!undo) return;
+    const tick = () => {
+      const left = Math.max(0, undo.expiresAt - Date.now());
+      setUndoLeft(left);
+      if (left === 0) setUndo(null);
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [undo]);
 
   async function submit() {
     if (!text.trim()) return;
     setBusy(true);
-    const e = await api<JournalEntry>("/api/journal", { text, author });
-    setEntry(e);
-    setDraftNeeds(e.extraction.needs.map((n) => n.id));
+    const published = await api<{ entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
+      text,
+      author,
+      labels: preview?.labels ?? [],
+    });
+    onPublishStart(published.fork_id);
+    setEntry(published.entry);
     setText("");
     setBusy(false);
     refresh();
+
+    const es = new EventSource(`/api/forks/${published.fork_id}/events`);
+    let needFocus: string | null = null;
+    es.onmessage = (m) => {
+      const ev: StageEvent = JSON.parse(m.data);
+      onPublishEvent(ev);
+      if (ev.stage === "needs" && ev.status === "done") needFocus = ev.matched[0]?.need_id ?? null;
+      if (ev.stage === "synthesize" && ev.status === "done") {
+        setUndo({ forkId: published.fork_id, expiresAt: Date.now() + 10_000, needId: needFocus });
+        es.close();
+      }
+      if (ev.status === "error") es.close();
+    };
+    es.onerror = () => es.close();
   }
 
-  async function saveCorrection() {
-    if (!entry) return;
-    const e = await api<JournalEntry>(`/api/journal/${entry.id}`, { needs: draftNeeds }, "PATCH");
-    setEntry(e);
+  async function undoPublish() {
+    if (!undo) return;
+    await api(`/api/forks/${undo.forkId}/undo`, {});
+    setUndo(null);
+    setEntry(null);
     refresh();
   }
 
-  const changed = entry && draftNeeds.join() !== entry.extraction.needs.map((n) => n.id).join();
+  const previewNeedsLine = preview?.matched.length
+    ? `Would join: ${preview.matched[0]!.name}${preview.matched.length > 1 ? ` + ${preview.matched.length - 1} more` : ""}.`
+    : "No need match yet.";
 
   return (
     <div className="grid two">
       <section className="card">
         <h2 className="prompt">What's happening in your life? What would make it better?</h2>
-        <p className="muted">Write normally. No policy language needed.</p>
+        <p className="muted">Publish is now staged: Journal → Needs → Vote → Synthesize.</p>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -156,54 +323,34 @@ function JournalView({ state, refresh }: { state: AppState; refresh: () => void 
           rows={6}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(); }}
         />
+        {text.trim() && <p className="note faint">{previewNeedsLine}</p>}
+        {preview?.labels?.length ? (
+          <div className="chips">{preview.labels.map((id) => <span key={id} className="chip s">{needLabel(state, id)}</span>)}</div>
+        ) : null}
         <div className="row">
           <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
-          <button onClick={submit} disabled={busy || !text.trim()}>{busy ? "Reading…" : "Add to journal"}</button>
+          <button onClick={submit} disabled={busy || !text.trim()}>{busy ? "Publishing…" : "Publish"}</button>
         </div>
 
         {entry && (
           <div className="interp">
             <div className="interp-head">
-              <h3>How the system read this</h3>
-              {entry.corrected && <span className="badge ok">Corrected by you</span>}
+              <h3>Published</h3>
+              <span className="badge ok">live</span>
             </div>
             <blockquote>{entry.text}</blockquote>
-
-            <label className="lbl">Needs</label>
+            <label className="lbl">Locked labels</label>
             <div className="chips">
-              {draftNeeds.length === 0 && <span className="muted">No needs detected. Add one below.</span>}
-              {draftNeeds.map((id) => (
-                <span key={id} className="chip">
-                  {needLabel(state, id)}
-                  <button aria-label="Remove" onClick={() => setDraftNeeds(draftNeeds.filter((x) => x !== id))}>×</button>
-                </span>
-              ))}
-              <select value="" onChange={(e) => e.target.value && setDraftNeeds([...draftNeeds, e.target.value])}>
-                <option value="">+ add a need</option>
-                {state.needs.filter((n) => !draftNeeds.includes(n.id)).map((n) => <option key={n.id} value={n.id}>{n.label}</option>)}
-              </select>
+              {entry.extraction.needs.map((n) => <span key={n.id} className="chip">{needLabel(state, n.id)}</span>)}
             </div>
+          </div>
+        )}
 
-            <label className="lbl">Importance</label>
-            <div className="row tight"><Bar value={entry.extraction.importance} /><span className="num-s">{pct(entry.extraction.importance)}</span></div>
-
-            {entry.extraction.constraints.length > 0 && (<>
-              <label className="lbl">Constraints</label>
-              <ul className="plain">{entry.extraction.constraints.map((c) => <li key={c}>{c}</li>)}</ul>
-            </>)}
-            {entry.extraction.concerns.length > 0 && (<>
-              <label className="lbl">Concerns</label>
-              <ul className="plain">{entry.extraction.concerns.map((c) => <li key={c}>“{c}”</li>)}</ul>
-            </>)}
-            {entry.extraction.proposalIds.length > 0 && (<>
-              <label className="lbl">Ideas it relates to</label>
-              <ul className="plain">{entry.extraction.proposalIds.map((id) => <li key={id}>{state.proposals.find((p) => p.id === id)?.title}</li>)}</ul>
-            </>)}
-
-            <div className="row end">
-              {changed
-                ? <button onClick={saveCorrection}>Save correction</button>
-                : <button className="ghost" onClick={() => setEntry(null)}>Looks right</button>}
+        {undo && (
+          <div className="interp">
+            <div className="row">
+              <button className="ghost" onClick={undoPublish}>Undo ({Math.ceil(undoLeft / 1000)}s)</button>
+              {undo.needId && <button className="ghost" onClick={() => onSeeNeed(undo.needId!)}>See where your entry went</button>}
             </div>
           </div>
         )}
@@ -231,9 +378,12 @@ function JournalView({ state, refresh }: { state: AppState; refresh: () => void 
 
 /* --------------------------------- Needs --------------------------------- */
 
-function NeedsView({ state }: { state: AppState }) {
+function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: string | null }) {
   const sorted = useMemo(() => [...state.needs].sort((a, b) => state.demand[b.id]!.demand - state.demand[a.id]!.demand), [state]);
-  const [sel, setSel] = useState(sorted[0]!.id);
+  const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
+  useEffect(() => {
+    if (focusNeedId) setSel(focusNeedId);
+  }, [focusNeedId]);
   const need = state.needs.find((n) => n.id === sel)!;
   const props = state.proposals.filter((p) => p.needId === sel);
 

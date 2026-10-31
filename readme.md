@@ -2,6 +2,12 @@
 
 A Bun + React prototype of the civic synthesis loop:
 
+everyday is a list of journal entries from everyone
+- plan is the input of function?
+
+
+
+
 **Journal → need extraction → needs graph → open-ended voting → synthesis → plan**
 
 ## Run

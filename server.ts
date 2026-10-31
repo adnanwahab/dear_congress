@@ -3,9 +3,107 @@ import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, buildContext, clusterAnswer, emptyDB, extract, synthesize, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
+import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, Proposal, UserVote, Weights } from "./src/engine/types";
+import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
+const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
+const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
+const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "1") !== "0";
+const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
+const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
+
+function logRequest(req: Request, route: string) {
+  if (!DEBUG_REQUEST_LOGS) return;
+  const url = new URL(req.url);
+  console.log("[REQ]", JSON.stringify({
+    ts: new Date().toISOString(),
+    route,
+    method: req.method,
+    path: url.pathname,
+    origin: req.headers.get("origin"),
+    referer: req.headers.get("referer"),
+    host: req.headers.get("host"),
+    secFetchSite: req.headers.get("sec-fetch-site"),
+    secFetchMode: req.headers.get("sec-fetch-mode"),
+    secFetchDest: req.headers.get("sec-fetch-dest"),
+    userAgent: req.headers.get("user-agent"),
+  }));
+}
+
+function logResponse(route: string, res: Response, extra: Record<string, unknown> = {}) {
+  if (!DEBUG_REQUEST_LOGS) return;
+  console.log("[RES]", JSON.stringify({
+    ts: new Date().toISOString(),
+    route,
+    status: res.status,
+    csp: res.headers.get("content-security-policy"),
+    xfo: res.headers.get("x-frame-options"),
+    ...extra,
+  }));
+}
+
+
+
+function logPublishEvent(event: string, payload: Record<string, unknown>) {
+  console.log(`[${event}]`, JSON.stringify({ ts: new Date().toISOString(), ...payload }));
+}
+
+function corsAllowOrigin(req: Request, configured: string) {
+  const requestOrigin = req.headers.get("origin");
+  return configured === "auto"
+    ? (requestOrigin ?? "*")
+    : configured;
+}
+
+function publishCorsHeaders(req: Request) {
+  return {
+    "access-control-allow-origin": corsAllowOrigin(req, PUBLISH_CORS_ALLOW_ORIGIN),
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-headers": "content-type, authorization",
+    "access-control-max-age": "86400",
+    vary: "origin",
+  };
+}
+
+function readCorsHeaders(req: Request) {
+  return {
+    "access-control-allow-origin": corsAllowOrigin(req, READ_CORS_ALLOW_ORIGIN),
+    "access-control-allow-methods": "GET, OPTIONS",
+    "access-control-allow-headers": "content-type, authorization",
+    "access-control-max-age": "86400",
+    vary: "origin",
+  };
+}
+
+function withPublishCors(req: Request, res: Response) {
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries(publishCorsHeaders(req))) headers.set(k, v);
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
+}
+
+function publishBad(req: Request, msg: string, status = 400) {
+  return withPublishCors(req, Response.json({ error: msg }, { status }));
+}
+
+function withReadCors(req: Request, res: Response) {
+  const headers = new Headers(res.headers);
+  for (const [k, v] of Object.entries(readCorsHeaders(req))) headers.set(k, v);
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers,
+  });
+}
+
+function entriesNewestFirst() {
+  return [...db.entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
 
 async function load(): Promise<DB> {
   const f = Bun.file(DB_PATH);
@@ -51,13 +149,146 @@ function state() {
 
 const bad = (msg: string) => Response.json({ error: msg }, { status: 400 });
 
-const server = Bun.serve({
+type StageEvent =
+  | { stage: "journal"; status: "done"; entry_id: string; labels: string[] }
+  | { stage: "needs"; status: "done"; matched: { need_id: string; name: string; voices: number; isNew: boolean }[] }
+  | { stage: "vote"; status: "done"; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] }
+  | { stage: "synthesize"; status: "running" | "done"; diff?: { added: string[]; removed: string[]; reinforced: string[]; nearMiss?: { item: string; entriesNeeded: number } } }
+  | { stage: string; status: "error"; message: string };
+
+interface ForkState {
+  id: string;
+  entryId: string;
+  baseCtx: Context;
+  labels: string[];
+  events: StageEvent[];
+  listeners: Set<(ev: StageEvent) => void>;
+  done: boolean;
+  undone: boolean;
+  undoUntil: number | null;
+  matchedNeedIds: string[];
+}
+
+const forks = new Map<string, ForkState>();
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function emitForkEvent(fork: ForkState, ev: StageEvent) {
+  fork.events.push(ev);
+  for (const send of fork.listeners) send(ev);
+}
+
+function rankByNeedDemand(ctx: Context) {
+  const sorted = [...NEEDS].sort((a, b) => ctx.demand[b.id]!.demand - ctx.demand[a.id]!.demand);
+  return new Map(sorted.map((n, i) => [n.id, i + 1]));
+}
+
+function synthDiff(baseCtx: Context, nextCtx: Context, matchedNeedIds: string[]) {
+  const basePkg = synthesize(baseCtx, DEFAULT_WEIGHTS, 0.25, 40)[0];
+  const nextPkg = synthesize(nextCtx, DEFAULT_WEIGHTS, 0.25, 40)[0];
+  if (!basePkg || !nextPkg) {
+    return { added: [], removed: [], reinforced: [] };
+  }
+  const baseTitles = new Set(basePkg.items.map((i) => i.proposal.title));
+  const nextTitles = new Set(nextPkg.items.map((i) => i.proposal.title));
+  const added = [...nextTitles].filter((t) => !baseTitles.has(t));
+  const removed = [...baseTitles].filter((t) => !nextTitles.has(t));
+  const reinforced = [...nextTitles].filter((t) => baseTitles.has(t));
+
+  const nearMiss = added.length === 0 && removed.length === 0
+    ? (() => {
+      const candidate = nextCtx.proposals
+        .filter((p) => matchedNeedIds.includes(p.needId))
+        .find((p) => !nextTitles.has(p.title));
+      return candidate ? { item: candidate.title, entriesNeeded: 3 } : undefined;
+    })()
+    : undefined;
+
+  return { added, removed, reinforced, nearMiss };
+}
+
+async function runPipeline(forkId: string) {
+  const fork = forks.get(forkId);
+  if (!fork || fork.undone) return;
+
+  try {
+    await sleep(140);
+    const ctxAfterEntry = buildContext(db);
+    const matched = fork.labels.map((needId) => {
+      const def = NEEDS.find((n) => n.id === needId);
+      return {
+        need_id: needId,
+        name: def?.label ?? needId,
+        voices: ctxAfterEntry.demand[needId]?.journalCount ?? 0,
+        isNew: false,
+      };
+    });
+    fork.matchedNeedIds = matched.map((m) => m.need_id);
+    emitForkEvent(fork, { stage: "needs", status: "done", matched });
+
+    await sleep(220);
+    const beforeRanks = rankByNeedDemand(fork.baseCtx);
+    const afterRanks = rankByNeedDemand(ctxAfterEntry);
+    const deltas = fork.matchedNeedIds.map((needId) => ({
+      item_id: needId,
+      name: NEEDS.find((n) => n.id === needId)?.label ?? needId,
+      rankBefore: beforeRanks.get(needId) ?? NEEDS.length,
+      rankAfter: afterRanks.get(needId) ?? NEEDS.length,
+    }));
+    emitForkEvent(fork, { stage: "vote", status: "done", deltas });
+
+    await sleep(200);
+    emitForkEvent(fork, { stage: "synthesize", status: "running" });
+
+    await sleep(950);
+    const diff = synthDiff(fork.baseCtx, ctxAfterEntry, fork.matchedNeedIds);
+    emitForkEvent(fork, { stage: "synthesize", status: "done", diff });
+    fork.done = true;
+    fork.undoUntil = Date.now() + 10_000;
+  } catch (err) {
+    emitForkEvent(fork, {
+      stage: "synthesize",
+      status: "error",
+      message: err instanceof Error ? err.message : "Plan update queued",
+    });
+    fork.done = true;
+    fork.undoUntil = Date.now() + 10_000;
+  }
+}
+
+const NEED_IDS = new Set(NEEDS.map((n) => n.id));
+const toStringList = (v: unknown) => Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").map((s) => s.trim()).filter(Boolean) : [];
+const normalizeNeedIds = (v: unknown) => {
+  const submitted = toStringList(v);
+  const valid = submitted.filter((id) => NEED_IDS.has(id));
+  const ignored = submitted.filter((id) => !NEED_IDS.has(id));
+  return { submitted, valid, ignored };
+};
+
+export const server = Bun.serve({
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
     "/": index,
 
-    "/api/state": { GET: () => Response.json(state()) },
+    // Explicit embed route.
+    "/embed": index,
+
+    "/api/debug/request": {
+      GET: (req) => {
+        logRequest(req, "/api/debug/request");
+        const headers = Object.fromEntries(req.headers.entries());
+        const payload = { ok: true, url: req.url, method: req.method, headers, frameAncestors: FRAME_ANCESTORS, embedCsp: EMBED_CSP };
+        const res = Response.json(payload);
+        logResponse("/api/debug/request", res);
+        return res;
+      },
+    },
+
+    "/api/state": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json(state())),
+    },
 
     "/api/journal": {
       POST: async (req) => {
@@ -143,6 +374,294 @@ const server = Bun.serve({
       },
     },
 
+    "/api/entries": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => {
+        const entries = entriesNewestFirst();
+        return withReadCors(req, Response.json({ entries }));
+      },
+      POST: async (req) => {
+        const body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[] };
+        if (!body.text?.trim()) return bad("text is required");
+
+        const baseCtx = buildContext(db);
+        const extraction = extract(body.text.trim(), baseCtx.proposals);
+        const labels = normalizeNeedIds(body.labels ?? body.needs);
+        if (labels.valid.length > 0) {
+          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+        }
+
+        const entry: JournalEntry = {
+          id: crypto.randomUUID(),
+          author: body.author?.trim() || "You",
+          text: body.text.trim(),
+          createdAt: new Date().toISOString(),
+          extraction,
+          corrected: labels.valid.length > 0,
+        };
+
+        db.entries.push(entry);
+        await save();
+
+        const forkId = crypto.randomUUID();
+        const fork: ForkState = {
+          id: forkId,
+          entryId: entry.id,
+          baseCtx,
+          labels: extraction.needs.map((n) => n.id),
+          events: [],
+          listeners: new Set(),
+          done: false,
+          undone: false,
+          undoUntil: null,
+          matchedNeedIds: [],
+        };
+        forks.set(forkId, fork);
+
+        emitForkEvent(fork, { stage: "journal", status: "done", entry_id: entry.id, labels: fork.labels });
+        void runPipeline(forkId);
+
+        return Response.json({ entry_id: entry.id, fork_id: forkId, entry });
+      },
+    },
+
+    "/api/forks/:id/events": {
+      GET: async (req) => {
+        const fork = forks.get(req.params.id);
+        if (!fork) return new Response("fork not found", { status: 404 });
+
+        let listener: ((ev: StageEvent) => void) | null = null;
+        const stream = new ReadableStream({
+          start(controller) {
+            const encoder = new TextEncoder();
+            const write = (ev: StageEvent) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(ev)}\n\n`));
+
+            for (const ev of fork.events) write(ev);
+            if (fork.done) {
+              controller.close();
+              return;
+            }
+
+            listener = (ev: StageEvent) => {
+              write(ev);
+              if (fork.done || (ev.status === "error" && ev.stage === "synthesize")) {
+                if (listener) fork.listeners.delete(listener);
+                controller.close();
+              }
+            };
+            fork.listeners.add(listener);
+          },
+          cancel() {
+            if (listener) fork.listeners.delete(listener);
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            "content-type": "text/event-stream",
+            "cache-control": "no-cache, no-transform",
+            connection: "keep-alive",
+          },
+        });
+      },
+    },
+
+    "/api/forks/:id/undo": {
+      POST: async (req) => {
+        const fork = forks.get(req.params.id);
+        if (!fork) return bad("fork not found");
+        if (fork.undone) return bad("fork already undone");
+        if (!fork.undoUntil || Date.now() > fork.undoUntil) return bad("undo window expired");
+
+        const idx = db.entries.findIndex((e) => e.id === fork.entryId);
+        if (idx >= 0) {
+          db.entries.splice(idx, 1);
+          await save();
+        }
+        fork.undone = true;
+        fork.done = true;
+        emitForkEvent(fork, { stage: "journal", status: "error", message: "Publish undone" });
+        return Response.json({ ok: true });
+      },
+    },
+
+    "/api/journals": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => {
+        const journals = entriesNewestFirst();
+        return withReadCors(req, Response.json({ journals }));
+      },
+    },
+
+    "/api/ballot_entries": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => {
+        const data = entriesNewestFirst();
+        return withReadCors(req, Response.json({ data }));
+      },
+    },
+
+    "/api/entries/preview": {
+      POST: async (req) => {
+        const body = (await req.json()) as { text?: string; labels?: string[]; needs?: string[] };
+        if (!body.text?.trim()) return Response.json({ labels: [], matched: [], deltas: [] });
+
+        const baseCtx = buildContext(db);
+        const extraction = extract(body.text.trim(), baseCtx.proposals);
+        const labels = normalizeNeedIds(body.labels ?? body.needs);
+        if (labels.valid.length > 0) {
+          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+        }
+
+        const matched = extraction.needs.map((n) => ({
+          need_id: n.id,
+          name: NEEDS.find((d) => d.id === n.id)?.label ?? n.id,
+          voices: (baseCtx.demand[n.id]?.journalCount ?? 0) + 1,
+          isNew: false,
+        }));
+
+        const beforeRanks = rankByNeedDemand(baseCtx);
+
+        const shadow: DB = {
+          ...db,
+          entries: [...db.entries, {
+            id: "preview",
+            author: "preview",
+            text: body.text.trim(),
+            createdAt: new Date().toISOString(),
+            extraction,
+            corrected: labels.valid.length > 0,
+          }],
+        };
+        const afterCtx = buildContext(shadow);
+        const afterRanks = rankByNeedDemand(afterCtx);
+        const deltas = extraction.needs.map((n) => ({
+          item_id: n.id,
+          name: NEEDS.find((d) => d.id === n.id)?.label ?? n.id,
+          rankBefore: beforeRanks.get(n.id) ?? NEEDS.length,
+          rankAfter: afterRanks.get(n.id) ?? NEEDS.length,
+        }));
+
+        return Response.json({ labels: extraction.needs.map((n) => n.id), matched, deltas });
+      },
+    },
+
+    "/api/journal-client/schema": {
+      GET: () => Response.json({
+        version: 1,
+        endpoints: {
+          publish_draft: "/api/publish_draft",
+          publish_labels: "/api/publish_labels",
+        },
+        needs: NEEDS.map((n) => ({ id: n.id, label: n.label })),
+      }),
+    },
+
+    // For external journal UIs: publish a draft entry into Civic Synthesis.
+    "/api/publish_draft": {
+      OPTIONS: (req) => {
+        logPublishEvent("PUBLISH_DRAFT_PREFLIGHT", {
+          method: req.method,
+          origin: req.headers.get("origin"),
+          referer: req.headers.get("referer"),
+          requestMethod: req.headers.get("access-control-request-method"),
+          requestHeaders: req.headers.get("access-control-request-headers"),
+        });
+        return new Response(null, { status: 204, headers: publishCorsHeaders(req) });
+      },
+      POST: async (req) => {
+        const origin = req.headers.get("origin");
+        const referer = req.headers.get("referer");
+        const remote = req.headers.get("fly-client-ip") ?? req.headers.get("x-forwarded-for") ?? null;
+        const contentType = req.headers.get("content-type");
+        const secFetchMode = req.headers.get("sec-fetch-mode");
+
+        logPublishEvent("PUBLISH_DRAFT_HIT", {
+          method: req.method,
+          origin,
+          referer,
+          remote,
+          contentType,
+          secFetchMode,
+        });
+
+        let body: { text?: string; author?: string; labels?: string[]; needs?: string[] };
+        try {
+          body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[] };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
+            reason: "invalid json body",
+            message,
+            origin,
+            referer,
+            remote,
+            contentType,
+          });
+          return publishBad(req, "invalid json body");
+        }
+
+        if (!body.text?.trim()) {
+          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
+            reason: "text is required",
+            origin,
+            referer,
+            remote,
+            author: body.author?.trim() || null,
+          });
+          return publishBad(req, "text is required");
+        }
+
+        const extraction = extract(body.text.trim(), buildContext(db).proposals);
+        const labels = normalizeNeedIds(body.labels ?? body.needs);
+        if (labels.valid.length > 0) {
+          extraction.needs = labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
+        }
+
+        const entry: JournalEntry = {
+          id: crypto.randomUUID(),
+          author: body.author?.trim() || "Journal Client",
+          text: body.text.trim(),
+          createdAt: new Date().toISOString(),
+          extraction,
+          corrected: labels.valid.length > 0,
+        };
+
+        db.entries.push(entry);
+        await save();
+
+        logPublishEvent("PUBLISH_DRAFT_OK", {
+          entryId: entry.id,
+          author: entry.author,
+          textLength: entry.text.length,
+          textPreview: entry.text.slice(0, 120),
+          acceptedNeedIds: labels.valid,
+          ignoredNeedIds: labels.ignored,
+          extractedNeedIds: extraction.needs.map((n) => n.id),
+          origin,
+          referer,
+          remote,
+        });
+
+        return withPublishCors(req, Response.json({ ok: true, entryId: entry.id, acceptedNeedIds: labels.valid, ignoredNeedIds: labels.ignored, entry }));
+      },
+    },
+
+    // For external journal UIs: publish final labels onto an existing entry.
+    "/api/publish_labels": {
+      OPTIONS: (req) => publishLabelsOptions(req, {
+        logPublishEvent,
+        publishCorsHeaders,
+      }),
+      POST: (req) => publishLabelsPost(req, {
+        db,
+        save,
+        normalizeNeedIds,
+        logPublishEvent,
+        publishCorsHeaders,
+      }),
+    },
+
     "/api/synthesize": {
       POST: async (req) => {
         const { weights, lambda, budget } = (await req.json()) as { weights?: Weights; lambda?: number; budget?: number };
@@ -158,6 +677,17 @@ const server = Bun.serve({
       },
     },
   },
+  error(error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("[SERVER_ERROR]", JSON.stringify({
+      ts: new Date().toISOString(),
+      message,
+      stack,
+    }));
+    return new Response("Internal Server Error", { status: 500 });
+  },
 });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);
+console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);

@@ -51,6 +51,11 @@ p { margin: 0 0 10px; }
 .step .num { width: 28px; height: 28px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .step.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .step.on .num { background: var(--accent); color: var(--card); }
+.step.step-done { border-color: var(--sup); }
+.step.step-done .num { background: var(--sup); color: #fff; }
+.step.step-running { border-color: var(--accent); }
+.step.step-error { border-color: var(--opp); }
+.step.step-error .num { background: var(--opp); color: #fff; }
 .step .arrow { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); color: var(--muted); z-index: 1; font-size: 13px; }
 
 .grid { display: grid; gap: 16px; align-items: start; }
@@ -148,6 +153,7 @@ ul.plain li { margin: 3px 0; }
 .goal { font-size: 15.5px; }
 .goal-res { display: flex; gap: 8px; align-items: center; flex: 1; min-width: 180px; font-size: 13px; color: var(--muted); }
 .note { color: var(--new); font-size: 13.5px; margin-top: 8px; }
+.note.faint { opacity: .85; }
 table.mech { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
 .mech th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 6px 4px; }
 .mech td { padding: 7px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
