@@ -93,6 +93,8 @@ export interface DB {
   emergentNeeds: NeedDef[];
   /** Last synthesized plan proposal IDs by package id (A/B/C). */
   lastPlan: Record<string, string[]>;
+  /** Consecutive runs each challenger has persisted for, by package and proposal id. */
+  challengerStreak: Record<string, Record<string, number>>;
 }
 
 export interface Weights {
@@ -169,4 +171,7 @@ export interface PackageResult {
   emerging: { title: string; answers: number }[];
   unfundedPopularCost: number;
   changesFromPrevious: { added: string[]; removed: string[]; moneyMovedB: number };
+  challengerStreak: Record<string, number>;
+  churnLimited: boolean;
+  waiting: { id: string; title: string; costB: number; margin: number; reason: string }[];
 }

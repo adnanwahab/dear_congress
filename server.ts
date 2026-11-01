@@ -133,6 +133,7 @@ async function load(): Promise<DB> {
   loaded.goalVotesByVoter = loaded.goalVotesByVoter ?? {};
   loaded.emergentNeeds = loaded.emergentNeeds ?? [];
   loaded.lastPlan = loaded.lastPlan ?? {};
+  loaded.challengerStreak = loaded.challengerStreak ?? {};
 
   return loaded;
 }
@@ -440,6 +441,28 @@ function parsePreviousPlans(input: unknown) {
   return { ok: true as const, previous: out };
 }
 
+function parseChallengerStreak(input: unknown) {
+  if (input === undefined) return { ok: true as const, challengerStreak: undefined as Record<string, Record<string, number>> | undefined };
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { ok: false as const, error: "challengerStreak must be an object keyed by package id" };
+
+  const out: Record<string, Record<string, number>> = {};
+  for (const [pkg, streakByProposal] of Object.entries(input as Record<string, unknown>)) {
+    if (!streakByProposal || typeof streakByProposal !== "object" || Array.isArray(streakByProposal)) {
+      return { ok: false as const, error: `challengerStreak.${pkg} must be an object keyed by proposal id` };
+    }
+
+    const rows: Record<string, number> = {};
+    for (const [proposalId, streak] of Object.entries(streakByProposal as Record<string, unknown>)) {
+      if (typeof proposalId !== "string" || !proposalId.trim()) continue;
+      const n = typeof streak === "number" && Number.isFinite(streak) ? Math.max(0, Math.floor(streak)) : 0;
+      rows[proposalId.trim()] = n;
+    }
+    out[pkg] = rows;
+  }
+
+  return { ok: true as const, challengerStreak: out };
+}
+
 function parseWhatIfExtraEntries(input: unknown) {
   if (input === undefined) return { ok: true as const, entries: [] as JournalEntry[] };
   if (!Array.isArray(input)) return { ok: false as const, error: "extraEntries must be an array" };
@@ -458,12 +481,16 @@ function parseWhatIfExtraEntries(input: unknown) {
 
     const authorRaw = (item as { author?: unknown }).author;
     const author = typeof authorRaw === "string" && authorRaw.trim() ? authorRaw.trim().slice(0, 120) : "What-if resident";
+    const createdAtRaw = (item as { createdAt?: unknown }).createdAt;
+    const createdAt = typeof createdAtRaw === "string" && Number.isFinite(Date.parse(createdAtRaw))
+      ? new Date(createdAtRaw).toISOString()
+      : new Date().toISOString();
 
     entries.push({
       id: `extra_${i}`,
       author,
       text,
-      createdAt: new Date().toISOString(),
+      createdAt,
       extraction: extract(text, ctx.proposals, ctx.needs),
       corrected: false,
       synthetic: true,
@@ -929,32 +956,40 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
           includeSynthetic?: boolean;
-          extraEntries?: { text: string; author?: string }[];
+          extraEntries?: { text: string; author?: string; createdAt?: string }[];
           previous?: Record<string, string[]>;
+          challengerStreak?: Record<string, Record<string, number>>;
+          now?: string | number;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
         if (!parsed.ok) return bad(parsed.error);
         const parsedPrev = parsePreviousPlans(previous);
         if (!parsedPrev.ok) return bad(parsedPrev.error);
+        const parsedChallengerStreak = parseChallengerStreak(challengerStreak);
+        if (!parsedChallengerStreak.ok) return bad(parsedChallengerStreak.error);
 
         const hasWhatIfEntries = parsed.entries.length > 0;
         const ctx = buildContext(db, undefined, {
           includeSynthetic: includeSynthetic === true,
           extraEntries: parsed.entries,
+          now,
         });
         const previousUsed = parsedPrev.previous ?? db.lastPlan;
-        const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed);
+        const challengerStreakUsed = parsedChallengerStreak.challengerStreak ?? db.challengerStreak;
+        const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
 
         // What-if requests must be read-only: include request-scoped extra entries
         // in synthesis without mutating or persisting server state.
-        if (!hasWhatIfEntries) {
+        const isRealOnly = includeSynthetic !== true;
+        if (!hasWhatIfEntries && isRealOnly) {
           db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+          db.challengerStreak = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.challengerStreak]));
           await save();
         }
 

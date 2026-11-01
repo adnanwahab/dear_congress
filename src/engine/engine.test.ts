@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildContext, clusterAnswer, DEFAULT_WEIGHTS, emptyDB, extract, hasKeyword, makePopulation, synthesize } from "./engine";
+import { buildContext, clusterAnswer, DEFAULT_WEIGHTS, emptyDB, extract, hasKeyword, JOURNAL_HALF_LIFE_DAYS, makePopulation, synthesize } from "./engine";
 import { NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 
 const seeded = () => {
@@ -127,6 +127,76 @@ describe("real-vote blending", () => {
   });
 });
 
+describe("journal recency weighting", () => {
+  const FLOOD = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
+
+  test("an entry JOURNAL_HALF_LIFE_DAYS old counts half as much as a new one", () => {
+    const now = Date.parse("2028-01-01T00:00:00.000Z");
+    const oldAt = new Date(now - JOURNAL_HALF_LIFE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const newAt = new Date(now).toISOString();
+
+    const db = emptyDB();
+    db.entries = [
+      { id: "old", author: "x", text: FLOOD, createdAt: oldAt, extraction: extract(FLOOD), corrected: false },
+      { id: "new", author: "x", text: FLOOD, createdAt: newAt, extraction: extract(FLOOD), corrected: false },
+    ];
+
+    const demand = buildContext(db, undefined, { now }).demand.flooding!;
+    const ex = extract(FLOOD);
+    const newContribution = ex.importance * ex.needs.find((n) => n.id === "flooding")!.confidence;
+    const oldContribution = demand.journalScore - newContribution;
+
+    expect(oldContribution).toBeGreaterThan(0);
+    expect(newContribution).toBeGreaterThan(oldContribution);
+    expect(oldContribution / newContribution).toBeGreaterThan(0.45);
+    expect(oldContribution / newContribution).toBeLessThan(0.55);
+  });
+
+  test("seeded demand and plan are identical with now at seeded time and now + 3 years", () => {
+    const db = seeded();
+    const t = Date.parse("2028-01-01T00:00:00.000Z");
+    const tIso = new Date(t).toISOString();
+    db.entries = db.entries.map((e) => ({ ...e, createdAt: tIso }));
+
+    const atTCtx = buildContext(db, undefined, { now: t });
+    const atTPlus3Ctx = buildContext(db, undefined, { now: t + 3 * 365 * 24 * 60 * 60 * 1000 });
+
+    expect(atTCtx.demand.flooding!.journalScore).toBe(atTPlus3Ctx.demand.flooding!.journalScore);
+    expect(atTCtx.demand.transit!.journalScore).toBe(atTPlus3Ctx.demand.transit!.journalScore);
+
+    const atT = synthesize(atTCtx, DEFAULT_WEIGHTS, 0.25, 40)[0]!.items.map((i) => i.proposal.id);
+    const atTPlus3y = synthesize(atTPlus3Ctx, DEFAULT_WEIGHTS, 0.25, 40)[0]!.items.map((i) => i.proposal.id);
+
+    expect(atT).toEqual(atTPlus3y);
+    expect(atT.length).toBe(10);
+    expect(atT).toContain("cc_subsidy");
+    expect(atT).toContain("f_drainage");
+    expect(atT).not.toContain("f_buyouts");
+  });
+
+  test("what-if extra entries age against request now, not newest stored entry", () => {
+    const db = seeded();
+    const t = Date.parse("2028-01-01T00:00:00.000Z");
+    const tIso = new Date(t).toISOString();
+    db.entries = db.entries.map((e) => ({ ...e, createdAt: tIso }));
+
+    const extra = [{
+      id: "x1",
+      author: "what-if",
+      text: FLOOD,
+      createdAt: new Date(t).toISOString(),
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true as const,
+      source: "what-if",
+    }];
+
+    const near = buildContext(db, undefined, { now: t, extraEntries: extra }).demand.flooding!.journalScore;
+    const far = buildContext(db, undefined, { now: t + 3 * 365 * 24 * 60 * 60 * 1000, extraEntries: extra }).demand.flooding!.journalScore;
+    expect(far).toBeLessThan(near);
+  });
+});
+
 describe("synthetic journals", () => {
   const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
   const withSimulated = (n: number) => {
@@ -167,8 +237,17 @@ describe("stabilized synthesis", () => {
     return db;
   };
 
-  const balancedIds = (db: ReturnType<typeof seeded>, previous?: Record<string, string[]>) =>
-    synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous)[0]!.items.map((i) => i.proposal.id);
+  const balancedPkg = (
+    db: ReturnType<typeof seeded>,
+    previous?: Record<string, string[]>,
+    challengerStreak?: Record<string, Record<string, number>>,
+  ) => synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous, challengerStreak)[0]!;
+
+  const balancedIds = (
+    db: ReturnType<typeof seeded>,
+    previous?: Record<string, string[]>,
+    challengerStreak?: Record<string, Record<string, number>>,
+  ) => balancedPkg(db, previous, challengerStreak).items.map((i) => i.proposal.id);
 
   test("stability: one journal causes at most small churn with previous plan", () => {
     const base = seeded();
@@ -190,18 +269,62 @@ describe("stabilized synthesis", () => {
     expect(next.housing!.demand).toBeGreaterThanOrEqual(base.housing!.demand);
   });
 
+  test("mixed rounds are churn-limited (<=3 items, <=$8B) and keep cc_subsidy through round 10", () => {
+    const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
+    const TRANSIT_PROMPT = "My commute keeps getting longer and I lose too much time each day. This keeps disrupting my daily life.";
+    const GROCERY_PROMPT = "Khan Market had empty shelves when I arrived for groceries. This keeps disrupting my daily life.";
+
+    const t0 = Date.parse("2028-01-01T00:00:00.000Z");
+    let previous = { A: balancedIds(seeded()) };
+    let challengerStreak: Record<string, Record<string, number>> = { A: {} };
+
+    for (let round = 1; round <= 10; round++) {
+      const db = seeded();
+      const roundNow = t0 + (round - 1) * 365 * 24 * 60 * 60 * 1000;
+      const roundIso = new Date(roundNow).toISOString();
+
+      for (let i = 0; i < 4; i++) db.entries.push({ id: `f${round}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: roundIso, extraction: extract(FLOOD_PROMPT), corrected: false });
+      for (let i = 0; i < 6; i++) db.entries.push({ id: `t${round}-${i}`, author: "transit", text: TRANSIT_PROMPT, createdAt: roundIso, extraction: extract(TRANSIT_PROMPT), corrected: false });
+      for (let i = 0; i < 2; i++) db.entries.push({ id: `g${round}-${i}`, author: "groceries", text: GROCERY_PROMPT, createdAt: roundIso, extraction: extract(GROCERY_PROMPT), corrected: false });
+
+      const pkg = synthesize(buildContext(db, undefined, { now: roundNow }), DEFAULT_WEIGHTS, 0.25, 40, previous, challengerStreak)[0]!;
+      const ids = pkg.items.map((i) => i.proposal.id);
+
+      const changedItems = pkg.changesFromPrevious.added.length + pkg.changesFromPrevious.removed.length;
+      expect(changedItems).toBeLessThanOrEqual(3);
+      expect(pkg.changesFromPrevious.moneyMovedB).toBeLessThanOrEqual(8);
+      expect(ids).toContain("cc_subsidy");
+
+      previous = { A: ids };
+      challengerStreak = { A: pkg.challengerStreak };
+    }
+  });
+
   test("responsiveness: a handful of flood journals (not one) can pull in f_buyouts", () => {
     const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
-    const previous = { A: balancedIds(seeded()) };
 
     let nToFlip: number | null = null;
     for (let n = 1; n <= 10; n++) {
-      const db = seeded();
-      for (let i = 0; i < n; i++) {
-        db.entries.push({ id: `f${n}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: "", extraction: extract(FLOOD_PROMPT), corrected: false });
+      let previous = { A: balancedIds(seeded()) };
+      let challengerStreak: Record<string, Record<string, number>> = { A: {} };
+      let flipped = false;
+
+      for (let round = 1; round <= 2; round++) {
+        const db = seeded();
+        for (let i = 0; i < n; i++) {
+          db.entries.push({ id: `f${n}-${round}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: "", extraction: extract(FLOOD_PROMPT), corrected: false });
+        }
+        const pkg = balancedPkg(db, previous, challengerStreak);
+        const ids = pkg.items.map((i) => i.proposal.id);
+        if (ids.includes("f_buyouts")) {
+          flipped = true;
+          break;
+        }
+        previous = { A: ids };
+        challengerStreak = { A: pkg.challengerStreak };
       }
-      const ids = balancedIds(db, previous);
-      if (ids.includes("f_buyouts")) {
+
+      if (flipped) {
         nToFlip = n;
         break;
       }

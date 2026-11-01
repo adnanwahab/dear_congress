@@ -196,8 +196,13 @@ function seededJournalReference() {
  * from later journal volume while preserving seeded baseline plan behavior.
  */
 export const JOURNAL_REFERENCE = seededJournalReference();
+export const JOURNAL_HALF_LIFE_DAYS = 365;
 
 export const STABILITY_BONUS = 0.04;
+export const CHALLENGER_PERSISTENCE = 2;
+export const MAX_SWAPS_PER_RUN = 3;
+export const MAX_MONEY_MOVED_B = 8;
+const CHALLENGER_MIN_EDGE = 0.02;
 
 function blendWeight(realVoices: number) {
   return realVoices / (realVoices + BLEND_K);
@@ -221,6 +226,11 @@ export interface ContextOptions {
   includeSynthetic?: boolean;
   /** Request-scoped, non-persistent what-if entries. Always counted for that request. */
   extraEntries?: JournalEntry[];
+  /**
+   * Optional time anchor. It does not age journals by wall-clock drift; it only caps
+   * future-dated entries so age never goes negative.
+   */
+  now?: number | Date | string;
 }
 
 /** The journal entries that should count toward needs, demand and quotes. */
@@ -231,7 +241,9 @@ export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
-  const entries = countedEntries(db, opts);
+  const baseEntries = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const whatIfEntries = opts.extraEntries ?? [];
+  const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
   const proposals = [...PROPOSALS, ...db.emergent];
 
@@ -323,24 +335,95 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: Context
     goalSupport[need.id] = round(wReal * real + (1 - wReal) * sim);
   }
 
-  return { needs, proposals, stats, demand: computeDemand(db, voters, needs, entries), mechanismShare, goalSupport, entries, db };
+  return {
+    needs,
+    proposals,
+    stats,
+    demand: computeDemand(db, voters, needs, entries, opts.now, whatIfEntries),
+    mechanismShare,
+    goalSupport,
+    entries,
+    db,
+  };
 }
 
-export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[], entries: JournalEntry[] = countedEntries(db)): Record<string, NeedDemand> {
+function normalizeNow(now: ContextOptions["now"]): number {
+  if (typeof now === "number" && Number.isFinite(now)) return now;
+  if (now instanceof Date) return now.getTime();
+  if (typeof now === "string") {
+    const t = Date.parse(now);
+    if (Number.isFinite(t)) return t;
+  }
+  return Date.now();
+}
+
+function parseCreatedAtMs(createdAt: string | undefined): number | null {
+  const t = Date.parse(String(createdAt || ""));
+  return Number.isFinite(t) ? t : null;
+}
+
+function clampToCap(t: number, capMs: number) {
+  return Math.min(t, capMs);
+}
+
+function newestClampedMs(entries: JournalEntry[], capMs: number): number {
+  const times = entries
+    .map((e) => parseCreatedAtMs(e.createdAt))
+    .filter((t): t is number => t !== null)
+    .map((t) => clampToCap(t, capMs));
+  return times.length ? Math.max(...times) : capMs;
+}
+
+function ageDaysFromBase(baseMs: number, createdAt: string | undefined, capMs: number): number {
+  const t = parseCreatedAtMs(createdAt);
+  if (t === null) return 0;
+  const ageMs = baseMs - clampToCap(t, capMs);
+  return Math.max(0, ageMs / (24 * 60 * 60 * 1000));
+}
+
+export function computeDemand(
+  db: DB,
+  voters: Voter[],
+  needs: NeedDef[],
+  entries: JournalEntry[] = countedEntries(db),
+  now: ContextOptions["now"] = undefined,
+  extraEntries: JournalEntry[] = [],
+): Record<string, NeedDemand> {
   const out: Record<string, NeedDemand> = {};
   const allAllocs = Object.values(db.allocationByVoter ?? {});
   const allocVoterCount = allAllocs.filter((a) => Object.values(a ?? {}).reduce((s, v) => s + v, 0) > 0).length;
   const wReal = blendWeight(allocVoterCount);
+  const capMs = normalizeNow(now);
+
+  const extraIds = new Set(extraEntries.map((e) => e.id));
+  const storedEntries = entries.filter((e) => !extraIds.has(e.id));
+  const requestExtras = entries.filter((e) => extraIds.has(e.id));
+
+  // Stored entries age relative to the newest stored entry (never wall-clock drift).
+  const storedBaseMs = newestClampedMs(storedEntries, capMs);
+  // Request-scoped what-if entries age relative to request now (capped), if present.
+  const extrasBaseMs = extraEntries.length ? capMs : storedBaseMs;
 
   for (const need of needs) {
     let js = 0;
     let jc = 0;
-    for (const e of entries) {
+
+    for (const e of storedEntries) {
       const hit = e.extraction.needs.find((n) => n.id === need.id);
-      if (hit) {
-        js += e.extraction.importance * hit.confidence;
-        jc++;
-      }
+      if (!hit) continue;
+      const ageDays = ageDaysFromBase(storedBaseMs, e.createdAt, capMs);
+      const recencyWeight = 0.5 ** (ageDays / JOURNAL_HALF_LIFE_DAYS);
+      js += e.extraction.importance * hit.confidence * recencyWeight;
+      jc++;
+    }
+
+    for (const e of requestExtras) {
+      const hit = e.extraction.needs.find((n) => n.id === need.id);
+      if (!hit) continue;
+      const ageDays = ageDaysFromBase(extrasBaseMs, e.createdAt, capMs);
+      const recencyWeight = 0.5 ** (ageDays / JOURNAL_HALF_LIFE_DAYS);
+      js += e.extraction.importance * hit.confidence * recencyWeight;
+      jc++;
     }
 
     const simAvgPoints = voters.reduce((s, v) => s + (v.pri[need.id] ?? 0.03) * 100, 0) / Math.max(1, voters.length);
@@ -381,6 +464,12 @@ interface SelectionResult {
   spent: number;
 }
 
+interface ChurnLimitResult {
+  selectedIds: string[];
+  churnLimited: boolean;
+  waitingIds: string[];
+}
+
 export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
   const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
   return ctx.proposals.map((p) => {
@@ -402,7 +491,15 @@ export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
 function runSelection(
   ctx: Context,
   rows: Row[],
-  opts: { budget: number; perNeed: number; minScore: number; minSupport: number; incumbentIds: Set<string>; applyStabilityBonus: boolean; stabilityBonus?: number },
+  opts: {
+    budget: number;
+    perNeed: number;
+    minScore: number;
+    minSupport: number;
+    incumbentIds: Set<string>;
+    applyStabilityBonus: boolean;
+    bonusBlockedIds?: Set<string>;
+  },
 ): SelectionResult {
   const ranked: RankedRow[] = rows
     .map((r) => {
@@ -412,9 +509,8 @@ function runSelection(
         && r.p.costB !== null
         && st.support > st.oppose
         && st.support >= opts.minSupport;
-      const stabilityBonus = opts.stabilityBonus ?? STABILITY_BONUS;
-      const getsBonus = opts.applyStabilityBonus && bonusEligible;
-      return { ...r, getsBonus, rankScore: round(r.score + (getsBonus ? stabilityBonus : 0)) };
+      const getsBonus = opts.applyStabilityBonus && bonusEligible && !opts.bonusBlockedIds?.has(r.p.id);
+      return { ...r, getsBonus, rankScore: round(r.score + (getsBonus ? STABILITY_BONUS : 0)) };
     })
     .sort((a, b) => b.rankScore - a.rankScore || b.score - a.score || a.p.id.localeCompare(b.p.id));
 
@@ -442,26 +538,150 @@ function runSelection(
   return { selected, deferred, blocked, emerging, spent };
 }
 
+function applyChurnLimit(
+  rows: Row[],
+  previous: string[],
+  proposedSelected: RankedRow[],
+  budget: number,
+): ChurnLimitResult {
+  if (!previous.length) {
+    return { selectedIds: proposedSelected.map((r) => r.p.id), churnLimited: false, waitingIds: [] };
+  }
+
+  const rowById = new Map(rows.map((r) => [r.p.id, r]));
+  const previousIds = previous.filter((id) => rowById.has(id));
+  const previousSet = new Set(previousIds);
+  const proposedIds = proposedSelected.map((r) => r.p.id);
+  const proposedSet = new Set(proposedIds);
+  const proposedRowById = new Map(proposedSelected.map((r) => [r.p.id, r]));
+
+  const scoreById = new Map(rows.map((r) => [r.p.id, r.score]));
+  const costById = new Map(rows.map((r) => [r.p.id, r.p.costB ?? 0]));
+
+  const finalSet = new Set(previousIds);
+  let finalCost = previousIds.reduce((s, id) => s + (costById.get(id) ?? 0), 0);
+
+  const addedIds = new Set<string>();
+  const removedIds = new Set<string>();
+  const waitingIds: string[] = [];
+
+  const removableOrder = previousIds
+    .filter((id) => !proposedSet.has(id))
+    .sort((a, b) => (scoreById.get(a) ?? 0) - (scoreById.get(b) ?? 0) || a.localeCompare(b));
+
+  const addCandidates = proposedIds
+    .filter((id) => !previousSet.has(id))
+    .sort((a, b) => (proposedRowById.get(b)?.rankScore ?? 0) - (proposedRowById.get(a)?.rankScore ?? 0) || a.localeCompare(b));
+
+  const moneyMovedNow = () => round(
+    [...addedIds, ...removedIds]
+      .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
+    2,
+  );
+
+  for (const addId of addCandidates) {
+    const addCost = costById.get(addId) ?? 0;
+
+    const toRemove: string[] = [];
+    let freed = 0;
+    for (const rid of removableOrder) {
+      if (finalCost + addCost - freed <= budget) break;
+      if (!finalSet.has(rid)) continue;
+      toRemove.push(rid);
+      freed += costById.get(rid) ?? 0;
+    }
+
+    if (finalCost + addCost - freed > budget) {
+      waitingIds.push(addId);
+      continue;
+    }
+
+    const nextAdded = new Set(addedIds);
+    const nextRemoved = new Set(removedIds);
+    nextAdded.add(addId);
+    for (const rid of toRemove) nextRemoved.add(rid);
+
+    const nextChanges = nextAdded.size + nextRemoved.size;
+    const nextMoneyMoved = round(
+      [...nextAdded, ...nextRemoved]
+        .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
+      2,
+    );
+
+    if (nextChanges > MAX_SWAPS_PER_RUN || nextMoneyMoved > MAX_MONEY_MOVED_B) {
+      waitingIds.push(addId);
+      continue;
+    }
+
+    finalSet.add(addId);
+    finalCost += addCost;
+    addedIds.add(addId);
+    for (const rid of toRemove) {
+      finalSet.delete(rid);
+      finalCost -= costById.get(rid) ?? 0;
+      removedIds.add(rid);
+    }
+  }
+
+  // Allow pure removals (no add) toward the target plan when limits permit.
+  for (const rid of removableOrder) {
+    if (!finalSet.has(rid)) continue;
+    const nextAdded = new Set(addedIds);
+    const nextRemoved = new Set(removedIds);
+    nextRemoved.add(rid);
+    const nextChanges = nextAdded.size + nextRemoved.size;
+    const nextMoneyMoved = round(
+      [...nextAdded, ...nextRemoved]
+        .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
+      2,
+    );
+    if (nextChanges > MAX_SWAPS_PER_RUN || nextMoneyMoved > MAX_MONEY_MOVED_B) {
+      waitingIds.push(rid);
+      continue;
+    }
+    finalSet.delete(rid);
+    finalCost -= costById.get(rid) ?? 0;
+    removedIds.add(rid);
+  }
+
+  const churnLimited = waitingIds.length > 0;
+  if (!churnLimited) {
+    return { selectedIds: proposedIds, churnLimited: false, waitingIds: [] };
+  }
+
+  const selectedIds = Array.from(finalSet).sort((a, b) => {
+    const ra = proposedRowById.get(a)?.rankScore ?? (scoreById.get(a) ?? 0);
+    const rb = proposedRowById.get(b)?.rankScore ?? (scoreById.get(b) ?? 0);
+    return rb - ra || a.localeCompare(b);
+  });
+
+  if (moneyMovedNow() > MAX_MONEY_MOVED_B) {
+    return { selectedIds: previousIds, churnLimited: true, waitingIds: addCandidates };
+  }
+
+  return { selectedIds, churnLimited: true, waitingIds };
+}
+
 export function synthesizePackage(
   ctx: Context,
-  opts: { id: string; name: string; description: string; weights: Weights; lambda: number; budget: number; perNeed?: number; minScore?: number; minSupport?: number; previous?: string[] },
+  opts: {
+    id: string;
+    name: string;
+    description: string;
+    weights: Weights;
+    lambda: number;
+    budget: number;
+    perNeed?: number;
+    minScore?: number;
+    minSupport?: number;
+    previous?: string[];
+    challengerStreak?: Record<string, number>;
+  },
 ): PackageResult {
-  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3, previous = [] } = opts;
+  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3, previous = [], challengerStreak = {} } = opts;
   const rows = scoreAll(ctx, opts.weights, opts.lambda);
   const incumbentIds = new Set(previous);
 
-  const unseededJournalCount = ctx.entries.filter((e) => !e.seeded).length;
-  const adaptiveStabilityBonus = unseededJournalCount <= 1 ? STABILITY_BONUS : STABILITY_BONUS * 0.25;
-
-  const withStability = runSelection(ctx, rows, {
-    budget,
-    perNeed,
-    minScore,
-    minSupport,
-    incumbentIds,
-    applyStabilityBonus: true,
-    stabilityBonus: adaptiveStabilityBonus,
-  });
   const withoutStability = runSelection(ctx, rows, {
     budget,
     perNeed,
@@ -469,28 +689,110 @@ export function synthesizePackage(
     minSupport,
     incumbentIds,
     applyStabilityBonus: false,
-    stabilityBonus: 0,
   });
 
+  const withStabilityBase = runSelection(ctx, rows, {
+    budget,
+    perNeed,
+    minScore,
+    minSupport,
+    incumbentIds,
+    applyStabilityBonus: true,
+  });
+
+  const withBaseIds = new Set(withStabilityBase.selected.map((r) => r.p.id));
   const selectedWithout = new Set(withoutStability.selected.map((r) => r.p.id));
+
+  const displacedIncumbentsBase = previous.filter((id) => withBaseIds.has(id) && !selectedWithout.has(id));
+  const baseScoreById = new Map(rows.map((r) => [r.p.id, r.score]));
+  const lowestDisplacedScore = displacedIncumbentsBase.length
+    ? Math.min(...displacedIncumbentsBase.map((id) => baseScoreById.get(id) ?? Number.POSITIVE_INFINITY))
+    : Number.POSITIVE_INFINITY;
+
+  const challengers = withoutStability.selected
+    .filter((r) => !withBaseIds.has(r.p.id))
+    .filter((r) => r.score >= lowestDisplacedScore + CHALLENGER_MIN_EDGE)
+    .map((r) => r.p.id);
+
+  const previousStreakKeys = new Set(Object.keys(challengerStreak));
+  const nextChallengerStreak: Record<string, number> = {};
+  for (const id of new Set([...previousStreakKeys, ...challengers])) {
+    if (challengers.includes(id)) nextChallengerStreak[id] = (challengerStreak[id] ?? 0) + 1;
+    else nextChallengerStreak[id] = 0;
+  }
+
+  const persistentChallengers = challengers.filter((id) => (nextChallengerStreak[id] ?? 0) >= CHALLENGER_PERSISTENCE);
+
+  const displacedIncumbents = new Set(displacedIncumbentsBase);
+
+  const withStability = persistentChallengers.length
+    ? runSelection(ctx, rows, {
+      budget,
+      perNeed,
+      minScore,
+      minSupport,
+      incumbentIds,
+      applyStabilityBonus: true,
+      bonusBlockedIds: displacedIncumbents,
+    })
+    : withStabilityBase;
 
   const maxDeferredScore = withStability.deferred.reduce((m, d) => Math.max(m, d.row.rankScore), minScore);
   const cutoffScore = withStability.selected.reduce((m, s) => Math.min(m, s.rankScore), Number.POSITIVE_INFINITY);
   const effectiveCutoff = Number.isFinite(cutoffScore) ? cutoffScore : minScore;
 
-  const items: PlanItem[] = withStability.selected.map((r) => {
+  const churn = applyChurnLimit(rows, previous, withStability.selected, budget);
+  const limitedIds = new Set(churn.selectedIds);
+  const rowById = new Map(rows.map((r) => [r.p.id, r]));
+  const selectedWithStabilityById = new Map(withStability.selected.map((r) => [r.p.id, r]));
+
+  const limitedSelected: RankedRow[] = churn.selectedIds
+    .map((id) => {
+      const sel = selectedWithStabilityById.get(id);
+      if (sel) return sel;
+      const base = rowById.get(id);
+      if (!base) return null;
+      const st = ctx.stats[base.p.id]!;
+      const bonusEligible = incumbentIds.has(base.p.id)
+        && !base.p.rightsIssue
+        && base.p.costB !== null
+        && st.support > st.oppose
+        && st.support >= minSupport;
+      const getsBonus = bonusEligible;
+      return { ...base, getsBonus, rankScore: round(base.score + (getsBonus ? STABILITY_BONUS : 0)) };
+    })
+    .filter((x): x is RankedRow => Boolean(x))
+    .sort((a, b) => b.rankScore - a.rankScore || b.score - a.score || a.p.id.localeCompare(b.p.id));
+
+  const items: PlanItem[] = limitedSelected.map((r) => {
     const keptForStability = r.getsBonus && !selectedWithout.has(r.p.id);
     const margin = round(r.rankScore - Math.max(minScore, maxDeferredScore));
     return buildItem(ctx, r, keptForStability, margin);
   });
 
-  const deferred: PackageResult["deferred"] = withStability.deferred.map((d) => ({
-    title: d.row.p.title,
-    costB: d.row.p.costB ?? 0,
-    support: ctx.stats[d.row.p.id]!.support,
-    reason: d.reason,
-    margin: round(Math.max(minScore, effectiveCutoff) - d.row.rankScore),
-  }));
+  const deferred: PackageResult["deferred"] = withStability.deferred
+    .filter((d) => !limitedIds.has(d.row.p.id))
+    .map((d) => ({
+      title: d.row.p.title,
+      costB: d.row.p.costB ?? 0,
+      support: ctx.stats[d.row.p.id]!.support,
+      reason: d.reason,
+      margin: round(Math.max(minScore, effectiveCutoff) - d.row.rankScore),
+    }));
+
+  const waiting: PackageResult["waiting"] = churn.waitingIds
+    .map((id) => {
+      const row = rowById.get(id);
+      if (!row) return null;
+      return {
+        id,
+        title: row.p.title,
+        costB: row.p.costB ?? 0,
+        margin: round(row.score - Math.max(minScore, effectiveCutoff), 3),
+        reason: `Churn cap (${MAX_SWAPS_PER_RUN} items / $${MAX_MONEY_MOVED_B}B)`,
+      };
+    })
+    .filter((x): x is PackageResult["waiting"][number] => Boolean(x));
 
   const prevSet = new Set(previous);
   const currentIds = items.map((i) => i.proposal.id);
@@ -500,14 +802,18 @@ export function synthesizePackage(
   const costById = new Map(ctx.proposals.map((p) => [p.id, p.costB ?? 0]));
   const moneyMovedB = round([...added, ...removed].reduce((sum, id) => sum + (costById.get(id) ?? 0), 0), 2);
 
+  const totalCost = round(items.reduce((sum, i) => sum + (i.proposal.costB ?? 0), 0), 2);
   const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
   return {
     id: opts.id, name: opts.name, description: opts.description,
-    items, totalCost: round(withStability.spent, 2), budget,
+    items, totalCost, budget,
     avgSupport: round(items.reduce((s, i) => s + i.stats.support, 0) / Math.max(1, items.length)),
     avgChange: round(items.reduce((s, i) => s + i.proposal.changeLevel, 0) / Math.max(1, items.length), 2),
     deferred, blocked: withStability.blocked, emerging: withStability.emerging, unfundedPopularCost: round(unfundedPopularCost, 2),
     changesFromPrevious: { added, removed, moneyMovedB },
+    challengerStreak: nextChallengerStreak,
+    churnLimited: churn.churnLimited,
+    waiting,
   };
 }
 
@@ -559,11 +865,39 @@ export function synthesize(
   lambda: number,
   budget: number,
   previous: Record<string, string[]> = {},
+  challengerStreak: Record<string, Record<string, number>> = {},
 ): PackageResult[] {
   return [
-    synthesizePackage(ctx, { id: "A", name: "Balanced", description: "Your weights and change penalty", weights, lambda, budget, previous: previous.A ?? [] }),
-    synthesizePackage(ctx, { id: "B", name: "Minimal change", description: "Same weights, strong penalty on institutional disruption", weights, lambda: lambda * 3 + 0.3, budget, previous: previous.B ?? [] }),
-    synthesizePackage(ctx, { id: "C", name: "Most popular", description: "Ranks purely by citizen support (rights constraints still apply)", weights: { support: 1, welfare: 0, fairness: 0, feasibility: 0, reversibility: 0, evidence: 0 }, lambda: 0, budget, previous: previous.C ?? [] }),
+    synthesizePackage(ctx, {
+      id: "A",
+      name: "Balanced",
+      description: "Your weights and change penalty",
+      weights,
+      lambda,
+      budget,
+      previous: previous.A ?? [],
+      challengerStreak: challengerStreak.A ?? {},
+    }),
+    synthesizePackage(ctx, {
+      id: "B",
+      name: "Minimal change",
+      description: "Same weights, strong penalty on institutional disruption",
+      weights,
+      lambda: lambda * 3 + 0.3,
+      budget,
+      previous: previous.B ?? [],
+      challengerStreak: challengerStreak.B ?? {},
+    }),
+    synthesizePackage(ctx, {
+      id: "C",
+      name: "Most popular",
+      description: "Ranks purely by citizen support (rights constraints still apply)",
+      weights: { support: 1, welfare: 0, fairness: 0, feasibility: 0, reversibility: 0, evidence: 0 },
+      lambda: 0,
+      budget,
+      previous: previous.C ?? [],
+      challengerStreak: challengerStreak.C ?? {},
+    }),
   ];
 }
 
@@ -580,5 +914,6 @@ export function emptyDB(): DB {
     emergent: [],
     emergentNeeds: [],
     lastPlan: {},
+    challengerStreak: {},
   };
 }
