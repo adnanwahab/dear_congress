@@ -5,12 +5,17 @@ import {
   emptyDB,
   extract,
   LATER_NEED_PRIORITIES,
+  ideaBackers,
   makePopulation,
+  provisionalCostFor,
+  PROVISIONAL_EVIDENCE,
+  PROVISIONAL_MIN_BACKERS,
   synthesize,
   utility,
 } from "./engine";
 import { NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import type { JournalEntry } from "./types";
+import { assessIdea } from "../server/assess-idea";
 
 const seeded = () => {
   const db = emptyDB();
@@ -103,5 +108,86 @@ describe("food access", () => {
     const before = db.entries.length;
     buildContext(db, undefined, { extraEntries: fridgeEntries(24) });
     expect(db.entries.length).toBe(before);
+  });
+});
+
+describe("food access citizen ideas → plan", () => {
+  const IDEA = "emergent_1";
+  const withIdea = () => {
+    const db = seeded();
+    db.emergent.push({
+      id: IDEA, needId: "food_access", title: "Community fridges stocked by local restaurants",
+      mechanism: "To be determined", authority: "Unassigned", jurisdiction: "Unassigned", costB: null,
+      changeLevel: 3, reversibility: 0.5, evidence: 0.3, effectiveness: 0.5, keywords: ["community", "fridges"],
+      metrics: [], legalChange: "Needs legal analysis", emergent: true, sourceText: "Community fridges stocked by local restaurants",
+    });
+    return db;
+  };
+  const back = (db: ReturnType<typeof seeded>, voters: string[]) => {
+    db.answers = voters.map((voterId, i) => ({ id: `a${i}`, needId: "food_access", text: "community fridges", proposalId: IDEA, createdAt: "", voterId }));
+  };
+  const distinct = (n: number) => Array.from({ length: n }, (_, i) => `v${i}`);
+  const idea = (ctx: ReturnType<typeof buildContext>) => ctx.proposals.find((p) => p.id === IDEA)!;
+  const competes = (pkg: { items: { proposal: { id: string } }[]; deferred: { id: string }[]; waiting: { id: string }[] }) =>
+    [...pkg.items.map((i) => i.proposal.id), ...pkg.deferred.map((d) => d.id), ...pkg.waiting.map((w) => w.id)].includes(IDEA);
+
+  test("an idea with too few backers stays uncosted under Emerging", () => {
+    const db = withIdea();
+    back(db, distinct(PROVISIONAL_MIN_BACKERS - 1));
+    const ctx = buildContext(db, undefined, { extraEntries: fridgeEntries(24) });
+    expect(idea(ctx).costB).toBeNull();
+    const [r] = synthesize(ctx, DEFAULT_WEIGHTS, 0.25, 40);
+    expect(r!.emerging.map((e) => e.title)).toContain("Community fridges stocked by local restaurants");
+    expect(competes(r!)).toBe(false);
+  });
+
+  test("repeat answers from one person don't count as more backers", () => {
+    const db = withIdea();
+    back(db, Array(PROVISIONAL_MIN_BACKERS + 3).fill("same-voter"));
+    expect(ideaBackers(db.answers, IDEA)).toBe(1);
+    expect(idea(buildContext(db)).costB).toBeNull();
+  });
+
+  test("enough distinct backers: provisional cost from the need's options, evidence capped, competes in the plan", () => {
+    const db = withIdea();
+    back(db, distinct(PROVISIONAL_MIN_BACKERS));
+    const ctx = buildContext(db, undefined, { extraEntries: fridgeEntries(24) });
+    const p = idea(ctx);
+    expect(p.costB).toBe(provisionalCostFor("food_access"));
+    expect(p.costEstimate).toBe("provisional");
+    expect(p.evidence).toBeLessThanOrEqual(PROVISIONAL_EVIDENCE);
+    const [r] = synthesize(ctx, DEFAULT_WEIGHTS, 0.25, 40);
+    expect(r!.emerging.map((e) => e.title)).not.toContain("Community fridges stocked by local restaurants");
+    expect(competes(r!)).toBe(true);
+    // The stored idea is untouched: the estimate is recomputed each run.
+    expect(db.emergent[0]!.costB).toBeNull();
+  });
+
+  test("voter support doesn't jump when an idea crosses the backer threshold", () => {
+    const below = withIdea(); back(below, distinct(PROVISIONAL_MIN_BACKERS - 1));
+    const at = withIdea(); back(at, distinct(PROVISIONAL_MIN_BACKERS));
+    expect(buildContext(at).stats[IDEA]!.support).toBe(buildContext(below).stats[IDEA]!.support);
+  });
+
+  test("a reviewed idea competes on its assessed cost, even without backers", () => {
+    const db = withIdea();
+    const r = assessIdea(db.emergent[0]!, { costB: 0.1, mechanism: "Restaurant partnership grants", authority: "Houston Health Department", jurisdiction: "Houston", evidence: 0.5, changeLevel: 1 });
+    expect(r).toEqual({ ok: true });
+    expect(db.emergent[0]!.costEstimate).toBe("assessed");
+    const ctx = buildContext(db, undefined, { extraEntries: fridgeEntries(24) });
+    expect(idea(ctx).costB).toBe(0.1);
+    const [pkg] = synthesize(ctx, DEFAULT_WEIGHTS, 0.25, 40);
+    expect(competes(pkg!)).toBe(true);
+  });
+
+  test("assessment rejects bad input and leaves the idea unchanged", () => {
+    const db = withIdea();
+    const before = { ...db.emergent[0]! };
+    expect("error" in assessIdea(db.emergent[0]!, {})).toBe(true);
+    expect("error" in assessIdea(db.emergent[0]!, { costB: -1 })).toBe(true);
+    expect("error" in assessIdea(db.emergent[0]!, { costB: 1, evidence: 2 })).toBe(true);
+    expect("error" in assessIdea(db.emergent[0]!, { costB: 1, changeLevel: 7 })).toBe(true);
+    expect(db.emergent[0]).toEqual(before);
+    expect("error" in assessIdea({ ...PROPOSALS.find((p) => p.id === "g_delivery")! }, { costB: 1 })).toBe(true);
   });
 });

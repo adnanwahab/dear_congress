@@ -10,6 +10,7 @@ import { extractWithLLM } from "./src/server/llm-extract";
 import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
+import { assessIdea } from "./src/server/assess-idea";
 import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
@@ -1378,6 +1379,20 @@ export const server = Bun.serve({
         emitEntriesUpdate();
         console.log("[ADMIN_PURGE]", JSON.stringify({ mode, ...applied, backupPath }));
         return Response.json({ dryRun: false, mode, applied, backupPath, plan });
+      },
+    },
+
+    "/api/admin/emergent/:id/assess": {
+      POST: async (req) => {
+        if (!isAdmin(req)) return new Response("Not found", { status: 404 });
+        const idea = db.emergent.find((p) => p.id === req.params.id);
+        if (!idea) return bad("unknown emergent idea");
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        if (!body) return bad("JSON body required");
+        const result = assessIdea(idea, body);
+        if ("error" in result) return bad(result.error);
+        await save();
+        return Response.json({ ok: true, proposal: idea });
       },
     },
 

@@ -140,8 +140,13 @@ export function makePopulation(n = 600, seed = 42): Voter[] {
 
 export const POPULATION = makePopulation();
 
+/** Cost voters weigh: the real cost, else the provisional estimate an idea would get, else a $3B guess. */
+export function voterCostB(p: Proposal): number {
+  return p.costB ?? provisionalCostFor(p.needId) ?? 3;
+}
+
 export function utility(v: Voter, p: Proposal): number {
-  const cost = p.costB ?? 3;
+  const cost = voterCostB(p);
   let u = 4 * (v.pri[p.needId] ?? 0) * p.effectiveness + 0.35;
   u -= (v.fiscal * Math.min(cost, 80)) / 40;
   u -= (v.change * p.changeLevel) / 5;
@@ -160,7 +165,7 @@ export function stanceOf(u: number): Stance {
 
 export function objectionsFor(p: Proposal): Omit<Objection, "share">[] {
   const o: Omit<Objection, "share">[] = [];
-  if ((p.costB ?? 3) >= 5) o.push({ key: "cost", text: "Spending is too high — who pays for it?", mitigation: "Income-targeted eligibility, annual cost review, and a 5-year sunset unless renewed" });
+  if (voterCostB(p) >= 5) o.push({ key: "cost", text: "Spending is too high — who pays for it?", mitigation: "Income-targeted eligibility, annual cost review, and a 5-year sunset unless renewed" });
   if (p.changeLevel >= 3) o.push({ key: "change", text: "Too big a change to existing law", mitigation: "Start as a 24-month pilot in 5 jurisdictions before full rollout" });
   if (p.benefitsFiscal && (p.costB ?? 0) > 1) o.push({ key: "services", text: "Cuts revenue for services people rely on", mitigation: "Phase in only when revenue targets are met" });
   if (["childcare", "housing"].includes(p.needId) && (p.costB ?? 0) > 1) o.push({ key: "prices", text: "Subsidies may just push prices up", mitigation: "Provider price monitoring, paired with supply-side measures in the same package" });
@@ -284,12 +289,52 @@ function normalizeOutcomes(outcomes: SynthesisOutcomes | undefined): { needs: Re
   return normalized;
 }
 
+/* ------------------------------------------------------------------ */
+/* Citizen ideas → plan options                                        */
+/* An idea starts uncosted (costB: null) and can only appear under     */
+/* "Emerging". It enters the plan's ranking once it has a cost: either */
+/* a reviewer assesses it, or enough distinct people back it and it    */
+/* gets a provisional cost from the same need's catalog options.       */
+/* ------------------------------------------------------------------ */
+
+/** Distinct people who must back an idea before it gets a provisional cost. */
+export const PROVISIONAL_MIN_BACKERS = 5;
+/** Provisional ideas are untested: cap their evidence so tested programs keep the edge. */
+export const PROVISIONAL_EVIDENCE = 0.3;
+
+/** Distinct people behind an idea. Answers without a voterId each count once. */
+export function ideaBackers(answers: DB["answers"], proposalId: string): number {
+  return new Set(answers.filter((a) => a.proposalId === proposalId).map((a) => a.voterId ?? `answer:${a.id}`)).size;
+}
+
+function median(xs: number[]): number | null {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
+}
+
+/** The median cost of a need's catalog options, used as a stand-in for an uncosted idea. */
+export function provisionalCostFor(needId: string, catalog: Proposal[] = PROPOSALS): number | null {
+  const m = median(catalog.filter((p) => p.needId === needId && !p.emergent && !p.rightsIssue && p.costB !== null).map((p) => p.costB!));
+  return m === null ? null : round(m, 2);
+}
+
+/** An idea as the synthesizer should see it: costed provisionally if it has enough backers. */
+export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS): Proposal {
+  if (!p.emergent || p.costB !== null) return p;
+  if (ideaBackers(answers, p.id) < PROVISIONAL_MIN_BACKERS) return p;
+  const costB = provisionalCostFor(p.needId, catalog);
+  if (costB === null) return p;
+  return { ...p, costB, evidence: Math.min(p.evidence, PROVISIONAL_EVIDENCE), costEstimate: "provisional" };
+}
+
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
   const baseEntries = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
   const whatIfEntries = opts.extraEntries ?? [];
   const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
-  const proposals = [...PROPOSALS, ...db.emergent];
+  const proposals = [...PROPOSALS, ...db.emergent.map((p) => withProvisionalCost(p, db.answers ?? []))];
   const outcomes = normalizeOutcomes(opts.outcomes);
 
   const stats: Record<string, ProposalStats> = {};

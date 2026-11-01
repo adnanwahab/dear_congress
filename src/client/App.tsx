@@ -735,6 +735,8 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
                       <b>{p.title}</b>
                       {p.rightsIssue && <span className="badge bad">Rights conflict</span>}
                       {p.emergent && <span className="badge new">Citizen idea</span>}
+                      {p.costEstimate === "provisional" && <span className="badge" title="Enough people backed this idea that it now competes in the plan, using the typical cost of this need's other options until it is reviewed.">Estimated cost</span>}
+                      {p.costEstimate === "assessed" && <span className="badge" title="Cost and mechanism filled in by a reviewer.">Reviewed</span>}
                     </div>
                     <Split s={state.stats[p.id]!} />
                     <small className="muted">{state.changeLevels[p.changeLevel]} · {p.authority} · {money(p.costB)}</small>
@@ -1224,7 +1226,7 @@ function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
-          <span>{money(p.costB)}</span>
+          <span>{money(p.costB)}{p.costEstimate === "provisional" && <small className="muted" title="Citizen idea, not yet reviewed: uses the typical cost of this need's other options."> est.</small>}</span>
           <Split s={it.stats} />
         </div>
         <span className="chev" aria-hidden>{open ? "−" : "+"}</span>

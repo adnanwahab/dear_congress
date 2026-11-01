@@ -34,6 +34,12 @@ export interface Proposal {
   rightsIssue?: string;
   emergent?: boolean;
   sourceText?: string;
+  /**
+   * How a citizen idea's cost was set. Absent on catalog proposals.
+   * "provisional": auto-estimated from the need's other options once enough people backed it.
+   * "assessed": filled in by a reviewer via /api/admin/emergent/:id/assess.
+   */
+  costEstimate?: "provisional" | "assessed";
 }
 
 export interface Extraction {
