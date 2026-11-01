@@ -1,4 +1,5 @@
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
+import { applyVariant, chosenVariant } from "./variants";
 import type {
   DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageDiffMap, PackageResult, PlanItem,
   Proposal, ProposalStats, ScoreParts, Stance, SynthesisOutcomes, UserVote, Weights,
@@ -78,7 +79,7 @@ export function clusterAnswer(text: string, needId: string, proposals: Proposal[
 /* Deterministic so results are reproducible.                          */
 /* ------------------------------------------------------------------ */
 
-function mulberry32(a: number) {
+export function mulberry32(a: number) {
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
@@ -86,7 +87,7 @@ function mulberry32(a: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function hash(s: string) {
+export function hash(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
   return h >>> 0;
@@ -325,12 +326,22 @@ export function provisionalCostFor(needId: string, catalog: Proposal[] = PROPOSA
   return m === null ? null : round(m, 2);
 }
 
+/** Cost for a designed idea when its need has no catalog programs to compare with. */
+export const DEFAULT_DESIGN_COST_B = (() => {
+  const m = median(PROPOSALS.filter((p) => !p.rightsIssue && p.costB !== null && p.changeLevel <= 2).map((p) => p.costB!));
+  return m === null ? 1 : round(m, 2);
+})();
+
+const UNSET = new Set(["Unassigned", "To be determined", "Needs legal analysis", ""]);
+const unset = (s: string | undefined) => UNSET.has((s ?? "").trim());
+
 /**
- * An idea as the synthesizer should see it. Precedence: a reviewer's assessment (stored costB),
- * then voters' own estimates (median), then a provisional cost once enough people back it.
- * Unreviewed costs cap evidence, so tested programs keep the edge.
+ * The full-scale version of an idea, as the synthesizer should see it. Precedence: a reviewer's
+ * assessment (stored costB), then voters' own estimates (median), then a design from
+ * "Make this possible" (costed from its closest catalog program), then a provisional cost once
+ * enough people back it. Unreviewed costs cap evidence, so tested programs keep the edge.
  */
-export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS, votesByVoter: DB["votesByVoter"] = {}): Proposal {
+export function designedIdea(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS, votesByVoter: DB["votesByVoter"] = {}): Proposal {
   if (!p.emergent || p.costB !== null) return p;
   const evidence = Math.min(p.evidence, PROVISIONAL_EVIDENCE);
   const est = p.estimates ?? [];
@@ -340,10 +351,82 @@ export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog
     const latestAuthority = [...est].reverse().find((e) => e.authority?.trim())?.authority?.trim();
     return { ...p, costB, changeLevel, evidence, ...(latestAuthority ? { authority: latestAuthority } : {}), costEstimate: "citizen" };
   }
+  if (p.interpretation) {
+    const analog = p.interpretation.analogId ? catalog.find((c) => c.id === p.interpretation!.analogId && c.costB !== null && !c.rightsIssue) : undefined;
+    const costB = analog?.costB ?? provisionalCostFor(p.needId, catalog) ?? DEFAULT_DESIGN_COST_B;
+    return {
+      ...p,
+      costB,
+      evidence,
+      ...(analog ? {
+        changeLevel: analog.changeLevel,
+        reversibility: analog.reversibility,
+        ...(unset(p.mechanism) ? { mechanism: `Modeled on: ${analog.mechanism}` } : {}),
+        ...(unset(p.authority) ? { authority: analog.authority } : {}),
+        ...(unset(p.jurisdiction) ? { jurisdiction: analog.jurisdiction } : {}),
+        ...(unset(p.legalChange) ? { legalChange: analog.legalChange } : {}),
+        ...(p.metrics.length ? {} : { metrics: analog.metrics }),
+      } : {}),
+      costEstimate: "designed",
+    };
+  }
   if (ideaBackers(answers, p.id, votesByVoter) < PROVISIONAL_MIN_BACKERS) return p;
   const costB = provisionalCostFor(p.needId, catalog);
   if (costB === null) return p;
   return { ...p, costB, evidence, costEstimate: "provisional" };
+}
+
+/** An idea as the plan weighs it: the full version sized down to the version most voters chose. */
+export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS, votesByVoter: DB["votesByVoter"] = {}): Proposal {
+  if (!p.emergent) return p;
+  const full = designedIdea(p, answers, catalog, votesByVoter);
+  if (full.costB === null) return full;
+  return applyVariant(full, chosenVariant(p.variantChoices));
+}
+
+/** How the population and real voters split on one proposal. */
+export function proposalStats(db: DB, voters: Voter[], p: Proposal): ProposalStats {
+  const objs = objectionsFor(p);
+  const objCount: Record<string, number> = {};
+  let supSim = 0; let neuSim = 0; let oppSim = 0; let strongSim = 0;
+  for (const v of voters) {
+    const s = stanceOf(utility(v, p));
+    if (s > 0) supSim++;
+    else if (s === 0) neuSim++;
+    else {
+      oppSim++;
+      if (s === -2) strongSim++;
+      const k = pickObjection(v, objs, p.id);
+      objCount[k] = (objCount[k] ?? 0) + 1;
+    }
+  }
+
+  const realVotes = Object.values(db.votesByVoter ?? {})
+    .map((m) => m?.[p.id])
+    .filter((v): v is UserVote => Boolean(v));
+  const r = classifyRealVotes(realVotes);
+
+  const simN = Math.max(1, voters.length);
+  const supportSim = supSim / simN;
+  const neutralSim = neuSim / simN;
+  const opposeSim = oppSim / simN;
+  const strongOpposeSim = strongSim / simN;
+
+  const supportReal = r.n ? r.sup / r.n : supportSim;
+  const neutralReal = r.n ? r.neu / r.n : neutralSim;
+  const opposeReal = r.n ? r.opp / r.n : opposeSim;
+  const strongOpposeReal = r.n ? r.strong / r.n : strongOpposeSim;
+
+  const wReal = blendWeight(r.n);
+
+  return {
+    n: voters.length + r.n,
+    support: round(wReal * supportReal + (1 - wReal) * supportSim),
+    neutral: round(wReal * neutralReal + (1 - wReal) * neutralSim),
+    oppose: round(wReal * opposeReal + (1 - wReal) * opposeSim),
+    strongOppose: round(wReal * strongOpposeReal + (1 - wReal) * strongOpposeSim),
+    objections: objs.map((o) => ({ ...o, share: round((objCount[o.key] ?? 0) / Math.max(1, oppSim)) })).sort((a, b) => b.share - a.share),
+  };
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
@@ -355,49 +438,7 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: Context
   const outcomes = normalizeOutcomes(opts.outcomes);
 
   const stats: Record<string, ProposalStats> = {};
-  for (const p of proposals) {
-    const objs = objectionsFor(p);
-    const objCount: Record<string, number> = {};
-    let supSim = 0; let neuSim = 0; let oppSim = 0; let strongSim = 0;
-    for (const v of voters) {
-      const s = stanceOf(utility(v, p));
-      if (s > 0) supSim++;
-      else if (s === 0) neuSim++;
-      else {
-        oppSim++;
-        if (s === -2) strongSim++;
-        const k = pickObjection(v, objs, p.id);
-        objCount[k] = (objCount[k] ?? 0) + 1;
-      }
-    }
-
-    const realVotes = Object.values(db.votesByVoter ?? {})
-      .map((m) => m?.[p.id])
-      .filter((v): v is UserVote => Boolean(v));
-    const r = classifyRealVotes(realVotes);
-
-    const simN = Math.max(1, voters.length);
-    const supportSim = supSim / simN;
-    const neutralSim = neuSim / simN;
-    const opposeSim = oppSim / simN;
-    const strongOpposeSim = strongSim / simN;
-
-    const supportReal = r.n ? r.sup / r.n : supportSim;
-    const neutralReal = r.n ? r.neu / r.n : neutralSim;
-    const opposeReal = r.n ? r.opp / r.n : opposeSim;
-    const strongOpposeReal = r.n ? r.strong / r.n : strongOpposeSim;
-
-    const wReal = blendWeight(r.n);
-
-    stats[p.id] = {
-      n: voters.length + r.n,
-      support: round(wReal * supportReal + (1 - wReal) * supportSim),
-      neutral: round(wReal * neutralReal + (1 - wReal) * neutralSim),
-      oppose: round(wReal * opposeReal + (1 - wReal) * opposeSim),
-      strongOppose: round(wReal * strongOpposeReal + (1 - wReal) * strongOpposeSim),
-      objections: objs.map((o) => ({ ...o, share: round((objCount[o.key] ?? 0) / Math.max(1, oppSim)) })).sort((a, b) => b.share - a.share),
-    };
-  }
+  for (const p of proposals) stats[p.id] = proposalStats(db, voters, p);
 
   const mechCount: Record<string, number> = {};
   const goalYesSim: Record<string, number> = {};
@@ -1240,16 +1281,18 @@ function buildItem(
   };
 }
 
-export function synthesize(
-  ctx: Context,
+export type PackageOptions = Parameters<typeof synthesizePackage>[1];
+
+/** The three packages synthesis produces, as options for synthesizePackage. */
+export function packageOptions(
   weights: Weights,
   lambda: number,
   budget: number,
   previous: Record<string, string[]> = {},
   challengerStreak: Record<string, Record<string, number>> = {},
-): PackageResult[] {
+): PackageOptions[] {
   return [
-    synthesizePackage(ctx, {
+    {
       id: "A",
       name: "Balanced",
       description: "Your weights and change penalty",
@@ -1258,8 +1301,8 @@ export function synthesize(
       budget,
       previous: previous.A ?? [],
       challengerStreak: challengerStreak.A ?? {},
-    }),
-    synthesizePackage(ctx, {
+    },
+    {
       id: "B",
       name: "Minimal change",
       description: "Same weights, strong penalty on institutional disruption",
@@ -1268,8 +1311,8 @@ export function synthesize(
       budget,
       previous: previous.B ?? [],
       challengerStreak: challengerStreak.B ?? {},
-    }),
-    synthesizePackage(ctx, {
+    },
+    {
       id: "C",
       name: "Most popular",
       description: "Ranks purely by citizen support (rights constraints still apply)",
@@ -1278,8 +1321,19 @@ export function synthesize(
       budget,
       previous: previous.C ?? [],
       challengerStreak: challengerStreak.C ?? {},
-    }),
+    },
   ];
+}
+
+export function synthesize(
+  ctx: Context,
+  weights: Weights,
+  lambda: number,
+  budget: number,
+  previous: Record<string, string[]> = {},
+  challengerStreak: Record<string, Record<string, number>> = {},
+): PackageResult[] {
+  return packageOptions(weights, lambda, budget, previous, challengerStreak).map((o) => synthesizePackage(ctx, o));
 }
 
 export function diffPackages(real: PackageResult[], blended: PackageResult[]): PackageDiffMap {

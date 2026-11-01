@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
+  IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
+  VariantFit, VariantId, Weights, WorldsResult,
 } from "../engine/types";
+import { IDEA_STAGES } from "../engine/types";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -250,7 +252,7 @@ export function App() {
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { setTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
         {tab === "vote" && <VoteView state={state} refresh={refresh} />}
-        {tab === "synth" && <SynthView state={state} />}
+        {tab === "synth" && <SynthView state={state} refresh={refresh} />}
       </main>
 
       <footer>
@@ -752,6 +754,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
                       {p.costEstimate === "provisional" && <span className="badge" title="Enough people backed this idea that it now competes in the plan, using the typical cost of this need's other options until it is reviewed.">Estimated cost</span>}
                       {p.costEstimate === "assessed" && <span className="badge" title="Cost and mechanism filled in by a reviewer.">Reviewed</span>}
                       {p.costEstimate === "citizen" && <span className="badge" title="Cost estimated by voters (the middle of their estimates), not yet reviewed.">Voter-estimated cost</span>}
+                      {p.costEstimate === "designed" && <span className="badge" title="Made concrete with Make this possible: costed from the closest existing program, not yet reviewed.">Designed</span>}
                     </div>
                     <Split s={state.stats[p.id]!} />
                     <small className="muted">{state.changeLevels[p.changeLevel]} · {p.authority} · {money(p.costB)}</small>
@@ -971,6 +974,7 @@ function EstimateForm({ p, changeLevels, onSaved }: { p: IdeaProposal; changeLev
 
   const status = p.costEstimate === "citizen"
     ? `In the running at ${money(p.costB)}/yr, from ${p.estimateCount ?? 1} voter estimate${(p.estimateCount ?? 1) === 1 ? "" : "s"}.`
+    : p.costEstimate === "designed" ? `In the running at ${money(p.costB)}/yr, designed from the closest existing program. Your estimate would replace that.`
     : p.costEstimate === "provisional" ? "In the running at this need's typical cost, because enough people back it."
     : "Not in the running yet: an idea needs a cost before the plan can weigh it.";
 
@@ -995,36 +999,261 @@ function EstimateForm({ p, changeLevels, onSaved }: { p: IdeaProposal; changeLev
   );
 }
 
-/** Where each citizen idea stands in this package. */
-function CitizenIdeas({ pkg, proposals }: { pkg: PackageResult; proposals: Proposal[] }) {
-  const ideas = proposals.filter((p) => p.emergent);
+const VARIANT_LABELS: Record<VariantId, string> = {
+  full: "As proposed", targeted: "Highest-need areas first", phased: "Phased over 3 years", grant: "Opt-in grants", pilot: "Pilot first",
+};
+
+const STAGE_META: Record<IdeaStage, { icon: string; label: string }> = {
+  idea: { icon: "💡", label: "Idea submitted" },
+  clarified: { icon: "✎", label: "Clarified: what it most likely means" },
+  costed: { icon: "$", label: "Costed" },
+  jurisdiction: { icon: "⚖", label: "Jurisdiction: who would run it" },
+  evidence: { icon: "🔬", label: "Evidence: compared with a tested program" },
+  designed: { icon: "🧩", label: "Implementation designed, with smaller versions" },
+  simulated: { icon: "🌎", label: "Simulated in 1,000 possible futures" },
+  review: { icon: "🗳", label: "Public review: people voted on it or chose a version" },
+  included: { icon: "✓", label: "Included in the plan" },
+};
+
+const STATUS_TONE: Record<IdeaReport["status"], string> = { in_plan: "ok", waiting: "new", not_funded: "", blocked: "bad", needs_design: "" };
+
+type ChoiceProposal = Proposal & { myVariant?: VariantId | null; variantCounts?: Record<VariantId, number> };
+
+/** Citizen ideas as a pipeline: each one is made concrete, sized, and tested against the plan. */
+function CitizenIdeas({ pkg, proposals, compact = false, onChanged, onRaiseBudget }: {
+  pkg: PackageResult;
+  proposals: Proposal[];
+  compact?: boolean;
+  onChanged: () => Promise<void>;
+  onRaiseBudget: (budgetB: number) => void;
+}) {
+  const ideas = pkg.ideas ?? [];
   if (!ideas.length) return null;
-  const status = (p: Proposal): { tone: string; text: string } => {
-    if (pkg.items.some((it) => it.proposal.id === p.id)) return { tone: "ok", text: "In the plan" };
-    const w = pkg.waiting.find((x) => x.id === p.id);
-    if (w) return { tone: "new", text: `Waiting: ${w.reasonDetail || w.reason}` };
-    const d = pkg.deferred.find((x) => x.id === p.id);
-    if (d) return { tone: "", text: `Not funded: ${d.reasonDetail || d.reason}` };
-    const b = pkg.blocked.find((x) => x.title === p.title);
-    if (b) return { tone: "bad", text: `Blocked: ${b.issue}` };
-    if (p.costB === null) return { tone: "", text: "Needs a cost estimate (Vote → Step 3)" };
-    return { tone: "", text: "Not funded" };
-  };
+  const order: Record<IdeaReport["status"], number> = { in_plan: 0, waiting: 1, not_funded: 2, needs_design: 3, blocked: 4 };
+  const sorted = [...ideas].sort((a, b) => order[a.status] - order[b.status] || b.support - a.support);
+
+  if (compact) {
+    return (
+      <div className="citizen-ideas">
+        <h3 className="q">Citizen ideas</h3>
+        <ul className="idea-compact">
+          {sorted.map((r) => (
+            <li key={r.id}><span>{r.title} <small className="muted">· {money(r.costB)}</small></span><span className={`badge ${STATUS_TONE[r.status]}`}>{r.statusText}</span></li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  const inPlan = ideas.filter((r) => r.status === "in_plan").length;
   return (
     <div className="citizen-ideas">
-      <h3 className="q">Citizen ideas</h3>
-      <ul>
-        {ideas.map((p) => {
-          const st = status(p);
-          return (
-            <li key={p.id}>
-              <span>{p.title} <small className="muted">· {money(p.costB)}</small></span>
-              <span className={`badge ${st.tone}`}>{st.text}</span>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="ideas-head">
+        <h3 className="q">Citizen ideas</h3>
+        <span className="count">{ideas.length} submitted · {inPlan} in the plan</span>
+      </div>
+      <p className="muted s">Synthesis doesn't just say yes or no to an idea. It works out what the idea most likely means, costs it, and tries smaller versions to find one the plan can take.</p>
+      <div className="idea-list">
+        {sorted.map((r) => <IdeaCard key={r.id} r={r} proposal={proposals.find((p) => p.id === r.id) as ChoiceProposal | undefined} onChanged={onChanged} onRaiseBudget={onRaiseBudget} />)}
+      </div>
     </div>
+  );
+}
+
+function Lifecycle({ r }: { r: IdeaReport }) {
+  return (
+    <ol className="lifecycle" aria-label="Where this idea is in the pipeline">
+      {IDEA_STAGES.map((s) => {
+        const done = r.stages[s];
+        const here = s === r.stage && !(s === "included" && done);
+        return (
+          <li key={s} className={`${done ? "done" : ""} ${here ? "here" : ""}`} title={`${STAGE_META[s].label}${done ? "" : here ? " (next step)" : " (not yet)"}`}>
+            <span aria-hidden>{STAGE_META[s].icon}</span>
+            <span className="sr">{STAGE_META[s].label}: {done ? "done" : "not yet"}</span>
+          </li>
+        );
+      })}
+      <li className="stage-note">{r.stage === "included" && r.stages.included ? "In the plan" : `Next: ${STAGE_META[r.stage].label.split(":")[0]!.toLowerCase()}`}</li>
+    </ol>
+  );
+}
+
+function WorldsView({ w, title }: { w: WorldsResult; title?: string }) {
+  return (
+    <div className="worlds">
+      {title && <h4>{title}</h4>}
+      <div className="worlds-bar" role="img" aria-label={`${w.good} futures work well, ${w.mixed} mixed, ${w.poor} perform poorly`}>
+        <span className="good" style={{ width: `${(w.good / w.n) * 100}%` }} />
+        <span className="mixed" style={{ width: `${(w.mixed / w.n) * 100}%` }} />
+        <span className="poor" style={{ width: `${(w.poor / w.n) * 100}%` }} />
+      </div>
+      <ul className="worlds-legend">
+        <li><i className="good" />Works well <b>{w.good}</b></li>
+        <li><i className="mixed" />Mixed <b>{w.mixed}</b></li>
+        <li><i className="poor" />Performs poorly <b>{w.poor}</b></li>
+      </ul>
+      <div className="robust"><span>Robustness</span><Bar value={w.robustness} /><b>{pct(w.robustness)}</b></div>
+      <p className="muted s">Overruns use up the plan's reserve in {pct(w.budgetStress)} of futures.</p>
+      {w.drivers.length > 0 && (
+        <>
+          <span className="lbl">What decides it</span>
+          <ul className="drivers">
+            {w.drivers.map((d) => <li key={d.label}><span className={d.helps === "higher" ? "up" : "down"}>{d.helps === "higher" ? "↑" : "↓"}</span> {d.helps === "higher" ? "More" : "Less"} {d.label.charAt(0).toLowerCase() + d.label.slice(1)}</li>)}
+          </ul>
+        </>
+      )}
+      <p className="muted s">Illustrative: {w.n.toLocaleString()} simulated futures varying staffing, uptake, overruns, delays and support. Not a forecast.</p>
+    </div>
+  );
+}
+
+const FIT_TEXT: Record<VariantFit, string> = { fits: "Fits the plan", contender: "Close: competing for a spot", no: "Doesn't fit yet" };
+
+function IdeaCard({ r, proposal, onChanged, onRaiseBudget }: { r: IdeaReport; proposal?: ChoiceProposal; onChanged: () => Promise<void>; onRaiseBudget: (budgetB: number) => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState("");
+  const [open, setOpen] = useState(false);
+  const myVariant = proposal?.myVariant ?? null;
+
+  async function act(key: string, fn: () => Promise<unknown>) {
+    setBusy(key); setErr("");
+    try { await fn(); await onChanged(); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
+  }
+  const design = () => act("design", () => api(`/api/emergent/design`, { ideaId: r.id }));
+  const choose = (variant: VariantId) => act(`v:${variant}`, () => api(`/api/emergent/variant`, { ideaId: r.id, variant }));
+
+  const costed = r.costB !== null;
+  const blockedOrIn = r.status === "in_plan" || r.status === "blocked";
+  const totalPicks = r.variants.reduce((s, v) => s + v.votes, 0);
+
+  return (
+    <article className={`idea-card status-${r.status}`}>
+      <header className="idea-top">
+        <div>
+          <h4 className="idea-title">{r.title}</h4>
+          <small className="muted">{r.needLabel}{r.variant !== "full" && costed ? ` · weighed as: ${VARIANT_LABELS[r.variant].toLowerCase()}` : ""}</small>
+        </div>
+        <span className={`badge ${STATUS_TONE[r.status]}`}>{r.statusText}</span>
+      </header>
+
+      {costed && (
+        <div className="idea-kpis">
+          <span title="Share of people who support this version"><b>♥ {pct(r.support)}</b> support</span>
+          <span><b>{money(r.costB)}</b> / yr</span>
+          {r.feasibility && <span title="Average of political, administrative, support and evidence scores"><b>{pct(r.feasibility.overall)}</b> feasible</span>}
+          {r.worlds && <span title="Share of 1,000 simulated futures where it works (mixed counts half)"><b>{pct(r.worlds.robustness)}</b> robust</span>}
+        </div>
+      )}
+
+      <p className="idea-orig"><span className="lbl">Original idea</span>“{r.original}”</p>
+      {r.intent && <p className="s"><span className="lbl">What it most likely means</span>{r.intent}</p>}
+      {costed && <p className="s"><span className="lbl">Proposed implementation</span>{r.implementation}</p>}
+
+      <Lifecycle r={r} />
+
+      {r.status === "needs_design" && (
+        <div className="make-box">
+          <p className="s">{r.constraint?.detail}</p>
+          <button className="make" onClick={design} disabled={busy !== null}>{busy === "design" ? "Working it out…" : "✦ Make this possible"}</button>
+        </div>
+      )}
+
+      {costed && !blockedOrIn && (
+        <div className="cant-fit">
+          <h5>{r.status === "waiting" ? "Waiting its turn" : "Why isn't this in the plan?"}</h5>
+          <p className="s"><b>Main constraint: {r.constraint?.label}.</b> {r.constraint?.detail}</p>
+          {r.strengths.length > 0 && <p className="s muted">Scores well on: {r.strengths.join(" · ")}</p>}
+          {r.options.length > 0 && (
+            <>
+              <span className="lbl">Make it feasible</span>
+              <ul className="options">
+                {r.options.map((o) => (
+                  <li key={o.kind + (o.variant ?? "")} className={o.recommended ? "rec" : ""}>
+                    {o.kind === "variant" && o.variant && (
+                      <button className={o.recommended ? "" : "ghost"} onClick={() => choose(o.variant!)} disabled={busy !== null || myVariant === o.variant}>
+                        {busy === `v:${o.variant}` ? "Saving…" : myVariant === o.variant ? "Your pick" : "Choose"}
+                      </button>
+                    )}
+                    {o.kind === "budget" && o.budgetB !== undefined && <button className="ghost" onClick={() => onRaiseBudget(o.budgetB!)} disabled={busy !== null}>Try it</button>}
+                    {o.kind === "replace" && <span className="opt-mark" aria-hidden>⇄</span>}
+                    <span className="opt-text">{o.text}{o.fit && o.fit !== "no" && <small className={`fit fit-${o.fit}`}>{FIT_TEXT[o.fit]}</small>}{o.recommended && <small className="fit rec-tag">Recommended</small>}</span>
+                  </li>
+                ))}
+              </ul>
+              {!r.variants.some((v) => !v.current && (v.fit === "fits" || v.fit === "contender")) && (
+                <p className="s">No smaller version fits the plan as it stands either{r.constraint?.key === "budget" ? ", so making room means more budget or replacing something" : r.constraint?.key === "covered" ? ": stronger options already cover this need, so it needs more support or evidence" : ""}.</p>
+              )}
+              <p className="muted s">Choosing a version is a vote: the plan weighs the version most people pick{totalPicks ? ` (${totalPicks} pick${totalPicks === 1 ? "" : "s"} so far)` : ""}.{r.options.some((o) => o.kind === "budget") ? " \"Try it\" reruns the plan with that budget." : ""}</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {r.status === "blocked" && <p className="s err">{r.constraint?.detail}</p>}
+
+      {costed && (
+        <>
+          <button className="ghost small explore" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Hide details" : "Explore: versions, futures, feasibility"}</button>
+          {open && (
+            <div className="idea-explore">
+              <div>
+                <h4>Versions</h4>
+                <table className="mech versions">
+                  <thead><tr><th>Version</th><th className="r">Cost / yr</th><th>Timeline</th><th>Plan</th><th>Works in</th><th></th></tr></thead>
+                  <tbody>
+                    {r.variants.map((v) => (
+                      <tr key={v.id} className={v.current ? "current" : ""}>
+                        <td><b>{v.label}</b>{v.current && <span className="badge ok">weighed now</span>}<br /><small className="muted">{v.summary}</small></td>
+                        <td className="r">{money(v.costB)}</td>
+                        <td><small>{v.timeline}</small></td>
+                        <td><small className={v.fit ? `fit fit-${v.fit}` : "muted"}>{v.fit ? FIT_TEXT[v.fit] : "—"}</small>{v.recommended && <small className="fit rec-tag">Recommended</small>}</td>
+                        <td><small>{v.worlds.good} of {v.worlds.n}</small></td>
+                        <td className="r">
+                          {r.status !== "blocked" && r.variants.length > 1 && (
+                            <button className="ghost small" onClick={() => choose(v.id)} disabled={busy !== null || myVariant === v.id}>{myVariant === v.id ? `Your pick${v.votes > 1 ? ` · ${v.votes}` : ""}` : `Pick${v.votes ? ` · ${v.votes}` : ""}`}</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="why-grid">
+                {r.worlds && <WorldsView w={r.worlds} title={`In which futures does it work? (${VARIANT_LABELS[r.variant].toLowerCase()})`} />}
+                <div>
+                  {r.feasibility && (
+                    <>
+                      <h4>Feasibility</h4>
+                      <ul className="bars">
+                        <li><span>Political</span><Bar value={r.feasibility.political} /><b>{pct(r.feasibility.political)}</b></li>
+                        <li><span>Administrative capacity</span><Bar value={r.feasibility.administrative} /><b>{pct(r.feasibility.administrative)}</b></li>
+                        <li><span>Public support</span><Bar value={r.feasibility.support} tone="sup" /><b>{pct(r.feasibility.support)}</b></li>
+                        <li><span>Evidence</span><Bar value={r.feasibility.evidence} /><b>{pct(r.feasibility.evidence)}</b></li>
+                      </ul>
+                      <p className="muted s">Timeline: {r.feasibility.timeline}</p>
+                    </>
+                  )}
+                  {r.jurisdiction && (
+                    <>
+                      <h4>Jurisdiction</h4>
+                      <p className="s">{r.jurisdiction.authority} · {r.jurisdiction.jurisdiction}<br /><small className="muted">{r.jurisdiction.legalChange}</small></p>
+                    </>
+                  )}
+                  {r.assumptions.length > 0 && (
+                    <>
+                      <h4>Assumptions</h4>
+                      <ul className="plain s">{r.assumptions.map((a) => <li key={a}>{a}</li>)}</ul>
+                    </>
+                  )}
+                  {r.interpretedBy && <p className="muted s">Reading by {r.interpretedBy === "heuristic" ? "keyword match (no AI configured)" : r.interpretedBy}. Not reviewed by a person yet.</p>}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {err && <p className="err s">{err}</p>}
+    </article>
   );
 }
 
@@ -1121,7 +1350,7 @@ type ComparePayload = {
   outcomesMode?: OutcomesMode;
 };
 
-function SynthView({ state }: { state: AppState }) {
+function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise<void> }) {
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
   const [lambda, setLambda] = useState(0.25);
   const [budget, setBudget] = useState(40);
@@ -1136,9 +1365,9 @@ function SynthView({ state }: { state: AppState }) {
   const [outcomesMode, setOutcomesMode] = useState<OutcomesMode>(state.outcomesMode ?? "shadow");
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
-  async function run() {
+  async function run(over: { budget?: number } = {}) {
     setBusy(true);
-    const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget, compare: true });
+    const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true });
     setRealPkgs(payload.real ?? []);
     setBlendedPkgs(payload.blended ?? []);
     setDiff(payload.diff ?? {});
@@ -1221,7 +1450,13 @@ function SynthView({ state }: { state: AppState }) {
             );
           })}
         </ol>
-        <CitizenIdeas pkg={pkg} proposals={state.proposals} />
+        <CitizenIdeas
+          pkg={pkg}
+          proposals={state.proposals}
+          compact={side === "blended"}
+          onChanged={async () => { await refresh(); await run(); }}
+          onRaiseBudget={(next) => { setBudget(next); void run({ budget: next }); }}
+        />
       </div>
     );
   };
@@ -1249,7 +1484,7 @@ function SynthView({ state }: { state: AppState }) {
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => setBudget(Number(e.target.value))} />
           <b className="num-s">${budget}B</b>
         </label>
-        <button className="big" onClick={run} disabled={busy}>{busy ? "Synthesizing…" : "Synthesize"}</button>
+        <button className="big" onClick={() => run()} disabled={busy}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
       <section className="stack">
@@ -1325,11 +1560,11 @@ function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state
     <li className={`plan-item ${open ? "open" : ""}`}>
       <button className="plan-sum" onClick={() => { setOpen(!open); onSelect?.(p.id); }} aria-expanded={open}>
         <div className="plan-title">
-          <b>{p.title}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
+          <b>{p.title}{p.emergent && p.variant && p.variant !== "full" && <span className="badge new" title="Citizen idea, weighed in the version most voters chose.">{VARIANT_LABELS[p.variant]}</span>}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
-          <span>{money(p.costB)}{(p.costEstimate === "provisional" || p.costEstimate === "citizen") && <small className="muted" title="Citizen idea, not yet reviewed: estimated cost."> est.</small>}</span>
+          <span>{money(p.costB)}{(p.costEstimate === "provisional" || p.costEstimate === "citizen" || p.costEstimate === "designed") && <small className="muted" title="Citizen idea, not yet reviewed: estimated cost."> est.</small>}</span>
           <Split s={it.stats} />
         </div>
         <span className="chev" aria-hidden>{open ? "−" : "+"}</span>

@@ -209,6 +209,9 @@ src/client/styles.css
 - `POST /api/answers` `{ needId, text }`
 - `POST /api/publish_draft` (external clients; supports `kind` modes below)
 - `POST /api/publish_labels` `{ entryId, labels[] | needs[] }`
+- `POST /api/emergent/:id/estimate` `{ costB, changeLevel, authority? }` (a voter's cost estimate for a citizen idea)
+- `POST /api/emergent/:id/design` `{}` ("Make this possible": read the idea and cost it; cached on the idea)
+- `POST /api/emergent/:id/variant` `{ variant: "full" | "targeted" | "phased" | "grant" | "pilot" }`
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
@@ -262,6 +265,16 @@ Server auto-detects/creates need first, then records the answer.
   "kind": "answer"
 }
 ```
+
+## Citizen ideas: "Make this possible"
+
+A citizen idea runs through a pipeline instead of a yes/no:
+**idea → clarified → costed → jurisdiction → evidence → designed → simulated → public review → in the plan.**
+
+- **Clarify + cost.** `POST /api/emergent/:id/design` reads what the idea most likely means (LLM if a key is set, else a keyword match that says it's guessing) and picks the closest catalog program as its costing template. The idea then competes at that program's cost (`costEstimate: "designed"`, evidence capped like other unreviewed ideas). Cost precedence: reviewer assessment > voter estimates > design > provisional.
+- **Versions.** Every costed idea gets nearby versions: as proposed, highest-need areas first, phased over 3 years, opt-in grants, and a pilot (`src/engine/variants.ts`). Voters pick one with `POST /api/emergent/:id/variant`; the plan weighs the most-picked version (ties → cheaper).
+- **Why isn't this in the plan?** `/api/synthesize` returns `ideas[]` on each package (`src/engine/idea-report.ts`): status, the main constraint, what it scores well on, and "make it feasible" options. Each version is tested by re-running synthesis with it swapped in, so "fits" means the plan really would take it; "raise the budget" names a budget that a re-run confirms.
+- **In which futures does it work?** Each version is run through the same 1,000 illustrative futures (staffing, uptake, overruns, delays, support), giving works/mixed/poor counts, robustness, budget stress and the conditions that decide it. Illustrative, not a forecast.
 
 ## Prototype shortcuts → next steps
 

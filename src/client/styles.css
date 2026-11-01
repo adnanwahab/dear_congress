@@ -259,6 +259,79 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--muted); text-align: c
 .estimate-form label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
 .err { color: var(--opp); }
 .citizen-ideas { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
-.citizen-ideas ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-.citizen-ideas li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.citizen-ideas .badge { margin-left: 0; white-space: normal; text-align: right; }
+.citizen-ideas .badge { margin-left: 0; white-space: normal; }
+.idea-compact { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.idea-compact li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.idea-compact .badge { text-align: right; }
+
+/* Citizen ideas → "Make this possible" pipeline (Synthesize) */
+.ideas-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ideas-head .q { margin-bottom: 2px; }
+.idea-list { display: grid; gap: 12px; margin-top: 10px; }
+.idea-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: var(--card); display: grid; gap: 8px; min-width: 0; }
+.idea-card.status-in_plan { border-left: 3px solid var(--sup); }
+.idea-card.status-not_funded, .idea-card.status-waiting { border-left: 3px solid var(--warn-line); }
+.idea-card.status-needs_design { border-left: 3px dashed var(--new); }
+.idea-card.status-blocked { border-left: 3px solid var(--opp); }
+.idea-card p { margin: 0; }
+.idea-card .lbl { margin: 0 0 2px; }
+.idea-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.idea-title { font-family: var(--serif); font-size: 16.5px; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0 0 2px; }
+.idea-top .badge { flex: none; max-width: 48%; text-align: right; }
+.idea-kpis { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.idea-kpis b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.idea-orig { font-family: var(--serif); font-size: 15px; }
+
+.lifecycle { list-style: none; padding: 0; margin: 2px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.lifecycle li { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; border: 1px solid var(--line); color: var(--muted); opacity: .55; filter: grayscale(1); }
+.lifecycle li.done { opacity: 1; filter: none; background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent); }
+.lifecycle li.here { opacity: 1; filter: none; border: 2px solid var(--new); color: var(--new); }
+.lifecycle li.stage-note { width: auto; height: auto; border: 0; border-radius: 0; opacity: 1; filter: none; font-size: 12.5px; color: var(--muted); margin-left: 6px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.make-box { display: grid; gap: 8px; padding: 12px; border: 1px dashed var(--new); border-radius: 10px; }
+button.make { justify-self: start; background: var(--new); border-color: var(--new); letter-spacing: .02em; font-weight: 600; }
+@media (prefers-color-scheme: dark) { button.make { color: #15112a; } }
+
+.cant-fit { padding: 12px; border-radius: 10px; background: var(--warn-bg); border: 1px solid var(--warn-line); display: grid; gap: 6px; }
+.cant-fit h5 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.options { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.options li { display: grid; grid-template-columns: 84px 1fr; gap: 10px; align-items: center; font-size: 14px; }
+.options li button { width: 100%; padding: 4px 8px; font-size: 13px; }
+.options li.rec .opt-text { font-weight: 600; }
+.opt-mark { text-align: center; color: var(--muted); }
+.opt-text { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.fit { font-size: 11.5px; font-weight: 600; padding: 0 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.fit-fits { color: var(--sup); border-color: var(--sup); }
+.fit-contender { color: var(--new); border-color: var(--new); }
+.rec-tag { color: var(--card); background: var(--accent); border-color: var(--accent); margin-left: 4px; }
+
+button.explore { justify-self: start; }
+.idea-explore { display: grid; gap: 16px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.idea-explore > div:first-child { overflow-x: auto; }
+table.versions { margin-top: 0; font-size: 13.5px; }
+table.versions td { vertical-align: middle; }
+table.versions tr.current td { background: var(--accent-soft); }
+table.versions .badge { margin-left: 6px; }
+
+.worlds-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--line); margin: 4px 0 6px; }
+.worlds-bar .good, .worlds-legend .good { background: var(--sup); }
+.worlds-bar .mixed, .worlds-legend .mixed { background: var(--neu); }
+.worlds-bar .poor, .worlds-legend .poor { background: var(--opp); }
+.worlds-legend { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+.worlds-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+.worlds-legend b { color: var(--ink); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.robust { display: grid; grid-template-columns: auto 1fr 40px; gap: 8px; align-items: center; font-size: 13px; margin-bottom: 6px; }
+.robust b { text-align: right; font-variant-numeric: tabular-nums; }
+.drivers { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 3px; font-size: 13.5px; }
+.drivers .up { color: var(--sup); font-weight: 700; }
+.drivers .down { color: var(--opp); font-weight: 700; }
+.worlds p.muted { margin-bottom: 4px; }
+
+@media (max-width: 900px) {
+  .idea-top { flex-direction: column; }
+  .idea-top .badge { max-width: none; text-align: left; }
+  .options li { grid-template-columns: 72px 1fr; }
+}
+.idea-explore h4 { margin-top: 14px; }
+.idea-explore .worlds h4, .idea-explore .why-grid > div > h4:first-child { margin-top: 0; }

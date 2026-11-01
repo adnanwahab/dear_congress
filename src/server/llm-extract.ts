@@ -222,6 +222,29 @@ async function callClaude(prompt: string): Promise<string | null> {
   return text || null;
 }
 
+/**
+ * Send a prompt that asks for JSON to the first configured provider (Gemini → OpenAI → Claude).
+ * Returns null when no provider is configured or none returns parseable JSON.
+ */
+export async function completeJSON(prompt: string): Promise<{ provider: "gemini" | "openai" | "claude"; json: Record<string, unknown> } | null> {
+  const providers: Array<{ name: "gemini" | "openai" | "claude"; run: () => Promise<string | null> }> = [
+    { name: "gemini", run: () => callGemini(prompt) },
+    { name: "openai", run: () => callOpenAI(prompt) },
+    { name: "claude", run: () => callClaude(prompt) },
+  ];
+  for (const provider of providers) {
+    try {
+      const raw = await provider.run();
+      if (!raw) continue;
+      const json = jsonObjectFromText(raw);
+      if (json) return { provider: provider.name, json };
+    } catch {
+      // try next provider
+    }
+  }
+  return null;
+}
+
 export async function extractWithLLM(
   text: string,
   proposals: Proposal[],

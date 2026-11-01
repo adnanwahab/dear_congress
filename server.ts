@@ -1,12 +1,15 @@
 import index from "./index.html";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
-  ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
+  ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
+import { attachIdeaReports } from "./src/engine/idea-report";
+import { variantCounts } from "./src/engine/variants";
 import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
-import { extractWithLLM } from "./src/server/llm-extract";
+import { completeJSON, extractWithLLM } from "./src/server/llm-extract";
+import { interpretIdea, recordVariantChoice } from "./src/server/make-possible";
 import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
@@ -368,10 +371,12 @@ function state(voterId = "anon") {
   return {
     needs: ctxReal.needs,
     changeLevels: CHANGE_LEVELS,
-    // Send the estimate count and this voter's own estimate, not everyone's list.
-    proposals: ctxReal.proposals.map(({ estimates, ...p }) => (estimates?.length
-      ? { ...p, estimateCount: estimates.length, myEstimate: estimates.find((e) => e.voterKey === voterKey(voterId)) ?? null }
-      : p)),
+    // Send counts and this voter's own estimate / version pick, not everyone's list.
+    proposals: ctxReal.proposals.map(({ estimates, variantChoices, ...p }) => ({
+      ...p,
+      ...(estimates?.length ? { estimateCount: estimates.length, myEstimate: estimates.find((e) => e.voterKey === voterKey(voterId)) ?? null } : {}),
+      ...(variantChoices?.length ? { variantCounts: variantCounts(variantChoices), myVariant: variantChoices.find((c) => c.voterKey === voterKey(voterId))?.variant ?? null } : {}),
+    })),
     stats: ctxReal.stats,
     demand: ctxReal.demand,
     demandReal: ctxReal.demand,
@@ -392,6 +397,37 @@ function state(voterId = "anon") {
 }
 
 const bad = (msg: string, status = 400) => Response.json({ error: msg }, { status });
+const designInFlight = new Map<string, Promise<NonNullable<Proposal["interpretation"]>>>();
+
+/** "Make this possible" for one idea: read it once (LLM or keyword match), cache it, return its new cost. */
+async function designIdea(ideaId: string) {
+  const idea = db.emergent.find((p) => p.id === ideaId);
+  if (!idea) return bad("unknown citizen idea", 404);
+  if (!idea.interpretation) {
+    let pending = designInFlight.get(idea.id);
+    if (!pending) {
+      const need = currentNeeds().find((n) => n.id === idea.needId);
+      pending = interpretIdea(idea, need, completeJSON).finally(() => designInFlight.delete(idea.id));
+      designInFlight.set(idea.id, pending);
+    }
+    const interpretation = await pending;
+    if (!idea.interpretation) {
+      idea.interpretation = interpretation;
+      await save();
+    }
+  }
+  const proposal = buildContext(db).proposals.find((p) => p.id === idea.id);
+  return Response.json({ ok: true, interpretation: idea.interpretation, costB: proposal?.costB ?? null, costEstimate: proposal?.costEstimate ?? null });
+}
+
+async function chooseVariant(ideaId: string, voterId: string, body: Record<string, unknown>) {
+  const idea = db.emergent.find((p) => p.id === ideaId);
+  if (!idea) return bad("unknown citizen idea", 404);
+  const result = recordVariantChoice(idea, voterId, body);
+  if ("error" in result) return bad(result.error);
+  await save();
+  return Response.json({ ok: true, variant: result.variant });
+}
 
 // Admin routes are off unless ADMIN_TOKEN is set (fly secrets set ADMIN_TOKEN=...).
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN?.trim() || "";
@@ -1335,6 +1371,9 @@ export const server = Bun.serve({
           });
           const real = synthesize(ctxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
           const blended = synthesize(ctxBlended, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+          const pkgOpts = packageOptions(weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+          attachIdeaReports(ctxReal, real, pkgOpts);
+          attachIdeaReports(ctxBlended, blended, pkgOpts, { fitTests: false });
 
           let measuredPreview: Record<string, { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } }> = {};
           if (OUTCOMES_MODE === "shadow") {
@@ -1366,6 +1405,7 @@ export const server = Bun.serve({
           outcomes: baseOutcomes,
         });
         const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+        attachIdeaReports(ctx, results, packageOptions(weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed));
 
         if (OUTCOMES_MODE === "shadow") {
           const measuredCtx = buildContext(db, undefined, {
@@ -1441,6 +1481,44 @@ export const server = Bun.serve({
         if ("error" in result) return bad(result.error);
         await save();
         return Response.json({ ok: true });
+      },
+    },
+
+    // "Make this possible": read what a citizen idea means and cost it from the closest program.
+    // Any voter can ask; the reading is cached on the idea, so only the first request calls an LLM.
+    // Two route styles (id in the path, or { ideaId } in the body), like /api/emergent/estimate.
+    "/api/emergent/:id/design": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
+      POST: (req) => designIdea(req.params.id),
+    },
+    "/api/emergent/design": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
+      POST: async (req) => {
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        const ideaId = body ? extractEstimateIdeaId(body) : null;
+        if (!ideaId) return bad("ideaId is required");
+        return designIdea(ideaId);
+      },
+    },
+
+    // Pick which version of a citizen idea the plan should weigh (full, targeted, phased, grant, pilot).
+    // The plan uses the version most voters picked.
+    "/api/emergent/:id/variant": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
+      POST: async (req) => {
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        if (!body) return bad("JSON body required");
+        return chooseVariant(req.params.id, resolveVoterId(req), body);
+      },
+    },
+    "/api/emergent/variant": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
+      POST: async (req) => {
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        if (!body) return bad("JSON body required");
+        const ideaId = extractEstimateIdeaId(body);
+        if (!ideaId) return bad("ideaId is required");
+        return chooseVariant(ideaId, resolveVoterId(req), body);
       },
     },
 
