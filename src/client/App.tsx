@@ -110,8 +110,7 @@ export function App() {
     es.onmessage = (m) => {
       try {
         const payload = JSON.parse(m.data) as { entries?: JournalEntry[] };
-        if (!Array.isArray(payload.entries)) return;
-        setState((prev) => prev ? { ...prev, entries: payload.entries } : prev);
+        setState((prev) => prev ? { ...prev, entries: payload.entries ?? prev.entries } : prev);
         setLiveStatus("live");
       } catch {
         // ignore malformed SSE payloads
@@ -411,6 +410,7 @@ function JournalView({
                 <span className="who">{e.author}</span>
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
+                {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
               </div>
             </li>
           ))}
@@ -655,10 +655,12 @@ function SynthView({ state }: { state: AppState }) {
   const [pkgs, setPkgs] = useState<PackageResult[] | null>(null);
   const [active, setActive] = useState("A");
   const [busy, setBusy] = useState(false);
+  const [includeSynthetic, setIncludeSynthetic] = useState(false);
+  const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
   async function run() {
     setBusy(true);
-    setPkgs(await api<PackageResult[]>("/api/synthesize", { weights, lambda, budget }));
+    setPkgs(await api<PackageResult[]>("/api/synthesize", { weights, lambda, budget, includeSynthetic }));
     setBusy(false);
   }
   useEffect(() => { run(); }, []);
@@ -688,6 +690,12 @@ function SynthView({ state }: { state: AppState }) {
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => setBudget(Number(e.target.value))} />
           <b className="num-s">${budget}B</b>
         </label>
+        {syntheticCount > 0 && (
+          <label className="check">
+            <input type="checkbox" checked={includeSynthetic} onChange={(e) => setIncludeSynthetic(e.target.checked)} />
+            <span>Include {syntheticCount} simulated residents' journals</span>
+          </label>
+        )}
         <button className="big" onClick={run} disabled={busy}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 

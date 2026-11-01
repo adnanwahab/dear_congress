@@ -186,6 +186,7 @@ table.mech { width: 100%; border-collapse: collapse; margin-top: 12px; font-size
 .vote-more { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 13px; }
 .vote-more label { display: grid; gap: 2px; color: var(--muted); }
 .vote-more label.check { display: flex; gap: 6px; align-items: center; }
+.controls label.check { display: flex; gap: 6px; align-items: center; margin: 8px 0; }
 
 .controls { position: sticky; top: 16px; }
 .slider { display: grid; grid-template-columns: 1fr 44px; gap: 2px 8px; margin: 10px 0; font-size: 13.5px; }

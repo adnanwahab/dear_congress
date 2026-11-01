@@ -5,7 +5,9 @@ A Bun + React prototype of the civic synthesis loop:
 everyday is a list of journal entries from everyone
 - plan is the input of function?
 
+remember the future? 10 year plan
 
+simulator visualziation - see why laws are the way they are - easier to change?
 
 
 **Journal → need extraction → needs graph → open-ended voting → synthesis → plan**

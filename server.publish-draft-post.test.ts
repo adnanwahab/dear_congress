@@ -137,3 +137,35 @@ describe("handlePublishDraftPost", () => {
     )).rejects.toBeInstanceOf(PublishDraftInputError);
   });
 });
+
+describe("handlePublishDraftPost · synthetic", () => {
+  const deps = (created: JournalEntry[]) => ({
+    defaultKind: "journal",
+    currentNeeds: () => needs,
+    normalizeNeedIds: () => ({ submitted: [], valid: [], ignored: [] }),
+    buildContext: () => ({ proposals, needs }),
+    extractWithLLM: async () => ({ provider: "fallback", extraction: extraction(), proposedNeed: null }),
+    ensureNeedCoverage: (_text: string, ex: Extraction) => ex,
+    recordAnswer: () => ({ proposalId: "h_vouchers", isNew: false }),
+    createJournalEntry: (input: { text: string; author?: string; extraction: Extraction; corrected: boolean; synthetic?: boolean; source?: string }) => {
+      const entry: JournalEntry = { id: `e${created.length}`, text: input.text, author: input.author ?? "x", createdAt: "", extraction: input.extraction, corrected: input.corrected, synthetic: input.synthetic, source: input.source };
+      created.push(entry);
+      return entry;
+    },
+    save: async () => {},
+  });
+
+  test("stores the synthetic flag and source on journals", async () => {
+    const created: JournalEntry[] = [];
+    await handlePublishDraftPost({ text: "Rent is too high", synthetic: true, source: "happybearlandia-world" }, deps(created));
+    await handlePublishDraftPost({ text: "Rent is too high" }, deps(created));
+    expect(created[0]!.synthetic).toBe(true);
+    expect(created[0]!.source).toBe("happybearlandia-world");
+    expect(created[1]!.synthetic).toBe(false);
+  });
+
+  test("rejects synthetic answers, which could create ballot options", async () => {
+    await expect(handlePublishDraftPost({ text: "More vouchers", kind: "answer", needId: "housing", synthetic: true }, deps([])))
+      .rejects.toBeInstanceOf(PublishDraftInputError);
+  });
+});

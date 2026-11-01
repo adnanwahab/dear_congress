@@ -52,6 +52,10 @@ export interface JournalEntry {
   extraction: Extraction;
   corrected: boolean;
   seeded?: boolean;
+  /** Written by a simulated resident (e.g. happybearlandia /world), not a real person. */
+  synthetic?: boolean;
+  /** Which client posted it, e.g. "happybearlandia-world". */
+  source?: string;
 }
 
 export interface UserVote {

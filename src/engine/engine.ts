@@ -15,16 +15,33 @@ export const tokens = (s: string) => (s.toLowerCase().match(/[a-z0-9]{3,}/g) ?? 
 
 const INTENSIFIERS = ["awful", "terrible", "can't", "cannot", "impossible", "eating", "desperate", "scared", "every month", "every time", "struggling", "two jobs", "exhausted", "please", "worst", "again", "barely", "half my income", "worse"];
 
+// Keywords match at the start of a word, so "lease" doesn't fire on "please",
+// "rent" on "parents", or "bus" on "business". Longer keywords stay prefix
+// stems ("subsid" → "subsidies", "evict" → "eviction"); 1–3 letter keywords
+// must be the whole word plus a simple ending ("bus" → "buses", not "busy").
+const KEYWORD_RE = new Map<string, RegExp>();
+export function hasKeyword(lowerText: string, keyword: string): boolean {
+  const k = keyword.toLowerCase().trim();
+  if (!k) return false;
+  let re = KEYWORD_RE.get(k);
+  if (!re) {
+    const esc = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    re = new RegExp(k.length <= 3 ? `\\b${esc}(?:s|es|ed|ing)?\\b` : `\\b${esc}`);
+    KEYWORD_RE.set(k, re);
+  }
+  return re.test(lowerText);
+}
+
 export function extract(text: string, proposals: Proposal[] = PROPOSALS, needsCatalog: NeedDef[] = NEEDS): Extraction {
   const t = text.toLowerCase();
   const needs = needsCatalog.map((n) => {
-    const hits = n.keywords.filter((k) => t.includes(k)).length;
+    const hits = n.keywords.filter((k) => hasKeyword(t, k)).length;
     return { id: n.id, confidence: hits ? Math.min(1, 0.45 + hits * 0.2) : 0 };
   })
     .filter((n) => n.confidence > 0)
     .sort((a, b) => b.confidence - a.confidence);
 
-  const intens = INTENSIFIERS.filter((w) => t.includes(w)).length;
+  const intens = INTENSIFIERS.filter((w) => hasKeyword(t, w)).length;
   const importance = Math.min(0.98, 0.45 + intens * 0.1 + (/\$\s?\d/.test(text) ? 0.1 : 0) + (text.includes("!") ? 0.05 : 0));
 
   const sentences = text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
@@ -34,7 +51,7 @@ export function extract(text: string, proposals: Proposal[] = PROPOSALS, needsCa
   for (const m of text.matchAll(/(?:don't|do not) want to ([^.,!?]+)/gi)) constraints.push(`wants to avoid: ${m[1]!.trim()}`);
   for (const m of text.matchAll(/(?:want|wants) to (choose|keep|stay) ([^.,!?]+)/gi)) constraints.push(`wants to ${m[1]} ${m[2]!.trim()}`);
 
-  const proposalIds = proposals.filter((p) => p.keywords.some((k) => t.includes(k)) && needs.some((n) => n.id === p.needId)).map((p) => p.id);
+  const proposalIds = proposals.filter((p) => p.keywords.some((k) => hasKeyword(t, k)) && needs.some((n) => n.id === p.needId)).map((p) => p.id);
 
   return { needs, importance: round(importance), concerns, constraints, proposalIds };
 }
@@ -46,7 +63,7 @@ export function clusterAnswer(text: string, needId: string, proposals: Proposal[
   let best: string | null = null;
   let bestScore = 0;
   for (const p of proposals.filter((p) => p.needId === needId)) {
-    const kw = p.keywords.filter((k) => t.includes(k)).length;
+    const kw = p.keywords.filter((k) => hasKeyword(t, k)).length;
     const pt = new Set(tokens(p.title + " " + (p.sourceText ?? "")));
     const inter = [...tk].filter((w) => pt.has(w)).length;
     const jac = inter / Math.max(1, new Set([...tk, ...pt]).size);
@@ -179,7 +196,18 @@ function classifyRealVotes(votes: UserVote[]) {
   return { sup, neu, opp, strong, n: votes.length };
 }
 
-export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
+export interface ContextOptions {
+  /** Count journals from simulated residents. Off by default so they never outweigh real people. */
+  includeSynthetic?: boolean;
+}
+
+/** The journal entries that should count toward needs, demand and quotes. */
+export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[] {
+  return opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+}
+
+export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
+  const entries = countedEntries(db, opts);
   const needs = [...NEEDS, ...db.emergentNeeds];
   const proposals = [...PROPOSALS, ...db.emergent];
 
@@ -271,10 +299,10 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION): Context {
     goalSupport[need.id] = round(wReal * real + (1 - wReal) * sim);
   }
 
-  return { needs, proposals, stats, demand: computeDemand(db, voters, needs), mechanismShare, goalSupport, entries: db.entries, db };
+  return { needs, proposals, stats, demand: computeDemand(db, voters, needs, entries), mechanismShare, goalSupport, entries, db };
 }
 
-export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[]): Record<string, NeedDemand> {
+export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[], entries: JournalEntry[] = countedEntries(db)): Record<string, NeedDemand> {
   const out: Record<string, NeedDemand> = {};
   const allAllocs = Object.values(db.allocationByVoter ?? {});
   const allocVoterCount = allAllocs.filter((a) => Object.values(a ?? {}).reduce((s, v) => s + v, 0) > 0).length;
@@ -283,7 +311,7 @@ export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[]): Record
   for (const need of needs) {
     let js = 0;
     let jc = 0;
-    for (const e of db.entries) {
+    for (const e of entries) {
       const hit = e.extraction.needs.find((n) => n.id === need.id);
       if (hit) {
         js += e.extraction.importance * hit.confidence;

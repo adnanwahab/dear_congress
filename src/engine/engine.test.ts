@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildContext, clusterAnswer, DEFAULT_WEIGHTS, emptyDB, extract, makePopulation, synthesize } from "./engine";
+import { buildContext, clusterAnswer, DEFAULT_WEIGHTS, emptyDB, extract, hasKeyword, makePopulation, synthesize } from "./engine";
 import { NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 
 const seeded = () => {
@@ -17,6 +17,25 @@ describe("extract", () => {
   });
   test("every seed journal maps to at least one need", () => {
     for (const s of SEED_JOURNALS) expect(extract(s.text).needs.length).toBeGreaterThan(0);
+  });
+  test("keywords don't fire inside other words", () => {
+    const ids = (t: string) => extract(t).needs.map((n) => n.id);
+    expect(ids("Please fix the pothole on our street.")).toEqual(["streets"]); // not housing via p-LEASE
+    expect(ids("My parents are getting older.")).toEqual([]);                   // not housing via pa-RENT-s
+    expect(ids("Running a business is hard.")).toEqual([]);                     // not transit via BUS-iness
+    expect(ids("We had a brainstorm at work.")).toEqual([]);                    // not flooding via brain-STORM
+    expect(ids("The current situation is different now.")).toEqual([]);
+  });
+  test("keywords still match their real word forms", () => {
+    expect(hasKeyword("we got an eviction notice", "evict")).toBe(true);
+    expect(hasKeyword("childcare subsidies please", "subsid")).toBe(true);
+    expect(hasKeyword("the rent went up", "rent")).toBe(true);
+    expect(hasKeyword("we rented a place", "rent")).toBe(true);
+    expect(hasKeyword("more buses please", "bus")).toBe(true);
+    expect(hasKeyword("i'm busy", "bus")).toBe(false);
+    expect(hasKeyword("an adult", "adu")).toBe(false);
+    expect(hasKeyword("i called 311 again", "311")).toBe(true);
+    expect(hasKeyword("pre-k costs a lot", "pre-k")).toBe(true);
   });
 });
 
@@ -97,5 +116,32 @@ describe("real-vote blending", () => {
     const after = buildContext(db, voters).goalSupport[needId]!;
 
     expect(Math.abs(after - before)).toBeLessThan(0.2);
+  });
+});
+
+describe("synthetic journals", () => {
+  const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
+  const withSimulated = (n: number) => {
+    const db = seeded();
+    for (let i = 0; i < n; i++) {
+      db.entries.push({ id: `sim${i}`, author: "Simulated resident", text: FLOOD, createdAt: "", extraction: extract(FLOOD), corrected: false, synthetic: true, source: "happybearlandia-world" });
+    }
+    return db;
+  };
+  const balanced = (db: ReturnType<typeof seeded>, includeSynthetic?: boolean) =>
+    synthesize(buildContext(db, undefined, { includeSynthetic }), DEFAULT_WEIGHTS, 0.25, 40)[0]!.items.map((i) => i.proposal.id);
+
+  test("don't count toward needs by default", () => {
+    expect(balanced(withSimulated(5))).toEqual(balanced(seeded()));
+    const ctx = buildContext(withSimulated(5));
+    expect(ctx.demand.flooding!.journalCount).toBe(buildContext(seeded()).demand.flooding!.journalCount);
+    expect(ctx.entries.some((e) => e.synthetic)).toBe(false);
+  });
+
+  test("do count when includeSynthetic is on", () => {
+    const ctx = buildContext(withSimulated(1), undefined, { includeSynthetic: true });
+    expect(ctx.demand.flooding!.journalCount).toBe(buildContext(seeded()).demand.flooding!.journalCount + 1);
+    expect(balanced(withSimulated(1), true)).toContain("f_buyouts");
+    expect(balanced(seeded())).not.toContain("f_buyouts");
   });
 });

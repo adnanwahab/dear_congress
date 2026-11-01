@@ -8,7 +8,7 @@ import type { DB, JournalEntry, NeedDef, Proposal, UserVote, Weights } from "./s
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 import { extractWithLLM } from "./src/server/llm-extract";
 import { journalClientSchema } from "./src/server/publish-draft";
-import { handlePublishDraftPost, PublishDraftInputError } from "./src/server/publish-draft-handler";
+import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -197,14 +197,16 @@ function ensureNeedCoverage(
   };
 }
 
-function createJournalEntry(input: { text: string; author?: string; extraction: JournalEntry["extraction"]; corrected: boolean }) {
+function createJournalEntry(input: { text: string; author?: string; extraction: JournalEntry["extraction"]; corrected: boolean; synthetic?: boolean; source?: string }) {
   const entry: JournalEntry = {
     id: crypto.randomUUID(),
-    author: input.author?.trim() || "Journal Client",
+    author: input.author?.trim() || (input.synthetic ? "Simulated resident" : "Journal Client"),
     text: input.text.trim(),
     createdAt: new Date().toISOString(),
     extraction: input.extraction,
     corrected: input.corrected,
+    ...(input.synthetic ? { synthetic: true } : {}),
+    ...(input.source ? { source: input.source } : {}),
   };
   db.entries.push(entry);
   return entry;
@@ -786,9 +788,9 @@ export const server = Bun.serve({
           secFetchMode,
         });
 
-        let body: { text?: string; author?: string; labels?: string[]; needs?: string[]; kind?: "journal" | "answer"; needId?: string };
+        let body: PublishDraftBody;
         try {
-          body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[]; kind?: "journal" | "answer"; needId?: string };
+          body = (await req.json()) as PublishDraftBody;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           logPublishEvent("PUBLISH_DRAFT_REJECTED", {
@@ -813,7 +815,7 @@ export const server = Bun.serve({
             ensureNeedCoverage,
             recordAnswer,
             createJournalEntry,
-            save,
+            save: async () => { await save(); },
             onExtract: (meta) => {
               logPublishEvent("EXTRACT_PROVIDER", {
                 route: "/api/publish_draft",
@@ -869,8 +871,9 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget } = (await req.json()) as { weights?: Weights; lambda?: number; budget?: number };
-        return Response.json(synthesize(buildContext(db), weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40));
+        const { weights, lambda, budget, includeSynthetic } = (await req.json()) as { weights?: Weights; lambda?: number; budget?: number; includeSynthetic?: boolean };
+        const ctx = buildContext(db, undefined, { includeSynthetic: includeSynthetic === true });
+        return Response.json(synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40));
       },
     },
 

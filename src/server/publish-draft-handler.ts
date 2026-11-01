@@ -8,6 +8,13 @@ export interface PublishDraftBody {
   needs?: string[];
   kind?: PublishDraftKind;
   needId?: string;
+  /** true when a simulated resident wrote this (see JournalEntry.synthetic). */
+  synthetic?: unknown;
+  source?: unknown;
+}
+
+function isSynthetic(v: unknown) {
+  return v === true || v === "true" || v === 1 || v === "1";
 }
 
 interface LLMResult {
@@ -61,6 +68,8 @@ export interface PublishDraftDeps {
     author?: string;
     extraction: Extraction;
     corrected: boolean;
+    synthetic?: boolean;
+    source?: string;
   }) => JournalEntry;
   save: () => Promise<void>;
   onExtract?: (meta: { provider: string; matchedNeedIds: string[]; mode: "journal" | "answer:auto-need" }) => void;
@@ -76,7 +85,12 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
     defaultKind: deps.defaultKind,
   });
 
+  const synthetic = isSynthetic(body.synthetic);
+  const source = typeof body.source === "string" ? body.source.trim().slice(0, 64) || undefined : undefined;
+
   if (mode === "answer") {
+    // Answers can create new ballot options, so simulated residents can't post them.
+    if (synthetic) throw new PublishDraftInputError("synthetic posts must be kind \"journal\"");
     let targetNeedId = body.needId?.trim() || "";
 
     if (!targetNeedId) {
@@ -123,6 +137,8 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
     author: body.author,
     extraction,
     corrected: labels.valid.length > 0,
+    synthetic,
+    source,
   });
 
   await deps.save();
