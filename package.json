@@ -7,7 +7,8 @@
     "start": "NODE_ENV=production bun server.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "purge:world": "bun scripts/purge-world-journals.ts"
+    "purge:world": "bun scripts/purge-world-journals.ts",
+    "outcomes:fetch": "bun scripts/fetch-outcomes.ts"
   },
   "dependencies": {
     "maplibre-gl": "^6.16.0",

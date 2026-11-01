@@ -19,6 +19,18 @@ interface PublishFlow {
   notes: Partial<Record<PublishStage, string>>;
 }
 
+type OutcomesMode = "off" | "shadow" | "on";
+
+interface OutcomePoint {
+  needId: string;
+  value: number;
+  unit: string;
+  year: number;
+  severity: number;
+  source: { name: string; url: string; caveat?: string };
+  fetchedAt: string;
+}
+
 interface AppState {
   needs: NeedDef[];
   changeLevels: string[];
@@ -34,6 +46,7 @@ interface AppState {
   user: { votes: Record<string, UserVote>; allocation: Record<string, number>; goalVotes: Record<string, boolean>; answers: { id: string; needId: string; text: string; proposalId: string }[] };
   defaultWeights: Weights;
   mapStyleUrl?: string;
+  outcomesMode?: OutcomesMode;
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
@@ -625,6 +638,7 @@ function JournalView({
 
 function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: string | null }) {
   const demandReal = state.demandReal ?? state.demand;
+  const [measured, setMeasured] = useState<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>({ mode: state.outcomesMode ?? "shadow", outcomes: null });
   const demandBlended = state.demandBlended ?? state.demand;
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
   const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
@@ -644,8 +658,24 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
     };
     void run();
   }, [geoMode, state.entries.length]);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const out = await api<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>("/api/outcomes");
+        setMeasured({ mode: out.mode, outcomes: out.outcomes ?? null });
+      } catch {
+        setMeasured({ mode: state.outcomesMode ?? "shadow", outcomes: null });
+      }
+    };
+    void run();
+  }, [state.outcomesMode]);
   const need = state.needs.find((n) => n.id === sel)!;
   const props = state.proposals.filter((p) => p.needId === sel);
+  const measuredRows = (measured.outcomes?.series ?? []).filter((r) => r.needId === sel);
+  const measuredLatest = measuredRows.length ? [...measuredRows].sort((a, b) => b.year - a.year)[0] : null;
+  const measuredSources = new Map<string, { name: string; url: string; caveat?: string }>();
+  for (const row of measured.outcomes?.series ?? []) measuredSources.set(`${row.source.name}|${row.source.url}`, row.source);
 
   const rankReal = new Map(sorted.map((n, i) => [n.id, i + 1]));
   const sortedBlend = [...state.needs].sort((a, b) => demandBlended[b.id]!.demand - demandBlended[a.id]!.demand);
@@ -712,7 +742,29 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
               </ul>
             </li>
             <li><span>Implementation</span>See the Synthesize step</li>
+            {measuredLatest && (
+              <li>
+                <span>Measured now</span>
+                <div>
+                  <div>{measuredLatest.value.toFixed(need.id === "transit" ? 3 : 1)} {measuredLatest.unit} ({measuredLatest.year}) — <a href={measuredLatest.source.url} target="_blank" rel="noreferrer">{measuredLatest.source.name}</a></div>
+                  <small className="muted">Severity percentile: {Math.round(measuredLatest.severity * 100)}{measured.mode === "shadow" ? " (preview only in synthesis)" : ""}</small>
+                </div>
+              </li>
+            )}
           </ol>
+        </div>
+
+        <div className="card">
+          <h2>Measured data caveats</h2>
+          <ul className="policies">
+            {[...measuredSources.values()].map((s) => (
+              <li key={`${s.name}|${s.url}`}>
+                <b><a href={s.url} target="_blank" rel="noreferrer">{s.name}</a></b>
+                <small className="muted">{s.caveat || "Interpret with context; source methodology may change over time."}</small>
+              </li>
+            ))}
+            {measuredSources.size === 0 && <li><small className="muted">No measured outcomes file loaded.</small></li>}
+          </ul>
         </div>
 
         <div className="card">
@@ -878,7 +930,13 @@ const WEIGHT_LABELS: Record<keyof Weights, string> = {
   feasibility: "Feasibility", reversibility: "Reversibility", evidence: "Evidence quality",
 };
 
-type ComparePayload = { real: PackageResult[]; blended: PackageResult[]; diff: PackageDiffMap };
+type ComparePayload = {
+  real: PackageResult[];
+  blended: PackageResult[];
+  diff: PackageDiffMap;
+  measuredPreview?: Record<string, { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } }>;
+  outcomesMode?: OutcomesMode;
+};
 
 function SynthView({ state }: { state: AppState }) {
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
@@ -891,21 +949,18 @@ function SynthView({ state }: { state: AppState }) {
   const [busy, setBusy] = useState(false);
   const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
   const [simCells, setSimCells] = useState<GeoCell[]>([]);
+  const [measuredPreview, setMeasuredPreview] = useState<Record<string, { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } }>>({});
+  const [outcomesMode, setOutcomesMode] = useState<OutcomesMode>(state.outcomesMode ?? "shadow");
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
   async function run() {
     setBusy(true);
-    if (syntheticCount > 0) {
-      const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget, compare: true });
-      setRealPkgs(payload.real ?? []);
-      setBlendedPkgs(payload.blended ?? []);
-      setDiff(payload.diff ?? {});
-    } else {
-      const single = await api<PackageResult[]>("/api/synthesize", { weights, lambda, budget });
-      setRealPkgs(single);
-      setBlendedPkgs(null);
-      setDiff({});
-    }
+    const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget, compare: true });
+    setRealPkgs(payload.real ?? []);
+    setBlendedPkgs(payload.blended ?? []);
+    setDiff(payload.diff ?? {});
+    setMeasuredPreview(payload.measuredPreview ?? {});
+    setOutcomesMode(payload.outcomesMode ?? state.outcomesMode ?? "shadow");
     setBusy(false);
   }
   useEffect(() => { run(); }, []);
@@ -1026,6 +1081,9 @@ function SynthView({ state }: { state: AppState }) {
             <div className="card">
               <h2>The synthesis</h2>
               <p className="muted">Simulated residents changed this package by +{pkgDiff.addedBySimulated.length} / -{pkgDiff.removedBySimulated.length}, money moved {money(pkgDiff.moneyMovedB)}.</p>
+              {outcomesMode === "shadow" && measuredPreview[active] && (
+                <p className="muted s">With measured conditions, {realPkg.name} would change: +{measuredPreview[active]!.diff.added.length} −{measuredPreview[active]!.diff.removed.length}.</p>
+              )}
               {pkgDiff.pending.length > 0 && (
                 <p className="muted s">
                   Simulated residents are pushing: {pkgDiff.pending.slice(0, 3).map((p) => `${p.title} (challenger ${p.streak} of ${p.needed}, gap ${p.marginReal.toFixed(3)} → ${p.marginBlended.toFixed(3)})`).join("; ")}
@@ -1051,6 +1109,12 @@ function SynthView({ state }: { state: AppState }) {
 
         {realPkg && syntheticCount === 0 && (
           <>
+            {outcomesMode === "shadow" && measuredPreview[active] && (
+              <div className="card">
+                <h2>Measured-conditions preview</h2>
+                <p className="muted">With measured conditions, {realPkg.name} would change: +{measuredPreview[active]!.diff.added.length} −{measuredPreview[active]!.diff.removed.length}.</p>
+              </div>
+            )}
             {renderPackage(realPkg, "real")}
             <div className="card">
               <h3>Jurisdiction preview</h3>

@@ -266,6 +266,93 @@ describe("/api/synthesize what-if", () => {
     expect(persisted.challengerStreak).toEqual(realStreak);
   });
 
+  test("shadow mode adds measuredPreview but does not alter returned or persisted real plan", async () => {
+    const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
+    const outcomesPath = `data/test-outcomes-${crypto.randomUUID()}.json`;
+    const initialDb = seededDb();
+    tempDbPaths.push(dbPath);
+    tempDbPaths.push(outcomesPath);
+    await Bun.write(dbPath, JSON.stringify(initialDb, null, 2));
+    await Bun.write(outcomesPath, JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      series: [
+        { needId: "flooding", value: 999, unit: "x", year: 2024, severity: 1, source: { name: "fixture", url: "https://example.test" }, fetchedAt: new Date().toISOString() },
+      ],
+    }, null, 2));
+
+    process.env.DB_PATH = dbPath;
+    process.env.OUTCOMES_PATH = outcomesPath;
+    process.env.OUTCOMES_MODE = "shadow";
+    process.env.PORT = "0";
+    process.env.DEBUG_REQUEST_LOGS = "0";
+
+    const mod = await import(`./server.ts?test=${crypto.randomUUID()}`);
+    const server = mod.server as { url: URL; stop: (closeConnections?: boolean) => void };
+    startedServers.push(server);
+
+    const res = await fetch(new URL("/api/synthesize", server.url), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ compare: true }),
+    });
+    expect(res.status).toBe(200);
+    const out = await res.json() as {
+      real: Array<{ id: string; items: Array<{ proposal: { id: string } }> }>;
+      measuredPreview?: Record<string, { diff: { added: string[]; removed: string[] } }>;
+      outcomesMode?: string;
+    };
+
+    expect(out.outcomesMode).toBe("shadow");
+    expect(out.measuredPreview).toBeDefined();
+
+    const realPlan = Object.fromEntries(out.real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+    const persisted = await Bun.file(dbPath).json() as DB;
+    expect(persisted.lastPlan).toEqual(realPlan);
+  });
+
+  test("on mode uses measured severity unless request outcomes override it", async () => {
+    const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
+    const outcomesPath = `data/test-outcomes-${crypto.randomUUID()}.json`;
+    const initialDb = seededDb();
+    tempDbPaths.push(dbPath);
+    tempDbPaths.push(outcomesPath);
+    await Bun.write(dbPath, JSON.stringify(initialDb, null, 2));
+    await Bun.write(outcomesPath, JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      series: [
+        { needId: "flooding", value: 1, unit: "x", year: 2024, severity: 0, source: { name: "fixture", url: "https://example.test" }, fetchedAt: new Date().toISOString() },
+      ],
+    }, null, 2));
+
+    process.env.DB_PATH = dbPath;
+    process.env.OUTCOMES_PATH = outcomesPath;
+    process.env.OUTCOMES_MODE = "on";
+    process.env.PORT = "0";
+    process.env.DEBUG_REQUEST_LOGS = "0";
+
+    const mod = await import(`./server.ts?test=${crypto.randomUUID()}`);
+    const server = mod.server as { url: URL; stop: (closeConnections?: boolean) => void };
+    startedServers.push(server);
+
+    const a = await fetch(new URL("/api/synthesize", server.url), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ budget: 30 }),
+    });
+    expect(a.status).toBe(200);
+    const outA = await a.json() as Array<{ id: string; items: Array<{ proposal: { id: string } }> }>;
+
+    const b = await fetch(new URL("/api/synthesize", server.url), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ budget: 30, outcomes: { needs: { flooding: { severity: 1 } } } }),
+    });
+    expect(b.status).toBe(200);
+    const outB = await b.json() as Array<{ id: string; items: Array<{ proposal: { id: string } }> }>;
+
+    expect(outA.find((p) => p.id === "A")?.items.map((i) => i.proposal.id)).not.toEqual(outB.find((p) => p.id === "A")?.items.map((i) => i.proposal.id));
+  });
+
   test("/api/state returns demandReal and demandBlended", async () => {
     const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
     const initialDb = seededDb();

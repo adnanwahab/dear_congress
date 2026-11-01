@@ -207,6 +207,7 @@ export interface PackageResult {
   churnLimited: boolean;
   waiting: { id: string; title: string; costB: number; margin: number; reason: string; reasonDetail: string }[];
   majorChange?: MajorChange;
+  measuredPreview?: { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } };
 }
 
 export interface PackageSimulatedDiff {

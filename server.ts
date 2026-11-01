@@ -12,6 +12,14 @@ import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody }
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { timingSafeEqual } from "node:crypto";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
+import {
+  loadOutcomesFile,
+  measuredNeedsOutcomes,
+  measuredPreviewByPackage,
+  mergeOutcomes,
+  parseOutcomesMode,
+  type OutcomesMode,
+} from "./src/server/outcomes";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -21,6 +29,8 @@ const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*")
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
 const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
 const MAP_STYLE_URL = (process.env.MAP_STYLE_URL ?? "").trim();
+const OUTCOMES_PATH = (process.env.OUTCOMES_PATH ?? "data/outcomes.json").trim() || "data/outcomes.json";
+const OUTCOMES_MODE: OutcomesMode = parseOutcomesMode(process.env.OUTCOMES_MODE);
 
 function logRequest(req: Request, route: string) {
   if (!DEBUG_REQUEST_LOGS) return;
@@ -307,12 +317,14 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 }
 
 let db = await load();
+let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
 const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
 await save();
 
 function state(voterId = "anon") {
-  const ctxReal = buildContext(db);
-  const ctxBlended = buildContext(db, undefined, { includeSynthetic: true });
+  const measuredOutcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
+  const ctxReal = buildContext(db, undefined, { outcomes: measuredOutcomes });
+  const ctxBlended = buildContext(db, undefined, { includeSynthetic: true, outcomes: measuredOutcomes });
   const userVotes = db.votesByVoter[voterId] ?? {};
   const userAllocation = db.allocationByVoter[voterId] ?? {};
   const userGoalVotes = db.goalVotesByVoter[voterId] ?? {};
@@ -343,6 +355,7 @@ function state(voterId = "anon") {
     user: { votes: userVotes, allocation: userAllocation, goalVotes: userGoalVotes, answers: userAnswers },
     defaultWeights: DEFAULT_WEIGHTS,
     mapStyleUrl: MAP_STYLE_URL,
+    outcomesMode: OUTCOMES_MODE,
   };
 }
 
@@ -724,6 +737,15 @@ export const server = Bun.serve({
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
+    },
+
+    "/api/outcomes": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json({
+        mode: OUTCOMES_MODE,
+        path: OUTCOMES_PATH,
+        outcomes: outcomesFile,
+      })),
     },
 
     "/api/needs/geo": {
@@ -1227,21 +1249,38 @@ export const server = Bun.serve({
         const previousUsed = parsedPrev.previous ?? db.lastPlan;
         const challengerStreakUsed = parsedChallengerStreak.challengerStreak ?? db.challengerStreak;
 
+        const measuredOutcomes = measuredNeedsOutcomes(outcomesFile);
+        const baseOutcomes = OUTCOMES_MODE === "on"
+          ? mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes)
+          : parsedOutcomes.outcomes;
+
         if (compare === true) {
           const ctxReal = buildContext(db, undefined, {
             includeSynthetic: false,
             extraEntries: parsed.entries,
             now,
-            outcomes: parsedOutcomes.outcomes,
+            outcomes: baseOutcomes,
           });
           const ctxBlended = buildContext(db, undefined, {
             includeSynthetic: true,
             extraEntries: parsed.entries,
             now,
-            outcomes: parsedOutcomes.outcomes,
+            outcomes: baseOutcomes,
           });
           const real = synthesize(ctxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
           const blended = synthesize(ctxBlended, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+
+          let measuredPreview: Record<string, { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } }> = {};
+          if (OUTCOMES_MODE === "shadow") {
+            const measuredCtxReal = buildContext(db, undefined, {
+              includeSynthetic: false,
+              extraEntries: parsed.entries,
+              now,
+              outcomes: mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes),
+            });
+            const measuredReal = synthesize(measuredCtxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+            measuredPreview = measuredPreviewByPackage(real, measuredReal);
+          }
 
           // In compare mode, persist only the REAL side exactly like a normal real-only run.
           // what-if requests (extraEntries) remain read-only.
@@ -1251,16 +1290,28 @@ export const server = Bun.serve({
             await save();
           }
 
-          return Response.json({ real, blended, diff: diffPackages(real, blended) });
+          return Response.json({ real, blended, diff: diffPackages(real, blended), measuredPreview, outcomesMode: OUTCOMES_MODE });
         }
 
         const ctx = buildContext(db, undefined, {
           includeSynthetic: includeSynthetic === true,
           extraEntries: parsed.entries,
           now,
-          outcomes: parsedOutcomes.outcomes,
+          outcomes: baseOutcomes,
         });
         const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+
+        if (OUTCOMES_MODE === "shadow") {
+          const measuredCtx = buildContext(db, undefined, {
+            includeSynthetic: includeSynthetic === true,
+            extraEntries: parsed.entries,
+            now,
+            outcomes: mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes),
+          });
+          const measured = synthesize(measuredCtx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+          const preview = measuredPreviewByPackage(results, measured);
+          for (const pkg of results) pkg.measuredPreview = preview[pkg.id];
+        }
 
         // What-if requests must be read-only: include request-scoped extra entries
         // in synthesis without mutating or persisting server state.

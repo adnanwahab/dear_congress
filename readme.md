@@ -23,6 +23,29 @@ bun run typecheck
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+## Measured outcomes (Harris County / Houston)
+
+The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.
+
+To refresh from live public sources:
+
+```bash
+bun run outcomes:fetch
+```
+
+Runtime env vars:
+
+- `OUTCOMES_PATH` (default: `data/outcomes.json`)
+- `OUTCOMES_MODE`:
+  - `off` — ignore measured outcomes
+  - `shadow` (default) — keep current synthesis, but return a measured-conditions preview
+  - `on` — feed measured severity into synthesis demand
+
+Notes:
+
+- Request-provided `outcomes` in `/api/synthesize` still override measured values for what-if runs.
+- Census fetch works without an API key at low volume; set `CENSUS_API_KEY` to raise reliability.
+
 ## What's in it
 
 | Step | What it does |

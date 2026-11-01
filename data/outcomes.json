@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-11-01T00:00:00.000Z",
+  "series": [
+    {
+      "needId": "flooding",
+      "value": 1120,
+      "unit": "claims/year (3-year avg)",
+      "year": 2022,
+      "severity": 0,
+      "source": {
+        "name": "OpenFEMA NFIP claims, Harris County",
+        "url": "https://www.fema.gov/openfema-data-page/fima-nfip-redacted-claims-v2",
+        "caveat": "Insurance claims undercount uninsured losses and may revise as claims settle."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "flooding",
+      "value": 1640,
+      "unit": "claims/year (3-year avg)",
+      "year": 2023,
+      "severity": 0.5,
+      "source": {
+        "name": "OpenFEMA NFIP claims, Harris County",
+        "url": "https://www.fema.gov/openfema-data-page/fima-nfip-redacted-claims-v2",
+        "caveat": "Insurance claims undercount uninsured losses and may revise as claims settle."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "flooding",
+      "value": 2135,
+      "unit": "claims/year (3-year avg)",
+      "year": 2024,
+      "severity": 1,
+      "source": {
+        "name": "OpenFEMA NFIP claims, Harris County",
+        "url": "https://www.fema.gov/openfema-data-page/fima-nfip-redacted-claims-v2",
+        "caveat": "Insurance claims undercount uninsured losses and may revise as claims settle."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "transit",
+      "value": 0.147,
+      "unit": "share of workers commuting 60+ minutes",
+      "year": 2022,
+      "severity": 0,
+      "source": {
+        "name": "U.S. Census ACS 1-year (B08303), Harris County",
+        "url": "https://api.census.gov/data.html",
+        "caveat": "Survey estimate with sampling error; year-to-year movement can be noisy."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "transit",
+      "value": 0.161,
+      "unit": "share of workers commuting 60+ minutes",
+      "year": 2023,
+      "severity": 0.5,
+      "source": {
+        "name": "U.S. Census ACS 1-year (B08303), Harris County",
+        "url": "https://api.census.gov/data.html",
+        "caveat": "Survey estimate with sampling error; year-to-year movement can be noisy."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "transit",
+      "value": 0.176,
+      "unit": "share of workers commuting 60+ minutes",
+      "year": 2024,
+      "severity": 1,
+      "source": {
+        "name": "U.S. Census ACS 1-year (B08303), Harris County",
+        "url": "https://api.census.gov/data.html",
+        "caveat": "Survey estimate with sampling error; year-to-year movement can be noisy."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "streets",
+      "value": 5.8,
+      "unit": "median days to close 311 street requests",
+      "year": 2022,
+      "severity": 0,
+      "source": {
+        "name": "Houston 311 service request feeds",
+        "url": "https://mycity.houstontx.gov/arcgis/rest/services/wm/",
+        "caveat": "Operational closures reflect workflow/queue changes as well as street conditions."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "streets",
+      "value": 7.2,
+      "unit": "median days to close 311 street requests",
+      "year": 2023,
+      "severity": 0.5,
+      "source": {
+        "name": "Houston 311 service request feeds",
+        "url": "https://mycity.houstontx.gov/arcgis/rest/services/wm/",
+        "caveat": "Operational closures reflect workflow/queue changes as well as street conditions."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "needId": "streets",
+      "value": 8.9,
+      "unit": "median days to close 311 street requests",
+      "year": 2024,
+      "severity": 1,
+      "source": {
+        "name": "Houston 311 service request feeds",
+        "url": "https://mycity.houstontx.gov/arcgis/rest/services/wm/",
+        "caveat": "Operational closures reflect workflow/queue changes as well as street conditions."
+      },
+      "fetchedAt": "2026-11-01T00:00:00.000Z"
+    }
+  ],
+  "errors": []
+}
