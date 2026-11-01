@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { emptyDB, extract } from "./src/engine/engine";
+import { DEFAULT_WEIGHTS, buildContext, emptyDB, extract, synthesize } from "./src/engine/engine";
 import { SEED_JOURNALS } from "./src/engine/catalog";
 import type { DB } from "./src/engine/types";
 
@@ -28,6 +28,10 @@ function seededDb(): DB {
   }));
   db.lastPlan = { A: ["sentinel_plan_item"] };
   return db;
+}
+
+function seededBalancedPlanIds(db: DB, budget = 40): string[] {
+  return synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, budget)[0]!.items.map((i) => i.proposal.id);
 }
 
 describe("/api/synthesize what-if", () => {
@@ -112,12 +116,24 @@ describe("/api/synthesize what-if", () => {
     }
   });
 
-  test("one synthetic flood entry produces non-empty compare diff", async () => {
+  test("2 synthetic FLOOD journals with seeded stored plan keeps selected set but starts pending challenger", async () => {
     const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
     const initialDb = seededDb();
-    const FLOOD = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
+    initialDb.lastPlan = { A: seededBalancedPlanIds(initialDb, 20) };
+
+    const FLOOD = "Our street flooded in the storm and the drainage could not keep up. I need a practical fix soon.";
     initialDb.entries.push({
       id: "sim-flood-1",
+      author: "Simulated resident",
+      text: FLOOD,
+      createdAt: new Date().toISOString(),
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true,
+      source: "happybearlandia-world",
+    });
+    initialDb.entries.push({
+      id: "sim-flood-2",
       author: "Simulated resident",
       text: FLOOD,
       createdAt: new Date().toISOString(),
@@ -140,13 +156,14 @@ describe("/api/synthesize what-if", () => {
     const res = await fetch(new URL("/api/synthesize", server.url), {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ compare: true, budget: 40 }),
+      body: JSON.stringify({ compare: true, budget: 20 }),
     });
     expect(res.status).toBe(200);
-    const out = await res.json() as { diff: Record<string, { addedBySimulated: string[]; removedBySimulated: string[]; moneyMovedB: number }> };
+    const out = await res.json() as { diff: Record<string, { addedBySimulated: string[]; removedBySimulated: string[]; moneyMovedB: number; pending: Array<{ id: string; streak: number }> }> };
 
-    const anyChanged = Object.values(out.diff).some((d) => d.addedBySimulated.length > 0 || d.removedBySimulated.length > 0 || d.moneyMovedB > 0);
-    expect(anyChanged).toBe(true);
+    expect(out.diff.A.addedBySimulated).toEqual([]);
+    expect(out.diff.A.removedBySimulated).toEqual([]);
+    expect(out.diff.A.pending.some((p) => p.id === "f_buyouts" && p.streak === 1)).toBe(true);
   });
 
   test("compare=true never updates lastPlan/challengerStreak", async () => {

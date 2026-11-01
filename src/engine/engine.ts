@@ -1202,6 +1202,24 @@ export function diffPackages(real: PackageResult[], blended: PackageResult[]): P
   const byId = new Map(blended.map((p) => [p.id, p]));
   const out: PackageDiffMap = {};
 
+  const marginFor = (pkg: PackageResult, id: string): number => {
+    const d = pkg.deferred.find((x) => x.id === id);
+    if (d) return d.margin;
+    const w = pkg.waiting.find((x) => x.id === id);
+    if (w) return w.margin;
+    return 0;
+  };
+
+  const titleFor = (pkg: PackageResult, id: string): string => {
+    const item = pkg.items.find((x) => x.proposal.id === id);
+    if (item) return item.proposal.title;
+    const d = pkg.deferred.find((x) => x.id === id);
+    if (d) return d.title;
+    const w = pkg.waiting.find((x) => x.id === id);
+    if (w) return w.title;
+    return id;
+  };
+
   for (const r of real) {
     const b = byId.get(r.id);
     if (!b) continue;
@@ -1215,7 +1233,40 @@ export function diffPackages(real: PackageResult[], blended: PackageResult[]): P
     for (const it of b.items) cost.set(it.proposal.id, it.proposal.costB ?? 0);
     const moneyMovedB = round([...addedBySimulated, ...removedBySimulated].reduce((s, id) => s + (cost.get(id) ?? 0), 0), 2);
 
-    out[r.id] = { addedBySimulated, removedBySimulated, moneyMovedB };
+    const pending = Object.entries(b.challengerStreak ?? {})
+      .filter(([id, streak]) => (streak ?? 0) > 0 && (r.challengerStreak?.[id] ?? 0) === 0)
+      .filter(([id]) => !blendIds.has(id))
+      .map(([id, streak]) => ({
+        id,
+        title: titleFor(b, id),
+        streak: streak ?? 0,
+        needed: CHALLENGER_PERSISTENCE,
+        marginReal: round(marginFor(r, id), 3),
+        marginBlended: round(marginFor(b, id), 3),
+      }))
+      .sort((a, c) => c.streak - a.streak || a.id.localeCompare(c.id));
+
+    const realDeferred = new Map(r.deferred.map((d) => [d.id, d]));
+    const shifted = b.deferred
+      .map((d) => {
+        const rd = realDeferred.get(d.id);
+        if (!rd) return null;
+        const delta = Math.abs((d.margin ?? 0) - (rd.margin ?? 0));
+        if (delta < 0.01) return null;
+        return {
+          id: d.id,
+          title: d.title,
+          marginReal: round(rd.margin ?? 0, 3),
+          marginBlended: round(d.margin ?? 0, 3),
+          delta,
+        };
+      })
+      .filter((x): x is { id: string; title: string; marginReal: number; marginBlended: number; delta: number } => Boolean(x))
+      .sort((a, c) => c.delta - a.delta || a.id.localeCompare(c.id))
+      .slice(0, 5)
+      .map(({ delta: _delta, ...rest }) => rest);
+
+    out[r.id] = { addedBySimulated, removedBySimulated, moneyMovedB, pending, shifted };
   }
 
   return out;

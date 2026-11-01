@@ -694,7 +694,7 @@ function SynthView({ state }: { state: AppState }) {
   const basePkgs = realPkgs ?? blendedPkgs;
   const realPkg = realPkgs?.find((p) => p.id === active) ?? null;
   const blendedPkg = blendedPkgs?.find((p) => p.id === active) ?? null;
-  const pkgDiff = diff[active] ?? { addedBySimulated: [], removedBySimulated: [], moneyMovedB: 0 };
+  const pkgDiff = diff[active] ?? { addedBySimulated: [], removedBySimulated: [], moneyMovedB: 0, pending: [], shifted: [] };
 
   const renderPackage = (pkg: PackageResult, side: "real" | "blended") => {
     const other = side === "real" ? blendedPkg : realPkg;
@@ -779,6 +779,11 @@ function SynthView({ state }: { state: AppState }) {
             <div className="card">
               <h2>The synthesis</h2>
               <p className="muted">Simulated residents changed this package by +{pkgDiff.addedBySimulated.length} / -{pkgDiff.removedBySimulated.length}, money moved {money(pkgDiff.moneyMovedB)}.</p>
+              {pkgDiff.pending.length > 0 && (
+                <p className="muted s">
+                  Simulated residents are pushing: {pkgDiff.pending.slice(0, 3).map((p) => `${p.title} (challenger ${p.streak} of ${p.needed}, gap ${p.marginReal.toFixed(3)} → ${p.marginBlended.toFixed(3)})`).join("; ")}
+                </p>
+              )}
             </div>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
               {renderPackage(realPkg, "real")}

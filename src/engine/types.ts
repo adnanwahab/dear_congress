@@ -208,6 +208,8 @@ export interface PackageSimulatedDiff {
   addedBySimulated: string[];
   removedBySimulated: string[];
   moneyMovedB: number;
+  pending: { id: string; title: string; streak: number; needed: number; marginReal: number; marginBlended: number }[];
+  shifted: { id: string; title: string; marginReal: number; marginBlended: number }[];
 }
 
 export type PackageDiffMap = Record<string, PackageSimulatedDiff>;
