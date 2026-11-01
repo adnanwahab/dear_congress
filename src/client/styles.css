@@ -244,3 +244,10 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--muted); text-align: c
 .sim-link-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 4px; }
 .sim-link { display: inline-block; padding: 6px 12px; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); font-weight: 600; text-decoration: none; }
 .sim-link:hover { background: var(--accent-soft, transparent); }
+
+.sim-realities { margin-top: 14px; }
+.sim-realities.compact { margin-top: 0; }
+.sim-realities.ready { margin-top: 14px; padding: 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft); display: grid; gap: 8px; }
+.sim-realities.ready .row { display: flex; gap: 8px; }
+.sim-realities.ready input { flex: 1; min-width: 0; font-size: 12px; }
+.sim-realities.ready p { margin: 0; }

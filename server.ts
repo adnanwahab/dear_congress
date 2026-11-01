@@ -10,6 +10,7 @@ import { extractWithLLM } from "./src/server/llm-extract";
 import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
+import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
@@ -29,6 +30,8 @@ const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*")
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
 const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
 const MAP_STYLE_URL = (process.env.MAP_STYLE_URL ?? "").trim();
+/** HappyBearLandia deploy that runs "Simulate realities". */
+const HBL_URL = (process.env.HBL_URL ?? "https://happybearlandia.fly.dev").trim() || "https://happybearlandia.fly.dev";
 const OUTCOMES_PATH = (process.env.OUTCOMES_PATH ?? "data/outcomes.json").trim() || "data/outcomes.json";
 const OUTCOMES_MODE: OutcomesMode = parseOutcomesMode(process.env.OUTCOMES_MODE);
 
@@ -1219,6 +1222,40 @@ export const server = Bun.serve({
         logPublishEvent,
         publishCorsHeaders,
       }),
+    },
+
+    // Freeze the current plan (optionally tied to one journal entry) for HappyBearLandia to
+    // simulate in many paired futures. Returns the snapshot and a shareable HBL URL.
+    "/api/simulation-snapshots": {
+      POST: async (req) => {
+        let body: { entryId?: string; package?: string; runs?: number; years?: number } = {};
+        try {
+          body = (await req.json()) ?? {};
+        } catch {
+          return bad("body must be JSON");
+        }
+        try {
+          const outcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
+          const snapshot = createSimulationSnapshot(db, { entryId: body.entryId, packageName: body.package, needs: currentNeeds(), outcomes });
+          storeSnapshot(db, snapshot);
+          await save();
+          const runs = Math.min(1000, Math.max(1, Math.floor(Number(body.runs) || DEFAULT_RUNS)));
+          const years = Math.min(10, Math.max(1, Math.floor(Number(body.years) || DEFAULT_YEARS)));
+          return Response.json({ snapshot, simulationUrl: simulationUrl(HBL_URL, snapshot, { runs, years }) }, { status: 201 });
+        } catch (err) {
+          if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
+          throw err;
+        }
+      },
+    },
+
+    "/api/simulation-snapshots/:id": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => {
+        const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id);
+        if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
+        return withReadCors(req, Response.json({ snapshot }));
+      },
     },
 
     "/api/synthesize": {

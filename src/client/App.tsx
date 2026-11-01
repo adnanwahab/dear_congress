@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  JournalEntry, NeedDef, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
+  JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
 } from "../engine/types";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
@@ -597,6 +597,7 @@ function JournalView({
             <div className="chips">
               {entry.extraction.needs.map((n) => <span key={n.id} className="chip">{needLabel(state, n.id)}</span>)}
             </div>
+            <SimulateRealities key={entry.id} entryId={entry.id} />
           </div>
         )}
 
@@ -941,6 +942,68 @@ export function simulatePlanUrl(pkg: PackageResult, side: "real" | "blended" = "
   return `${HBL_URL}/world/plan.html?${q}`;
 }
 
+/**
+ * "Simulate realities": freezes the current plan (from this journal entry, if given) as a
+ * snapshot and hands back a HappyBearLandia link that runs it in many paired futures.
+ */
+function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, compact = false }: {
+  entryId?: string;
+  packageName?: string;
+  runs?: number;
+  compact?: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ snapshot: SimulationSnapshot; simulationUrl: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function create() {
+    setBusy(true);
+    setError(null);
+    try {
+      setResult(await api<{ snapshot: SimulationSnapshot; simulationUrl: string }>("/api/simulation-snapshots", { entryId, package: packageName, runs }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copy() {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result.simulationUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  if (!result) {
+    return (
+      <div className={`sim-realities${compact ? " compact" : ""}`}>
+        <button className={compact ? "ghost small" : "big"} onClick={create} disabled={busy}>
+          {busy ? "Freezing the plan…" : `✦ Simulate ${runs} realities`}
+        </button>
+        {!compact && <p className="muted s">Freezes the {packageName} plan and runs it in {runs} possible futures, each paired with the same future without it.</p>}
+        {error && <p className="note warn">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="sim-realities ready">
+      <p className="s"><b>Simulation created.</b> {result.snapshot.plan.label} plan, {result.snapshot.plan.proposalIds.length} changes. The link has no journal text in it, only a snapshot id.</p>
+      <div className="row">
+        <input readOnly value={result.simulationUrl} onFocus={(e) => e.currentTarget.select()} aria-label="Simulation link" />
+        <button className="ghost small" onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
+      </div>
+      <a className="sim-link" href={result.simulationUrl} target="_blank" rel="noopener">Enter futures →</a>
+    </div>
+  );
+}
+
 const WEIGHT_LABELS: Record<keyof Weights, string> = {
   support: "Public support", welfare: "Expected welfare gain", fairness: "Fairness (low strong opposition)",
   feasibility: "Feasibility", reversibility: "Reversibility", evidence: "Evidence quality",
@@ -1031,10 +1094,12 @@ function SynthView({ state }: { state: AppState }) {
           </div>
         </div>
         <Bar value={pkg.totalCost / pkg.budget} tone="accent" />
-        <p className="sim-link-row">
-          <a className="sim-link" href={simulatePlanUrl(pkg, side)} target="_blank" rel="noopener">Simulate this plan →</a>
-          <span className="muted s">Paired futures with and without it, in a synthetic neighborhood.</span>
-        </p>
+        <div className="sim-link-row">
+          {side === "real"
+            ? <SimulateRealities key={pkg.id} packageName={pkg.id} compact />
+            : null}
+          <a className="muted s" href={simulatePlanUrl(pkg, side)} target="_blank" rel="noopener">Quick 8-future summary →</a>
+        </div>
         <ol className="plan">
           {pkg.items.map((it) => {
             const onlyHere = !otherIds.has(it.proposal.id);

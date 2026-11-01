@@ -79,6 +79,30 @@ export interface OpenAnswer {
   voterId?: string;
 }
 
+/**
+ * A frozen plan handed to HappyBearLandia to simulate. Immutable once created.
+ * Deliberately has no journal text: HBL only needs the needs and the plan.
+ */
+export interface SimulationSnapshot {
+  id: string;
+  schemaVersion: 1;
+  createdAt: string;
+  /** Journal entry the person simulated from, if any (id only, never the text). */
+  entryId: string | null;
+  /** Privacy-clamped location stored with that entry, if it had one. */
+  location: { lat: number; lng: number } | null;
+  /** Needs the entry was linked to, weights summing to 1. Empty when not from an entry. */
+  needs: { id: string; label: string; weight: number }[];
+  plan: {
+    id: string;
+    label: string;
+    proposalIds: string[];
+    items: { id: string; title: string; needId: string; costB: number | null }[];
+    totalCostB: number;
+    budgetB: number;
+  };
+}
+
 export interface DB {
   /** Incremented when one-time data migrations are applied. */
   schemaVersion?: number;
@@ -100,6 +124,8 @@ export interface DB {
   lastPlan: Record<string, string[]>;
   /** Consecutive runs each challenger has persisted for, by package and proposal id. */
   challengerStreak: Record<string, Record<string, number>>;
+  /** Frozen plans sent to HappyBearLandia ("Simulate realities"). Newest last. */
+  simulationSnapshots?: SimulationSnapshot[];
 }
 
 export interface Weights {
