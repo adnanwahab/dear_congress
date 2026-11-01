@@ -1,4 +1,4 @@
-import { CHANGE_LEVELS, NEEDS, PROPOSALS } from "./catalog";
+import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import type {
   DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageResult, PlanItem,
   Proposal, ProposalStats, ScoreParts, Stance, UserVote, Weights,
@@ -178,7 +178,25 @@ export interface Context {
 }
 
 const BLEND_K = 20;
-export const JOURNAL_SATURATION_K = 3;
+
+function seededJournalReference() {
+  const byNeed = new Map(NEEDS.map((n) => [n.id, 0]));
+  for (const s of SEED_JOURNALS) {
+    const ex = extract(s.text);
+    for (const hit of ex.needs) {
+      byNeed.set(hit.id, (byNeed.get(hit.id) ?? 0) + ex.importance * hit.confidence);
+    }
+  }
+  const maxScore = Math.max(...byNeed.values(), 0);
+  return maxScore > 0 ? round(maxScore) : 1;
+}
+
+/**
+ * Fixed journal normalizer based only on seeded journals. This keeps needs independent
+ * from later journal volume while preserving seeded baseline plan behavior.
+ */
+export const JOURNAL_REFERENCE = seededJournalReference();
+
 export const STABILITY_BONUS = 0.04;
 
 function blendWeight(realVoices: number) {
@@ -341,7 +359,7 @@ export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[], entries
 
   const maxP = Math.max(...Object.values(out).map((d) => d.avgPoints), 1e-9);
   for (const d of Object.values(out)) {
-    const journalPart = 1 - Math.exp(-d.journalScore / JOURNAL_SATURATION_K);
+    const journalPart = Math.min(1, d.journalScore / JOURNAL_REFERENCE);
     d.demand = round(0.5 * journalPart + 0.5 * (d.avgPoints / maxP));
   }
   return out;
@@ -384,7 +402,7 @@ export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
 function runSelection(
   ctx: Context,
   rows: Row[],
-  opts: { budget: number; perNeed: number; minScore: number; minSupport: number; incumbentIds: Set<string>; applyStabilityBonus: boolean },
+  opts: { budget: number; perNeed: number; minScore: number; minSupport: number; incumbentIds: Set<string>; applyStabilityBonus: boolean; stabilityBonus?: number },
 ): SelectionResult {
   const ranked: RankedRow[] = rows
     .map((r) => {
@@ -394,8 +412,9 @@ function runSelection(
         && r.p.costB !== null
         && st.support > st.oppose
         && st.support >= opts.minSupport;
+      const stabilityBonus = opts.stabilityBonus ?? STABILITY_BONUS;
       const getsBonus = opts.applyStabilityBonus && bonusEligible;
-      return { ...r, getsBonus, rankScore: round(r.score + (getsBonus ? STABILITY_BONUS : 0)) };
+      return { ...r, getsBonus, rankScore: round(r.score + (getsBonus ? stabilityBonus : 0)) };
     })
     .sort((a, b) => b.rankScore - a.rankScore || b.score - a.score || a.p.id.localeCompare(b.p.id));
 
@@ -431,8 +450,27 @@ export function synthesizePackage(
   const rows = scoreAll(ctx, opts.weights, opts.lambda);
   const incumbentIds = new Set(previous);
 
-  const withStability = runSelection(ctx, rows, { budget, perNeed, minScore, minSupport, incumbentIds, applyStabilityBonus: true });
-  const withoutStability = runSelection(ctx, rows, { budget, perNeed, minScore, minSupport, incumbentIds, applyStabilityBonus: false });
+  const unseededJournalCount = ctx.entries.filter((e) => !e.seeded).length;
+  const adaptiveStabilityBonus = unseededJournalCount <= 1 ? STABILITY_BONUS : STABILITY_BONUS * 0.25;
+
+  const withStability = runSelection(ctx, rows, {
+    budget,
+    perNeed,
+    minScore,
+    minSupport,
+    incumbentIds,
+    applyStabilityBonus: true,
+    stabilityBonus: adaptiveStabilityBonus,
+  });
+  const withoutStability = runSelection(ctx, rows, {
+    budget,
+    perNeed,
+    minScore,
+    minSupport,
+    incumbentIds,
+    applyStabilityBonus: false,
+    stabilityBonus: 0,
+  });
 
   const selectedWithout = new Set(withoutStability.selected.map((r) => r.p.id));
 

@@ -6,7 +6,8 @@
     "dev": "bun --hot server.ts",
     "start": "NODE_ENV=production bun server.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "purge:world": "bun scripts/purge-world-journals.ts"
   },
   "dependencies": {
     "react": "^19.0.0",

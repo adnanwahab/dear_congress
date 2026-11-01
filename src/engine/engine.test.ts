@@ -63,6 +63,14 @@ describe("synthesize", () => {
   test("minimal-change package is less disruptive", () => {
     expect(b!.avgChange).toBeLessThanOrEqual(a!.avgChange);
   });
+
+  test("seeded Balanced baseline at $40B is the pre-Fix-B 10-item plan", () => {
+    const ids = a!.items.map((i) => i.proposal.id);
+    expect(ids.length).toBe(10);
+    expect(ids).toContain("cc_subsidy");
+    expect(ids).toContain("f_drainage");
+    expect(ids).not.toContain("f_buyouts");
+  });
 });
 
 describe("real-vote blending", () => {
@@ -182,12 +190,27 @@ describe("stabilized synthesis", () => {
     expect(next.housing!.demand).toBeGreaterThanOrEqual(base.housing!.demand);
   });
 
-  test("responsiveness: several flood journals pull in flood mitigation", () => {
-    const db = seeded();
-    for (let i = 0; i < 5; i++) db.entries.push({ id: `f${i}`, author: "flood", text: FLOOD, createdAt: "", extraction: extract(FLOOD), corrected: false });
+  test("responsiveness: a handful of flood journals (not one) can pull in f_buyouts", () => {
+    const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
     const previous = { A: balancedIds(seeded()) };
-    const ids = balancedIds(db, previous);
-    expect(ids.some((id) => id === "f_buyouts" || id === "f_drainage")).toBe(true);
+
+    let nToFlip: number | null = null;
+    for (let n = 1; n <= 10; n++) {
+      const db = seeded();
+      for (let i = 0; i < n; i++) {
+        db.entries.push({ id: `f${n}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: "", extraction: extract(FLOOD_PROMPT), corrected: false });
+      }
+      const ids = balancedIds(db, previous);
+      if (ids.includes("f_buyouts")) {
+        nToFlip = n;
+        break;
+      }
+    }
+
+    console.log("[responsiveness] smallest N to include f_buyouts:", nToFlip);
+    expect(nToFlip).not.toBeNull();
+    expect(nToFlip!).toBeGreaterThanOrEqual(2);
+    expect(nToFlip!).toBeLessThanOrEqual(10);
   });
 
   test("hysteresis is bounded: incumbents below support floor are still dropped", () => {

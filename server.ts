@@ -9,6 +9,8 @@ import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-la
 import { extractWithLLM } from "./src/server/llm-extract";
 import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
+import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
+import { timingSafeEqual } from "node:crypto";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -290,6 +292,15 @@ function state(voterId = "anon") {
 }
 
 const bad = (msg: string) => Response.json({ error: msg }, { status: 400 });
+
+// Admin routes are off unless ADMIN_TOKEN is set (fly secrets set ADMIN_TOKEN=...).
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN?.trim() || "";
+function isAdmin(req: Request) {
+  if (!ADMIN_TOKEN) return false;
+  const got = Buffer.from(req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "");
+  const want = Buffer.from(ADMIN_TOKEN);
+  return got.length === want.length && timingSafeEqual(got, want);
+}
 
 type StageEvent =
   | { stage: "journal"; status: "done"; entry_id: string; labels: string[] }
@@ -948,6 +959,24 @@ export const server = Bun.serve({
         }
 
         return Response.json(results);
+      },
+    },
+
+    "/api/admin/purge-world-journals": {
+      POST: async (req) => {
+        if (!isAdmin(req)) return new Response("Not found", { status: 404 });
+        const body = (await req.json().catch(() => ({}))) as { apply?: boolean; mode?: PurgeMode };
+        const mode: PurgeMode = body.mode === "flag" ? "flag" : "delete";
+        const plan = planPurge(db);
+        if (body.apply !== true) return Response.json({ dryRun: true, mode, plan });
+
+        const backupPath = `${DB_PATH}.backup-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+        await Bun.write(backupPath, JSON.stringify(db, null, 2));
+        const applied = applyPurge(db, plan, mode);
+        await save();
+        emitEntriesUpdate();
+        console.log("[ADMIN_PURGE]", JSON.stringify({ mode, ...applied, backupPath }));
+        return Response.json({ dryRun: false, mode, applied, backupPath, plan });
       },
     },
 
