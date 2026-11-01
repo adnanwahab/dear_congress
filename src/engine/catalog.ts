@@ -101,6 +101,15 @@ export const NEEDS: NeedDef[] = [
     level: "Federal / State",
     keywords: ["taxes", "tax bill", "property tax", "deficit", "debt", "government spending", "wasteful", "balanced budget", "fixed income"],
   },
+  {
+    id: "food_access",
+    label: "Food access",
+    value: "Health & security",
+    goal: "No household goes a day without groceries at home",
+    metric: "% of households reporting an empty fridge or skipped meals in the past week",
+    level: "City / County",
+    keywords: ["fridge", "groceries", "grocery", "food bank", "pantry", "ran out of food", "out of food", "skipped meals", "skip meals", "hungry", "empty shelves", "food desert"],
+  },
 ];
 
 const p = (x: Proposal) => x;
@@ -144,6 +153,9 @@ export const PROPOSALS: Proposal[] = [
 
   // Streets
   p({ id: "s_311", needId: "streets", title: "30-day service standard for 311 street repairs", mechanism: "Public Works service standard", authority: "Houston Public Works", jurisdiction: "Houston", costB: 0.05, changeLevel: 0, reversibility: 1, evidence: 0.6, effectiveness: 0.7, keywords: ["311", "fix", "faster", "pothole", "streetlight", "repair"], metrics: ["median_days_to_resolve_311"], legalChange: "None (administrative)" }),
+
+  // Food access
+  p({ id: "g_delivery", needId: "food_access", title: "Grocery delivery for households that are running out of food", mechanism: "City / county food-access program (delivery partnered with food banks and grocers)", authority: "Houston Health Department / Harris County Public Health", jurisdiction: "Houston", costB: 0.3, changeLevel: 2, reversibility: 0.8, evidence: 0.5, effectiveness: 0.6, keywords: ["delivery", "deliver", "grocery delivery", "pantry", "food bank", "meals"], metrics: ["households_reporting_empty_fridge", "days_without_groceries"], legalChange: "Appropriations increase" }),
 
   // Fiscal
   p({ id: "fx_taxcut", needId: "fiscal", title: "Across-the-board 2-point income tax cut", mechanism: "Tax rate change", authority: "Congress", jurisdiction: "United States", costB: 40, changeLevel: 3, reversibility: 0.5, evidence: 0.5, effectiveness: 0.6, benefitsFiscal: true, keywords: ["tax cut", "cut taxes", "lower taxes", "lower rates"], metrics: ["tax_burden_median_household", "deficit"], legalChange: "Statutory amendment" }),

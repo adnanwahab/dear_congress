@@ -105,6 +105,17 @@ export const ARCHETYPES = [
 
 export interface Voter { id: number; archetype: string; pri: Record<string, number>; fiscal: number; change: number }
 
+/**
+ * Needs added after the original catalog. makePopulation draws one random number
+ * per need, so a new need in that loop would shift the sequence and reshuffle every
+ * voter's priorities, quietly changing every existing plan. These get their priority
+ * from a separate per-voter hash instead, scaled like the others, so existing voters
+ * (and all existing synthesis results) stay identical. Values are archetype weights.
+ */
+export const LATER_NEED_PRIORITIES: Record<string, Partial<Record<string, number>>> = {
+  food_access: { "Working parents": 0.08, "Urban renters": 0.08 },
+};
+
 export function makePopulation(n = 600, seed = 42): Voter[] {
   const r = mulberry32(seed);
   const voters: Voter[] = [];
@@ -112,9 +123,16 @@ export function makePopulation(n = 600, seed = 42): Voter[] {
     let x = r();
     const a = ARCHETYPES.find((a) => (x -= a.share) < 0) ?? ARCHETYPES[0];
     const raw: Record<string, number> = {};
-    for (const need of NEEDS) raw[need.id] = ((a.pri as Record<string, number>)[need.id] ?? 0.03) * (0.5 + r());
+    for (const need of NEEDS) {
+      if (need.id in LATER_NEED_PRIORITIES) continue;
+      raw[need.id] = ((a.pri as Record<string, number>)[need.id] ?? 0.03) * (0.5 + r());
+    }
     const sum = Object.values(raw).reduce((s, v) => s + v, 0);
     for (const k in raw) raw[k] = raw[k]! / sum;
+    for (const [needId, byArchetype] of Object.entries(LATER_NEED_PRIORITIES)) {
+      const draw = mulberry32(hash(`pri:${needId}:${seed}:${i}`))();
+      raw[needId] = ((byArchetype[a.name] ?? 0.03) * (0.5 + draw)) / sum;
+    }
     voters.push({ id: i, archetype: a.name, pri: raw, fiscal: clamp(a.fiscal + (r() - 0.5) * 0.4), change: clamp(a.change + (r() - 0.5) * 0.4) });
   }
   return voters;
