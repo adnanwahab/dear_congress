@@ -11,7 +11,7 @@ import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { timingSafeEqual } from "node:crypto";
-import { CELL_SIZE_DEG, cellCoord } from "./src/server/geo-cell";
+import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -113,7 +113,7 @@ function entriesNewestFirst() {
   return [...db.entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
-const DB_SCHEMA_VERSION = 1;
+const DB_SCHEMA_VERSION = 2;
 
 async function load(): Promise<DB> {
   const f = Bun.file(DB_PATH);
@@ -142,15 +142,17 @@ async function load(): Promise<DB> {
 
   const schemaVersion = Number.isFinite(raw.schemaVersion as number) ? Number(raw.schemaVersion) : 0;
   if (schemaVersion < DB_SCHEMA_VERSION) {
-    // Privacy migration (one-time): normalize any stored real locations to 0.01° floored cell coords.
-    // (Accepts small shifts for pre-existing rounded values.)
+    // Privacy migration (one-time per schema version):
+    // - real entries stored at 0.01° floored cells
+    // - simulated entries stored at 3-decimal floored coords
     for (const e of loaded.entries ?? []) {
-      if (e?.synthetic) continue;
       if (!e?.location) continue;
       const lat = Number(e.location.lat);
       const lng = Number(e.location.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-      e.location = { lat: cellCoord(lat), lng: cellCoord(lng) };
+      e.location = e.synthetic
+        ? { lat: storeSimulatedCoord(lat), lng: storeSimulatedCoord(lng) }
+        : { lat: storeRealCoord(lat), lng: storeRealCoord(lng) };
     }
     loaded.schemaVersion = DB_SCHEMA_VERSION;
     await Bun.write(DB_PATH, JSON.stringify(loaded, null, 2));
@@ -225,20 +227,15 @@ function ensureNeedCoverage(
   };
 }
 
-const roundCoord = (v: number, decimals: number) => {
-  const p = 10 ** decimals;
-  return Math.round(v * p) / p;
-};
-
 function parseAndRoundLocation(raw: unknown, synthetic: boolean): { lat: number; lng: number } | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const lat = Number((raw as { lat?: unknown }).lat);
   const lng = Number((raw as { lng?: unknown }).lng);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new PublishDraftInputError("location must include numeric lat/lng");
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new PublishDraftInputError("location lat/lng out of range");
-  if (synthetic) return { lat: roundCoord(lat, 3), lng: roundCoord(lng, 3) };
+  if (synthetic) return { lat: storeSimulatedCoord(lat), lng: storeSimulatedCoord(lng) };
   // Real entries are stored directly at 0.01° cell coordinates (privacy floor).
-  return { lat: cellCoord(lat), lng: cellCoord(lng) };
+  return { lat: storeRealCoord(lat), lng: storeRealCoord(lng) };
 }
 
 function createJournalEntry(input: {

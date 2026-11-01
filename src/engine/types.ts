@@ -56,7 +56,7 @@ export interface JournalEntry {
   synthetic?: boolean;
   /** Which client posted it, e.g. "happybearlandia-world". */
   source?: string;
-  /** Rounded server-side for privacy (real=2 decimals, synthetic=3). */
+  /** Privacy-clamped server-side (real=0.01° cell; synthetic=0.001° floored). */
   location?: { lat: number; lng: number };
   tileId?: string;
 }
