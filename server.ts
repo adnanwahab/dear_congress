@@ -416,6 +416,40 @@ const normalizeNeedIds = (v: unknown) => {
   return { submitted, valid, ignored };
 };
 
+function parseWhatIfExtraEntries(input: unknown) {
+  if (input === undefined) return { ok: true as const, entries: [] as JournalEntry[] };
+  if (!Array.isArray(input)) return { ok: false as const, error: "extraEntries must be an array" };
+  if (input.length > 200) return { ok: false as const, error: "extraEntries exceeds maximum of 200" };
+
+  const ctx = buildContext(db);
+  const entries: JournalEntry[] = [];
+
+  for (let i = 0; i < input.length; i++) {
+    const item = input[i];
+    if (!item || typeof item !== "object") return { ok: false as const, error: `extraEntries[${i}] must be an object` };
+
+    const text = typeof (item as { text?: unknown }).text === "string" ? (item as { text?: string }).text!.trim() : "";
+    if (!text) return { ok: false as const, error: `extraEntries[${i}].text is required` };
+    if (text.length > 2000) return { ok: false as const, error: `extraEntries[${i}].text exceeds 2000 characters` };
+
+    const authorRaw = (item as { author?: unknown }).author;
+    const author = typeof authorRaw === "string" && authorRaw.trim() ? authorRaw.trim().slice(0, 120) : "What-if resident";
+
+    entries.push({
+      id: `extra_${i}`,
+      author,
+      text,
+      createdAt: new Date().toISOString(),
+      extraction: extract(text, ctx.proposals, ctx.needs),
+      corrected: false,
+      synthetic: true,
+      source: "what-if",
+    });
+  }
+
+  return { ok: true as const, entries };
+}
+
 export const server = Bun.serve({
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
@@ -871,8 +905,21 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic } = (await req.json()) as { weights?: Weights; lambda?: number; budget?: number; includeSynthetic?: boolean };
-        const ctx = buildContext(db, undefined, { includeSynthetic: includeSynthetic === true });
+        const { weights, lambda, budget, includeSynthetic, extraEntries } = (await req.json()) as {
+          weights?: Weights;
+          lambda?: number;
+          budget?: number;
+          includeSynthetic?: boolean;
+          extraEntries?: { text: string; author?: string }[];
+        };
+
+        const parsed = parseWhatIfExtraEntries(extraEntries);
+        if (!parsed.ok) return bad(parsed.error);
+
+        const ctx = buildContext(db, undefined, {
+          includeSynthetic: includeSynthetic === true,
+          extraEntries: parsed.entries,
+        });
         return Response.json(synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40));
       },
     },

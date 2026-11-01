@@ -145,3 +145,35 @@ describe("synthetic journals", () => {
     expect(balanced(seeded())).not.toContain("f_buyouts");
   });
 });
+
+describe("what-if extra entries", () => {
+  const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
+
+  test("flood extra entry can bring f_buyouts into Balanced and does not mutate db.entries", () => {
+    const db = seeded();
+    const beforeLen = db.entries.length;
+
+    const baseIds = synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40)[0]!.items.map((i) => i.proposal.id);
+    const extraEntry = {
+      id: "extra_0",
+      author: "What-if resident",
+      text: FLOOD,
+      createdAt: "",
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true as const,
+      source: "what-if",
+    };
+
+    const withExtraIds = synthesize(
+      buildContext(db, undefined, { includeSynthetic: false, extraEntries: [extraEntry] }),
+      DEFAULT_WEIGHTS,
+      0.25,
+      40,
+    )[0]!.items.map((i) => i.proposal.id);
+
+    expect(baseIds).not.toContain("f_buyouts");
+    expect(withExtraIds).toContain("f_buyouts");
+    expect(db.entries.length).toBe(beforeLen);
+  });
+});

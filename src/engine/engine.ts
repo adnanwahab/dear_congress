@@ -199,11 +199,15 @@ function classifyRealVotes(votes: UserVote[]) {
 export interface ContextOptions {
   /** Count journals from simulated residents. Off by default so they never outweigh real people. */
   includeSynthetic?: boolean;
+  /** Request-scoped, non-persistent what-if entries. Always counted for that request. */
+  extraEntries?: JournalEntry[];
 }
 
 /** The journal entries that should count toward needs, demand and quotes. */
 export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[] {
-  return opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const base = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  if (!opts.extraEntries?.length) return base;
+  return [...base, ...opts.extraEntries];
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
