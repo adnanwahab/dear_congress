@@ -925,6 +925,22 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
 
 /* ------------------------------- Synthesize ------------------------------ */
 
+
+/** HappyBearLandia runs the simulation; set window.HBL_URL to point at another deploy. */
+const HBL_URL = ((globalThis as { HBL_URL?: string }).HBL_URL ?? "https://happybearlandia.fly.dev").replace(/\/+$/, "");
+
+/** Link to HappyBearLandia's paired plan-vs-baseline simulation for exactly this package. */
+export function simulatePlanUrl(pkg: PackageResult, side: "real" | "blended" = "real"): string {
+  const q = new URLSearchParams({
+    proposals: pkg.items.map((it) => it.proposal.id).join(","),
+    costs: pkg.items.filter((it) => it.proposal.costB != null).map((it) => `${it.proposal.id}:${it.proposal.costB}`).join(","),
+    label: `Package ${pkg.id} · ${pkg.name}${side === "blended" ? " (with simulated residents)" : ""}`,
+    planId: `dc-${pkg.id}-${side}`.toLowerCase(),
+    source: "dear-congress",
+  });
+  return `${HBL_URL}/world/plan.html?${q}`;
+}
+
 const WEIGHT_LABELS: Record<keyof Weights, string> = {
   support: "Public support", welfare: "Expected welfare gain", fairness: "Fairness (low strong opposition)",
   feasibility: "Feasibility", reversibility: "Reversibility", evidence: "Evidence quality",
@@ -1015,6 +1031,10 @@ function SynthView({ state }: { state: AppState }) {
           </div>
         </div>
         <Bar value={pkg.totalCost / pkg.budget} tone="accent" />
+        <p className="sim-link-row">
+          <a className="sim-link" href={simulatePlanUrl(pkg, side)} target="_blank" rel="noopener">Simulate this plan →</a>
+          <span className="muted s">Paired futures with and without it, in a synthetic neighborhood.</span>
+        </p>
         <ol className="plan">
           {pkg.items.map((it) => {
             const onlyHere = !otherIds.has(it.proposal.id);
