@@ -130,6 +130,7 @@ async function load(): Promise<DB> {
   loaded.allocationByVoter = loaded.allocationByVoter ?? {};
   loaded.goalVotesByVoter = loaded.goalVotesByVoter ?? {};
   loaded.emergentNeeds = loaded.emergentNeeds ?? [];
+  loaded.lastPlan = loaded.lastPlan ?? {};
 
   return loaded;
 }
@@ -415,6 +416,18 @@ const normalizeNeedIds = (v: unknown) => {
   const ignored = submitted.filter((id) => !needIds.has(id));
   return { submitted, valid, ignored };
 };
+
+function parsePreviousPlans(input: unknown) {
+  if (input === undefined) return { ok: true as const, previous: undefined as Record<string, string[]> | undefined };
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { ok: false as const, error: "previous must be an object keyed by package id" };
+
+  const out: Record<string, string[]> = {};
+  for (const [pkg, ids] of Object.entries(input as Record<string, unknown>)) {
+    if (!Array.isArray(ids)) return { ok: false as const, error: `previous.${pkg} must be an array of proposal ids` };
+    out[pkg] = ids.filter((id): id is string => typeof id === "string").map((id) => id.trim()).filter(Boolean);
+  }
+  return { ok: true as const, previous: out };
+}
 
 function parseWhatIfExtraEntries(input: unknown) {
   if (input === undefined) return { ok: true as const, entries: [] as JournalEntry[] };
@@ -905,22 +918,36 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
           includeSynthetic?: boolean;
           extraEntries?: { text: string; author?: string }[];
+          previous?: Record<string, string[]>;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
         if (!parsed.ok) return bad(parsed.error);
+        const parsedPrev = parsePreviousPlans(previous);
+        if (!parsedPrev.ok) return bad(parsedPrev.error);
 
+        const hasWhatIfEntries = parsed.entries.length > 0;
         const ctx = buildContext(db, undefined, {
           includeSynthetic: includeSynthetic === true,
           extraEntries: parsed.entries,
         });
-        return Response.json(synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40));
+        const previousUsed = parsedPrev.previous ?? db.lastPlan;
+        const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed);
+
+        // What-if requests must be read-only: include request-scoped extra entries
+        // in synthesis without mutating or persisting server state.
+        if (!hasWhatIfEntries) {
+          db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+          await save();
+        }
+
+        return Response.json(results);
       },
     },
 

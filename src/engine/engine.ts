@@ -178,6 +178,8 @@ export interface Context {
 }
 
 const BLEND_K = 20;
+export const JOURNAL_SATURATION_K = 3;
+export const STABILITY_BONUS = 0.04;
 
 function blendWeight(realVoices: number) {
   return realVoices / (realVoices + BLEND_K);
@@ -337,9 +339,11 @@ export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[], entries
     };
   }
 
-  const maxJ = Math.max(...Object.values(out).map((d) => d.journalScore), 1e-9);
   const maxP = Math.max(...Object.values(out).map((d) => d.avgPoints), 1e-9);
-  for (const d of Object.values(out)) d.demand = round(0.5 * (d.journalScore / maxJ) + 0.5 * (d.avgPoints / maxP));
+  for (const d of Object.values(out)) {
+    const journalPart = 1 - Math.exp(-d.journalScore / JOURNAL_SATURATION_K);
+    d.demand = round(0.5 * journalPart + 0.5 * (d.avgPoints / maxP));
+  }
   return out;
 }
 
@@ -350,6 +354,14 @@ export function computeDemand(db: DB, voters: Voter[], needs: NeedDef[], entries
 export const DEFAULT_WEIGHTS: Weights = { support: 0.3, welfare: 0.25, fairness: 0.15, feasibility: 0.1, reversibility: 0.1, evidence: 0.1 };
 
 interface Row { p: Proposal; parts: ScoreParts; changeCost: number; score: number }
+interface RankedRow extends Row { rankScore: number; getsBonus: boolean }
+interface SelectionResult {
+  selected: RankedRow[];
+  deferred: Array<{ row: RankedRow; reason: string }>;
+  blocked: PackageResult["blocked"];
+  emerging: PackageResult["emerging"];
+  spent: number;
+}
 
 export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
   const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
@@ -369,44 +381,99 @@ export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
   });
 }
 
-export function synthesizePackage(
+function runSelection(
   ctx: Context,
-  opts: { id: string; name: string; description: string; weights: Weights; lambda: number; budget: number; perNeed?: number; minScore?: number; minSupport?: number },
-): PackageResult {
-  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3 } = opts;
-  const rows = scoreAll(ctx, opts.weights, opts.lambda).sort((a, b) => b.score - a.score);
-  const items: PlanItem[] = [];
-  const deferred: PackageResult["deferred"] = [];
+  rows: Row[],
+  opts: { budget: number; perNeed: number; minScore: number; minSupport: number; incumbentIds: Set<string>; applyStabilityBonus: boolean },
+): SelectionResult {
+  const ranked: RankedRow[] = rows
+    .map((r) => {
+      const st = ctx.stats[r.p.id]!;
+      const bonusEligible = opts.incumbentIds.has(r.p.id)
+        && !r.p.rightsIssue
+        && r.p.costB !== null
+        && st.support > st.oppose
+        && st.support >= opts.minSupport;
+      const getsBonus = opts.applyStabilityBonus && bonusEligible;
+      return { ...r, getsBonus, rankScore: round(r.score + (getsBonus ? STABILITY_BONUS : 0)) };
+    })
+    .sort((a, b) => b.rankScore - a.rankScore || b.score - a.score || a.p.id.localeCompare(b.p.id));
+
+  const selected: RankedRow[] = [];
+  const deferred: Array<{ row: RankedRow; reason: string }> = [];
   const blocked: PackageResult["blocked"] = [];
   const emerging: PackageResult["emerging"] = [];
   const perNeedCount: Record<string, number> = {};
   let spent = 0;
 
-  for (const r of rows) {
+  for (const r of ranked) {
     const st = ctx.stats[r.p.id]!;
     if (r.p.rightsIssue) { blocked.push({ title: r.p.title, support: st.support, issue: r.p.rightsIssue }); continue; }
     if (r.p.costB === null) { emerging.push({ title: r.p.title, answers: ctx.db.answers.filter((a) => a.proposalId === r.p.id).length }); continue; }
-    if (st.support <= st.oppose) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "More opposition than support" }); continue; }
-    if (st.support < minSupport) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Below democratic support floor" }); continue; }
-    if (r.score < minScore) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Low overall score" }); continue; }
-    if ((perNeedCount[r.p.needId] ?? 0) >= perNeed) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Need already addressed by higher-scoring items" }); continue; }
-    if (spent + r.p.costB > budget) { deferred.push({ title: r.p.title, costB: r.p.costB, support: st.support, reason: "Doesn't fit the remaining budget" }); continue; }
+    if (st.support <= st.oppose) { deferred.push({ row: r, reason: "More opposition than support" }); continue; }
+    if (st.support < opts.minSupport) { deferred.push({ row: r, reason: "Below democratic support floor" }); continue; }
+    if (r.rankScore < opts.minScore) { deferred.push({ row: r, reason: "Low overall score" }); continue; }
+    if ((perNeedCount[r.p.needId] ?? 0) >= opts.perNeed) { deferred.push({ row: r, reason: "Need already addressed by higher-scoring items" }); continue; }
+    if (spent + r.p.costB > opts.budget) { deferred.push({ row: r, reason: "Doesn't fit the remaining budget" }); continue; }
     spent += r.p.costB;
     perNeedCount[r.p.needId] = (perNeedCount[r.p.needId] ?? 0) + 1;
-    items.push(buildItem(ctx, r));
+    selected.push(r);
   }
+
+  return { selected, deferred, blocked, emerging, spent };
+}
+
+export function synthesizePackage(
+  ctx: Context,
+  opts: { id: string; name: string; description: string; weights: Weights; lambda: number; budget: number; perNeed?: number; minScore?: number; minSupport?: number; previous?: string[] },
+): PackageResult {
+  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3, previous = [] } = opts;
+  const rows = scoreAll(ctx, opts.weights, opts.lambda);
+  const incumbentIds = new Set(previous);
+
+  const withStability = runSelection(ctx, rows, { budget, perNeed, minScore, minSupport, incumbentIds, applyStabilityBonus: true });
+  const withoutStability = runSelection(ctx, rows, { budget, perNeed, minScore, minSupport, incumbentIds, applyStabilityBonus: false });
+
+  const selectedWithout = new Set(withoutStability.selected.map((r) => r.p.id));
+
+  const maxDeferredScore = withStability.deferred.reduce((m, d) => Math.max(m, d.row.rankScore), minScore);
+  const cutoffScore = withStability.selected.reduce((m, s) => Math.min(m, s.rankScore), Number.POSITIVE_INFINITY);
+  const effectiveCutoff = Number.isFinite(cutoffScore) ? cutoffScore : minScore;
+
+  const items: PlanItem[] = withStability.selected.map((r) => {
+    const keptForStability = r.getsBonus && !selectedWithout.has(r.p.id);
+    const margin = round(r.rankScore - Math.max(minScore, maxDeferredScore));
+    return buildItem(ctx, r, keptForStability, margin);
+  });
+
+  const deferred: PackageResult["deferred"] = withStability.deferred.map((d) => ({
+    title: d.row.p.title,
+    costB: d.row.p.costB ?? 0,
+    support: ctx.stats[d.row.p.id]!.support,
+    reason: d.reason,
+    margin: round(Math.max(minScore, effectiveCutoff) - d.row.rankScore),
+  }));
+
+  const prevSet = new Set(previous);
+  const currentIds = items.map((i) => i.proposal.id);
+  const currentSet = new Set(currentIds);
+  const added = currentIds.filter((id) => !prevSet.has(id));
+  const removed = previous.filter((id) => !currentSet.has(id));
+  const costById = new Map(ctx.proposals.map((p) => [p.id, p.costB ?? 0]));
+  const moneyMovedB = round([...added, ...removed].reduce((sum, id) => sum + (costById.get(id) ?? 0), 0), 2);
 
   const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
   return {
     id: opts.id, name: opts.name, description: opts.description,
-    items, totalCost: round(spent, 2), budget,
+    items, totalCost: round(withStability.spent, 2), budget,
     avgSupport: round(items.reduce((s, i) => s + i.stats.support, 0) / Math.max(1, items.length)),
     avgChange: round(items.reduce((s, i) => s + i.proposal.changeLevel, 0) / Math.max(1, items.length), 2),
-    deferred, blocked, emerging, unfundedPopularCost: round(unfundedPopularCost, 2),
+    deferred, blocked: withStability.blocked, emerging: withStability.emerging, unfundedPopularCost: round(unfundedPopularCost, 2),
+    changesFromPrevious: { added, removed, moneyMovedB },
   };
 }
 
-function buildItem(ctx: Context, r: Row): PlanItem {
+function buildItem(ctx: Context, r: Row, keptForStability: boolean, margin: number): PlanItem {
   const p = r.p;
   const st = ctx.stats[p.id]!;
   const need = ctx.needs.find((n) => n.id === p.needId) ?? NEEDS.find((n) => n.id === p.needId)!;
@@ -431,6 +498,8 @@ function buildItem(ctx: Context, r: Row): PlanItem {
     mitigations,
     rollout,
     newAgency: p.changeLevel >= 5,
+    keptForStability,
+    margin,
     handoff: {
       proposal: p.title,
       citizen_support: st.support,
@@ -446,11 +515,17 @@ function buildItem(ctx: Context, r: Row): PlanItem {
   };
 }
 
-export function synthesize(ctx: Context, weights: Weights, lambda: number, budget: number): PackageResult[] {
+export function synthesize(
+  ctx: Context,
+  weights: Weights,
+  lambda: number,
+  budget: number,
+  previous: Record<string, string[]> = {},
+): PackageResult[] {
   return [
-    synthesizePackage(ctx, { id: "A", name: "Balanced", description: "Your weights and change penalty", weights, lambda, budget }),
-    synthesizePackage(ctx, { id: "B", name: "Minimal change", description: "Same weights, strong penalty on institutional disruption", weights, lambda: lambda * 3 + 0.3, budget }),
-    synthesizePackage(ctx, { id: "C", name: "Most popular", description: "Ranks purely by citizen support (rights constraints still apply)", weights: { support: 1, welfare: 0, fairness: 0, feasibility: 0, reversibility: 0, evidence: 0 }, lambda: 0, budget }),
+    synthesizePackage(ctx, { id: "A", name: "Balanced", description: "Your weights and change penalty", weights, lambda, budget, previous: previous.A ?? [] }),
+    synthesizePackage(ctx, { id: "B", name: "Minimal change", description: "Same weights, strong penalty on institutional disruption", weights, lambda: lambda * 3 + 0.3, budget, previous: previous.B ?? [] }),
+    synthesizePackage(ctx, { id: "C", name: "Most popular", description: "Ranks purely by citizen support (rights constraints still apply)", weights: { support: 1, welfare: 0, fairness: 0, feasibility: 0, reversibility: 0, evidence: 0 }, lambda: 0, budget, previous: previous.C ?? [] }),
   ];
 }
 
@@ -466,5 +541,6 @@ export function emptyDB(): DB {
     answers: [],
     emergent: [],
     emergentNeeds: [],
+    lastPlan: {},
   };
 }

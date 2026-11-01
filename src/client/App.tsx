@@ -64,6 +64,7 @@ async function api<T>(path: string, body?: unknown, method?: string): Promise<T>
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const money = (b: number | null) => (b === null ? "Not costed" : b >= 1 ? `$${b.toFixed(1)}B` : b > 0 ? `$${Math.round(b * 1000)}M` : "$0");
+const isEdge = (margin: number) => Math.abs(margin) < 0.02;
 
 type Tab = "journal" | "needs" | "vote" | "synth";
 type LiveStatus = "connecting" | "live" | "reconnecting";
@@ -717,6 +718,7 @@ function SynthView({ state }: { state: AppState }) {
               <div>
                 <h2>The synthesis</h2>
                 <p className="muted">{pkg.description}. These {pkg.items.length} changes address the highest-priority needs with the least institutional disruption that fits the budget.</p>
+                <p className="muted s">Changes from previous: +{pkg.changesFromPrevious.added.length} / -{pkg.changesFromPrevious.removed.length}, money moved {money(pkg.changesFromPrevious.moneyMovedB)}</p>
               </div>
               <div className="kpis">
                 <div><b>{money(pkg.totalCost)}</b><small>of ${pkg.budget}B</small></div>
@@ -760,7 +762,7 @@ function SynthView({ state }: { state: AppState }) {
             <summary>Everything else considered ({pkg.deferred.length})</summary>
             <table className="mech">
               <thead><tr><th>Option</th><th>Cost</th><th>Support</th><th>Why not included</th></tr></thead>
-              <tbody>{pkg.deferred.map((d) => <tr key={d.title}><td>{d.title}</td><td>{money(d.costB)}</td><td>{pct(d.support)}</td><td>{d.reason}</td></tr>)}</tbody>
+              <tbody>{pkg.deferred.map((d) => <tr key={d.title}><td>{d.title}{isEdge(d.margin) && <span className="badge new" title="This option is near the selection cutoff; a small score shift could flip it in.">on the edge</span>}</td><td>{money(d.costB)}</td><td>{pct(d.support)}</td><td>{d.reason}</td></tr>)}</tbody>
             </table>
           </details>
         </>)}
@@ -776,7 +778,7 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
     <li className={`plan-item ${open ? "open" : ""}`}>
       <button className="plan-sum" onClick={() => setOpen(!open)} aria-expanded={open}>
         <div className="plan-title">
-          <b>{p.title}</b>
+          <b>{p.title}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}</b>
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
@@ -798,7 +800,7 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
                 <li><span>Feasibility</span><Bar value={it.parts.feasibility} /><b>{pct(it.parts.feasibility)}</b></li>
                 <li><span>Evidence</span><Bar value={it.parts.evidence} /><b>{pct(it.parts.evidence)}</b></li>
               </ul>
-              <small className="muted">Score {it.score.toFixed(2)} (change penalty −{it.changeCost.toFixed(2)})</small>
+              <small className="muted">Score {it.score.toFixed(2)} (change penalty −{it.changeCost.toFixed(2)}) · margin {it.margin.toFixed(2)}</small>
             </div>
             <div>
               <h4>Who asked for this?</h4>

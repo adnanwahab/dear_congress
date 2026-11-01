@@ -91,6 +91,8 @@ export interface DB {
   answers: OpenAnswer[];
   emergent: Proposal[];
   emergentNeeds: NeedDef[];
+  /** Last synthesized plan proposal IDs by package id (A/B/C). */
+  lastPlan: Record<string, string[]>;
 }
 
 export interface Weights {
@@ -149,6 +151,8 @@ export interface PlanItem {
   rollout: string;
   newAgency: boolean;
   handoff: Record<string, unknown>;
+  keptForStability: boolean;
+  margin: number;
 }
 
 export interface PackageResult {
@@ -160,8 +164,9 @@ export interface PackageResult {
   budget: number;
   avgSupport: number;
   avgChange: number;
-  deferred: { title: string; costB: number; support: number; reason: string }[];
+  deferred: { title: string; costB: number; support: number; reason: string; margin: number }[];
   blocked: { title: string; support: number; issue: string }[];
   emerging: { title: string; answers: number }[];
   unfundedPopularCost: number;
+  changesFromPrevious: { added: string[]; removed: string[]; moneyMovedB: number };
 }

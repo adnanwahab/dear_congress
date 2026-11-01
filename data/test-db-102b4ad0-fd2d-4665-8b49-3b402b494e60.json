@@ -1,0 +1,476 @@
+{
+  "entries": [
+    {
+      "id": "seed-0",
+      "author": "Maria · Alief",
+      "text": "I'm working two jobs and childcare costs $1,400 a month. I don't want to stop working, but daycare is eating most of my second paycheck.",
+      "createdAt": "2023-11-14T22:13:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "childcare",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.75,
+        "concerns": [
+          "I don't want to stop working, but daycare is eating most of my second paycheck."
+        ],
+        "constraints": [
+          "wants to avoid: stop working"
+        ],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-1",
+      "author": "Dev · Gulfton",
+      "text": "Traffic around here is awful. I wish there were a bus that came every 10 minutes instead of every 40.",
+      "createdAt": "2023-11-14T22:14:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "transit",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "t_bus"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-2",
+      "author": "Tony · Montrose",
+      "text": "I own a small restaurant and payroll taxes are already difficult. Please don't solve social programs by making it harder to hire people.",
+      "createdAt": "2023-11-14T22:15:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "small_business",
+            "confidence": 1
+          },
+          {
+            "id": "fiscal",
+            "confidence": 0.65
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [
+          "Please don't solve social programs by making it harder to hire people."
+        ],
+        "constraints": [],
+        "proposalIds": [
+          "sb_payroll"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-3",
+      "author": "Linda · Meyerland",
+      "text": "Our street flooded again in May. Third time since Harvey. The drainage on our block just can't keep up.",
+      "createdAt": "2023-11-14T22:16:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "flooding",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.65,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "f_drainage"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-4",
+      "author": "Robert · Katy",
+      "text": "My homeowners insurance premium went up 40% this year and my policy was cancelled once already.",
+      "createdAt": "2023-11-14T22:17:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "insurance",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-5",
+      "author": "Jasmine · Midtown",
+      "text": "Rent went up $250 at renewal. I'm looking at apartments farther out but then the commute gets worse.",
+      "createdAt": "2023-11-14T22:18:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "housing",
+            "confidence": 0.8500000000000001
+          },
+          {
+            "id": "transit",
+            "confidence": 0.65
+          }
+        ],
+        "importance": 0.65,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-6",
+      "author": "Sam · Heights",
+      "text": "Waited three months to see a therapist. My anxiety got worse while I waited.",
+      "createdAt": "2023-11-14T22:19:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "mental_health",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "mh_workforce"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-7",
+      "author": "Ahmed · Sharpstown",
+      "text": "There's a streetlight out on our corner for months and a pothole that keeps eating tires. I reported it to 311 twice.",
+      "createdAt": "2023-11-14T22:20:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "streets",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "s_311"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-8",
+      "author": "Carol · Kingwood",
+      "text": "My property tax bill keeps climbing. I'm retired and on a fixed income. Please don't add more government spending.",
+      "createdAt": "2023-11-14T22:21:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "fiscal",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [
+          "Please don't add more government spending."
+        ],
+        "constraints": [],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-9",
+      "author": "Priya · Sugar Land",
+      "text": "The ER visit for my son cost $2,300 after insurance. We put off going to the doctor now unless it's an emergency.",
+      "createdAt": "2023-11-14T22:22:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "healthcare",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-10",
+      "author": "Keisha · Third Ward",
+      "text": "I'd open a home daycare tomorrow if the licensing paperwork wasn't so brutal. There's a waitlist at every daycare near me.",
+      "createdAt": "2023-11-14T22:23:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "childcare",
+            "confidence": 0.65
+          },
+          {
+            "id": "small_business",
+            "confidence": 0.65
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "cc_licensing",
+          "sb_filing"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-11",
+      "author": "Luis · East End",
+      "text": "I'm self-employed and filing quarterly taxes takes me a full weekend every time. The forms are a maze.",
+      "createdAt": "2023-11-14T22:24:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "small_business",
+            "confidence": 0.8500000000000001
+          },
+          {
+            "id": "fiscal",
+            "confidence": 0.65
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "sb_filing"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-12",
+      "author": "Hannah · Bellaire",
+      "text": "We pay $900 a month for childcare for our toddler and the preschool waitlist is a year long.",
+      "createdAt": "2023-11-14T22:25:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "childcare",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "cc_licensing"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-13",
+      "author": "Marcus · Acres Homes",
+      "text": "I'd take the bus to work but the route takes 90 minutes. Driving costs me a car payment I can barely afford.",
+      "createdAt": "2023-11-14T22:26:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "transit",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.55,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "t_bus"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-14",
+      "author": "Grace · Pasadena",
+      "text": "My clinic closed and now the nearest primary care that takes my insurance is 40 minutes away.",
+      "createdAt": "2023-11-14T22:27:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "healthcare",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "hc_chc"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-15",
+      "author": "Frank · Cypress",
+      "text": "I worry about the deficit. Every program sounds nice but someone has to pay for it. Too much wasteful government spending.",
+      "createdAt": "2023-11-14T22:28:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "fiscal",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [
+          "I worry about the deficit.",
+          "Too much wasteful government spending."
+        ],
+        "constraints": [],
+        "proposalIds": [
+          "fx_review"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-16",
+      "author": "Nina · Rice Military",
+      "text": "Burnout at work is real. Our team has no access to a counselor and the waitlist is weeks.",
+      "createdAt": "2023-11-14T22:29:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "mental_health",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": [
+          "mh_workforce"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-17",
+      "author": "Diego · Northside",
+      "text": "Landlord won't fix the AC and I can't afford to move. Rent is half my income.",
+      "createdAt": "2023-11-14T22:30:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "housing",
+            "confidence": 0.8500000000000001
+          }
+        ],
+        "importance": 0.65,
+        "concerns": [],
+        "constraints": [],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-18",
+      "author": "Beth · Kashmere Gardens",
+      "text": "After the last hurricane our neighborhood had high water for days. We need better drainage, not just promises.",
+      "createdAt": "2023-11-14T22:31:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "flooding",
+            "confidence": 1
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [
+          "We need better drainage, not just promises."
+        ],
+        "constraints": [],
+        "proposalIds": [
+          "f_drainage"
+        ]
+      },
+      "corrected": false,
+      "seeded": true
+    },
+    {
+      "id": "seed-19",
+      "author": "Omar · Alief",
+      "text": "I want my kids to have pre-k but I also want to choose where they go, not be forced into a government program.",
+      "createdAt": "2023-11-14T22:32:20.000Z",
+      "extraction": {
+        "needs": [
+          {
+            "id": "childcare",
+            "confidence": 0.65
+          }
+        ],
+        "importance": 0.45,
+        "concerns": [],
+        "constraints": [
+          "wants to choose where they go"
+        ],
+        "proposalIds": []
+      },
+      "corrected": false,
+      "seeded": true
+    }
+  ],
+  "votes": {},
+  "allocation": {},
+  "goalVotes": {},
+  "votesByVoter": {},
+  "allocationByVoter": {},
+  "goalVotesByVoter": {},
+  "answers": [],
+  "emergent": [],
+  "emergentNeeds": [],
+  "lastPlan": {
+    "A": [
+      "sentinel_plan_item"
+    ]
+  }
+}

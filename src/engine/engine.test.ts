@@ -139,23 +139,97 @@ describe("synthetic journals", () => {
   });
 
   test("do count when includeSynthetic is on", () => {
+    const baseCtx = buildContext(seeded());
     const ctx = buildContext(withSimulated(1), undefined, { includeSynthetic: true });
-    expect(ctx.demand.flooding!.journalCount).toBe(buildContext(seeded()).demand.flooding!.journalCount + 1);
-    expect(balanced(withSimulated(1), true)).toContain("f_buyouts");
-    expect(balanced(seeded())).not.toContain("f_buyouts");
+    expect(ctx.demand.flooding!.journalCount).toBe(baseCtx.demand.flooding!.journalCount + 1);
+    expect(ctx.demand.flooding!.demand).toBeGreaterThanOrEqual(baseCtx.demand.flooding!.demand);
+    expect(balanced(withSimulated(1), true).length).toBeGreaterThan(0);
+  });
+});
+
+describe("stabilized synthesis", () => {
+  const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
+  const BUS = "The bus to work takes over an hour and only comes every 40 minutes. I'm exhausted. Give us more buses and a dedicated bus lane!";
+  const RENT = "Rent went up again, it's half my income. Let them build more townhomes and get rid of the parking minimum and lot size rules!";
+  const POTHOLE = "The pothole on our street has been there for months and the streetlight is out again. I reported it to 311 three times.";
+
+  const withEntry = (text: string) => {
+    const db = seeded();
+    db.entries.push({ id: crypto.randomUUID(), author: "test", text, createdAt: "", extraction: extract(text), corrected: false });
+    return db;
+  };
+
+  const balancedIds = (db: ReturnType<typeof seeded>, previous?: Record<string, string[]>) =>
+    synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous)[0]!.items.map((i) => i.proposal.id);
+
+  test("stability: one journal causes at most small churn with previous plan", () => {
+    const base = seeded();
+    const previous = { A: balancedIds(base) };
+
+    for (const text of [FLOOD, BUS, RENT, POTHOLE]) {
+      const pkg = synthesize(buildContext(withEntry(text)), DEFAULT_WEIGHTS, 0.25, 40, previous)[0]!;
+      expect(pkg.changesFromPrevious.added.length + pkg.changesFromPrevious.removed.length).toBeLessThanOrEqual(2);
+      expect(pkg.changesFromPrevious.moneyMovedB).toBeLessThan(10);
+    }
+  });
+
+  test("independence: one bus journal does not reduce unrelated need demand", () => {
+    const base = buildContext(seeded()).demand;
+    const next = buildContext(withEntry(BUS)).demand;
+
+    expect(next.childcare!.demand).toBeGreaterThanOrEqual(base.childcare!.demand);
+    expect(next.flooding!.demand).toBeGreaterThanOrEqual(base.flooding!.demand);
+    expect(next.housing!.demand).toBeGreaterThanOrEqual(base.housing!.demand);
+  });
+
+  test("responsiveness: several flood journals pull in flood mitigation", () => {
+    const db = seeded();
+    for (let i = 0; i < 5; i++) db.entries.push({ id: `f${i}`, author: "flood", text: FLOOD, createdAt: "", extraction: extract(FLOOD), corrected: false });
+    const previous = { A: balancedIds(seeded()) };
+    const ids = balancedIds(db, previous);
+    expect(ids.some((id) => id === "f_buyouts" || id === "f_drainage")).toBe(true);
+  });
+
+  test("hysteresis is bounded: incumbents below support floor are still dropped", () => {
+    const db = seeded();
+    const previous = { A: balancedIds(db) };
+    const target = previous.A[0]!;
+
+    for (let i = 0; i < 500; i++) {
+      db.votesByVoter[`v${i}`] = {
+        [target]: { proposalId: target, stance: -2, importance: 1, acceptCompromise: false, concern: "", changeMind: "" },
+      };
+    }
+
+    const ctx = buildContext(db);
+    expect(ctx.stats[target]!.support).toBeLessThan(0.3);
+
+    const ids = balancedIds(db, previous);
+    expect(ids).not.toContain(target);
+  });
+
+  test("determinism: same input yields same package", () => {
+    const db = seeded();
+    db.entries.push({ id: "bus", author: "x", text: BUS, createdAt: "", extraction: extract(BUS), corrected: false });
+    const previous = { A: balancedIds(seeded()) };
+    const first = synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous)[0]!;
+    const second = synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous)[0]!;
+    expect(JSON.stringify(first)).toBe(JSON.stringify(second));
   });
 });
 
 describe("what-if extra entries", () => {
   const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
 
-  test("flood extra entry can bring f_buyouts into Balanced and does not mutate db.entries", () => {
+  test("flood extraEntries can pull f_buyouts into Balanced and do not mutate db.entries", () => {
     const db = seeded();
     const beforeLen = db.entries.length;
 
-    const baseIds = synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40)[0]!.items.map((i) => i.proposal.id);
-    const extraEntry = {
-      id: "extra_0",
+    const baseCtx = buildContext(db);
+    const baseIds = synthesize(baseCtx, DEFAULT_WEIGHTS, 0.25, 20)[0]!.items.map((i) => i.proposal.id);
+
+    const extraEntries = Array.from({ length: 8 }, (_, i) => ({
+      id: `extra_${i}`,
       author: "What-if resident",
       text: FLOOD,
       createdAt: "",
@@ -163,15 +237,12 @@ describe("what-if extra entries", () => {
       corrected: false,
       synthetic: true as const,
       source: "what-if",
-    };
+    }));
 
-    const withExtraIds = synthesize(
-      buildContext(db, undefined, { includeSynthetic: false, extraEntries: [extraEntry] }),
-      DEFAULT_WEIGHTS,
-      0.25,
-      40,
-    )[0]!.items.map((i) => i.proposal.id);
+    const withExtraCtx = buildContext(db, undefined, { includeSynthetic: false, extraEntries });
+    const withExtraIds = synthesize(withExtraCtx, DEFAULT_WEIGHTS, 0.25, 20)[0]!.items.map((i) => i.proposal.id);
 
+    expect(withExtraCtx.demand.flooding!.journalCount).toBe(baseCtx.demand.flooding!.journalCount + 8);
     expect(baseIds).not.toContain("f_buyouts");
     expect(withExtraIds).toContain("f_buyouts");
     expect(db.entries.length).toBe(beforeLen);

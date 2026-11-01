@@ -186,8 +186,18 @@ src/client/styles.css
 - `POST /api/answers` `{ needId, text }`
 - `POST /api/publish_draft` (external clients; supports `kind` modes below)
 - `POST /api/publish_labels` `{ entryId, labels[] | needs[] }`
-- `POST /api/synthesize` `{ weights?, lambda?, budget? }`
+- `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
+
+### `POST /api/synthesize` notes
+
+- `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
+- If `previous` is omitted, the server uses persisted `db.lastPlan` (from the prior synthesis run). If none exists yet, it behaves like a fresh run.
+- Response now includes, per package:
+  - `changesFromPrevious: { added: string[]; removed: string[]; moneyMovedB: number }`
+  - `items[].keptForStability: boolean`
+  - `items[].margin: number`
+  - `deferred[].margin: number`
 
 ### External journal client: `publish_draft` modes
 
