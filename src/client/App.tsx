@@ -70,12 +70,26 @@ async function api<T>(path: string, body?: unknown, method?: string): Promise<T>
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-  const data = await res.json();
+
+  const raw = await res.text();
+  let payload: unknown = null;
+  if (raw.trim()) {
+    try { payload = JSON.parse(raw); }
+    catch { payload = raw; }
+  }
+
+  if (!res.ok) {
+    const msg = (typeof payload === "object" && payload !== null && "error" in payload && typeof (payload as { error?: unknown }).error === "string")
+      ? (payload as { error: string }).error
+      : (typeof payload === "string" && payload.trim() ? payload : res.statusText);
+    throw new Error(msg || "Request failed");
+  }
+
   if (resolvedMethod === "POST" && JOURNAL_CREATE_ENDPOINTS.some((p) => path.startsWith(p))) {
     window.dispatchEvent(new CustomEvent("journal:created", { detail: { path } }));
   }
-  return data;
+
+  return (payload ?? {}) as T;
 }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -941,12 +955,13 @@ function EstimateForm({ p, changeLevels, onSaved }: { p: IdeaProposal; changeLev
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const cost = Number(costM);
-  const valid = costM.trim() !== "" && Number.isFinite(cost) && cost >= 0;
+  const maxEstimateM = 100000; // Mirrors server MAX_ESTIMATE_B=100.
+  const valid = costM.trim() !== "" && Number.isFinite(cost) && cost >= 0 && cost <= maxEstimateM;
 
   async function submit() {
     setBusy(true); setErr("");
     try {
-      await api(`/api/emergent/${encodeURIComponent(p.id)}/estimate`, { costB: cost / 1000, changeLevel: level, authority });
+      await api(`/api/emergent/estimate`, { ideaId: p.id, costB: cost / 1000, changeLevel: level, authority });
       setOpen(false);
       onSaved();
     } catch (e) {
@@ -965,6 +980,7 @@ function EstimateForm({ p, changeLevels, onSaved }: { p: IdeaProposal; changeLev
       {open && (
         <div className="estimate-form">
           <label>Yearly cost ($ millions)<input inputMode="decimal" value={costM} onChange={(e) => setCostM(e.target.value)} placeholder="e.g. 50" /></label>
+          {costM.trim() !== "" && Number.isFinite(cost) && cost > maxEstimateM && <p className="err s">Please enter up to 100,000 million ($100B) per year.</p>}
           <label>Size of change<select value={level} onChange={(e) => setLevel(Number(e.target.value))}>{changeLevels.map((l, i) => <option key={l} value={i}>{l}</option>)}</select></label>
           <label>Who would do it (optional)<input value={authority} onChange={(e) => setAuthority(e.target.value)} placeholder="e.g. Houston Health Department" /></label>
           <div className="row">

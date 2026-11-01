@@ -210,6 +210,18 @@ function currentNeeds() {
   return [...NEEDS, ...db.emergentNeeds];
 }
 
+function extractEstimateIdeaId(body: Record<string, unknown>): string | null {
+  const raw = typeof body.ideaId === "string"
+    ? body.ideaId
+    : typeof body.proposalId === "string"
+      ? body.proposalId
+      : typeof body.id === "string"
+        ? body.id
+        : null;
+  const id = raw?.trim();
+  return id ? id : null;
+}
+
 function toNeedId(label: string) {
   return label
     .toLowerCase()
@@ -379,7 +391,7 @@ function state(voterId = "anon") {
   };
 }
 
-const bad = (msg: string) => Response.json({ error: msg }, { status: 400 });
+const bad = (msg: string, status = 400) => Response.json({ error: msg }, { status });
 
 // Admin routes are off unless ADMIN_TOKEN is set (fly secrets set ADMIN_TOKEN=...).
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN?.trim() || "";
@@ -1399,13 +1411,32 @@ export const server = Bun.serve({
     },
 
     // Any voter can estimate an uncosted citizen idea so it competes in the plan.
+    // Keep both route styles so old and new clients both work.
     "/api/emergent/:id/estimate": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
       POST: async (req) => {
         const voterId = resolveVoterId(req);
         const idea = db.emergent.find((p) => p.id === req.params.id);
-        if (!idea) return bad("unknown citizen idea");
+        if (!idea) return bad("unknown citizen idea", 404);
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
+        const result = recordEstimate(idea, voterId, body);
+        if ("error" in result) return bad(result.error);
+        await save();
+        return Response.json({ ok: true });
+      },
+    },
+
+    "/api/emergent/estimate": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
+      POST: async (req) => {
+        const voterId = resolveVoterId(req);
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        if (!body) return bad("JSON body required");
+        const ideaId = extractEstimateIdeaId(body);
+        if (!ideaId) return bad("ideaId is required");
+        const idea = db.emergent.find((p) => p.id === ideaId);
+        if (!idea) return bad("unknown citizen idea", 404);
         const result = recordEstimate(idea, voterId, body);
         if ("error" in result) return bad(result.error);
         await save();
