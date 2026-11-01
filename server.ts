@@ -11,6 +11,7 @@ import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { assessIdea } from "./src/server/assess-idea";
+import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
 import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
@@ -154,6 +155,12 @@ async function load(): Promise<DB> {
   loaded.lastPlan = loaded.lastPlan ?? {};
   loaded.challengerStreak = loaded.challengerStreak ?? {};
 
+  const merged = mergeDuplicateNeeds(loaded, NEEDS);
+  if (Object.keys(merged).length) {
+    console.log(`[needs] merged duplicate needs: ${JSON.stringify(merged)}`);
+    await Bun.write(DB_PATH, JSON.stringify(loaded, null, 2));
+  }
+
   const schemaVersion = Number.isFinite(raw.schemaVersion as number) ? Number(raw.schemaVersion) : 0;
   if (schemaVersion < DB_SCHEMA_VERSION) {
     // Privacy migration (one-time per schema version):
@@ -216,6 +223,11 @@ function ensureNeedCoverage(
   proposedNeed?: { label: string; goal: string; metric: string; keywords?: string[]; value?: string; level?: string } | null,
 ) {
   if (extraction.needs.length > 0) return extraction;
+
+  // The model often proposes a need that already exists ("Food access"). Reuse it rather than
+  // creating a duplicate that splits journals, votes and ideas away from the real one.
+  const existing = proposedNeed?.label ? findNeedByLabel(proposedNeed.label, currentNeeds()) : undefined;
+  if (existing) return { ...extraction, needs: [{ id: existing.id, confidence: 1 }] };
 
   const tk = tokens(text).filter((t) => t.length >= 4);
   const labelCore = proposedNeed?.label?.trim() || tk.slice(0, 3).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ") || "Community need";

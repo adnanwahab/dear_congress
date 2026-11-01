@@ -108,7 +108,7 @@ export const NEEDS: NeedDef[] = [
     goal: "No household goes a day without groceries at home",
     metric: "% of households reporting an empty fridge or skipped meals in the past week",
     level: "City / County",
-    keywords: ["fridge", "groceries", "grocery", "food bank", "pantry", "ran out of food", "out of food", "skipped meals", "skip meals", "hungry", "empty shelves", "food desert"],
+    keywords: ["fridge", "groceries", "grocery", "food bank", "pantry", "ran out of food", "out of food", "skipped meals", "skip meals", "hungry", "empty shelves", "food desert", "food access", "food insecurity", "nutritious", "nutrition", "healthy food", "afford food", "fresh food"],
   },
 ];
 
