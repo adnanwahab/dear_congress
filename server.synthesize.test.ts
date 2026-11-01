@@ -204,10 +204,32 @@ describe("/api/synthesize what-if", () => {
     expect(out.diff.A.pending.some((p) => p.id === "f_buyouts" && p.streak === 1)).toBe(true);
   });
 
-  test("compare=true never updates lastPlan/challengerStreak", async () => {
+  test("compare=true persists only the real side", async () => {
     const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
     const initialDb = seededDb();
-    initialDb.challengerStreak = { A: { sentinel: 7 } };
+
+    const FLOOD = "Our street flooded in the storm and the drainage could not keep up. I need a practical fix soon.";
+    initialDb.entries.push({
+      id: "sim-flood-1",
+      author: "Simulated resident",
+      text: FLOOD,
+      createdAt: new Date().toISOString(),
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true,
+      source: "happybearlandia-world",
+    });
+    initialDb.entries.push({
+      id: "sim-flood-2",
+      author: "Simulated resident",
+      text: FLOOD,
+      createdAt: new Date().toISOString(),
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true,
+      source: "happybearlandia-world",
+    });
+
     tempDbPaths.push(dbPath);
     await Bun.write(dbPath, JSON.stringify(initialDb, null, 2));
 
@@ -222,13 +244,26 @@ describe("/api/synthesize what-if", () => {
     const res = await fetch(new URL("/api/synthesize", server.url), {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ compare: true }),
+      body: JSON.stringify({ compare: true, budget: 30, previous: { A: [] } }),
     });
     expect(res.status).toBe(200);
 
+    const out = await res.json() as {
+      real: Array<{ id: string; items: Array<{ proposal: { id: string } }>; challengerStreak: Record<string, number> }>;
+      blended: Array<{ id: string; items: Array<{ proposal: { id: string } }> }>;
+      diff: Record<string, { addedBySimulated: string[] }>;
+    };
+
     const persisted = await Bun.file(dbPath).json() as DB;
-    expect(persisted.lastPlan).toEqual(initialDb.lastPlan);
-    expect(persisted.challengerStreak).toEqual(initialDb.challengerStreak);
+
+    const realPlan = Object.fromEntries(out.real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+    const blendedPlan = Object.fromEntries(out.blended.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+    const realStreak = Object.fromEntries(out.real.map((pkg) => [pkg.id, pkg.challengerStreak]));
+
+    expect(out.diff.A.addedBySimulated).toContain("f_buyouts");
+    expect(persisted.lastPlan).toEqual(realPlan);
+    expect(persisted.lastPlan).not.toEqual(blendedPlan);
+    expect(persisted.challengerStreak).toEqual(realStreak);
   });
 
   test("/api/state returns demandReal and demandBlended", async () => {

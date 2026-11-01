@@ -941,13 +941,17 @@ function SynthView({ state }: { state: AppState }) {
   const renderPackage = (pkg: PackageResult, side: "real" | "blended") => {
     const other = side === "real" ? blendedPkg : realPkg;
     const otherIds = new Set((other?.items ?? []).map((x) => x.proposal.id));
+    const firstPlan = pkg.changesFromPrevious.removed.length === 0
+      && pkg.changesFromPrevious.added.length === pkg.items.length;
     return (
       <div className="card" style={{ flex: 1 }}>
         <div className="plan-head">
           <div>
             <h3>{side === "real" ? "Real voices" : `With ${syntheticCount} simulated residents`}</h3>
             <p className="muted">{pkg.description}. These {pkg.items.length} changes fit the budget.</p>
-            <p className="muted s">Changes from previous: +{pkg.changesFromPrevious.added.length} / -{pkg.changesFromPrevious.removed.length}, money moved {money(pkg.changesFromPrevious.moneyMovedB)}</p>
+            <p className="muted s">{firstPlan
+              ? "First plan"
+              : `Changes from previous: +${pkg.changesFromPrevious.added.length} / -${pkg.changesFromPrevious.removed.length}, money moved ${money(pkg.changesFromPrevious.moneyMovedB)}`}</p>
           </div>
           <div className="kpis">
             <div><b>{money(pkg.totalCost)}</b><small>of ${pkg.budget}B</small></div>

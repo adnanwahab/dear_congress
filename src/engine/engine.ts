@@ -1012,12 +1012,16 @@ export function synthesizePackage(
     const prevBest = bestDeferredByIncumbent.get(inc.p.id);
     if (!prevBest || d.row.rankScore > prevBest.rankScore) bestDeferredByIncumbent.set(inc.p.id, d.row);
   }
+  const cutoffDeferredRank = deferredRows.length
+    ? Math.max(...deferredRows.map((d) => d.row.rankScore))
+    : (limitedSelected.length ? Math.min(...limitedSelected.map((r) => r.rankScore)) : 0);
 
   const currentIdsForIfDropped = new Set(limitedSelected.map((x) => x.p.id));
   const items: PlanItem[] = limitedSelected.map((r) => {
     const keptForStability = r.getsBonus && !selectedWithout.has(r.p.id);
     const bestDeferred = bestDeferredByIncumbent.get(r.p.id);
-    const margin = round(r.rankScore - (bestDeferred?.rankScore ?? r.rankScore), 3);
+    const challengerRank = bestDeferred?.rankScore ?? cutoffDeferredRank;
+    const margin = round(r.rankScore - challengerRank, 3);
     const stabilityBonus = round(r.rankScore - r.score, 9);
 
     const baseExplanation = scoreExplanation(r, opts.weights, stabilityBonus);

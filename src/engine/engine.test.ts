@@ -448,6 +448,15 @@ describe("stabilized synthesis", () => {
     expect(deferredMarginsOk).toBe(true);
   });
 
+  test("seeded Balanced selected margins are meaningful (not all edge, not all equal)", () => {
+    const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
+    const nearEdge = pkg.items.filter((it) => Math.abs(it.margin) < 0.02).length;
+    expect(nearEdge).toBeLessThanOrEqual(3);
+
+    const unique = new Set(pkg.items.map((it) => it.margin.toFixed(3)));
+    expect(unique.size).toBeGreaterThan(1);
+  });
+
   test("explanation arithmetic equals ranking score", () => {
     const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
     for (const it of pkg.items) {

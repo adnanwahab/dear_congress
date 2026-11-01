@@ -1242,6 +1242,15 @@ export const server = Bun.serve({
           });
           const real = synthesize(ctxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
           const blended = synthesize(ctxBlended, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+
+          // In compare mode, persist only the REAL side exactly like a normal real-only run.
+          // what-if requests (extraEntries) remain read-only.
+          if (!hasWhatIfEntries) {
+            db.lastPlan = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
+            db.challengerStreak = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.challengerStreak]));
+            await save();
+          }
+
           return Response.json({ real, blended, diff: diffPackages(real, blended) });
         }
 
