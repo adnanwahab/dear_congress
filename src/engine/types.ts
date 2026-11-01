@@ -56,6 +56,9 @@ export interface JournalEntry {
   synthetic?: boolean;
   /** Which client posted it, e.g. "happybearlandia-world". */
   source?: string;
+  /** Rounded server-side for privacy (real=2 decimals, synthetic=3). */
+  location?: { lat: number; lng: number };
+  tileId?: string;
 }
 
 export interface UserVote {
@@ -77,6 +80,8 @@ export interface OpenAnswer {
 }
 
 export interface DB {
+  /** Incremented when one-time data migrations are applied. */
+  schemaVersion?: number;
   entries: JournalEntry[];
   // Legacy single-user fields (kept for migration/backward compatibility)
   votes: Record<string, UserVote>;

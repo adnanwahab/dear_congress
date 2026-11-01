@@ -1274,6 +1274,7 @@ export function diffPackages(real: PackageResult[], blended: PackageResult[]): P
 
 export function emptyDB(): DB {
   return {
+    schemaVersion: 0,
     entries: [],
     votes: {},
     allocation: {},

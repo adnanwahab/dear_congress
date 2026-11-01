@@ -1,7 +1,7 @@
 import index from "./index.html";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
-  ARCHETYPES, POPULATION, buildContext, clusterAnswer, diffPackages, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
+  ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
 import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
@@ -11,6 +11,7 @@ import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { timingSafeEqual } from "node:crypto";
+import { CELL_SIZE_DEG, cellCoord } from "./src/server/geo-cell";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
@@ -19,6 +20,7 @@ const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "1") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
 const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
+const MAP_STYLE_URL = (process.env.MAP_STYLE_URL ?? "").trim();
 
 function logRequest(req: Request, route: string) {
   if (!DEBUG_REQUEST_LOGS) return;
@@ -111,11 +113,14 @@ function entriesNewestFirst() {
   return [...db.entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
+const DB_SCHEMA_VERSION = 1;
+
 async function load(): Promise<DB> {
   const f = Bun.file(DB_PATH);
   if (!(await f.exists())) return seed();
 
-  const loaded = { ...emptyDB(), ...(await f.json()) } as DB;
+  const raw = (await f.json()) as Partial<DB>;
+  const loaded = { ...emptyDB(), ...raw } as DB;
 
   // Migrate legacy single-user fields into the multi-voter maps.
   if (Object.keys(loaded.votesByVoter ?? {}).length === 0 && Object.keys(loaded.votes ?? {}).length > 0) {
@@ -135,11 +140,30 @@ async function load(): Promise<DB> {
   loaded.lastPlan = loaded.lastPlan ?? {};
   loaded.challengerStreak = loaded.challengerStreak ?? {};
 
+  const schemaVersion = Number.isFinite(raw.schemaVersion as number) ? Number(raw.schemaVersion) : 0;
+  if (schemaVersion < DB_SCHEMA_VERSION) {
+    // Privacy migration (one-time): normalize any stored real locations to 0.01° floored cell coords.
+    // (Accepts small shifts for pre-existing rounded values.)
+    for (const e of loaded.entries ?? []) {
+      if (e?.synthetic) continue;
+      if (!e?.location) continue;
+      const lat = Number(e.location.lat);
+      const lng = Number(e.location.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      e.location = { lat: cellCoord(lat), lng: cellCoord(lng) };
+    }
+    loaded.schemaVersion = DB_SCHEMA_VERSION;
+    await Bun.write(DB_PATH, JSON.stringify(loaded, null, 2));
+  } else {
+    loaded.schemaVersion = schemaVersion;
+  }
+
   return loaded;
 }
 
 function seed(): DB {
   const db = emptyDB();
+  db.schemaVersion = DB_SCHEMA_VERSION;
   const t0 = Date.now() - SEED_JOURNALS.length * 3600_000;
   db.entries = SEED_JOURNALS.map((s, i) => ({
     id: crypto.randomUUID(),
@@ -201,7 +225,34 @@ function ensureNeedCoverage(
   };
 }
 
-function createJournalEntry(input: { text: string; author?: string; extraction: JournalEntry["extraction"]; corrected: boolean; synthetic?: boolean; source?: string }) {
+const roundCoord = (v: number, decimals: number) => {
+  const p = 10 ** decimals;
+  return Math.round(v * p) / p;
+};
+
+function parseAndRoundLocation(raw: unknown, synthetic: boolean): { lat: number; lng: number } | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const lat = Number((raw as { lat?: unknown }).lat);
+  const lng = Number((raw as { lng?: unknown }).lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new PublishDraftInputError("location must include numeric lat/lng");
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new PublishDraftInputError("location lat/lng out of range");
+  if (synthetic) return { lat: roundCoord(lat, 3), lng: roundCoord(lng, 3) };
+  // Real entries are stored directly at 0.01° cell coordinates (privacy floor).
+  return { lat: cellCoord(lat), lng: cellCoord(lng) };
+}
+
+function createJournalEntry(input: {
+  text: string;
+  author?: string;
+  extraction: JournalEntry["extraction"];
+  corrected: boolean;
+  synthetic?: boolean;
+  source?: string;
+  location?: { lat: number; lng: number };
+  tileId?: string;
+}) {
+  const roundedLoc = input.location ? parseAndRoundLocation(input.location, !!input.synthetic) : undefined;
+  const tileId = input.tileId?.trim().slice(0, 120) || undefined;
   const entry: JournalEntry = {
     id: crypto.randomUUID(),
     author: input.author?.trim() || (input.synthetic ? "Simulated resident" : "Journal Client"),
@@ -211,6 +262,8 @@ function createJournalEntry(input: { text: string; author?: string; extraction: 
     corrected: input.corrected,
     ...(input.synthetic ? { synthetic: true } : {}),
     ...(input.source ? { source: input.source } : {}),
+    ...(roundedLoc ? { location: roundedLoc } : {}),
+    ...(tileId ? { tileId } : {}),
   };
   db.entries.push(entry);
   return entry;
@@ -292,6 +345,7 @@ function state(voterId = "anon") {
     },
     user: { votes: userVotes, allocation: userAllocation, goalVotes: userGoalVotes, answers: userAnswers },
     defaultWeights: DEFAULT_WEIGHTS,
+    mapStyleUrl: MAP_STYLE_URL,
   };
 }
 
@@ -432,6 +486,111 @@ const normalizeNeedIds = (v: unknown) => {
   return { submitted, valid, ignored };
 };
 
+function parseBBox(raw: string | null) {
+  if (!raw) return { ok: false as const, error: "bbox is required as s,w,n,e" };
+  const parts = raw.split(",").map((x) => Number(x.trim()));
+  if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return { ok: false as const, error: "bbox must be s,w,n,e" };
+  const s = parts[0]!;
+  const w = parts[1]!;
+  const n = parts[2]!;
+  const e = parts[3]!;
+  if (s < -90 || n > 90 || w < -180 || e > 180 || s >= n || w >= e) return { ok: false as const, error: "bbox out of range" };
+  return { ok: true as const, bbox: { s, w, n, e } };
+}
+
+function recencyWeight(createdAt: string, newestMs: number) {
+  const t = Date.parse(createdAt);
+  if (!Number.isFinite(t)) return 1;
+  const ageDays = Math.max(0, (newestMs - t) / 86_400_000);
+  return 0.5 ** (ageDays / JOURNAL_HALF_LIFE_DAYS);
+}
+
+function needsGeo(bbox: { s: number; w: number; n: number; e: number }, mode: "real" | "simulated" | "both") {
+  const includeReal = mode === "real" || mode === "both";
+  const includeSim = mode === "simulated" || mode === "both";
+  const entries = db.entries.filter((e) => e.location
+    && e.location.lat >= bbox.s && e.location.lat <= bbox.n
+    && e.location.lng >= bbox.w && e.location.lng <= bbox.e
+    && ((includeReal && !e.synthetic) || (includeSim && !!e.synthetic)));
+
+  const newestMs = entries.length
+    ? Math.max(...entries.map((e) => Date.parse(e.createdAt)).filter(Number.isFinite))
+    : Date.now();
+
+  type Bucket = {
+    lat: number;
+    lng: number;
+    realCount: number;
+    simCount: number;
+    realNeedCount: Record<string, number>;
+    simNeedCount: Record<string, number>;
+    realNeedScore: Record<string, number>;
+    simNeedScore: Record<string, number>;
+  };
+
+  const byCell = new Map<string, Bucket>();
+
+  for (const e of entries) {
+    const lat = cellCoord(e.location!.lat);
+    const lng = cellCoord(e.location!.lng);
+    const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
+    const b = byCell.get(key) ?? {
+      lat,
+      lng,
+      realCount: 0,
+      simCount: 0,
+      realNeedCount: {},
+      simNeedCount: {},
+      realNeedScore: {},
+      simNeedScore: {},
+    };
+    const isSim = !!e.synthetic;
+    if (isSim) b.simCount += 1;
+    else b.realCount += 1;
+
+    const w = recencyWeight(e.createdAt, newestMs);
+    for (const hit of e.extraction.needs) {
+      const c = e.extraction.importance * hit.confidence * w;
+      if (isSim) {
+        b.simNeedCount[hit.id] = (b.simNeedCount[hit.id] ?? 0) + 1;
+        b.simNeedScore[hit.id] = (b.simNeedScore[hit.id] ?? 0) + c;
+      } else {
+        b.realNeedCount[hit.id] = (b.realNeedCount[hit.id] ?? 0) + 1;
+        b.realNeedScore[hit.id] = (b.realNeedScore[hit.id] ?? 0) + c;
+      }
+    }
+
+    byCell.set(key, b);
+  }
+
+  const cells = [...byCell.values()]
+    .map((b) => {
+      const suppressReal = b.realCount > 0 && b.realCount < 3;
+      const real = {
+        count: suppressReal ? 0 : b.realCount,
+        perNeed: Object.entries(suppressReal ? {} : b.realNeedCount).map(([needId, count]) => ({
+          needId,
+          count,
+          demand: Math.min(1, (b.realNeedScore[needId] ?? 0) / JOURNAL_REFERENCE),
+        })),
+      };
+      const simulated = {
+        count: b.simCount,
+        perNeed: Object.entries(b.simNeedCount).map(([needId, count]) => ({
+          needId,
+          count,
+          demand: Math.min(1, (b.simNeedScore[needId] ?? 0) / JOURNAL_REFERENCE),
+        })),
+      };
+
+      const keep = (includeReal && real.count >= 3) || (includeSim && simulated.count > 0);
+      return keep ? { lat: Number(b.lat.toFixed(2)), lng: Number(b.lng.toFixed(2)), real, simulated } : null;
+    })
+    .filter((x): x is { lat: number; lng: number; real: { count: number; perNeed: { needId: string; count: number; demand: number }[] }; simulated: { count: number; perNeed: { needId: string; count: number; demand: number }[] } } => Boolean(x));
+
+  return { bbox, mode, cellSizeDeg: CELL_SIZE_DEG, cells };
+}
+
 function parsePreviousPlans(input: unknown) {
   if (input === undefined) return { ok: true as const, previous: undefined as Record<string, string[]> | undefined };
   if (!input || typeof input !== "object" || Array.isArray(input)) return { ok: false as const, error: "previous must be an object keyed by package id" };
@@ -570,9 +729,38 @@ export const server = Bun.serve({
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
     },
 
+    "/api/needs/geo": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => {
+        const url = new URL(req.url);
+        const parsed = parseBBox(url.searchParams.get("bbox"));
+        if (!parsed.ok) return bad(parsed.error);
+        const m = (url.searchParams.get("mode") || "both").toLowerCase();
+        const mode = m === "real" || m === "simulated" || m === "both" ? m : null;
+        if (!mode) return bad("mode must be real, simulated, or both");
+        return withReadCors(req, Response.json(needsGeo(parsed.bbox, mode)));
+      },
+    },
+
+    "/api/geo/:id": {
+      GET: async (req) => {
+        const id = req.params.id;
+        const map: Record<string, string> = {
+          houston: "data/geo/houston-city-limits.geojson",
+          "harris-county": "data/geo/harris-county.geojson",
+          texas: "data/geo/texas.geojson",
+        };
+        const path = map[id];
+        if (!path) return bad("unknown geography");
+        const f = Bun.file(path);
+        if (!(await f.exists())) return bad("missing geography file");
+        return withReadCors(req, new Response(await f.text(), { headers: { "content-type": "application/geo+json" } }));
+      },
+    },
+
     "/api/journal": {
       POST: async (req) => {
-        const { text, author } = (await req.json()) as { text?: string; author?: string };
+        const { text, author, location } = (await req.json()) as { text?: string; author?: string; location?: { lat?: number; lng?: number } };
         if (!text?.trim()) return bad("text is required");
         const ctx = buildContext(db);
         const llm = await extractWithLLM(text.trim(), ctx.proposals, ctx.needs);
@@ -584,6 +772,13 @@ export const server = Bun.serve({
           matchedNeedIds: extraction.needs.map((n) => n.id),
         });
 
+        let roundedLoc: { lat: number; lng: number } | undefined;
+        try {
+          roundedLoc = location ? parseAndRoundLocation(location, false) : undefined;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "invalid location";
+          return bad(msg);
+        }
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
           author: author?.trim() || "You",
@@ -591,6 +786,7 @@ export const server = Bun.serve({
           createdAt: new Date().toISOString(),
           extraction,
           corrected: false,
+          ...(roundedLoc ? { location: roundedLoc } : {}),
         };
         db.entries.push(entry);
         await save();
@@ -702,7 +898,7 @@ export const server = Bun.serve({
         return withReadCors(req, Response.json({ entries }));
       },
       POST: async (req) => {
-        const body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[] };
+        const body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[]; location?: { lat?: number; lng?: number } };
         if (!body.text?.trim()) return bad("text is required");
 
         const baseCtx = buildContext(db);
@@ -721,6 +917,13 @@ export const server = Bun.serve({
           matchedNeedIds: extraction.needs.map((n) => n.id),
         });
 
+        let roundedLoc: { lat: number; lng: number } | undefined;
+        try {
+          roundedLoc = body.location ? parseAndRoundLocation(body.location, false) : undefined;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "invalid location";
+          return bad(msg);
+        }
         const entry: JournalEntry = {
           id: crypto.randomUUID(),
           author: body.author?.trim() || "You",
@@ -728,6 +931,7 @@ export const server = Bun.serve({
           createdAt: new Date().toISOString(),
           extraction,
           corrected: labels.valid.length > 0,
+          ...(roundedLoc ? { location: roundedLoc } : {}),
         };
 
         db.entries.push(entry);

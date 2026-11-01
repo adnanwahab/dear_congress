@@ -11,10 +11,17 @@ export interface PublishDraftBody {
   /** true when a simulated resident wrote this (see JournalEntry.synthetic). */
   synthetic?: unknown;
   source?: unknown;
+  location?: unknown;
+  tileId?: unknown;
+  metadata?: unknown;
 }
 
 function isSynthetic(v: unknown) {
   return v === true || v === "true" || v === 1 || v === "1";
+}
+
+function validLatLng(loc: { lat: number; lng: number }) {
+  return Number.isFinite(loc.lat) && Number.isFinite(loc.lng) && loc.lat >= -90 && loc.lat <= 90 && loc.lng >= -180 && loc.lng <= 180;
 }
 
 interface LLMResult {
@@ -70,6 +77,8 @@ export interface PublishDraftDeps {
     corrected: boolean;
     synthetic?: boolean;
     source?: string;
+    location?: { lat: number; lng: number };
+    tileId?: string;
   }) => JournalEntry;
   save: () => Promise<void>;
   onExtract?: (meta: { provider: string; matchedNeedIds: string[]; mode: "journal" | "answer:auto-need" }) => void;
@@ -87,6 +96,16 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
 
   const synthetic = isSynthetic(body.synthetic);
   const source = typeof body.source === "string" ? body.source.trim().slice(0, 64) || undefined : undefined;
+  const meta = (body.metadata && typeof body.metadata === "object") ? body.metadata as Record<string, unknown> : undefined;
+  const rawLoc = body.location ?? ((meta && typeof meta.lat === "number" && typeof meta.lng === "number") ? { lat: meta.lat, lng: meta.lng } : undefined);
+  const location = rawLoc && typeof rawLoc === "object" && Number.isFinite(Number((rawLoc as { lat?: unknown }).lat)) && Number.isFinite(Number((rawLoc as { lng?: unknown }).lng))
+    ? { lat: Number((rawLoc as { lat: unknown }).lat), lng: Number((rawLoc as { lng: unknown }).lng) }
+    : undefined;
+  if (rawLoc && !location) throw new PublishDraftInputError("location must include numeric lat/lng");
+  if (location && !validLatLng(location)) throw new PublishDraftInputError("location lat/lng out of range");
+  const tileId = typeof body.tileId === "string"
+    ? body.tileId.trim().slice(0, 120) || undefined
+    : (meta && typeof meta.tileId === "string" ? meta.tileId.trim().slice(0, 120) || undefined : undefined);
 
   if (mode === "answer") {
     // Answers can create new ballot options, so simulated residents can't post them.
@@ -139,6 +158,8 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
     corrected: labels.valid.length > 0,
     synthetic,
     source,
+    location,
+    tileId,
   });
 
   await deps.save();

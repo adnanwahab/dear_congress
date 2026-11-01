@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   JournalEntry, NeedDef, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
 } from "../engine/types";
@@ -33,6 +33,7 @@ interface AppState {
   population: { n: number; archetypes: { name: string; share: number }[]; realVoices?: number };
   user: { votes: Record<string, UserVote>; allocation: Record<string, number>; goalVotes: Record<string, boolean>; answers: { id: string; needId: string; text: string; proposalId: string }[] };
   defaultWeights: Weights;
+  mapStyleUrl?: string;
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
@@ -264,6 +265,203 @@ function SplitLegend({ s }: { s: ProposalStats }) {
 
 const needLabel = (state: AppState, id: string) => state.needs.find((n) => n.id === id)?.label ?? id;
 
+const NEED_COLORS = ["#2f5d50", "#5b4b9a", "#b5523b", "#3f7d5c", "#946c3d", "#4f6a85", "#8b3f5c"];
+
+type GeoCell = {
+  lat: number;
+  lng: number;
+  real: { count: number; perNeed: { needId: string; count: number; demand: number }[] };
+  simulated: { count: number; perNeed: { needId: string; count: number; demand: number }[] };
+};
+
+function topNeedForCell(cell: GeoCell, mode: "real" | "simulated" | "both") {
+  const m = new Map<string, number>();
+  if (mode !== "simulated") for (const p of cell.real.perNeed) m.set(p.needId, (m.get(p.needId) ?? 0) + p.count);
+  if (mode !== "real") for (const p of cell.simulated.perNeed) m.set(p.needId, (m.get(p.needId) ?? 0) + p.count);
+  const arr = [...m.entries()].sort((a, b) => b[1] - a[1]);
+  return arr[0]?.[0] ?? null;
+}
+
+function NeedsGeoMap({
+  styleUrl,
+  cells,
+  mode,
+  needFilter,
+  needs,
+}: {
+  styleUrl?: string;
+  cells: GeoCell[];
+  mode: "real" | "simulated" | "both";
+  needFilter: string | "all";
+  needs: NeedDef[];
+}) {
+  const elRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+  const colorByNeed = useMemo(() => Object.fromEntries(needs.map((n, i) => [n.id, NEED_COLORS[i % NEED_COLORS.length]])), [needs]);
+
+  const features = useMemo(() => cells
+    .map((c) => {
+      const topNeed = topNeedForCell(c, mode);
+      if (needFilter !== "all" && topNeed !== needFilter) return null;
+      const count = mode === "real" ? c.real.count : mode === "simulated" ? c.simulated.count : c.real.count + c.simulated.count;
+      if (!count) return null;
+      return {
+        type: "Feature",
+        properties: {
+          count,
+          topNeed,
+          color: colorByNeed[topNeed ?? ""] ?? "#2f5d50",
+          hasSim: c.simulated.count > 0 ? 1 : 0,
+        },
+        geometry: { type: "Point", coordinates: [c.lng + 0.005, c.lat + 0.005] },
+      };
+    })
+    .filter(Boolean), [cells, mode, needFilter, colorByNeed]);
+
+  const simBoxes = useMemo(() => cells
+    .filter((c) => c.simulated.count > 0)
+    .map((c) => ({
+      type: "Feature",
+      properties: {},
+      geometry: {
+        type: "Polygon",
+        coordinates: [[
+          [c.lng, c.lat],
+          [c.lng + 0.01, c.lat],
+          [c.lng + 0.01, c.lat + 0.01],
+          [c.lng, c.lat + 0.01],
+          [c.lng, c.lat],
+        ]],
+      },
+    })), [cells]);
+
+  useEffect(() => {
+    if (!elRef.current || !styleUrl) return;
+    let disposed = false;
+    (async () => {
+      const maplibre = await import("maplibre-gl");
+      if (disposed || !elRef.current) return;
+      const map = new maplibre.Map({
+        container: elRef.current,
+        style: styleUrl,
+        center: [-95.37, 29.76],
+        zoom: 8,
+      });
+      map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), "top-right");
+      map.on("load", () => {
+        map.addSource("cells", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        map.addSource("sim-boxes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        map.addLayer({
+          id: "sim-boxes-line",
+          type: "line",
+          source: "sim-boxes",
+          paint: {
+            "line-color": "#1d1b18",
+            "line-width": 1.5,
+            "line-dasharray": [2, 2],
+            "line-opacity": 0.6,
+          },
+        });
+        map.addLayer({
+          id: "cells-circle",
+          type: "circle",
+          source: "cells",
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 5, 5, 12, 20, 22],
+            "circle-color": ["get", "color"],
+            "circle-opacity": 0.55,
+            "circle-stroke-width": ["case", ["==", ["get", "hasSim"], 1], 2, 0],
+            "circle-stroke-color": "#1d1b18",
+          },
+        });
+      });
+      mapRef.current = map;
+    })();
+    return () => {
+      disposed = true;
+      mapRef.current?.remove?.();
+      mapRef.current = null;
+    };
+  }, [styleUrl]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map?.getSource?.("cells")) return;
+    const src = map.getSource("cells");
+    src.setData({ type: "FeatureCollection", features });
+    const simSrc = map.getSource?.("sim-boxes");
+    simSrc?.setData?.({ type: "FeatureCollection", features: simBoxes });
+  }, [features, simBoxes]);
+
+  if (!styleUrl) return <p className="muted s">Set `MAP_STYLE_URL` on the server to enable map tiles.</p>;
+  return <div ref={elRef} style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+}
+
+function JurisdictionMap({
+  styleUrl,
+  jurisdiction,
+  pushingCells,
+}: {
+  styleUrl?: string;
+  jurisdiction?: string;
+  pushingCells: GeoCell[];
+}) {
+  const elRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!elRef.current || !styleUrl) return;
+    let disposed = false;
+    (async () => {
+      const maplibre = await import("maplibre-gl");
+      if (disposed || !elRef.current) return;
+      const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
+      map.on("load", async () => {
+        map.addSource("jur", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        map.addLayer({ id: "jur-line", type: "line", source: "jur", paint: { "line-color": "#2f5d50", "line-width": 3 } });
+        map.addSource("push", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+        map.addLayer({ id: "push-circle", type: "circle", source: "push", paint: { "circle-color": "#b5523b", "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+      });
+      mapRef.current = map;
+    })();
+    return () => {
+      disposed = true;
+      mapRef.current?.remove?.();
+      mapRef.current = null;
+    };
+  }, [styleUrl]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const slug = jurisdiction === "Houston" ? "houston" : jurisdiction === "Harris County" ? "harris-county" : jurisdiction === "Texas" ? "texas" : null;
+    const update = async () => {
+      if (map.getSource?.("jur")) {
+        if (!slug) {
+          map.getSource("jur").setData({ type: "FeatureCollection", features: [] });
+        } else {
+          try {
+            const gj = await api<any>(`/api/geo/${slug}`);
+            map.getSource("jur").setData(gj);
+          } catch {
+            map.getSource("jur").setData({ type: "FeatureCollection", features: [] });
+          }
+        }
+      }
+      if (map.getSource?.("push")) {
+        map.getSource("push").setData({
+          type: "FeatureCollection",
+          features: pushingCells.map((c) => ({ type: "Feature", geometry: { type: "Point", coordinates: [c.lng + 0.005, c.lat + 0.005] }, properties: {} })),
+        });
+      }
+    };
+    void update();
+  }, [jurisdiction, pushingCells]);
+
+  if (!styleUrl) return null;
+  return <div ref={elRef} style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+}
+
 /* -------------------------------- Journal -------------------------------- */
 
 function JournalView({
@@ -430,9 +628,22 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const demandBlended = state.demandBlended ?? state.demand;
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
   const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
+  const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
+  const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
   useEffect(() => {
     if (focusNeedId) setSel(focusNeedId);
   }, [focusNeedId]);
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const out = await api<{ cells: GeoCell[] }>(`/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=${geoMode}`);
+        setGeoCells(out.cells ?? []);
+      } catch {
+        setGeoCells([]);
+      }
+    };
+    void run();
+  }, [geoMode, state.entries.length]);
   const need = state.needs.find((n) => n.id === sel)!;
   const props = state.proposals.filter((p) => p.needId === sel);
 
@@ -451,6 +662,12 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
       <section className="card">
         <h2>Shared needs</h2>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
+        <div className="row" style={{ marginBottom: 8 }}>
+          <button className={geoMode === "real" ? "" : "ghost"} onClick={() => setGeoMode("real")}>Real voices</button>
+          <button className={geoMode === "simulated" ? "" : "ghost"} onClick={() => setGeoMode("simulated")}>Simulated residents</button>
+          <button className={geoMode === "both" ? "" : "ghost"} onClick={() => setGeoMode("both")}>Both</button>
+        </div>
+        <NeedsGeoMap styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
           {sorted.map((n) => {
             const d = state.demand[n.id]!;
@@ -672,6 +889,8 @@ function SynthView({ state }: { state: AppState }) {
   const [diff, setDiff] = useState<PackageDiffMap>({});
   const [active, setActive] = useState("A");
   const [busy, setBusy] = useState(false);
+  const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  const [simCells, setSimCells] = useState<GeoCell[]>([]);
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
   async function run() {
@@ -695,6 +914,29 @@ function SynthView({ state }: { state: AppState }) {
   const realPkg = realPkgs?.find((p) => p.id === active) ?? null;
   const blendedPkg = blendedPkgs?.find((p) => p.id === active) ?? null;
   const pkgDiff = diff[active] ?? { addedBySimulated: [], removedBySimulated: [], moneyMovedB: 0, pending: [], shifted: [] };
+
+  useEffect(() => {
+    if (syntheticCount <= 0) { setSimCells([]); return; }
+    const run = async () => {
+      try {
+        const out = await api<{ cells: GeoCell[] }>("/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=simulated");
+        setSimCells(out.cells ?? []);
+      } catch {
+        setSimCells([]);
+      }
+    };
+    void run();
+  }, [syntheticCount, state.entries.length]);
+
+  const selectedProposal = selectedProposalId
+    ? (realPkg?.items.find((i) => i.proposal.id === selectedProposalId)?.proposal
+      ?? blendedPkg?.items.find((i) => i.proposal.id === selectedProposalId)?.proposal
+      ?? state.proposals.find((p) => p.id === selectedProposalId)
+      ?? null)
+    : null;
+
+  const pushingNeedIds = new Set((pkgDiff.pending ?? []).map((p) => state.proposals.find((x) => x.id === p.id)?.needId).filter(Boolean) as string[]);
+  const pushingCells = simCells.filter((c) => c.simulated.perNeed.some((pn) => pushingNeedIds.has(pn.needId)));
 
   const renderPackage = (pkg: PackageResult, side: "real" | "blended") => {
     const other = side === "real" ? blendedPkg : realPkg;
@@ -726,6 +968,7 @@ function SynthView({ state }: { state: AppState }) {
                 it={it}
                 state={state}
                 simulatedEffect={simulatedEffect}
+                onSelect={setSelectedProposalId}
               />
             );
           })}
@@ -784,26 +1027,45 @@ function SynthView({ state }: { state: AppState }) {
                   Simulated residents are pushing: {pkgDiff.pending.slice(0, 3).map((p) => `${p.title} (challenger ${p.streak} of ${p.needed}, gap ${p.marginReal.toFixed(3)} → ${p.marginBlended.toFixed(3)})`).join("; ")}
                 </p>
               )}
+              {pkgDiff.shifted.length > 0 && (
+                <p className="muted s">
+                  Biggest margin shifts: {pkgDiff.shifted.slice(0, 3).map((s) => `${s.title} (${s.marginReal.toFixed(3)} → ${s.marginBlended.toFixed(3)})`).join("; ")}
+                </p>
+              )}
             </div>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
               {renderPackage(realPkg, "real")}
               {renderPackage(blendedPkg, "blended")}
             </div>
+            <div className="card">
+              <h3>Jurisdiction + pushing locations</h3>
+              <p className="muted s">{selectedProposal ? `Selected: ${selectedProposal.title} (${selectedProposal.jurisdiction})` : "Open a plan item to preview jurisdiction outline."}</p>
+              <JurisdictionMap styleUrl={state.mapStyleUrl} jurisdiction={selectedProposal?.jurisdiction} pushingCells={pushingCells} />
+            </div>
           </>
         )}
 
-        {realPkg && syntheticCount === 0 && renderPackage(realPkg, "real")}
+        {realPkg && syntheticCount === 0 && (
+          <>
+            {renderPackage(realPkg, "real")}
+            <div className="card">
+              <h3>Jurisdiction preview</h3>
+              <p className="muted s">{selectedProposal ? `Selected: ${selectedProposal.title} (${selectedProposal.jurisdiction})` : "Open a plan item to preview jurisdiction outline."}</p>
+              <JurisdictionMap styleUrl={state.mapStyleUrl} jurisdiction={selectedProposal?.jurisdiction} pushingCells={[]} />
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
 }
 
-function PlanRow({ it, state, simulatedEffect }: { it: PlanItem; state: AppState; simulatedEffect?: "added" | "removed" | null }) {
+function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state: AppState; simulatedEffect?: "added" | "removed" | null; onSelect?: (proposalId: string) => void }) {
   const [open, setOpen] = useState(false);
   const p = it.proposal;
   return (
     <li className={`plan-item ${open ? "open" : ""}`}>
-      <button className="plan-sum" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button className="plan-sum" onClick={() => { setOpen(!open); onSelect?.(p.id); }} aria-expanded={open}>
         <div className="plan-title">
           <b>{p.title}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>

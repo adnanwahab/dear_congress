@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Harris County" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-95.909, 29.522],
+          [-95.909, 30.170],
+          [-94.910, 30.170],
+          [-94.910, 29.522],
+          [-95.909, 29.522]
+        ]]
+      }
+    }
+  ]
+}

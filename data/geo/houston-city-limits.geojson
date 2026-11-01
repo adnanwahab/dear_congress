@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Houston" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-95.909, 29.522],
+          [-95.909, 30.110],
+          [-95.014, 30.110],
+          [-95.014, 29.522],
+          [-95.909, 29.522]
+        ]]
+      }
+    }
+  ]
+}

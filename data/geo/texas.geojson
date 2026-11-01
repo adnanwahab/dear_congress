@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Texas" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-106.650, 25.840],
+          [-106.650, 36.500],
+          [-93.510, 36.500],
+          [-93.510, 25.840],
+          [-106.650, 25.840]
+        ]]
+      }
+    }
+  ]
+}

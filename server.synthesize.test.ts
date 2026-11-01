@@ -116,6 +116,44 @@ describe("/api/synthesize what-if", () => {
     }
   });
 
+  test("one synthetic FLOOD entry produces non-empty compare diff and adds f_buyouts when stability is off", async () => {
+    const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
+    const initialDb = seededDb();
+
+    const FLOOD = "Our street flooded in the storm and the drainage could not keep up. I need a practical fix soon.";
+    initialDb.entries.push({
+      id: "sim-flood-1",
+      author: "Simulated resident",
+      text: FLOOD,
+      createdAt: new Date().toISOString(),
+      extraction: extract(FLOOD),
+      corrected: false,
+      synthetic: true,
+      source: "happybearlandia-world",
+    });
+    tempDbPaths.push(dbPath);
+    await Bun.write(dbPath, JSON.stringify(initialDb, null, 2));
+
+    process.env.DB_PATH = dbPath;
+    process.env.PORT = "0";
+    process.env.DEBUG_REQUEST_LOGS = "0";
+
+    const mod = await import(`./server.ts?test=${crypto.randomUUID()}`);
+    const server = mod.server as { url: URL; stop: (closeConnections?: boolean) => void };
+    startedServers.push(server);
+
+    const res = await fetch(new URL("/api/synthesize", server.url), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ compare: true, budget: 30, previous: { A: [] } }),
+    });
+    expect(res.status).toBe(200);
+    const out = await res.json() as { diff: Record<string, { addedBySimulated: string[]; removedBySimulated: string[]; moneyMovedB: number }> };
+
+    expect(out.diff.A.addedBySimulated).toContain("f_buyouts");
+    expect(out.diff.A.moneyMovedB).toBeGreaterThan(0);
+  });
+
   test("2 synthetic FLOOD journals with seeded stored plan keeps selected set but starts pending challenger", async () => {
     const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
     const initialDb = seededDb();
