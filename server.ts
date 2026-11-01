@@ -1,7 +1,7 @@
 import index from "./index.html";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
-  ARCHETYPES, POPULATION, buildContext, clusterAnswer, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
+  ARCHETYPES, POPULATION, buildContext, clusterAnswer, diffPackages, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
 import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
@@ -261,7 +261,8 @@ const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
 await save();
 
 function state(voterId = "anon") {
-  const ctx = buildContext(db);
+  const ctxReal = buildContext(db);
+  const ctxBlended = buildContext(db, undefined, { includeSynthetic: true });
   const userVotes = db.votesByVoter[voterId] ?? {};
   const userAllocation = db.allocationByVoter[voterId] ?? {};
   const userGoalVotes = db.goalVotesByVoter[voterId] ?? {};
@@ -274,13 +275,15 @@ function state(voterId = "anon") {
   const userAnswers = db.answers.filter((a) => a.voterId === voterId || (voterId === "anon" && !a.voterId));
 
   return {
-    needs: ctx.needs,
+    needs: ctxReal.needs,
     changeLevels: CHANGE_LEVELS,
-    proposals: ctx.proposals,
-    stats: ctx.stats,
-    demand: ctx.demand,
-    mechanismShare: ctx.mechanismShare,
-    goalSupport: ctx.goalSupport,
+    proposals: ctxReal.proposals,
+    stats: ctxReal.stats,
+    demand: ctxReal.demand,
+    demandReal: ctxReal.demand,
+    demandBlended: ctxBlended.demand,
+    mechanismShare: ctxReal.mechanismShare,
+    goalSupport: ctxReal.goalSupport,
     entries: [...db.entries].reverse(),
     population: {
       n: POPULATION.length,
@@ -997,7 +1000,7 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
@@ -1007,6 +1010,7 @@ export const server = Bun.serve({
           challengerStreak?: Record<string, Record<string, number>>;
           now?: string | number;
           outcomes?: SynthesisOutcomes;
+          compare?: boolean;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
@@ -1019,14 +1023,33 @@ export const server = Bun.serve({
         if (!parsedOutcomes.ok) return bad(parsedOutcomes.error);
 
         const hasWhatIfEntries = parsed.entries.length > 0;
+        const previousUsed = parsedPrev.previous ?? db.lastPlan;
+        const challengerStreakUsed = parsedChallengerStreak.challengerStreak ?? db.challengerStreak;
+
+        if (compare === true) {
+          const ctxReal = buildContext(db, undefined, {
+            includeSynthetic: false,
+            extraEntries: parsed.entries,
+            now,
+            outcomes: parsedOutcomes.outcomes,
+          });
+          const ctxBlended = buildContext(db, undefined, {
+            includeSynthetic: true,
+            extraEntries: parsed.entries,
+            now,
+            outcomes: parsedOutcomes.outcomes,
+          });
+          const real = synthesize(ctxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+          const blended = synthesize(ctxBlended, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
+          return Response.json({ real, blended, diff: diffPackages(real, blended) });
+        }
+
         const ctx = buildContext(db, undefined, {
           includeSynthetic: includeSynthetic === true,
           extraEntries: parsed.entries,
           now,
           outcomes: parsedOutcomes.outcomes,
         });
-        const previousUsed = parsedPrev.previous ?? db.lastPlan;
-        const challengerStreakUsed = parsedChallengerStreak.challengerStreak ?? db.challengerStreak;
         const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
 
         // What-if requests must be read-only: include request-scoped extra entries

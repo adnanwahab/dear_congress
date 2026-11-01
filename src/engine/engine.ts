@@ -1,6 +1,6 @@
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import type {
-  DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageResult, PlanItem,
+  DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageDiffMap, PackageResult, PlanItem,
   Proposal, ProposalStats, ScoreParts, Stance, SynthesisOutcomes, UserVote, Weights,
 } from "./types";
 
@@ -958,12 +958,12 @@ export function synthesizePackage(
     const margin = round(incRank - d.row.rankScore, 3);
 
     let reasonDetail = d.reason;
+    let replaceIds: string[] | undefined;
     if (d.reason === "Below democratic support floor") {
       const support = ctx.stats[d.row.p.id]!.support;
       reasonDetail = `support ${support.toFixed(2)} < floor ${minSupport.toFixed(2)}`;
     } else if (d.reason === "Doesn't fit the remaining budget") {
-      const left = Math.max(0, remainingBudget);
-      const needed = Math.max(0, (d.row.p.costB ?? 0) - left);
+      const needed = Math.max(0, (d.row.p.costB ?? 0) - Math.max(0, remainingBudget));
       const lowerRanked = limitedSelected.filter((r) => r.rankScore < d.row.rankScore);
       let swapSet = cheapestIncumbentsToFree(lowerRanked, needed);
       let freed = swapSet.reduce((s, r) => s + (r.p.costB ?? 0), 0);
@@ -971,9 +971,19 @@ export function synthesizePackage(
         swapSet = cheapestIncumbentsToFree(limitedSelected, needed);
         freed = swapSet.reduce((s, r) => s + (r.p.costB ?? 0), 0);
       }
-      const swapNames = swapSet.map((r) => r.p.id).join(" + ") || "none";
-      const alt = inc && !swapSet.some((x) => x.p.id === inc.p.id) ? ` or ${inc.p.id}` : "";
-      reasonDetail = `needs $${fmtB(needed)}B, $${fmtB(left)}B left — would have to replace ${swapNames}${alt}`;
+      replaceIds = swapSet.map((r) => r.p.id);
+
+      const byCostDesc = [...swapSet].sort((a, b) => (b.p.costB ?? 0) - (a.p.costB ?? 0));
+      const named = byCostDesc.slice(0, 2);
+      const namedPhrase = named.map((r) => `${r.p.title} ($${fmtB(r.p.costB ?? 0)}B)`).join(" + ");
+      const rest = byCostDesc.slice(2);
+      const restCost = rest.reduce((s, r) => s + (r.p.costB ?? 0), 0);
+      const restPhrase = rest.length ? ` plus ${rest.length} smaller item${rest.length === 1 ? "" : "s"} ($${fmtB(restCost)}B)` : "";
+      const main = namedPhrase ? `Would mean dropping ${namedPhrase}${restPhrase}` : `Would need about $${fmtB(needed)}B more`;
+      const alt = inc && !swapSet.some((x) => x.p.id === inc.p.id)
+        ? `, or ${inc.p.title} ($${fmtB(inc.p.costB ?? 0)}B)`
+        : "";
+      reasonDetail = `${main}${alt}.`;
     }
 
     const cid = d.row.p.id;
@@ -990,6 +1000,7 @@ export function synthesizePackage(
       support: ctx.stats[d.row.p.id]!.support,
       reason: d.reason,
       reasonDetail,
+      replaceIds,
       margin,
     };
   });
@@ -1185,6 +1196,29 @@ export function synthesize(
       challengerStreak: challengerStreak.C ?? {},
     }),
   ];
+}
+
+export function diffPackages(real: PackageResult[], blended: PackageResult[]): PackageDiffMap {
+  const byId = new Map(blended.map((p) => [p.id, p]));
+  const out: PackageDiffMap = {};
+
+  for (const r of real) {
+    const b = byId.get(r.id);
+    if (!b) continue;
+    const realIds = new Set(r.items.map((x) => x.proposal.id));
+    const blendIds = new Set(b.items.map((x) => x.proposal.id));
+    const addedBySimulated = [...blendIds].filter((id) => !realIds.has(id));
+    const removedBySimulated = [...realIds].filter((id) => !blendIds.has(id));
+
+    const cost = new Map<string, number>();
+    for (const it of r.items) cost.set(it.proposal.id, it.proposal.costB ?? 0);
+    for (const it of b.items) cost.set(it.proposal.id, it.proposal.costB ?? 0);
+    const moneyMovedB = round([...addedBySimulated, ...removedBySimulated].reduce((s, id) => s + (cost.get(id) ?? 0), 0), 2);
+
+    out[r.id] = { addedBySimulated, removedBySimulated, moneyMovedB };
+  }
+
+  return out;
 }
 
 export function emptyDB(): DB {

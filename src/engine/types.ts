@@ -193,7 +193,7 @@ export interface PackageResult {
   budget: number;
   avgSupport: number;
   avgChange: number;
-  deferred: { id: string; title: string; costB: number; support: number; reason: string; reasonDetail: string; margin: number }[];
+  deferred: { id: string; title: string; costB: number; support: number; reason: string; reasonDetail: string; replaceIds?: string[]; margin: number }[];
   blocked: { title: string; support: number; issue: string }[];
   emerging: { title: string; answers: number }[];
   unfundedPopularCost: number;
@@ -203,3 +203,11 @@ export interface PackageResult {
   waiting: { id: string; title: string; costB: number; margin: number; reason: string; reasonDetail: string }[];
   majorChange?: MajorChange;
 }
+
+export interface PackageSimulatedDiff {
+  addedBySimulated: string[];
+  removedBySimulated: string[];
+  moneyMovedB: number;
+}
+
+export type PackageDiffMap = Record<string, PackageSimulatedDiff>;

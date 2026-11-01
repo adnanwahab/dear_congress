@@ -496,20 +496,19 @@ describe("stabilized synthesis", () => {
     expect(item.explanation.ifDropped.freesB).toBe(item.proposal.costB ?? 0);
   });
 
-  test("budget reasonDetail names incumbents whose cost frees enough", () => {
+  test("budget reasonDetail is readable and replaceIds free enough budget", () => {
     const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
     const d = pkg.deferred.find((x) => x.reason === "Doesn't fit the remaining budget");
     expect(d).toBeDefined();
 
-    const match = d!.reasonDetail.match(/needs \$([0-9.]+)B, \$([0-9.]+)B left — would have to replace (.+)$/);
-    expect(match).not.toBeNull();
-
-    const needed = Number(match![1]);
-    const replacementPart = match![3]!.split(" or ")[0]!;
-    const replacementIds = replacementPart.split(" + ").map((s) => s.trim()).filter(Boolean);
+    expect(d!.reasonDetail.startsWith("Would mean dropping ")).toBe(true);
+    expect(d!.reasonDetail.endsWith(".")).toBe(true);
+    expect(Array.isArray(d!.replaceIds)).toBe(true);
+    expect((d!.replaceIds ?? []).length).toBeGreaterThan(0);
 
     const selectedCostById = new Map(pkg.items.map((i) => [i.proposal.id, i.proposal.costB ?? 0]));
-    const freed = replacementIds.reduce((sum, id) => sum + (selectedCostById.get(id) ?? 0), 0);
+    const freed = (d!.replaceIds ?? []).reduce((sum, id) => sum + (selectedCostById.get(id) ?? 0), 0);
+    const needed = Math.max(0, d!.costB - (pkg.budget - pkg.totalCost));
     expect(freed + 1e-9).toBeGreaterThanOrEqual(needed);
   });
 

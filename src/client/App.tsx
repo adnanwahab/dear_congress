@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type {
-  JournalEntry, NeedDef, NeedDemand, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
+  JournalEntry, NeedDef, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote, Weights,
 } from "../engine/types";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
@@ -25,6 +25,8 @@ interface AppState {
   proposals: Proposal[];
   stats: Record<string, ProposalStats>;
   demand: Record<string, NeedDemand>;
+  demandReal?: Record<string, NeedDemand>;
+  demandBlended?: Record<string, NeedDemand>;
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
@@ -424,7 +426,9 @@ function JournalView({
 /* --------------------------------- Needs --------------------------------- */
 
 function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: string | null }) {
-  const sorted = useMemo(() => [...state.needs].sort((a, b) => state.demand[b.id]!.demand - state.demand[a.id]!.demand), [state]);
+  const demandReal = state.demandReal ?? state.demand;
+  const demandBlended = state.demandBlended ?? state.demand;
+  const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
   const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
   useEffect(() => {
     if (focusNeedId) setSel(focusNeedId);
@@ -432,10 +436,14 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const need = state.needs.find((n) => n.id === sel)!;
   const props = state.proposals.filter((p) => p.needId === sel);
 
+  const rankReal = new Map(sorted.map((n, i) => [n.id, i + 1]));
+  const sortedBlend = [...state.needs].sort((a, b) => demandBlended[b.id]!.demand - demandBlended[a.id]!.demand);
+  const rankBlend = new Map(sortedBlend.map((n, i) => [n.id, i + 1]));
+
   const jurisdictions = ["Houston", "Harris County", "Texas", "United States"];
   const byJur = jurisdictions.map((j) => {
     const needIds = [...new Set(state.proposals.filter((p) => p.jurisdiction === j && !p.rightsIssue).map((p) => p.needId))];
-    return { j, ranked: needIds.map((id) => ({ id, d: state.demand[id]!.demand })).sort((a, b) => b.d - a.d).slice(0, 5) };
+    return { j, ranked: needIds.map((id) => ({ id, d: demandReal[id]!.demand })).sort((a, b) => b.d - a.d).slice(0, 5) };
   });
 
   return (
@@ -451,7 +459,11 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
                 <button onClick={() => setSel(n.id)}>
                   <div className="need-top"><b>{n.label}</b><span className="num-s">{Math.round(d.demand * 100)}</span></div>
                   <Bar value={d.demand} />
-                  <small>{d.journalCount} journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts</small>
+                  <small>
+                    rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
+                    {rankReal.get(n.id) !== rankBlend.get(n.id) ? ` (${rankReal.get(n.id)} → ${rankBlend.get(n.id)})` : ""}
+                    {" · "}{d.journalCount} journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts
+                  </small>
                 </button>
               </li>
             );
@@ -649,24 +661,78 @@ const WEIGHT_LABELS: Record<keyof Weights, string> = {
   feasibility: "Feasibility", reversibility: "Reversibility", evidence: "Evidence quality",
 };
 
+type ComparePayload = { real: PackageResult[]; blended: PackageResult[]; diff: PackageDiffMap };
+
 function SynthView({ state }: { state: AppState }) {
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
   const [lambda, setLambda] = useState(0.25);
   const [budget, setBudget] = useState(40);
-  const [pkgs, setPkgs] = useState<PackageResult[] | null>(null);
+  const [realPkgs, setRealPkgs] = useState<PackageResult[] | null>(null);
+  const [blendedPkgs, setBlendedPkgs] = useState<PackageResult[] | null>(null);
+  const [diff, setDiff] = useState<PackageDiffMap>({});
   const [active, setActive] = useState("A");
   const [busy, setBusy] = useState(false);
-  const [includeSynthetic, setIncludeSynthetic] = useState(false);
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
   async function run() {
     setBusy(true);
-    setPkgs(await api<PackageResult[]>("/api/synthesize", { weights, lambda, budget, includeSynthetic }));
+    if (syntheticCount > 0) {
+      const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget, compare: true });
+      setRealPkgs(payload.real ?? []);
+      setBlendedPkgs(payload.blended ?? []);
+      setDiff(payload.diff ?? {});
+    } else {
+      const single = await api<PackageResult[]>("/api/synthesize", { weights, lambda, budget });
+      setRealPkgs(single);
+      setBlendedPkgs(null);
+      setDiff({});
+    }
     setBusy(false);
   }
   useEffect(() => { run(); }, []);
 
-  const pkg = pkgs?.find((p) => p.id === active);
+  const basePkgs = realPkgs ?? blendedPkgs;
+  const realPkg = realPkgs?.find((p) => p.id === active) ?? null;
+  const blendedPkg = blendedPkgs?.find((p) => p.id === active) ?? null;
+  const pkgDiff = diff[active] ?? { addedBySimulated: [], removedBySimulated: [], moneyMovedB: 0 };
+
+  const renderPackage = (pkg: PackageResult, side: "real" | "blended") => {
+    const other = side === "real" ? blendedPkg : realPkg;
+    const otherIds = new Set((other?.items ?? []).map((x) => x.proposal.id));
+    return (
+      <div className="card" style={{ flex: 1 }}>
+        <div className="plan-head">
+          <div>
+            <h3>{side === "real" ? "Real voices" : `With ${syntheticCount} simulated residents`}</h3>
+            <p className="muted">{pkg.description}. These {pkg.items.length} changes fit the budget.</p>
+            <p className="muted s">Changes from previous: +{pkg.changesFromPrevious.added.length} / -{pkg.changesFromPrevious.removed.length}, money moved {money(pkg.changesFromPrevious.moneyMovedB)}</p>
+          </div>
+          <div className="kpis">
+            <div><b>{money(pkg.totalCost)}</b><small>of ${pkg.budget}B</small></div>
+            <div><b>{pct(pkg.avgSupport)}</b><small>avg support</small></div>
+            <div><b>{pkg.avgChange.toFixed(1)}</b><small>avg change level</small></div>
+          </div>
+        </div>
+        <Bar value={pkg.totalCost / pkg.budget} tone="accent" />
+        <ol className="plan">
+          {pkg.items.map((it) => {
+            const onlyHere = !otherIds.has(it.proposal.id);
+            const simulatedEffect = onlyHere
+              ? (side === "blended" ? "added" : "removed")
+              : null;
+            return (
+              <PlanRow
+                key={`${side}:${it.proposal.id}`}
+                it={it}
+                state={state}
+                simulatedEffect={simulatedEffect}
+              />
+            );
+          })}
+        </ol>
+      </div>
+    );
+  };
 
   return (
     <div className="grid synth">
@@ -691,110 +757,50 @@ function SynthView({ state }: { state: AppState }) {
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => setBudget(Number(e.target.value))} />
           <b className="num-s">${budget}B</b>
         </label>
-        {syntheticCount > 0 && (
-          <label className="check">
-            <input type="checkbox" checked={includeSynthetic} onChange={(e) => setIncludeSynthetic(e.target.checked)} />
-            <span>Include {syntheticCount} simulated residents' journals</span>
-          </label>
-        )}
         <button className="big" onClick={run} disabled={busy}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
       <section className="stack">
-        {pkgs && (
+        {basePkgs && (
           <div className="pkg-tabs">
-            {pkgs.map((p) => (
+            {basePkgs.map((p) => (
               <button key={p.id} className={`pkg ${p.id === active ? "on" : ""}`} onClick={() => setActive(p.id)}>
                 <span className="pkg-name">Package {p.id} · {p.name}</span>
-                <span className="pkg-sub">{p.items.length} changes · {money(p.totalCost)} · {pct(p.avgSupport)} avg support</span>
+                {syntheticCount > 0
+                  ? <span className="pkg-sub">sim diff +{(diff[p.id]?.addedBySimulated.length ?? 0)} / -{(diff[p.id]?.removedBySimulated.length ?? 0)} · moved {money(diff[p.id]?.moneyMovedB ?? 0)}</span>
+                  : <span className="pkg-sub">{p.items.length} changes · {money(p.totalCost)} · {pct(p.avgSupport)} avg support</span>}
               </button>
             ))}
           </div>
         )}
 
-        {pkg && (<>
-          <div className="card">
-            <div className="plan-head">
-              <div>
-                <h2>The synthesis</h2>
-                <p className="muted">{pkg.description}. These {pkg.items.length} changes address the highest-priority needs with the least institutional disruption that fits the budget.</p>
-                <p className="muted s">Changes from previous: +{pkg.changesFromPrevious.added.length} / -{pkg.changesFromPrevious.removed.length}, money moved {money(pkg.changesFromPrevious.moneyMovedB)}</p>
-              </div>
-              <div className="kpis">
-                <div><b>{money(pkg.totalCost)}</b><small>of ${pkg.budget}B</small></div>
-                <div><b>{pct(pkg.avgSupport)}</b><small>avg support</small></div>
-                <div><b>{pkg.avgChange.toFixed(1)}</b><small>avg change level</small></div>
-              </div>
-            </div>
-            <Bar value={pkg.totalCost / pkg.budget} tone="accent" />
-            <ol className="plan">
-              {pkg.items.map((it) => <PlanRow key={it.proposal.id} it={it} state={state} />)}
-            </ol>
-          </div>
-
-          {pkg.unfundedPopularCost > 0 && (
-            <div className="card warn">
-              <h3>Budget conflict</h3>
-              <p>Options with more support than opposition that didn't fit would cost another <b>{money(pkg.unfundedPopularCost)}</b> a year. Raise the budget, add a funding source, or accept the tradeoff.</p>
-              <ul className="plain">
-                {pkg.deferred.filter((d) => d.reason.startsWith("Doesn't fit")).map((d) => <li key={d.title}>{d.title} · {money(d.costB)} · {pct(d.support)} support</li>)}
-              </ul>
-            </div>
-          )}
-
-          {pkg.blocked.length > 0 && (
-            <div className="card bad">
-              <h3>Blocked by rights constraints</h3>
-              <p className="muted">Excluded no matter how popular. Majority preference can't override fundamental rights.</p>
-              {pkg.blocked.map((b) => <div key={b.title} className="blocked"><b>{b.title}</b> <span className="badge">{pct(b.support)} support</span><p>{b.issue}</p></div>)}
-            </div>
-          )}
-
-          {pkg.emerging.length > 0 && (
+        {realPkg && syntheticCount > 0 && blendedPkg && (
+          <>
             <div className="card">
-              <h3>Emerging citizen ideas</h3>
-              <p className="muted">New options from open-ended answers. They need costing and legal review before they can enter a plan.</p>
-              <ul className="plain">{pkg.emerging.map((e) => <li key={e.title}>{e.title}</li>)}</ul>
+              <h2>The synthesis</h2>
+              <p className="muted">Simulated residents changed this package by +{pkgDiff.addedBySimulated.length} / -{pkgDiff.removedBySimulated.length}, money moved {money(pkgDiff.moneyMovedB)}.</p>
             </div>
-          )}
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+              {renderPackage(realPkg, "real")}
+              {renderPackage(blendedPkg, "blended")}
+            </div>
+          </>
+        )}
 
-          <details className="card">
-            <summary>Everything else considered ({pkg.deferred.length})</summary>
-            <table className="mech">
-              <thead><tr><th>Option</th><th>Cost</th><th>Support</th><th>Why not included</th><th>Details</th></tr></thead>
-              <tbody>{pkg.deferred.map((d) => <tr key={d.id}><td>{d.title}{isEdge(d.margin) && <span className="badge new" title="This option is near the selection cutoff; a small score shift could flip it in.">on the edge</span>}{d.reasonDetail.includes("challenger:") && <span className="badge" title="Persistent challenger">challenger</span>}</td><td>{money(d.costB)}</td><td>{pct(d.support)}</td><td>{d.reason}</td><td>{d.reasonDetail}</td></tr>)}</tbody>
-            </table>
-          </details>
-
-          {pkg.waiting.length > 0 && (
-            <details className="card">
-              <summary>Waiting due to churn limits ({pkg.waiting.length})</summary>
-              <ul className="plain">
-                {pkg.waiting.map((w) => (
-                  <li key={w.id}>
-                    <b>{w.id}</b> — {w.title} ({money(w.costB)})
-                    <span className="badge">waiting</span>
-                    {w.reasonDetail.includes("challenger:") && <span className="badge">challenger</span>}
-                    <div className="muted s">{w.reasonDetail}</div>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </>)}
+        {realPkg && syntheticCount === 0 && renderPackage(realPkg, "real")}
       </section>
     </div>
   );
 }
 
-function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
+function PlanRow({ it, state, simulatedEffect }: { it: PlanItem; state: AppState; simulatedEffect?: "added" | "removed" | null }) {
   const [open, setOpen] = useState(false);
   const p = it.proposal;
   return (
     <li className={`plan-item ${open ? "open" : ""}`}>
       <button className="plan-sum" onClick={() => setOpen(!open)} aria-expanded={open}>
         <div className="plan-title">
-          <b>{p.title}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}</b>
+          <b>{p.title}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
@@ -821,6 +827,7 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
                 <li><span>Stability bonus</span><Bar value={Math.min(1, Math.max(0, it.explanation.stabilityBonus * 10))} tone="sup" /><b>+{it.explanation.stabilityBonus.toFixed(3)}</b></li>
               </ul>
               <small className="muted">Ranking score {it.explanation.total.toFixed(3)} · margin {it.margin.toFixed(3)}</small>
+              {simulatedEffect && <p className="muted s">{simulatedEffect === "added" ? "Included only when simulated residents are counted." : "Dropped when simulated residents are counted."}</p>}
               {it.explanation.protection && (
                 <p className="muted s">
                   <span className="badge">protected: {it.explanation.protection}</span>
@@ -838,6 +845,7 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
               <p className="muted s">
                 demand {pct(it.demand.demand)} · journals {it.demand.realJournalCount} real + {it.demand.simulatedJournalCount} simulated
                 · avg priority {it.demand.avgPoints}
+                {simulatedEffect ? ` · ${simulatedEffect === "added" ? "simulated voices pushed this above the cutoff" : "simulated voices shifted this below the cutoff"}` : ""}
               </p>
               {typeof it.measuredImpact === "number" && <p className="muted s">Measured impact: {pct(it.measuredImpact)}{it.maturing ? " (maturing)" : ""}</p>}
               {it.quotes.map((q) => <blockquote key={q.text}>{q.text}<cite>{q.author}</cite></blockquote>)}
