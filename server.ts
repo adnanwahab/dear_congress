@@ -11,6 +11,7 @@ import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { assessIdea } from "./src/server/assess-idea";
+import { recordEstimate, voterKey } from "./src/server/estimate-idea";
 import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
 import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
@@ -355,7 +356,10 @@ function state(voterId = "anon") {
   return {
     needs: ctxReal.needs,
     changeLevels: CHANGE_LEVELS,
-    proposals: ctxReal.proposals,
+    // Send the estimate count and this voter's own estimate, not everyone's list.
+    proposals: ctxReal.proposals.map(({ estimates, ...p }) => (estimates?.length
+      ? { ...p, estimateCount: estimates.length, myEstimate: estimates.find((e) => e.voterKey === voterKey(voterId)) ?? null }
+      : p)),
     stats: ctxReal.stats,
     demand: ctxReal.demand,
     demandReal: ctxReal.demand,
@@ -1391,6 +1395,21 @@ export const server = Bun.serve({
         emitEntriesUpdate();
         console.log("[ADMIN_PURGE]", JSON.stringify({ mode, ...applied, backupPath }));
         return Response.json({ dryRun: false, mode, applied, backupPath, plan });
+      },
+    },
+
+    // Any voter can estimate an uncosted citizen idea so it competes in the plan.
+    "/api/emergent/:id/estimate": {
+      POST: async (req) => {
+        const voterId = resolveVoterId(req);
+        const idea = db.emergent.find((p) => p.id === req.params.id);
+        if (!idea) return bad("unknown citizen idea");
+        const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+        if (!body) return bad("JSON body required");
+        const result = recordEstimate(idea, voterId, body);
+        if ("error" in result) return bad(result.error);
+        await save();
+        return Response.json({ ok: true });
       },
     },
 

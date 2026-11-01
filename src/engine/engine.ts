@@ -302,9 +302,14 @@ export const PROVISIONAL_MIN_BACKERS = 5;
 /** Provisional ideas are untested: cap their evidence so tested programs keep the edge. */
 export const PROVISIONAL_EVIDENCE = 0.3;
 
-/** Distinct people behind an idea. Answers without a voterId each count once. */
-export function ideaBackers(answers: DB["answers"], proposalId: string): number {
-  return new Set(answers.filter((a) => a.proposalId === proposalId).map((a) => a.voterId ?? `answer:${a.id}`)).size;
+/**
+ * Distinct people behind an idea: everyone who wrote an answer grouped into it, plus everyone
+ * who voted Support or Strongly support on it. Answers without a voterId each count once.
+ */
+export function ideaBackers(answers: DB["answers"], proposalId: string, votesByVoter: DB["votesByVoter"] = {}): number {
+  const people = new Set(answers.filter((a) => a.proposalId === proposalId).map((a) => a.voterId ?? `answer:${a.id}`));
+  for (const [voterId, votes] of Object.entries(votesByVoter)) if ((votes[proposalId]?.stance ?? 0) >= 1) people.add(voterId);
+  return people.size;
 }
 
 function median(xs: number[]): number | null {
@@ -320,13 +325,25 @@ export function provisionalCostFor(needId: string, catalog: Proposal[] = PROPOSA
   return m === null ? null : round(m, 2);
 }
 
-/** An idea as the synthesizer should see it: costed provisionally if it has enough backers. */
-export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS): Proposal {
+/**
+ * An idea as the synthesizer should see it. Precedence: a reviewer's assessment (stored costB),
+ * then voters' own estimates (median), then a provisional cost once enough people back it.
+ * Unreviewed costs cap evidence, so tested programs keep the edge.
+ */
+export function withProvisionalCost(p: Proposal, answers: DB["answers"], catalog: Proposal[] = PROPOSALS, votesByVoter: DB["votesByVoter"] = {}): Proposal {
   if (!p.emergent || p.costB !== null) return p;
-  if (ideaBackers(answers, p.id) < PROVISIONAL_MIN_BACKERS) return p;
+  const evidence = Math.min(p.evidence, PROVISIONAL_EVIDENCE);
+  const est = p.estimates ?? [];
+  if (est.length) {
+    const costB = round(median(est.map((e) => e.costB))!, 3);
+    const changeLevel = Math.round(median(est.map((e) => e.changeLevel))!);
+    const latestAuthority = [...est].reverse().find((e) => e.authority?.trim())?.authority?.trim();
+    return { ...p, costB, changeLevel, evidence, ...(latestAuthority ? { authority: latestAuthority } : {}), costEstimate: "citizen" };
+  }
+  if (ideaBackers(answers, p.id, votesByVoter) < PROVISIONAL_MIN_BACKERS) return p;
   const costB = provisionalCostFor(p.needId, catalog);
   if (costB === null) return p;
-  return { ...p, costB, evidence: Math.min(p.evidence, PROVISIONAL_EVIDENCE), costEstimate: "provisional" };
+  return { ...p, costB, evidence, costEstimate: "provisional" };
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
@@ -334,7 +351,7 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: Context
   const whatIfEntries = opts.extraEntries ?? [];
   const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
-  const proposals = [...PROPOSALS, ...db.emergent.map((p) => withProvisionalCost(p, db.answers ?? []))];
+  const proposals = [...PROPOSALS, ...db.emergent.map((p) => withProvisionalCost(p, db.answers ?? [], PROPOSALS, db.votesByVoter ?? {}))];
   const outcomes = normalizeOutcomes(opts.outcomes);
 
   const stats: Record<string, ProposalStats> = {};

@@ -737,6 +737,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
                       {p.emergent && <span className="badge new">Citizen idea</span>}
                       {p.costEstimate === "provisional" && <span className="badge" title="Enough people backed this idea that it now competes in the plan, using the typical cost of this need's other options until it is reviewed.">Estimated cost</span>}
                       {p.costEstimate === "assessed" && <span className="badge" title="Cost and mechanism filled in by a reviewer.">Reviewed</span>}
+                      {p.costEstimate === "citizen" && <span className="badge" title="Cost estimated by voters (the middle of their estimates), not yet reviewed.">Voter-estimated cost</span>}
                     </div>
                     <Split s={state.stats[p.id]!} />
                     <small className="muted">{state.changeLevels[p.changeLevel]} · {p.authority} · {money(p.costB)}</small>
@@ -899,6 +900,7 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
                 <li key={p.id}>
                   <div className="pol-head"><b>{p.title}</b><span className="muted s">{money(p.costB)} · {state.changeLevels[p.changeLevel]}</span></div>
                   <Split s={state.stats[p.id]!} />
+                  {p.emergent && p.costEstimate !== "assessed" && <EstimateForm key={`${p.id}:${(p as IdeaProposal).myEstimate?.costB ?? ""}`} p={p as IdeaProposal} changeLevels={state.changeLevels} onSaved={refresh} />}
                   <div className="stances">
                     {STANCES.map((s) => (
                       <button key={s.v} className={`st st${s.v} ${v?.stance === s.v ? "on" : ""}`} onClick={() => vote(p.id, { stance: s.v })}>{s.label}</button>
@@ -922,6 +924,90 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+
+type IdeaProposal = Proposal & { estimateCount?: number; myEstimate?: { costB: number; changeLevel: number; authority?: string } | null };
+
+/** Lets any voter put a cost on an uncosted citizen idea so it competes in the plan. */
+function EstimateForm({ p, changeLevels, onSaved }: { p: IdeaProposal; changeLevels: string[]; onSaved: () => void }) {
+  const mine = p.myEstimate ?? null;
+  const [open, setOpen] = useState(false);
+  const [costM, setCostM] = useState(mine ? String(Math.round(mine.costB * 1000)) : "");
+  const [level, setLevel] = useState(mine?.changeLevel ?? 2);
+  const [authority, setAuthority] = useState(mine?.authority ?? "");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const cost = Number(costM);
+  const valid = costM.trim() !== "" && Number.isFinite(cost) && cost >= 0;
+
+  async function submit() {
+    setBusy(true); setErr("");
+    try {
+      await api(`/api/emergent/${encodeURIComponent(p.id)}/estimate`, { costB: cost / 1000, changeLevel: level, authority });
+      setOpen(false);
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally { setBusy(false); }
+  }
+
+  const status = p.costEstimate === "citizen"
+    ? `In the running at ${money(p.costB)}/yr, from ${p.estimateCount ?? 1} voter estimate${(p.estimateCount ?? 1) === 1 ? "" : "s"}.`
+    : p.costEstimate === "provisional" ? "In the running at this need's typical cost, because enough people back it."
+    : "Not in the running yet: an idea needs a cost before the plan can weigh it.";
+
+  return (
+    <div className="estimate">
+      <p className="muted s">{status} {!open && <button className="ghost small" onClick={() => setOpen(true)}>{mine ? "Change your estimate" : "Estimate its cost"}</button>}</p>
+      {open && (
+        <div className="estimate-form">
+          <label>Yearly cost ($ millions)<input inputMode="decimal" value={costM} onChange={(e) => setCostM(e.target.value)} placeholder="e.g. 50" /></label>
+          <label>Size of change<select value={level} onChange={(e) => setLevel(Number(e.target.value))}>{changeLevels.map((l, i) => <option key={l} value={i}>{l}</option>)}</select></label>
+          <label>Who would do it (optional)<input value={authority} onChange={(e) => setAuthority(e.target.value)} placeholder="e.g. Houston Health Department" /></label>
+          <div className="row">
+            <button onClick={submit} disabled={!valid || busy}>{busy ? "Saving…" : "Save estimate"}</button>
+            <button className="ghost" onClick={() => setOpen(false)}>Cancel</button>
+          </div>
+          <p className="muted s">The plan uses the middle of everyone's estimates. Unreviewed ideas are scored as less proven than existing programs, and votes still decide whether it's funded.</p>
+          {err && <p className="err s">{err}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Where each citizen idea stands in this package. */
+function CitizenIdeas({ pkg, proposals }: { pkg: PackageResult; proposals: Proposal[] }) {
+  const ideas = proposals.filter((p) => p.emergent);
+  if (!ideas.length) return null;
+  const status = (p: Proposal): { tone: string; text: string } => {
+    if (pkg.items.some((it) => it.proposal.id === p.id)) return { tone: "ok", text: "In the plan" };
+    const w = pkg.waiting.find((x) => x.id === p.id);
+    if (w) return { tone: "new", text: `Waiting: ${w.reasonDetail || w.reason}` };
+    const d = pkg.deferred.find((x) => x.id === p.id);
+    if (d) return { tone: "", text: `Not funded: ${d.reasonDetail || d.reason}` };
+    const b = pkg.blocked.find((x) => x.title === p.title);
+    if (b) return { tone: "bad", text: `Blocked: ${b.issue}` };
+    if (p.costB === null) return { tone: "", text: "Needs a cost estimate (Vote → Step 3)" };
+    return { tone: "", text: "Not funded" };
+  };
+  return (
+    <div className="citizen-ideas">
+      <h3 className="q">Citizen ideas</h3>
+      <ul>
+        {ideas.map((p) => {
+          const st = status(p);
+          return (
+            <li key={p.id}>
+              <span>{p.title} <small className="muted">· {money(p.costB)}</small></span>
+              <span className={`badge ${st.tone}`}>{st.text}</span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -1119,6 +1205,7 @@ function SynthView({ state }: { state: AppState }) {
             );
           })}
         </ol>
+        <CitizenIdeas pkg={pkg} proposals={state.proposals} />
       </div>
     );
   };
@@ -1226,7 +1313,7 @@ function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
-          <span>{money(p.costB)}{p.costEstimate === "provisional" && <small className="muted" title="Citizen idea, not yet reviewed: uses the typical cost of this need's other options."> est.</small>}</span>
+          <span>{money(p.costB)}{(p.costEstimate === "provisional" || p.costEstimate === "citizen") && <small className="muted" title="Citizen idea, not yet reviewed: estimated cost."> est.</small>}</span>
           <Split s={it.stats} />
         </div>
         <span className="chev" aria-hidden>{open ? "−" : "+"}</span>

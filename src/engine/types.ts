@@ -38,8 +38,22 @@ export interface Proposal {
    * How a citizen idea's cost was set. Absent on catalog proposals.
    * "provisional": auto-estimated from the need's other options once enough people backed it.
    * "assessed": filled in by a reviewer via /api/admin/emergent/:id/assess.
+   * "citizen": the median of voters' own estimates (POST /api/emergent/:id/estimate).
    */
-  costEstimate?: "provisional" | "assessed";
+  costEstimate?: "provisional" | "assessed" | "citizen";
+  /** Voters' own estimates for an uncosted citizen idea, one per voter (latest wins). */
+  estimates?: CitizenEstimate[];
+}
+
+export interface CitizenEstimate {
+  /** sha256 of the voter id, never the id itself: proposals are sent to every client. */
+  voterKey: string;
+  /** Annual cost in $B. */
+  costB: number;
+  /** 0 = administrative … 6 = constitutional amendment */
+  changeLevel: number;
+  authority?: string;
+  createdAt: string;
 }
 
 export interface Extraction {

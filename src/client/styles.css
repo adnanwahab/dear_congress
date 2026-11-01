@@ -251,3 +251,14 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--muted); text-align: c
 .sim-realities.ready .row { display: flex; gap: 8px; }
 .sim-realities.ready input { flex: 1; min-width: 0; font-size: 12px; }
 .sim-realities.ready p { margin: 0; }
+
+/* Citizen idea cost estimates (Vote → Step 3) and their status on Synthesize */
+.estimate { margin: 6px 0 4px; }
+.estimate .ghost.small { margin-left: 6px; }
+.estimate-form { display: grid; gap: 10px; margin-top: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.estimate-form label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.err { color: var(--opp); }
+.citizen-ideas { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.citizen-ideas ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.citizen-ideas li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.citizen-ideas .badge { margin-left: 0; white-space: normal; text-align: right; }
