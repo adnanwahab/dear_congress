@@ -1,7 +1,7 @@
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import type {
   DB, Extraction, JournalEntry, NeedDef, NeedDemand, Objection, PackageResult, PlanItem,
-  Proposal, ProposalStats, ScoreParts, Stance, UserVote, Weights,
+  Proposal, ProposalStats, ScoreParts, Stance, SynthesisOutcomes, UserVote, Weights,
 } from "./types";
 
 /* ------------------------------------------------------------------ */
@@ -174,6 +174,7 @@ export interface Context {
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
+  outcomes: { needs: Record<string, number>; items: Record<string, number>; maturing: Record<string, boolean> };
   db: DB;
 }
 
@@ -202,7 +203,8 @@ export const STABILITY_BONUS = 0.04;
 export const CHALLENGER_PERSISTENCE = 2;
 export const MAX_SWAPS_PER_RUN = 3;
 export const MAX_MONEY_MOVED_B = 8;
-const CHALLENGER_MIN_EDGE = 0.02;
+export const CHURN_ESCALATION_RUNS = 3;
+
 
 function blendWeight(realVoices: number) {
   return realVoices / (realVoices + BLEND_K);
@@ -231,6 +233,7 @@ export interface ContextOptions {
    * future-dated entries so age never goes negative.
    */
   now?: number | Date | string;
+  outcomes?: SynthesisOutcomes;
 }
 
 /** The journal entries that should count toward needs, demand and quotes. */
@@ -240,12 +243,36 @@ export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[
   return [...base, ...opts.extraEntries];
 }
 
+function normalizeOutcomes(outcomes: SynthesisOutcomes | undefined): { needs: Record<string, number>; items: Record<string, number>; maturing: Record<string, boolean> } {
+  const normalized = {
+    needs: {} as Record<string, number>,
+    items: {} as Record<string, number>,
+    maturing: {} as Record<string, boolean>,
+  };
+  if (!outcomes || typeof outcomes !== "object") return normalized;
+
+  const clamp01 = (n: unknown) => Math.max(0, Math.min(1, Number(n)));
+  for (const [needId, row] of Object.entries(outcomes.needs ?? {})) {
+    if (!row || typeof row !== "object") continue;
+    const severity = clamp01((row as { severity?: unknown }).severity);
+    if (Number.isFinite(severity)) normalized.needs[needId] = severity;
+  }
+  for (const [proposalId, row] of Object.entries(outcomes.items ?? {})) {
+    if (!row || typeof row !== "object") continue;
+    const impact = clamp01((row as { impact?: unknown }).impact);
+    if (Number.isFinite(impact)) normalized.items[proposalId] = impact;
+    normalized.maturing[proposalId] = Boolean((row as { maturing?: unknown }).maturing);
+  }
+  return normalized;
+}
+
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
   const baseEntries = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
   const whatIfEntries = opts.extraEntries ?? [];
   const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
   const proposals = [...PROPOSALS, ...db.emergent];
+  const outcomes = normalizeOutcomes(opts.outcomes);
 
   const stats: Record<string, ProposalStats> = {};
   for (const p of proposals) {
@@ -339,10 +366,11 @@ export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: Context
     needs,
     proposals,
     stats,
-    demand: computeDemand(db, voters, needs, entries, opts.now, whatIfEntries),
+    demand: computeDemand(db, voters, needs, entries, opts.now, whatIfEntries, outcomes.needs),
     mechanismShare,
     goalSupport,
     entries,
+    outcomes,
     db,
   };
 }
@@ -388,6 +416,7 @@ export function computeDemand(
   entries: JournalEntry[] = countedEntries(db),
   now: ContextOptions["now"] = undefined,
   extraEntries: JournalEntry[] = [],
+  needSeverities: Record<string, number> = {},
 ): Record<string, NeedDemand> {
   const out: Record<string, NeedDemand> = {};
   const allAllocs = Object.values(db.allocationByVoter ?? {});
@@ -407,6 +436,8 @@ export function computeDemand(
   for (const need of needs) {
     let js = 0;
     let jc = 0;
+    let realJc = 0;
+    let simJc = 0;
 
     for (const e of storedEntries) {
       const hit = e.extraction.needs.find((n) => n.id === need.id);
@@ -415,6 +446,8 @@ export function computeDemand(
       const recencyWeight = 0.5 ** (ageDays / JOURNAL_HALF_LIFE_DAYS);
       js += e.extraction.importance * hit.confidence * recencyWeight;
       jc++;
+      if (e.synthetic) simJc++;
+      else realJc++;
     }
 
     for (const e of requestExtras) {
@@ -424,6 +457,8 @@ export function computeDemand(
       const recencyWeight = 0.5 ** (ageDays / JOURNAL_HALF_LIFE_DAYS);
       js += e.extraction.importance * hit.confidence * recencyWeight;
       jc++;
+      if (e.synthetic) simJc++;
+      else realJc++;
     }
 
     const simAvgPoints = voters.reduce((s, v) => s + (v.pri[need.id] ?? 0.03) * 100, 0) / Math.max(1, voters.length);
@@ -435,15 +470,23 @@ export function computeDemand(
     out[need.id] = {
       journalScore: round(js),
       journalCount: jc,
+      realJournalCount: realJc,
+      simulatedJournalCount: simJc,
       avgPoints: round(wReal * realAvgPoints + (1 - wReal) * simAvgPoints, 1),
       demand: 0,
     };
   }
 
   const maxP = Math.max(...Object.values(out).map((d) => d.avgPoints), 1e-9);
-  for (const d of Object.values(out)) {
+  for (const [needId, d] of Object.entries(out)) {
     const journalPart = Math.min(1, d.journalScore / JOURNAL_REFERENCE);
-    d.demand = round(0.5 * journalPart + 0.5 * (d.avgPoints / maxP));
+    const votesPart = d.avgPoints / maxP;
+    if (Number.isFinite(needSeverities[needId]) && needSeverities[needId]! > 0) {
+      const severity = Math.max(0, Math.min(1, needSeverities[needId]!));
+      d.demand = round(0.4 * journalPart + 0.3 * votesPart + 0.3 * severity);
+    } else {
+      d.demand = round(0.5 * journalPart + 0.5 * votesPart);
+    }
   }
   return out;
 }
@@ -464,23 +507,77 @@ interface SelectionResult {
   spent: number;
 }
 
+interface ChurnWaiting {
+  id: string;
+  type: "add" | "remove";
+  moneyMovedB: number;
+  changeCount: number;
+  toRemoveIds: string[];
+}
+
 interface ChurnLimitResult {
   selectedIds: string[];
   churnLimited: boolean;
-  waitingIds: string[];
+  waiting: ChurnWaiting[];
+  majorChange?: PackageResult["majorChange"];
+  escalationNext: Record<string, number>;
+  churnChallengers: string[];
+}
+
+function scoreExplanation(row: Row, weights: Weights, stabilityBonus: number) {
+  const keys = Object.keys(weights) as (keyof Weights)[];
+  const wsum = keys.reduce((s, k) => s + weights[k], 0) || 1;
+  const parts = {} as { [K in keyof Weights]: { raw: number; weight: number; contribution: number } };
+
+  let sumContrib = 0;
+  for (const k of keys) {
+    const raw = row.parts[k];
+    const weight = weights[k];
+    const contribution = (raw * weight) / wsum;
+    parts[k] = { raw, weight, contribution };
+    sumContrib += contribution;
+  }
+
+  const target = row.score + row.changeCost;
+  const correction = target - sumContrib;
+  parts.evidence.contribution += correction;
+  const total = row.score + stabilityBonus;
+
+  return {
+    parts,
+    changePenalty: row.changeCost,
+    stabilityBonus,
+    total,
+  };
+}
+
+function cheapestIncumbentsToFree(incumbents: RankedRow[], needed: number): RankedRow[] {
+  if (needed <= 0) return [];
+  const sorted = incumbents
+    .filter((r) => (r.p.costB ?? 0) > 0)
+    .sort((a, b) => (a.p.costB ?? 0) - (b.p.costB ?? 0) || a.rankScore - b.rankScore || a.p.id.localeCompare(b.p.id));
+  const out: RankedRow[] = [];
+  let freed = 0;
+  for (const r of sorted) {
+    out.push(r);
+    freed += r.p.costB ?? 0;
+    if (freed >= needed) break;
+  }
+  return out;
 }
 
 export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
   const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
   return ctx.proposals.map((p) => {
     const st = ctx.stats[p.id]!;
+    const measuredImpact = Number(ctx.outcomes.items[p.id] ?? 0);
     const parts: ScoreParts = {
       support: st.support,
       welfare: round(ctx.demand[p.needId]!.demand * p.effectiveness),
       fairness: round(clamp(1 - 2.5 * st.strongOppose)),
       feasibility: round(1 - p.changeLevel / 6),
       reversibility: p.reversibility,
-      evidence: p.evidence,
+      evidence: round(clamp(Math.max(p.evidence, measuredImpact))),
     };
     const base = (Object.keys(w) as (keyof Weights)[]).reduce((s, k) => s + w[k] * parts[k], 0) / wsum;
     const changeCost = round((lambda * p.changeLevel) / 6);
@@ -499,6 +596,7 @@ function runSelection(
     incumbentIds: Set<string>;
     applyStabilityBonus: boolean;
     bonusBlockedIds?: Set<string>;
+    forceKeepIds?: Set<string>;
   },
 ): SelectionResult {
   const ranked: RankedRow[] = rows
@@ -521,18 +619,35 @@ function runSelection(
   const perNeedCount: Record<string, number> = {};
   let spent = 0;
 
-  for (const r of ranked) {
+  const maybeSelect = (r: RankedRow, forced = false) => {
     const st = ctx.stats[r.p.id]!;
-    if (r.p.rightsIssue) { blocked.push({ title: r.p.title, support: st.support, issue: r.p.rightsIssue }); continue; }
-    if (r.p.costB === null) { emerging.push({ title: r.p.title, answers: ctx.db.answers.filter((a) => a.proposalId === r.p.id).length }); continue; }
-    if (st.support <= st.oppose) { deferred.push({ row: r, reason: "More opposition than support" }); continue; }
-    if (st.support < opts.minSupport) { deferred.push({ row: r, reason: "Below democratic support floor" }); continue; }
-    if (r.rankScore < opts.minScore) { deferred.push({ row: r, reason: "Low overall score" }); continue; }
-    if ((perNeedCount[r.p.needId] ?? 0) >= opts.perNeed) { deferred.push({ row: r, reason: "Need already addressed by higher-scoring items" }); continue; }
-    if (spent + r.p.costB > opts.budget) { deferred.push({ row: r, reason: "Doesn't fit the remaining budget" }); continue; }
+    if (r.p.rightsIssue) { blocked.push({ title: r.p.title, support: st.support, issue: r.p.rightsIssue }); return false; }
+    if (r.p.costB === null) { emerging.push({ title: r.p.title, answers: ctx.db.answers.filter((a) => a.proposalId === r.p.id).length }); return false; }
+    if (st.support <= st.oppose) { if (!forced) deferred.push({ row: r, reason: "More opposition than support" }); return false; }
+    if (st.support < opts.minSupport) { if (!forced) deferred.push({ row: r, reason: "Below democratic support floor" }); return false; }
+    if (!forced && r.rankScore < opts.minScore) { deferred.push({ row: r, reason: "Low overall score" }); return false; }
+    if (!forced && (perNeedCount[r.p.needId] ?? 0) >= opts.perNeed) { deferred.push({ row: r, reason: "Need already addressed by higher-scoring items" }); return false; }
+    if (spent + r.p.costB > opts.budget) {
+      if (!forced) deferred.push({ row: r, reason: "Doesn't fit the remaining budget" });
+      return false;
+    }
     spent += r.p.costB;
     perNeedCount[r.p.needId] = (perNeedCount[r.p.needId] ?? 0) + 1;
     selected.push(r);
+    return true;
+  };
+
+  if (opts.forceKeepIds?.size) {
+    for (const fid of opts.forceKeepIds) {
+      const r = ranked.find((x) => x.p.id === fid);
+      if (!r) continue;
+      maybeSelect(r, true);
+    }
+  }
+
+  for (const r of ranked) {
+    if (selected.some((s) => s.p.id === r.p.id)) continue;
+    maybeSelect(r, false);
   }
 
   return { selected, deferred, blocked, emerging, spent };
@@ -543,9 +658,10 @@ function applyChurnLimit(
   previous: string[],
   proposedSelected: RankedRow[],
   budget: number,
+  prevEscalationStreak: Record<string, number>,
 ): ChurnLimitResult {
   if (!previous.length) {
-    return { selectedIds: proposedSelected.map((r) => r.p.id), churnLimited: false, waitingIds: [] };
+    return { selectedIds: proposedSelected.map((r) => r.p.id), churnLimited: false, waiting: [], escalationNext: {}, churnChallengers: [] };
   }
 
   const rowById = new Map(rows.map((r) => [r.p.id, r]));
@@ -563,7 +679,7 @@ function applyChurnLimit(
 
   const addedIds = new Set<string>();
   const removedIds = new Set<string>();
-  const waitingIds: string[] = [];
+  const waiting: ChurnWaiting[] = [];
 
   const removableOrder = previousIds
     .filter((id) => !proposedSet.has(id))
@@ -573,11 +689,14 @@ function applyChurnLimit(
     .filter((id) => !previousSet.has(id))
     .sort((a, b) => (proposedRowById.get(b)?.rankScore ?? 0) - (proposedRowById.get(a)?.rankScore ?? 0) || a.localeCompare(b));
 
-  const moneyMovedNow = () => round(
-    [...addedIds, ...removedIds]
-      .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
+  const totalMoved = (adds: Set<string>, removes: Set<string>) => round(
+    [...adds, ...removes].reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
     2,
   );
+
+  let majorChange: PackageResult["majorChange"] | undefined;
+  const escalationNext: Record<string, number> = {};
+  const churnChallengers = new Set<string>();
 
   for (const addId of addCandidates) {
     const addCost = costById.get(addId) ?? 0;
@@ -592,7 +711,7 @@ function applyChurnLimit(
     }
 
     if (finalCost + addCost - freed > budget) {
-      waitingIds.push(addId);
+      waiting.push({ id: addId, type: "add", moneyMovedB: totalMoved(new Set([...addedIds, addId]), removedIds), changeCount: addedIds.size + removedIds.size + 1, toRemoveIds: [] });
       continue;
     }
 
@@ -602,15 +721,31 @@ function applyChurnLimit(
     for (const rid of toRemove) nextRemoved.add(rid);
 
     const nextChanges = nextAdded.size + nextRemoved.size;
-    const nextMoneyMoved = round(
-      [...nextAdded, ...nextRemoved]
-        .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
-      2,
-    );
+    const nextMoneyMoved = totalMoved(nextAdded, nextRemoved);
 
-    if (nextChanges > MAX_SWAPS_PER_RUN || nextMoneyMoved > MAX_MONEY_MOVED_B) {
-      waitingIds.push(addId);
+    const overLimit = nextChanges > MAX_SWAPS_PER_RUN || nextMoneyMoved > MAX_MONEY_MOVED_B;
+    const displaced = toRemove[0];
+    const displacedScore = displaced ? (scoreById.get(displaced) ?? Number.POSITIVE_INFINITY) : Number.POSITIVE_INFINITY;
+    const addScore = scoreById.get(addId) ?? Number.NEGATIVE_INFINITY;
+    const qualifiesEsc = Number.isFinite(displacedScore) && addScore >= displacedScore + STABILITY_BONUS;
+    const prevEsc = prevEscalationStreak[addId] ?? 0;
+    const escNext = qualifiesEsc ? prevEsc + 1 : 0;
+    escalationNext[addId] = escNext;
+    const escalationReady = escNext >= CHURN_ESCALATION_RUNS;
+
+    if (overLimit && !escalationReady) {
+      churnChallengers.add(addId);
+      waiting.push({ id: addId, type: "add", moneyMovedB: nextMoneyMoved, changeCount: nextChanges, toRemoveIds: [...toRemove] });
       continue;
+    }
+
+    if (overLimit && escalationReady) {
+      majorChange = {
+        added: [addId],
+        removed: [...toRemove],
+        moneyMovedB: nextMoneyMoved,
+        reason: `Escalated after ${CHURN_ESCALATION_RUNS} runs: ${addId} sustained a >= ${STABILITY_BONUS.toFixed(2)} rank advantage`,
+      };
     }
 
     finalSet.add(addId);
@@ -630,13 +765,9 @@ function applyChurnLimit(
     const nextRemoved = new Set(removedIds);
     nextRemoved.add(rid);
     const nextChanges = nextAdded.size + nextRemoved.size;
-    const nextMoneyMoved = round(
-      [...nextAdded, ...nextRemoved]
-        .reduce((sum, id) => sum + (costById.get(id) ?? 0), 0),
-      2,
-    );
+    const nextMoneyMoved = totalMoved(nextAdded, nextRemoved);
     if (nextChanges > MAX_SWAPS_PER_RUN || nextMoneyMoved > MAX_MONEY_MOVED_B) {
-      waitingIds.push(rid);
+      waiting.push({ id: rid, type: "remove", moneyMovedB: nextMoneyMoved, changeCount: nextChanges, toRemoveIds: [rid] });
       continue;
     }
     finalSet.delete(rid);
@@ -644,9 +775,9 @@ function applyChurnLimit(
     removedIds.add(rid);
   }
 
-  const churnLimited = waitingIds.length > 0;
+  const churnLimited = waiting.length > 0;
   if (!churnLimited) {
-    return { selectedIds: proposedIds, churnLimited: false, waitingIds: [] };
+    return { selectedIds: proposedIds, churnLimited: false, waiting: [], majorChange, escalationNext, churnChallengers: [...churnChallengers] };
   }
 
   const selectedIds = Array.from(finalSet).sort((a, b) => {
@@ -655,11 +786,7 @@ function applyChurnLimit(
     return rb - ra || a.localeCompare(b);
   });
 
-  if (moneyMovedNow() > MAX_MONEY_MOVED_B) {
-    return { selectedIds: previousIds, churnLimited: true, waitingIds: addCandidates };
-  }
-
-  return { selectedIds, churnLimited: true, waitingIds };
+  return { selectedIds, churnLimited: true, waiting, majorChange, escalationNext, churnChallengers: [...churnChallengers] };
 }
 
 export function synthesizePackage(
@@ -676,10 +803,21 @@ export function synthesizePackage(
     minSupport?: number;
     previous?: string[];
     challengerStreak?: Record<string, number>;
+    excludeProposalId?: string;
+    _noExplain?: boolean;
   },
 ): PackageResult {
-  const { budget, perNeed = 2, minScore = 0.3, minSupport = 0.3, previous = [], challengerStreak = {} } = opts;
-  const rows = scoreAll(ctx, opts.weights, opts.lambda);
+  const {
+    budget,
+    perNeed = 2,
+    minScore = 0.3,
+    minSupport = 0.3,
+    previous = [],
+    challengerStreak = {},
+    excludeProposalId,
+    _noExplain = false,
+  } = opts;
+  const rows = scoreAll(ctx, opts.weights, opts.lambda).filter((r) => r.p.id !== excludeProposalId);
   const incumbentIds = new Set(previous);
 
   const withoutStability = runSelection(ctx, rows, {
@@ -711,19 +849,41 @@ export function synthesizePackage(
 
   const challengers = withoutStability.selected
     .filter((r) => !withBaseIds.has(r.p.id))
-    .filter((r) => r.score >= lowestDisplacedScore + CHALLENGER_MIN_EDGE)
+    .filter((r) => r.score >= lowestDisplacedScore)
     .map((r) => r.p.id);
 
+  const challengerSet = new Set(challengers);
   const previousStreakKeys = new Set(Object.keys(challengerStreak));
   const nextChallengerStreak: Record<string, number> = {};
+
+  // Base challenger streak used by persistence logic.
   for (const id of new Set([...previousStreakKeys, ...challengers])) {
-    if (challengers.includes(id)) nextChallengerStreak[id] = (challengerStreak[id] ?? 0) + 1;
+    if (id.startsWith("__escalate__:")) continue;
+    if (challengerSet.has(id)) nextChallengerStreak[id] = (challengerStreak[id] ?? 0) + 1;
     else nextChallengerStreak[id] = 0;
+  }
+
+  const prevEscalationStreak: Record<string, number> = {};
+  for (const key of previousStreakKeys) {
+    if (!key.startsWith("__escalate__:")) continue;
+    const cid = key.slice("__escalate__:".length);
+    prevEscalationStreak[cid] = challengerStreak[key] ?? 0;
+    nextChallengerStreak[key] = 0;
   }
 
   const persistentChallengers = challengers.filter((id) => (nextChallengerStreak[id] ?? 0) >= CHALLENGER_PERSISTENCE);
 
-  const displacedIncumbents = new Set(displacedIncumbentsBase);
+  const displacedIncumbents = new Set(
+    displacedIncumbentsBase.filter((id) => {
+      const impactProtected = Number(ctx.outcomes.items[id] ?? 0) >= 0.3;
+      const maturingProtected = Boolean(ctx.outcomes.maturing[id]);
+      return !(impactProtected || maturingProtected);
+    }),
+  );
+
+  const forceKeepMaturingIds = new Set(
+    previous.filter((id) => Boolean(ctx.outcomes.maturing[id])),
+  );
 
   const withStability = persistentChallengers.length
     ? runSelection(ctx, rows, {
@@ -734,14 +894,18 @@ export function synthesizePackage(
       incumbentIds,
       applyStabilityBonus: true,
       bonusBlockedIds: displacedIncumbents,
+      forceKeepIds: forceKeepMaturingIds,
     })
     : withStabilityBase;
 
-  const maxDeferredScore = withStability.deferred.reduce((m, d) => Math.max(m, d.row.rankScore), minScore);
-  const cutoffScore = withStability.selected.reduce((m, s) => Math.min(m, s.rankScore), Number.POSITIVE_INFINITY);
-  const effectiveCutoff = Number.isFinite(cutoffScore) ? cutoffScore : minScore;
+  const churn = applyChurnLimit(rows, previous, withStability.selected, budget, prevEscalationStreak);
 
-  const churn = applyChurnLimit(rows, previous, withStability.selected, budget);
+  for (const cid of churn.churnChallengers) {
+    nextChallengerStreak[cid] = Math.max(nextChallengerStreak[cid] ?? 0, (challengerStreak[cid] ?? 0) + 1);
+  }
+  for (const [cid, n] of Object.entries(churn.escalationNext)) {
+    nextChallengerStreak[`__escalate__:${cid}`] = n;
+  }
   const limitedIds = new Set(churn.selectedIds);
   const rowById = new Map(rows.map((r) => [r.p.id, r]));
   const selectedWithStabilityById = new Map(withStability.selected.map((r) => [r.p.id, r]));
@@ -764,32 +928,143 @@ export function synthesizePackage(
     .filter((x): x is RankedRow => Boolean(x))
     .sort((a, b) => b.rankScore - a.rankScore || b.score - a.score || a.p.id.localeCompare(b.p.id));
 
-  const items: PlanItem[] = limitedSelected.map((r) => {
-    const keptForStability = r.getsBonus && !selectedWithout.has(r.p.id);
-    const margin = round(r.rankScore - Math.max(minScore, maxDeferredScore));
-    return buildItem(ctx, r, keptForStability, margin);
-  });
+  const selectedIncumbents = limitedSelected
+    .filter((r) => incumbentIds.has(r.p.id))
+    .sort((a, b) => a.rankScore - b.rankScore || a.p.id.localeCompare(b.p.id));
 
-  const deferred: PackageResult["deferred"] = withStability.deferred
-    .filter((d) => !limitedIds.has(d.row.p.id))
-    .map((d) => ({
+  const totalCost = round(limitedSelected.reduce((sum, r) => sum + (r.p.costB ?? 0), 0), 2);
+  const remainingBudget = Math.max(0, budget - totalCost);
+
+  const fmtB = (n: number) => n.toFixed(1).replace(/\.0$/, "");
+
+  const displacedIncumbentFor = (candidate: RankedRow): RankedRow | null => {
+    const need = Math.max(0, (candidate.p.costB ?? 0) - remainingBudget);
+    if (need <= 0) return selectedIncumbents[0] ?? null;
+    let freed = 0;
+    for (const inc of selectedIncumbents) {
+      freed += inc.p.costB ?? 0;
+      if (freed >= need) return inc;
+    }
+    return selectedIncumbents[0] ?? null;
+  };
+
+  const deferredRows = withStability.deferred.filter((d) => !limitedIds.has(d.row.p.id));
+  const challengerNeed = CHALLENGER_PERSISTENCE;
+  const churnChallengerSet = new Set(churn.churnChallengers);
+
+  const deferred: PackageResult["deferred"] = deferredRows.map((d) => {
+    const inc = displacedIncumbentFor(d.row);
+    const incRank = inc?.rankScore ?? d.row.rankScore;
+    const margin = round(incRank - d.row.rankScore, 3);
+
+    let reasonDetail = d.reason;
+    if (d.reason === "Below democratic support floor") {
+      const support = ctx.stats[d.row.p.id]!.support;
+      reasonDetail = `support ${support.toFixed(2)} < floor ${minSupport.toFixed(2)}`;
+    } else if (d.reason === "Doesn't fit the remaining budget") {
+      const left = Math.max(0, remainingBudget);
+      const needed = Math.max(0, (d.row.p.costB ?? 0) - left);
+      const lowerRanked = limitedSelected.filter((r) => r.rankScore < d.row.rankScore);
+      let swapSet = cheapestIncumbentsToFree(lowerRanked, needed);
+      let freed = swapSet.reduce((s, r) => s + (r.p.costB ?? 0), 0);
+      if (freed < needed) {
+        swapSet = cheapestIncumbentsToFree(limitedSelected, needed);
+        freed = swapSet.reduce((s, r) => s + (r.p.costB ?? 0), 0);
+      }
+      const swapNames = swapSet.map((r) => r.p.id).join(" + ") || "none";
+      const alt = inc && !swapSet.some((x) => x.p.id === inc.p.id) ? ` or ${inc.p.id}` : "";
+      reasonDetail = `needs $${fmtB(needed)}B, $${fmtB(left)}B left — would have to replace ${swapNames}${alt}`;
+    }
+
+    const cid = d.row.p.id;
+    const streak = nextChallengerStreak[cid] ?? 0;
+    if ((challengerSet.has(cid) || churnChallengerSet.has(cid)) && streak < challengerNeed) {
+      const chall = `challenger: ${streak} of ${challengerNeed} required runs`;
+      reasonDetail = reasonDetail === d.reason ? chall : `${reasonDetail}; ${chall}`;
+    }
+
+    return {
+      id: d.row.p.id,
       title: d.row.p.title,
       costB: d.row.p.costB ?? 0,
       support: ctx.stats[d.row.p.id]!.support,
       reason: d.reason,
-      margin: round(Math.max(minScore, effectiveCutoff) - d.row.rankScore),
-    }));
+      reasonDetail,
+      margin,
+    };
+  });
 
-  const waiting: PackageResult["waiting"] = churn.waitingIds
-    .map((id) => {
-      const row = rowById.get(id);
+  const bestDeferredByIncumbent = new Map<string, RankedRow>();
+  for (const d of deferredRows) {
+    const inc = displacedIncumbentFor(d.row);
+    if (!inc) continue;
+    const prevBest = bestDeferredByIncumbent.get(inc.p.id);
+    if (!prevBest || d.row.rankScore > prevBest.rankScore) bestDeferredByIncumbent.set(inc.p.id, d.row);
+  }
+
+  const currentIdsForIfDropped = new Set(limitedSelected.map((x) => x.p.id));
+  const items: PlanItem[] = limitedSelected.map((r) => {
+    const keptForStability = r.getsBonus && !selectedWithout.has(r.p.id);
+    const bestDeferred = bestDeferredByIncumbent.get(r.p.id);
+    const margin = round(r.rankScore - (bestDeferred?.rankScore ?? r.rankScore), 3);
+    const stabilityBonus = round(r.rankScore - r.score, 9);
+
+    const baseExplanation = scoreExplanation(r, opts.weights, stabilityBonus);
+    const impact = Number(ctx.outcomes.items[r.p.id] ?? 0);
+    const maturing = Boolean(ctx.outcomes.maturing[r.p.id]);
+    const protection: PlanItem["explanation"]["protection"] = maturing
+      ? "maturing"
+      : (impact >= 0.3 ? "impact" : (keptForStability ? "stability" : undefined));
+
+    const protectedFrom = protection && bestDeferred
+      ? {
+        id: bestDeferred.p.id,
+        title: bestDeferred.p.title,
+        streak: nextChallengerStreak[bestDeferred.p.id] ?? 0,
+        needed: CHALLENGER_PERSISTENCE,
+      }
+      : undefined;
+
+    const ifDropped = (() => {
+      if (_noExplain) return { freesB: r.p.costB ?? 0, wouldAdd: [] as { id: string; title: string; costB: number }[] };
+      const alt = synthesizePackage(ctx, {
+        ...opts,
+        previous,
+        challengerStreak,
+        excludeProposalId: r.p.id,
+        _noExplain: true,
+      });
+      const keepSet = new Set(currentIdsForIfDropped);
+      keepSet.delete(r.p.id);
+      const wouldAdd = alt.items
+        .filter((x) => !keepSet.has(x.proposal.id))
+        .map((x) => ({ id: x.proposal.id, title: x.proposal.title, costB: x.proposal.costB ?? 0 }));
+      return { freesB: r.p.costB ?? 0, wouldAdd };
+    })();
+
+    return buildItem(ctx, r, keptForStability, margin, {
+      ...baseExplanation,
+      protection,
+      protectedFrom,
+      ifDropped,
+    });
+  });
+
+  const waiting: PackageResult["waiting"] = churn.waiting
+    .map((w) => {
+      const row = rowById.get(w.id);
       if (!row) return null;
+      const streak = nextChallengerStreak[w.id] ?? 0;
+      const challengerDetail = churnChallengerSet.has(w.id) && streak < challengerNeed
+        ? `; challenger: ${streak} of ${challengerNeed} required runs`
+        : "";
       return {
-        id,
+        id: w.id,
         title: row.p.title,
         costB: row.p.costB ?? 0,
-        margin: round(row.score - Math.max(minScore, effectiveCutoff), 3),
-        reason: `Churn cap (${MAX_SWAPS_PER_RUN} items / $${MAX_MONEY_MOVED_B}B)`,
+        margin: round(row.score, 3),
+        reason: "churn-limited",
+        reasonDetail: `churn-limited: would move $${w.moneyMovedB}B (limit $${MAX_MONEY_MOVED_B}B)${challengerDetail}`,
       };
     })
     .filter((x): x is PackageResult["waiting"][number] => Boolean(x));
@@ -802,7 +1077,6 @@ export function synthesizePackage(
   const costById = new Map(ctx.proposals.map((p) => [p.id, p.costB ?? 0]));
   const moneyMovedB = round([...added, ...removed].reduce((sum, id) => sum + (costById.get(id) ?? 0), 0), 2);
 
-  const totalCost = round(items.reduce((sum, i) => sum + (i.proposal.costB ?? 0), 0), 2);
   const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
   return {
     id: opts.id, name: opts.name, description: opts.description,
@@ -814,15 +1088,22 @@ export function synthesizePackage(
     challengerStreak: nextChallengerStreak,
     churnLimited: churn.churnLimited,
     waiting,
+    majorChange: churn.majorChange,
   };
 }
 
-function buildItem(ctx: Context, r: Row, keptForStability: boolean, margin: number): PlanItem {
+function buildItem(
+  ctx: Context,
+  r: Row,
+  keptForStability: boolean,
+  margin: number,
+  explanation: PlanItem["explanation"],
+): PlanItem {
   const p = r.p;
   const st = ctx.stats[p.id]!;
   const need = ctx.needs.find((n) => n.id === p.needId) ?? NEEDS.find((n) => n.id === p.needId)!;
   const quotes = ctx.entries
-    .filter((e) => e.extraction.needs.some((n) => n.id === p.needId))
+    .filter((e) => !e.synthetic && e.extraction.needs.some((n) => n.id === p.needId))
     .sort((a, b) => Number(!!a.seeded) - Number(!!b.seeded) || b.extraction.importance - a.extraction.importance)
     .slice(0, 3)
     .map((e) => ({ author: e.author, text: e.text }));
@@ -830,6 +1111,8 @@ function buildItem(ctx: Context, r: Row, keptForStability: boolean, margin: numb
   const rollout = p.changeLevel >= 3 || p.reversibility < 0.5
     ? "Pilot in 5 jurisdictions for 24 months, then review against metrics"
     : "Roll out through the existing mechanism, with a 24-month review";
+  const measuredImpact = Number.isFinite(ctx.outcomes.items[p.id]) ? Number(ctx.outcomes.items[p.id]) : undefined;
+  const maturing = Boolean(ctx.outcomes.maturing[p.id]);
   return {
     proposal: p,
     needLabel: need.label,
@@ -844,6 +1127,9 @@ function buildItem(ctx: Context, r: Row, keptForStability: boolean, margin: numb
     newAgency: p.changeLevel >= 5,
     keptForStability,
     margin,
+    explanation,
+    measuredImpact,
+    maturing,
     handoff: {
       proposal: p.title,
       citizen_support: st.support,

@@ -4,7 +4,7 @@ import {
   ARCHETYPES, POPULATION, buildContext, clusterAnswer, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
 import type { Context } from "./src/engine/engine";
-import type { DB, JournalEntry, NeedDef, Proposal, UserVote, Weights } from "./src/engine/types";
+import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 import { extractWithLLM } from "./src/server/llm-extract";
 import { journalClientSchema } from "./src/server/publish-draft";
@@ -461,6 +461,47 @@ function parseChallengerStreak(input: unknown) {
   }
 
   return { ok: true as const, challengerStreak: out };
+}
+
+function parseOutcomes(input: unknown) {
+  if (input === undefined) return { ok: true as const, outcomes: undefined as SynthesisOutcomes | undefined };
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { ok: false as const, error: "outcomes must be an object" };
+  }
+
+  const out: SynthesisOutcomes = { needs: {}, items: {} };
+  const root = input as Record<string, unknown>;
+
+  if (root.needs !== undefined) {
+    if (!root.needs || typeof root.needs !== "object" || Array.isArray(root.needs)) {
+      return { ok: false as const, error: "outcomes.needs must be an object keyed by need id" };
+    }
+    for (const [needId, row] of Object.entries(root.needs as Record<string, unknown>)) {
+      if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+      const severityRaw = (row as { severity?: unknown }).severity;
+      const severityNum = Number(severityRaw);
+      if (!Number.isFinite(severityNum)) continue;
+      out.needs![needId] = { severity: Math.max(0, Math.min(1, severityNum)) };
+    }
+  }
+
+  if (root.items !== undefined) {
+    if (!root.items || typeof root.items !== "object" || Array.isArray(root.items)) {
+      return { ok: false as const, error: "outcomes.items must be an object keyed by proposal id" };
+    }
+    for (const [proposalId, row] of Object.entries(root.items as Record<string, unknown>)) {
+      if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+      const impactRaw = (row as { impact?: unknown }).impact;
+      const impactNum = Number(impactRaw);
+      if (!Number.isFinite(impactNum)) continue;
+      out.items![proposalId] = {
+        impact: Math.max(0, Math.min(1, impactNum)),
+        maturing: Boolean((row as { maturing?: unknown }).maturing),
+      };
+    }
+  }
+
+  return { ok: true as const, outcomes: out };
 }
 
 function parseWhatIfExtraEntries(input: unknown) {
@@ -956,7 +997,7 @@ export const server = Bun.serve({
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
@@ -965,6 +1006,7 @@ export const server = Bun.serve({
           previous?: Record<string, string[]>;
           challengerStreak?: Record<string, Record<string, number>>;
           now?: string | number;
+          outcomes?: SynthesisOutcomes;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
@@ -973,12 +1015,15 @@ export const server = Bun.serve({
         if (!parsedPrev.ok) return bad(parsedPrev.error);
         const parsedChallengerStreak = parseChallengerStreak(challengerStreak);
         if (!parsedChallengerStreak.ok) return bad(parsedChallengerStreak.error);
+        const parsedOutcomes = parseOutcomes(outcomes);
+        if (!parsedOutcomes.ok) return bad(parsedOutcomes.error);
 
         const hasWhatIfEntries = parsed.entries.length > 0;
         const ctx = buildContext(db, undefined, {
           includeSynthetic: includeSynthetic === true,
           extraEntries: parsed.entries,
           now,
+          outcomes: parsedOutcomes.outcomes,
         });
         const previousUsed = parsedPrev.previous ?? db.lastPlan;
         const challengerStreakUsed = parsedChallengerStreak.challengerStreak ?? db.challengerStreak;

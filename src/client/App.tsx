@@ -761,10 +761,26 @@ function SynthView({ state }: { state: AppState }) {
           <details className="card">
             <summary>Everything else considered ({pkg.deferred.length})</summary>
             <table className="mech">
-              <thead><tr><th>Option</th><th>Cost</th><th>Support</th><th>Why not included</th></tr></thead>
-              <tbody>{pkg.deferred.map((d) => <tr key={d.title}><td>{d.title}{isEdge(d.margin) && <span className="badge new" title="This option is near the selection cutoff; a small score shift could flip it in.">on the edge</span>}</td><td>{money(d.costB)}</td><td>{pct(d.support)}</td><td>{d.reason}</td></tr>)}</tbody>
+              <thead><tr><th>Option</th><th>Cost</th><th>Support</th><th>Why not included</th><th>Details</th></tr></thead>
+              <tbody>{pkg.deferred.map((d) => <tr key={d.id}><td>{d.title}{isEdge(d.margin) && <span className="badge new" title="This option is near the selection cutoff; a small score shift could flip it in.">on the edge</span>}{d.reasonDetail.includes("challenger:") && <span className="badge" title="Persistent challenger">challenger</span>}</td><td>{money(d.costB)}</td><td>{pct(d.support)}</td><td>{d.reason}</td><td>{d.reasonDetail}</td></tr>)}</tbody>
             </table>
           </details>
+
+          {pkg.waiting.length > 0 && (
+            <details className="card">
+              <summary>Waiting due to churn limits ({pkg.waiting.length})</summary>
+              <ul className="plain">
+                {pkg.waiting.map((w) => (
+                  <li key={w.id}>
+                    <b>{w.id}</b> — {w.title} ({money(w.costB)})
+                    <span className="badge">waiting</span>
+                    {w.reasonDetail.includes("challenger:") && <span className="badge">challenger</span>}
+                    <div className="muted s">{w.reasonDetail}</div>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </>)}
       </section>
     </div>
@@ -794,17 +810,36 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
             <div>
               <h4>Why?</h4>
               <ul className="bars">
-                <li><span>Need demand</span><Bar value={it.demand.demand} /><b>{pct(it.demand.demand)}</b></li>
-                <li><span>Prefer this approach</span><Bar value={it.mechanismShare} /><b>{pct(it.mechanismShare)}</b></li>
-                <li><span>Support</span><Bar value={it.stats.support} tone="sup" /><b>{pct(it.stats.support)}</b></li>
-                <li><span>Feasibility</span><Bar value={it.parts.feasibility} /><b>{pct(it.parts.feasibility)}</b></li>
-                <li><span>Evidence</span><Bar value={it.parts.evidence} /><b>{pct(it.parts.evidence)}</b></li>
+                {(Object.entries(it.explanation.parts) as Array<[keyof Weights, { raw: number; weight: number; contribution: number }]>).map(([k, part]) => (
+                  <li key={k}>
+                    <span>{WEIGHT_LABELS[k]} · raw {part.raw.toFixed(2)} × w {part.weight.toFixed(2)}</span>
+                    <Bar value={Math.min(1, Math.max(0, part.raw))} />
+                    <b>{part.contribution.toFixed(3)}</b>
+                  </li>
+                ))}
+                <li><span>Change penalty</span><Bar value={Math.min(1, Math.max(0, it.explanation.changePenalty))} tone="opp" /><b>−{it.explanation.changePenalty.toFixed(3)}</b></li>
+                <li><span>Stability bonus</span><Bar value={Math.min(1, Math.max(0, it.explanation.stabilityBonus * 10))} tone="sup" /><b>+{it.explanation.stabilityBonus.toFixed(3)}</b></li>
               </ul>
-              <small className="muted">Score {it.score.toFixed(2)} (change penalty −{it.changeCost.toFixed(2)}) · margin {it.margin.toFixed(2)}</small>
+              <small className="muted">Ranking score {it.explanation.total.toFixed(3)} · margin {it.margin.toFixed(3)}</small>
+              {it.explanation.protection && (
+                <p className="muted s">
+                  <span className="badge">protected: {it.explanation.protection}</span>
+                  {it.explanation.protectedFrom && (
+                    <>
+                      {" "}against <code>{it.explanation.protectedFrom.id}</code>
+                      {" "}(streak {it.explanation.protectedFrom.streak}/{it.explanation.protectedFrom.needed})
+                    </>
+                  )}
+                </p>
+              )}
             </div>
             <div>
               <h4>Who asked for this?</h4>
-              <p className="muted s">{it.demand.journalCount} journal entries · {it.demand.avgPoints} avg priority points</p>
+              <p className="muted s">
+                demand {pct(it.demand.demand)} · journals {it.demand.realJournalCount} real + {it.demand.simulatedJournalCount} simulated
+                · avg priority {it.demand.avgPoints}
+              </p>
+              {typeof it.measuredImpact === "number" && <p className="muted s">Measured impact: {pct(it.measuredImpact)}{it.maturing ? " (maturing)" : ""}</p>}
               {it.quotes.map((q) => <blockquote key={q.text}>{q.text}<cite>{q.author}</cite></blockquote>)}
               {it.yourAnswers.map((a) => <blockquote key={a} className="mine">{a}<cite>Your idea</cite></blockquote>)}
             </div>
@@ -821,7 +856,12 @@ function PlanRow({ it, state }: { it: PlanItem; state: AppState }) {
               </ul>
             </div>
             <div>
-              <h4>Changed because of those objections</h4>
+              <h4>If dropped now</h4>
+              <p className="muted s">Would free {money(it.explanation.ifDropped.freesB)} and likely bring in:</p>
+              {it.explanation.ifDropped.wouldAdd.length
+                ? <ul className="plain">{it.explanation.ifDropped.wouldAdd.map((w) => <li key={w.id}><code>{w.id}</code> — {w.title} ({money(w.costB)})</li>)}</ul>
+                : <p className="muted">No replacement item selected in the immediate rerun.</p>}
+              <h4>Changed because of objections</h4>
               {it.mitigations.length ? <ul className="plain">{it.mitigations.map((m) => <li key={m}>{m}</li>)}</ul> : <p className="muted">No objection cited by 15%+ of opponents.</p>}
             </div>
           </div>

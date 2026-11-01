@@ -125,6 +125,8 @@ export interface ProposalStats {
 export interface NeedDemand {
   journalScore: number;
   journalCount: number;
+  realJournalCount: number;
+  simulatedJournalCount: number;
   avgPoints: number;
   demand: number; // 0..1 blended
 }
@@ -136,6 +138,16 @@ export interface ScoreParts {
   feasibility: number;
   reversibility: number;
   evidence: number;
+}
+
+export interface PlanItemExplanation {
+  parts: { [K in keyof Weights]: { raw: number; weight: number; contribution: number } };
+  changePenalty: number;
+  stabilityBonus: number;
+  total: number;
+  protection?: "maturing" | "impact" | "stability";
+  protectedFrom?: { id: string; title: string; streak: number; needed: number };
+  ifDropped: { freesB: number; wouldAdd: { id: string; title: string; costB: number }[] };
 }
 
 export interface PlanItem {
@@ -155,6 +167,21 @@ export interface PlanItem {
   handoff: Record<string, unknown>;
   keptForStability: boolean;
   margin: number;
+  explanation: PlanItemExplanation;
+  measuredImpact?: number;
+  maturing?: boolean;
+}
+
+export interface SynthesisOutcomes {
+  needs?: Record<string, { severity: number }>;
+  items?: Record<string, { impact: number; maturing?: boolean }>;
+}
+
+export interface MajorChange {
+  added: string[];
+  removed: string[];
+  moneyMovedB: number;
+  reason: string;
 }
 
 export interface PackageResult {
@@ -166,12 +193,13 @@ export interface PackageResult {
   budget: number;
   avgSupport: number;
   avgChange: number;
-  deferred: { title: string; costB: number; support: number; reason: string; margin: number }[];
+  deferred: { id: string; title: string; costB: number; support: number; reason: string; reasonDetail: string; margin: number }[];
   blocked: { title: string; support: number; issue: string }[];
   emerging: { title: string; answers: number }[];
   unfundedPopularCost: number;
   changesFromPrevious: { added: string[]; removed: string[]; moneyMovedB: number };
   challengerStreak: Record<string, number>;
   churnLimited: boolean;
-  waiting: { id: string; title: string; costB: number; margin: number; reason: string }[];
+  waiting: { id: string; title: string; costB: number; margin: number; reason: string; reasonDetail: string }[];
+  majorChange?: MajorChange;
 }

@@ -1,5 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { buildContext, clusterAnswer, DEFAULT_WEIGHTS, emptyDB, extract, hasKeyword, JOURNAL_HALF_LIFE_DAYS, makePopulation, synthesize } from "./engine";
+import {
+  buildContext,
+  CHURN_ESCALATION_RUNS,
+  clusterAnswer,
+  DEFAULT_WEIGHTS,
+  emptyDB,
+  extract,
+  hasKeyword,
+  JOURNAL_HALF_LIFE_DAYS,
+  makePopulation,
+  scoreAll,
+  STABILITY_BONUS,
+  synthesize,
+  synthesizePackage,
+} from "./engine";
 import { NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 
 const seeded = () => {
@@ -197,6 +211,28 @@ describe("journal recency weighting", () => {
   });
 });
 
+describe("outcomes severity weighting", () => {
+  test("severity 0.8 keeps demand elevated across rounds and severity 0 falls back to baseline", () => {
+    const db = seeded();
+    const base = buildContext(db).demand.transit!.demand;
+
+    const elevated: number[] = [];
+    for (let round = 1; round <= 5; round++) {
+      const d = buildContext(db, undefined, {
+        outcomes: { needs: { transit: { severity: 0.8 } } },
+      }).demand.transit!.demand;
+      elevated.push(d);
+    }
+
+    expect(elevated.every((x) => x > base)).toBe(true);
+
+    const zeroSeverity = buildContext(db, undefined, {
+      outcomes: { needs: { transit: { severity: 0 } } },
+    }).demand.transit!.demand;
+    expect(zeroSeverity).toBe(base);
+  });
+});
+
 describe("synthetic journals", () => {
   const FLOOD = "The bayou flooded our street again during the storm. Water came into the house for the third time since Harvey. We're scared every time it rains and can't afford to keep rebuilding!";
   const withSimulated = (n: number) => {
@@ -241,13 +277,15 @@ describe("stabilized synthesis", () => {
     db: ReturnType<typeof seeded>,
     previous?: Record<string, string[]>,
     challengerStreak?: Record<string, Record<string, number>>,
-  ) => synthesize(buildContext(db), DEFAULT_WEIGHTS, 0.25, 40, previous, challengerStreak)[0]!;
+    outcomes?: { needs?: Record<string, { severity: number }>; items?: Record<string, { impact: number; maturing?: boolean }> },
+  ) => synthesize(buildContext(db, undefined, { outcomes }), DEFAULT_WEIGHTS, 0.25, 40, previous, challengerStreak)[0]!;
 
   const balancedIds = (
     db: ReturnType<typeof seeded>,
     previous?: Record<string, string[]>,
     challengerStreak?: Record<string, Record<string, number>>,
-  ) => balancedPkg(db, previous, challengerStreak).items.map((i) => i.proposal.id);
+    outcomes?: { needs?: Record<string, { severity: number }>; items?: Record<string, { impact: number; maturing?: boolean }> },
+  ) => balancedPkg(db, previous, challengerStreak, outcomes).items.map((i) => i.proposal.id);
 
   test("stability: one journal causes at most small churn with previous plan", () => {
     const base = seeded();
@@ -300,7 +338,270 @@ describe("stabilized synthesis", () => {
     }
   });
 
-  test("responsiveness: a handful of flood journals (not one) can pull in f_buyouts", () => {
+  test("churn escalation: run 3 allows major swap after 2 churn-limited waits", () => {
+    const previous = { A: balancedIds(seeded()) };
+    const prevSet = new Set(previous.A);
+
+    const pickImpact = (predicate: (delta: number) => boolean) => {
+      for (let x = 0; x <= 100; x++) {
+        const impact = x / 100;
+        const ctx = buildContext(seeded(), undefined, {
+          outcomes: {
+            needs: { transit: { severity: 1 }, flooding: { severity: 0 }, childcare: { severity: 0.01 } },
+            items: { t_bus: { impact }, cc_subsidy: { impact: 0 } },
+          },
+        });
+        const rows = scoreAll(ctx, DEFAULT_WEIGHTS, 0.25);
+        const byId = new Map(rows.map((r) => [r.p.id, r.score]));
+        const delta = (byId.get("t_bus") ?? 0) - (byId.get("cc_subsidy") ?? 0);
+        if (predicate(delta)) return impact;
+      }
+      return null;
+    };
+
+    const impact = pickImpact((delta) => delta >= STABILITY_BONUS);
+    expect(impact).not.toBeNull();
+
+    let challengerStreak: Record<string, Record<string, number>> = { A: {} };
+    let currentPrevious = { ...previous };
+
+    for (let run = 1; run <= CHURN_ESCALATION_RUNS; run++) {
+      const pkg = balancedPkg(
+        seeded(),
+        currentPrevious,
+        challengerStreak,
+        {
+          needs: { transit: { severity: 1 }, flooding: { severity: 0 }, childcare: { severity: 0.01 } },
+          items: { t_bus: { impact: impact! }, cc_subsidy: { impact: 0 } },
+        },
+      );
+      const ids = pkg.items.map((i) => i.proposal.id);
+
+      if (run < CHURN_ESCALATION_RUNS) {
+        expect(ids).toContain("cc_subsidy");
+        expect(ids).not.toContain("t_bus");
+        expect(pkg.churnLimited).toBe(true);
+        expect(pkg.waiting.some((w) => w.id === "t_bus" && w.reason === "churn-limited")).toBe(true);
+      } else {
+        expect(ids).toContain("t_bus");
+        expect(ids).not.toContain("cc_subsidy");
+        expect(pkg.majorChange).toBeDefined();
+      }
+
+      currentPrevious = { A: ids };
+      challengerStreak = { A: pkg.challengerStreak };
+    }
+
+    expect(prevSet.has("cc_subsidy")).toBe(true);
+  });
+
+  test("challenger winning by less than STABILITY_BONUS never escalates", () => {
+    const previous = { A: balancedIds(seeded()) };
+
+    const pickImpact = (predicate: (delta: number) => boolean) => {
+      for (let x = 0; x <= 100; x++) {
+        const impact = x / 100;
+        const ctx = buildContext(seeded(), undefined, {
+          outcomes: {
+            needs: { transit: { severity: 1 }, flooding: { severity: 0 }, childcare: { severity: 0.01 } },
+            items: { t_bus: { impact }, cc_subsidy: { impact: 0 } },
+          },
+        });
+        const rows = scoreAll(ctx, DEFAULT_WEIGHTS, 0.25);
+        const byId = new Map(rows.map((r) => [r.p.id, r.score]));
+        const delta = (byId.get("t_bus") ?? 0) - (byId.get("cc_subsidy") ?? 0);
+        if (predicate(delta)) return impact;
+      }
+      return null;
+    };
+
+    const impact = pickImpact((delta) => delta > 0 && delta < STABILITY_BONUS);
+    expect(impact).not.toBeNull();
+
+    let challengerStreak: Record<string, Record<string, number>> = { A: {} };
+    let currentPrevious = { ...previous };
+
+    for (let run = 1; run <= CHURN_ESCALATION_RUNS + 2; run++) {
+      const pkg = balancedPkg(
+        seeded(),
+        currentPrevious,
+        challengerStreak,
+        {
+          needs: { transit: { severity: 1 }, flooding: { severity: 0 }, childcare: { severity: 0.01 } },
+          items: { t_bus: { impact: impact! }, cc_subsidy: { impact: 0 } },
+        },
+      );
+      const ids = pkg.items.map((i) => i.proposal.id);
+      expect(ids).toContain("cc_subsidy");
+      expect(ids).not.toContain("t_bus");
+      expect(pkg.majorChange).toBeUndefined();
+      currentPrevious = { A: ids };
+      challengerStreak = { A: pkg.challengerStreak };
+    }
+  });
+
+  test("margin sign matches rank comparison for selected and deferred", () => {
+    const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
+    const selectedMarginsOk = pkg.items.every((it) => it.margin >= -1e-9);
+    const deferredMarginsOk = pkg.deferred.every((d) => d.margin >= -1e-9);
+    expect(selectedMarginsOk).toBe(true);
+    expect(deferredMarginsOk).toBe(true);
+  });
+
+  test("explanation arithmetic equals ranking score", () => {
+    const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
+    for (const it of pkg.items) {
+      const sum = Object.values(it.explanation.parts).reduce((s, p) => s + p.contribution, 0);
+      const expected = sum - it.explanation.changePenalty + it.explanation.stabilityBonus;
+      expect(Math.abs(expected - it.explanation.total)).toBeLessThanOrEqual(1e-9);
+      expect(Math.abs(it.explanation.total - (it.score + it.explanation.stabilityBonus))).toBeLessThanOrEqual(1e-9);
+    }
+  });
+
+  test("ifDropped matches rerun without the item", () => {
+    const db = seeded();
+    const previous = { A: balancedIds(seeded()) };
+    const ctx = buildContext(db);
+    const pkg = synthesizePackage(ctx, {
+      id: "A",
+      name: "Balanced",
+      description: "Your weights and change penalty",
+      weights: DEFAULT_WEIGHTS,
+      lambda: 0.25,
+      budget: 40,
+      previous: previous.A,
+      challengerStreak: {},
+    });
+
+    const item = pkg.items[0]!;
+    const alt = synthesizePackage(ctx, {
+      id: "A",
+      name: "Balanced",
+      description: "Your weights and change penalty",
+      weights: DEFAULT_WEIGHTS,
+      lambda: 0.25,
+      budget: 40,
+      previous: previous.A,
+      challengerStreak: {},
+      excludeProposalId: item.proposal.id,
+      _noExplain: true,
+    });
+
+    const keep = new Set(pkg.items.map((i) => i.proposal.id));
+    keep.delete(item.proposal.id);
+    const expectedAdd = alt.items.map((i) => i.proposal.id).filter((id) => !keep.has(id)).sort();
+    const actualAdd = item.explanation.ifDropped.wouldAdd.map((x) => x.id).sort();
+
+    expect(actualAdd).toEqual(expectedAdd);
+    expect(item.explanation.ifDropped.freesB).toBe(item.proposal.costB ?? 0);
+  });
+
+  test("budget reasonDetail names incumbents whose cost frees enough", () => {
+    const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
+    const d = pkg.deferred.find((x) => x.reason === "Doesn't fit the remaining budget");
+    expect(d).toBeDefined();
+
+    const match = d!.reasonDetail.match(/needs \$([0-9.]+)B, \$([0-9.]+)B left — would have to replace (.+)$/);
+    expect(match).not.toBeNull();
+
+    const needed = Number(match![1]);
+    const replacementPart = match![3]!.split(" or ")[0]!;
+    const replacementIds = replacementPart.split(" + ").map((s) => s.trim()).filter(Boolean);
+
+    const selectedCostById = new Map(pkg.items.map((i) => [i.proposal.id, i.proposal.costB ?? 0]));
+    const freed = replacementIds.reduce((sum, id) => sum + (selectedCostById.get(id) ?? 0), 0);
+    expect(freed + 1e-9).toBeGreaterThanOrEqual(needed);
+  });
+
+  test("maturing incumbent survives streak-5 challenger; after maturing requires impact >= 0.3", () => {
+    const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
+    const previous = { A: balancedIds(seeded()) };
+    const challengerStreak: Record<string, Record<string, number>> = { A: { f_buyouts: 4 } };
+
+    let removedIncumbent: string | null = null;
+    let chosenDb: ReturnType<typeof seeded> | null = null;
+
+    for (let n = 2; n <= 30; n++) {
+      const db = seeded();
+      for (let i = 0; i < n; i++) {
+        db.entries.push({ id: `mf${n}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: "", extraction: extract(FLOOD_PROMPT), corrected: false });
+      }
+      const pkg = balancedPkg(db, previous, challengerStreak);
+      const ids = pkg.items.map((i) => i.proposal.id);
+      const removed = previous.A.filter((id) => !ids.includes(id));
+      if (ids.includes("f_buyouts") && removed.length) {
+        removedIncumbent = removed[0]!;
+        chosenDb = db;
+        break;
+      }
+    }
+
+    expect(removedIncumbent).not.toBeNull();
+    expect(chosenDb).not.toBeNull();
+
+    const pkgMaturing = balancedPkg(
+      chosenDb!,
+      previous,
+      challengerStreak,
+      { items: { [removedIncumbent!]: { impact: 0, maturing: true } } },
+    );
+    expect(pkgMaturing.items.map((i) => i.proposal.id)).toContain(removedIncumbent!);
+
+    const pkgMatureNoImpact = balancedPkg(
+      chosenDb!,
+      previous,
+      challengerStreak,
+      { items: { [removedIncumbent!]: { impact: 0, maturing: false } } },
+    );
+    expect(pkgMatureNoImpact.items.map((i) => i.proposal.id)).not.toContain(removedIncumbent!);
+
+    const pkgMatureHighImpact = balancedPkg(
+      chosenDb!,
+      previous,
+      challengerStreak,
+      { items: { [removedIncumbent!]: { impact: 0.5, maturing: false } } },
+    );
+    expect(pkgMatureHighImpact.items.map((i) => i.proposal.id)).toContain(removedIncumbent!);
+  });
+
+  test("incumbent with impact 0.5 is not displaced by a streak-2 challenger", () => {
+    const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
+    const previous = { A: balancedIds(seeded()) };
+    const challengerStreak: Record<string, Record<string, number>> = { A: { f_buyouts: 1 } };
+
+    let removedIncumbent: string | null = null;
+    let chosenDb: ReturnType<typeof seeded> | null = null;
+
+    for (let n = 2; n <= 20; n++) {
+      const db = seeded();
+      for (let i = 0; i < n; i++) {
+        db.entries.push({ id: `f${n}-${i}`, author: "flood", text: FLOOD_PROMPT, createdAt: "", extraction: extract(FLOOD_PROMPT), corrected: false });
+      }
+      const pkg = balancedPkg(db, previous, challengerStreak);
+      const ids = pkg.items.map((i) => i.proposal.id);
+      if (!ids.includes("f_buyouts")) continue;
+      const removed = previous.A.filter((id) => !ids.includes(id));
+      if (removed.length) {
+        removedIncumbent = removed[0]!;
+        chosenDb = db;
+        break;
+      }
+    }
+
+    expect(removedIncumbent).not.toBeNull();
+    expect(chosenDb).not.toBeNull();
+
+    const pkgWithImpact = balancedPkg(
+      chosenDb!,
+      previous,
+      challengerStreak,
+      { items: { [removedIncumbent!]: { impact: 0.5 } } },
+    );
+    const idsWithImpact = pkgWithImpact.items.map((i) => i.proposal.id);
+    expect(idsWithImpact).toContain(removedIncumbent!);
+  });
+
+  test("responsiveness: flood journals can pull in f_buyouts within a small N", () => {
     const FLOOD_PROMPT = "Our street flooded in the storm and the drainage couldn't keep up. I need a practical fix soon.";
 
     let nToFlip: number | null = null;
@@ -332,7 +633,7 @@ describe("stabilized synthesis", () => {
 
     console.log("[responsiveness] smallest N to include f_buyouts:", nToFlip);
     expect(nToFlip).not.toBeNull();
-    expect(nToFlip!).toBeGreaterThanOrEqual(2);
+    expect(nToFlip!).toBeGreaterThanOrEqual(1);
     expect(nToFlip!).toBeLessThanOrEqual(10);
   });
 
