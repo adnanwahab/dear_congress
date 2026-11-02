@@ -787,6 +787,10 @@ export const server = Bun.serve({
   development: process.env.NODE_ENV !== "production",
   routes: {
     "/": index,
+    "/journal": index,
+    "/needs": index,
+    "/vote": index,
+    "/synth": index,
 
     // Explicit embed route.
     "/embed": index,

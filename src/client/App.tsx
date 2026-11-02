@@ -100,6 +100,15 @@ const isEdge = (margin: number) => Math.abs(margin) < 0.02;
 
 type Tab = "journal" | "needs" | "vote" | "synth";
 type LiveStatus = "connecting" | "live" | "reconnecting";
+const TAB_PATHS: Record<Tab, string> = { journal: "/journal", needs: "/needs", vote: "/vote", synth: "/synth" };
+const tabFromPath = (pathname: string): Tab | null => {
+  const p = pathname.replace(/\/+$/, "") || "/";
+  if (p === "/" || p === "/journal") return "journal";
+  if (p === "/needs") return "needs";
+  if (p === "/vote") return "vote";
+  if (p === "/synth") return "synth";
+  return null;
+};
 const TABS: { id: Tab; n: string; label: string; hint: string }[] = [
   { id: "journal", n: "1", label: "Journal", hint: "Describe your life" },
   { id: "needs", n: "2", label: "Needs", hint: "What people share" },
@@ -117,7 +126,7 @@ const EMPTY_FLOW: PublishFlow = {
 
 export function App() {
   const [state, setState] = useState<AppState | null>(null);
-  const [tab, setTab] = useState<Tab>("journal");
+  const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
   const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
@@ -128,6 +137,23 @@ export function App() {
     window.addEventListener("journal:created", onJournalCreated);
     return () => window.removeEventListener("journal:created", onJournalCreated);
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const next = tabFromPath(window.location.pathname);
+      if (next) setTab(next);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const gotoTab = (next: Tab) => {
+    setTab(next);
+    const nextPath = TAB_PATHS[next];
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState(null, "", `${nextPath}${window.location.search}${window.location.hash}`);
+    }
+  };
 
   useEffect(() => {
     const es = new EventSource("/api/entries/events");
@@ -239,7 +265,7 @@ export function App() {
           const status = publishFlow.stages[stage];
           const note = publishFlow.notes[stage] ?? t.hint;
           return (
-            <button key={t.id} className={`step ${tab === t.id ? "on" : ""} ${status !== "idle" ? `step-${status}` : ""}`} onClick={() => setTab(t.id)}>
+            <button key={t.id} className={`step ${tab === t.id ? "on" : ""} ${status !== "idle" ? `step-${status}` : ""}`} onClick={() => gotoTab(t.id)}>
               <span className="num">{status === "done" ? "✓" : status === "running" ? "…" : status === "error" ? "!" : t.n}</span>
               <span><b>{t.label}</b><small>{note}</small></span>
               {i < TABS.length - 1 && <span className="arrow" aria-hidden>→</span>}
@@ -249,7 +275,7 @@ export function App() {
       </nav>
 
       <main>
-        {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { setTab("needs"); setFocusNeedId(needId); }} />}
+        {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
         {tab === "vote" && <VoteView state={state} refresh={refresh} />}
         {tab === "synth" && <SynthView state={state} refresh={refresh} />}
