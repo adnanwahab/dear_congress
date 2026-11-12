@@ -84,6 +84,9 @@ input[type="checkbox"] { width: auto; accent-color: var(--accent); }
 .row.end { justify-content: flex-end; margin-top: 12px; }
 .row.tight { flex-wrap: nowrap; }
 
+.proposal-entry-link { display: inline-block; color: var(--accent); font: 600 13px/1.5 var(--sans); text-underline-offset: 3px; padding: 7px 0; }
+.proposal-entry-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+
 .prompt { font-size: 23px; }
 .interp { margin-top: 18px; border-top: 1px dashed var(--line); padding-top: 14px; }
 .interp-head { display: flex; justify-content: space-between; align-items: center; }

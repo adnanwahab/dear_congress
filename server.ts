@@ -18,6 +18,9 @@ import { recordEstimate, voterKey } from "./src/server/estimate-idea";
 import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
 import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
+import { mkdir, rename } from "node:fs/promises";
+import { dirname } from "node:path";
+import { createCitizenProposalHandlers } from "./src/server/citizen-proposals";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
   loadOutcomesFile,
@@ -350,7 +353,21 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 
 let db = await load();
 let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
-const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
+// Serialize snapshots so an older concurrent write cannot replace a newer vote.
+// Atomic rename also keeps a process interruption from leaving a partial JSON DB.
+let saveQueue: Promise<unknown> = Promise.resolve();
+const save = () => {
+  const snapshot = JSON.stringify(db, null, 2);
+  const write = saveQueue.then(async () => {
+    await mkdir(dirname(DB_PATH), { recursive: true });
+    const temporaryPath = `${DB_PATH}.${process.pid}.tmp`;
+    await Bun.write(temporaryPath, snapshot);
+    await rename(temporaryPath, DB_PATH);
+  });
+  saveQueue = write.catch(() => {});
+  return write;
+};
+const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 await save();
 
 function state(voterId = "anon") {
@@ -790,6 +807,10 @@ export const server = Bun.serve({
     "/journal": index,
     "/needs": index,
     "/vote": index,
+    "/votes": index,
+    "/feed": index,
+    "/proposals/new": index,
+    "/proposals/:id": index,
     "/synth": index,
 
     // Explicit embed route.
@@ -809,6 +830,23 @@ export const server = Bun.serve({
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
+    },
+
+    "/api/citizen-proposals": {
+      GET: (req) => citizenProposalHandlers.list(req),
+      POST: (req) => citizenProposalHandlers.publish(req),
+    },
+    "/api/citizen-proposals/journal/:id": {
+      GET: (req) => citizenProposalHandlers.journal(req, req.params.id),
+    },
+    "/api/citizen-proposals/:id": {
+      GET: (req) => citizenProposalHandlers.detail(req, req.params.id),
+    },
+    "/api/citizen-proposals/:id/vote": {
+      POST: (req) => citizenProposalHandlers.vote(req, req.params.id),
+    },
+    "/api/citizen-proposals/:id/comments": {
+      POST: (req) => citizenProposalHandlers.comment(req, req.params.id),
     },
 
     "/api/outcomes": {
@@ -1542,7 +1580,14 @@ export const server = Bun.serve({
 
     "/api/reset": {
       POST: async () => {
+        // Resetting sample synthesis data must not erase public proposals or their votes.
+        const citizenProposals = db.citizenProposals;
+        const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
+        const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
+        db.citizenProposals = citizenProposals;
+        const seededIds = new Set(db.entries.map((entry) => entry.id));
+        db.entries.push(...citedEntries.filter((entry) => !seededIds.has(entry.id)));
         await save();
         return Response.json({ ok: true });
       },
