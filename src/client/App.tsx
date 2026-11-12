@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
   VariantFit, VariantId, Weights, WorldsResult,
@@ -124,7 +124,14 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
-export function App() {
+const GamePatches=lazy(()=>import('./GamePatches'));
+export function App(){
+ const [path,setPath]=useState(window.location.pathname);
+ useEffect(()=>{const update=()=>setPath(window.location.pathname);window.addEventListener('popstate',update);return()=>window.removeEventListener('popstate',update);},[]);
+ if(/^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/\d+)?\/?$/.test(path))return <Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches/></Suspense>;
+ return <LegacyApp/>;
+}
+function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
@@ -252,7 +259,7 @@ export function App() {
         <div className="brand">
           <span className="mark" aria-hidden>◎</span>
           <div>
-            <h1>Civic Synthesis</h1>
+            <h1>Civic Synthesis</h1><a href="/vote/happybearlandia">Repository voting ↗</a>
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>

@@ -1,0 +1,82 @@
+[
+  {
+    "number": 2,
+    "headSha": "a4fdefa0e44d5b9c0c2ed595ea719cc11cd1636e",
+    "route": "/world/visualize-constitution",
+    "screenshot": "pr-2-a4fdefa0.png",
+    "capturedAt": "2026-11-12T14:44:39.859715+00:00",
+    "note": "Locally rendered PR revision with synthetic paired worlds. Preview data is isolated and temporary.",
+    "deployedUrl": "https://hbl-pr-2-a4fdefa0.fly.dev/world/visualize-constitution",
+    "deploymentVerifiedAt": "2026-11-12T14:43:48.924061+00:00"
+  },
+  {
+    "number": 5,
+    "headSha": "b7a16f59f28de8c5df7a8fce6ddcb824aeea729b",
+    "screenshot": "pr-5-b7a16f59f28d.png",
+    "capturedAt": "2026-11-12T14:42:46.758Z",
+    "note": "Bar scene rendered from this PR revision.",
+    "route": "/world/bar",
+    "deployedUrl": "https://hbl-pr-5-b7a16f59.fly.dev/world/bar",
+    "deploymentVerifiedAt": "2026-11-12T14:47:14.999709+00:00"
+  },
+  {
+    "number": 6,
+    "headSha": "a57849111eae1461d6a306d294df9fe851ce438a",
+    "screenshot": "pr-6-a57849111eae.png",
+    "capturedAt": "2026-11-12T14:44:18.090Z",
+    "note": "Example household with synthetic residents, rendered from this revision. Explore opens the household chooser with separate preview data.",
+    "route": "/world/house",
+    "deployedUrl": "https://hbl-pr-6-a5784911.fly.dev/world/house",
+    "deploymentVerifiedAt": "2026-11-12T14:47:18.133809+00:00"
+  },
+  {
+    "number": 20,
+    "headSha": "c7954363a1706a737cda2524bddbf2a29faa5547",
+    "screenshot": "pr-20-c7954363a170.png",
+    "capturedAt": "2026-11-12T14:43:39.654Z",
+    "note": "Infrastructure change; screenshot shows the baseline city at this revision, not a visual change. Population was still loading when captured.",
+    "route": "/world",
+    "deployedUrl": "https://hbl-pr-20-c7954363.fly.dev/world",
+    "deploymentVerifiedAt": "2026-11-12T14:47:58.835530+00:00"
+  },
+  {
+    "number": 40,
+    "headSha": "4845c3dadc1cc32c6d6e42b64cf6583410884b79",
+    "screenshot": "pr-40-4845c3dadc1c.png",
+    "capturedAt": "2026-11-12T14:47:14.250Z",
+    "note": "Infrastructure change; screenshot shows the baseline city at this revision, not a visual change. Population was still loading when captured.",
+    "route": "/world",
+    "deployedUrl": "https://hbl-pr-40-4845c3da.fly.dev/world",
+    "deploymentVerifiedAt": "2026-11-12T14:48:12.068853+00:00"
+  },
+  {
+    "number": 41,
+    "headSha": "c9b1f7e4167537978ee7d19d0a3f094ed7243346",
+    "screenshot": "pr-41-c9b1f7e41675.png",
+    "capturedAt": "2026-11-12T14:45:08.257Z",
+    "note": "Infrastructure change; screenshot shows the baseline city at this revision, not a visual change. Population was still loading when captured.",
+    "route": "/world",
+    "deployedUrl": "https://hbl-pr-41-c9b1f7e4.fly.dev/world",
+    "deploymentVerifiedAt": "2026-11-12T14:48:40.175246+00:00"
+  },
+  {
+    "number": 42,
+    "headSha": "aaafd6b6c7e5ca4bd2e4f0f5ef28a9bfcc2a18d4",
+    "screenshot": "pr-42-aaafd6b6c7e5.png",
+    "capturedAt": "2026-11-12T14:45:57.223Z",
+    "note": "Infrastructure change; screenshot shows the baseline city at this revision, not a visual change. Population was still loading when captured.",
+    "route": "/world",
+    "deployedUrl": "https://hbl-pr-42-aaafd6b6.fly.dev/world",
+    "deploymentVerifiedAt": "2026-11-12T14:48:57.419663+00:00"
+  },
+  {
+    "number": 43,
+    "headSha": "a30b3d625be3239966fc21ff5954264a97a68888",
+    "screenshot": "pr-43-a30b3d625be3.png",
+    "capturedAt": "2026-11-12T14:49:16.064Z",
+    "note": "Infrastructure change; screenshot shows the baseline city at this revision, not a visual change. Population was still loading when captured. Shown using the supported WebGL renderer.",
+    "route": "/world?renderer=webgl",
+    "deployedUrl": "https://hbl-pr-43-a30b3d62.fly.dev/world?renderer=webgl",
+    "deploymentVerifiedAt": "2026-11-12T14:49:38.414961+00:00"
+  }
+]

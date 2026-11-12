@@ -1,3 +1,4 @@
+import { handleHblGovernance } from "./src/server/hbl/api";
 import index from "./index.html";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
@@ -790,6 +791,16 @@ export const server = Bun.serve({
     "/journal": index,
     "/needs": index,
     "/vote": index,
+    "/vote/": index,
+    "/vote/:repoKey": index,
+    "/vote/:repoKey/": index,
+    "/vote/:repoKey/pr/:number": index,
+    "/vote/:repoKey/pr/:number/": index,
+    "/vote/:repoKey/issue/:number": index,
+    "/vote/:repoKey/issue/:number/": index,
+    "/api/hbl/*": handleHblGovernance,
+    "/api/internal/hbl/batch": handleHblGovernance,
+    "/api/webhooks/github": handleHblGovernance,
     "/synth": index,
 
     // Explicit embed route.
