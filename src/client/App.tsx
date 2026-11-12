@@ -4,6 +4,7 @@ import type {
   VariantFit, VariantId, Weights, WorldsResult,
 } from "../engine/types";
 import { IDEA_STAGES } from "../engine/types";
+import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -125,6 +126,17 @@ const EMPTY_FLOW: PublishFlow = {
 };
 
 export function App() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
+  useEffect(() => {
+    const onPopState = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  return isCitizenProposalPath(pathname) ? <CitizenProposalsApp /> : <LegacyApp />;
+}
+
+function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
@@ -256,7 +268,11 @@ export function App() {
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>
-        <button className="ghost small" onClick={async () => { if (confirm("Reset all your entries and votes?")) { await api("/api/reset", {}); refresh(); } }}>Reset demo</button>
+        <div className="row">
+          <a className="proposal-entry-link" href="/votes">Proposals &amp; votes</a>
+          <a className="proposal-entry-link" href="/proposals/new">＋ Propose a law</a>
+          <button className="ghost small" onClick={async () => { if (confirm("Reset unlinked demo entries and simulation votes? Published citizen proposals, their source entries, and their advisory responses will remain.")) { await api("/api/reset", {}); refresh(); } }}>Reset demo</button>
+        </div>
       </header>
 
       <nav className="loop" aria-label="Steps">
@@ -640,6 +656,7 @@ function JournalView({
               {entry.extraction.needs.map((n) => <span key={n.id} className="chip">{needLabel(state, n.id)}</span>)}
             </div>
             <SimulateRealities key={entry.id} entryId={entry.id} />
+            <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(entry.id)}`}>Turn this into a proposal</a>
           </div>
         )}
 
@@ -661,7 +678,7 @@ function JournalView({
         <p className="muted">Every interpretation stays attached to the original words.</p>
         <ul className="feed">
           {state.entries.map((e) => (
-            <li key={e.id}>
+            <li key={e.id} id={`entry-${e.id}`}>
               <p>{e.text}</p>
               <div className="feed-meta">
                 <span className="who">{e.author}</span>
@@ -669,6 +686,7 @@ function JournalView({
                 {e.corrected && <span className="badge ok">corrected</span>}
                 {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
               </div>
+              <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(e.id)}`}>Turn this into a proposal</a>
             </li>
           ))}
         </ul>
