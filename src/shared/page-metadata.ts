@@ -6,7 +6,7 @@ export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen propos
 export const PAGE_TITLES: Record<string, string> = {
   "/account": "Participation & privacy",
   "/map": "County map",
-  "/documentation": "Documentation", "/docs": "Documentation",
+  "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",
   "/journals": "Journal", "/api-docs": "Journal API",
   "/privacy": "Privacy & removal",
   "/": "Overview", "/journal": "Journal", "/needs": "Shared needs",

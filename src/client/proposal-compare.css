@@ -1,0 +1,11 @@
+.proposal-compare { min-width: 0; margin-block: 1rem; overflow-wrap: anywhere; }
+.proposal-compare fieldset { display: grid; gap: .65rem; min-width: 0; }
+.proposal-compare label { display: flex; align-items: baseline; gap: .5rem; }
+.proposal-compare input { flex: 0 0 auto; }
+.proposal-compare button { white-space: normal; margin: .3rem; }
+.proposal-compare-scroll { max-width: 100%; overflow-x: auto; margin-block: 1rem; }
+.proposal-compare table { width: 100%; min-width: 680px; border-collapse: collapse; table-layout: fixed; }
+.proposal-compare th, .proposal-compare td { padding: .75rem; border: 1px solid var(--border, #888); text-align: left; vertical-align: top; white-space: pre-wrap; }
+.proposal-compare article { margin-block: 1.5rem; }
+.proposal-compare :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .proposal-compare *, .proposal-compare { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
