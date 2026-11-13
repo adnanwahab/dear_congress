@@ -26,7 +26,7 @@
 .cp-eyebrow { font: 650 11px/1.6 var(--sans); letter-spacing: .14em; color: var(--accent); margin-bottom: 13px; }
 .cp-lede { font-size: 17px; color: var(--muted); max-width: 640px; margin: 18px 0 24px; }
 .cp-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--card) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; }
+.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; }
 .cp-button-secondary { background: transparent; color: var(--accent) !important; border-color: var(--line); }
 .cp-text-link { display: inline-block; font-weight: 600; font-size: 13px; }
 .cp-hero-note { border-left: 1px solid var(--line); padding-left: 28px; }
@@ -128,7 +128,7 @@
 .cp-vote-choice { display: flex; justify-content: space-between; align-items: center; text-align: left; padding: 13px 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); min-height: 49px; font-size: 14px; }
 .cp-vote-choice b { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .cp-choice-selected { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
-.cp-choice-oppose.cp-choice-selected { background: var(--bad-bg); color: var(--opp); border-color: var(--opp); box-shadow: inset 0 0 0 1px var(--opp); }
+.cp-choice-oppose.cp-choice-selected { background: var(--bad-bg); color: var(--bad-ink); border-color: var(--bad-ink); box-shadow: inset 0 0 0 1px var(--opp); }
 .cp-response-total { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
 .cp-response-total b { font-size: 17px; color: var(--ink); }
 .cp-vote-panel .cp-vote-caveat { font-size: 10.5px !important; line-height: 1.7; }
@@ -197,10 +197,7 @@
   .cp-section-heading { gap: 12px; }
   .cp-section-heading h2 { font-size: 23px; }
 }
-@media (prefers-color-scheme: dark) {
-  .cp-button { color: #10201b !important; }
-  .cp-button-secondary { color: var(--accent) !important; }
-}
+
 @media (prefers-reduced-motion: reduce) { .cp-button { transition: none; } }
 
 .cp-reading-help { margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }

@@ -33,6 +33,16 @@ checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+## Appearance
+
+The shared civic header cycles **System → Light → Dark**. System is the default;
+explicit choices override the OS and persist in this browser across routes and
+reloads. Storage-blocked browsers retain a choice only for the current page.
+A pre-paint script sets `html[data-theme]`; its exact CSP hash is verified against
+both browser builds. Update that hash if editing the inline initializer.
+Supported browsers reveal theme changes from the button in 400 ms. Reduced
+motion and browsers without View Transitions swap immediately.
+
 ## Measured outcomes (Harris County / Houston)
 
 The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.

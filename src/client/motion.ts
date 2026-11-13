@@ -1,6 +1,6 @@
 import { flushSync } from 'react-dom';
 
-export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter';
+export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme';
 export type MotionMode = 'normal' | 'slow' | 'off';
 
 /** Apply before rendering/capturing the incoming page. Storage may be unavailable. */
