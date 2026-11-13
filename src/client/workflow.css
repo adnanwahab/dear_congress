@@ -64,3 +64,8 @@
 .workflow-provenance { margin: 12px 0; padding: 12px; border: 1px solid var(--border, #d5dbe1); border-radius: 8px; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .workflow-provenance strong { display: block; }
 .workflow-provenance p { margin: 6px 0 0; }
+
+.outreach-draft > label { display: grid; gap: .5rem; margin: 1rem 0; }
+.outreach-draft input:not([type="checkbox"]), .outreach-draft textarea { box-sizing: border-box; width: 100%; min-width: 0; font: inherit; }
+.outreach-draft textarea { resize: vertical; }
+.outreach-preview { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
