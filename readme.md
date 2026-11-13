@@ -1,5 +1,7 @@
 # Civic Synthesis (prototype)
 
+- https://www.usa.gov/find-active-challenge
+
 A Bun + React prototype of the civic synthesis loop:
 
 everyday is a list of journal entries from everyone
@@ -283,3 +285,27 @@ A citizen idea runs through a pipeline instead of a yes/no:
 - **Costs, support and legal details are illustrative**, not real estimates.
 - **Storage is a JSON file.** The Postgres schema in the design doc (journals, needs, proposals, votes, plans, experiments, outcomes) is the natural next step.
 - Not yet built: user accounts, outcome measurement / policy experiments feeding back into journals, district-level views.
+
+## Daily demo screens
+
+The public demo is deployed as `civic-synthesis` at https://civic-synthesis.fly.dev.
+
+| Route | Screen |
+| --- | --- |
+| `/` | Full workflow overview |
+| `/published` | Official background reference desk |
+| `/feed` | Searchable sample proposal feed |
+| `/votes` (or `/vote`) | Advisory voting |
+| `/draft` | Clause comparison and draft download |
+| `/sponsors` | Browser-local sponsor walkthrough |
+| `/outcomes` | Simulated outcome tracking |
+| `/map` | deck.gl proposal map and 3D columns |
+| `/journal` | Shared journal and publishing form |
+| `/journal?tab=api` (or `/api-docs`) | Journal API connection docs |
+| `/needs`, `/synth` | Original needs and synthesis engine tools |
+
+Every screen shares bottom navigation with Back, Top, and API docs actions. Sample proposal content is separate from stored journal experiences. Sponsor stages and map coordinates are illustrative. No real sponsor messages are sent.
+
+Journal integrations can discover `/api/journal-client/schema`, publish to `/api/publish_draft` with `kind: "journal"`, and read `/api/entries?limit=12`. Feed responses include `entries`, `total`, and `nextCursor`; pass the last cursor as `cursor=…` to get the next page. The API docs show JavaScript and cURL examples. This is a public demo API with unverified client IDs; it is not an authenticated private journal service.
+
+See [January 1 launch readiness](docs/launch-readiness.md) for the million-user architecture gates and daily demo checklist. The current single-writer JSON store is not certified for that scale.

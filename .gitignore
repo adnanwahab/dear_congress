@@ -1,3 +1,11 @@
 node_modules
 data/db.json
 .env
+
+# Local Mini Symphony runtime and private project state
+.mini-symphony/
+
+.DS_Store
+data/test-db*
+**/*.sqlite
+**/*.sqlite-*
