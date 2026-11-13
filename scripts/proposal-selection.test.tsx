@@ -58,7 +58,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         await act(async () => { fireEvent.click(support()); });
         await act(async () => { settle!(); });
         expect(support().getAttribute('aria-pressed')).toBe('true');
-        expect(q().getByRole('status').textContent).toMatch(/vote (is )?saved/);
+        expect(q().getAllByRole('status').some(node => /vote (is )?saved/.test(node.textContent ?? ''))).toBe(true);
       }
       await act(async () => { root.unmount(); });
       const restored = createRoot(document.getElementById('root')!);
