@@ -578,3 +578,24 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+## Public journal discovery
+
+`/journal` defaults to public submissions, excluding entries flagged seeded or
+synthetic. This is provenance labeling, not verified-human participation; legacy
+unflagged records remain subject to SHE-271 review. Origin, need, inclusive UTC
+calendar dates and cursor are shareable query parameters. Browsing uses GET
+`/api/entries?discovery=1&origin=public&need=food&from=2026-11-01&to=2026-11-13`.
+The opt-in discovery mode filters before cursor pagination; existing API clients
+without it retain their original feed contract. Sort is most recent, with ID ties.
+A removed/invalid cursor asks the reader to clear filters rather than restarting
+silently. `/journal?entry=<id>` reads only that publicly available original,
+independent of browse filters; need links retain its ID. Hidden/private records
+remain excluded by the existing server projection. Live snapshots remove hidden
+items but never inject entries into a filtered page. Refresh for new entries.
+
+Dates include UTC and freshness is a rolling seven-day interval. Existing native
+simulated-story grouping preserves expandable originals within each page; runs
+can split across pages. Jurisdiction remains unavailable because no consented
+public broad-jurisdiction field exists. Coordinates, source text and authors are
+never used to infer locality. Draft and explicit publication flows are unchanged.
