@@ -107,3 +107,108 @@ storage denial and zero network requests. Associated labels, heading focus on
 step changes and live status/error roles are implemented. Native keyboard,
 screen-reader, narrow viewport and 200% zoom checks remain required; DOM tests
 are not native accessibility acceptance.
+
+## Private amendment preparation (SHE-305 first slice)
+
+Citizen proposal details now offer **Suggest amendment**. The recovered sample
+`/draft` and `/votes` screens offer the same editor, explicitly labelled fictional.
+The source's entire proposed text is one editable section; this does not infer
+legal clause boundaries. Replace text, supply rationale, impact/cost (unknown is
+valid), and a citation note with title, URL, locator, date and excerpt/version.
+The comparison labels Removed/Added alongside strike/underline and stacks on
+narrow screens. It highlights one changed span between the shared prefix/suffix;
+it is not a semantic legal diff or a minimal word diff.
+
+**Save new private version** appends an exact text/source snapshot and metadata
+in browser-local storage, isolated by source kind and proposal ID. Saved versions
+can be reopened after reload; saving edits creates another version. Origin,
+jurisdiction, title, text, timestamp and an unverified browser author label stay
+attached to each saved version. The editor blocks a stale-source save and offers
+an explicit fresh start, preserving earlier saved versions. An unsaved working
+copy is lost on navigation; save before switching proposals. A fresh start clears
+the working fields, so save any needed work before accepting it.
+
+No amendment API, moderation submission, publication or voting option exists in
+this slice. Publication permission is recorded as **not requested**. There is no
+public author-name field. Citation notes render as escaped plain text, including
+URLs; nothing is fetched or treated as verified evidence. Parent text, votes,
+comments, source journal identity and repository ballots are untouched.
+
+Local storage is accessible to users of the same browser profile and scripts on
+this origin; it is not an authenticated private account or durable audit history.
+Clearing it loses drafts. The app appends snapshots but storage can be edited and
+has no tamper protection, backup or cross-tab transaction guarantee. Each proposal
+is limited to 30 saved versions. Corrupt/unreadable storage and failed saves
+produce an error without intentionally overwriting earlier records. Do not use
+this preparation feature for sensitive personal information.
+
+`bun test` includes model fixtures and an isolated Happy DOM walkthrough through
+`src/client/amendment-ui.test.ts` / `scripts/verify-amendments-ui.tsx`. The existing
+`bun run test:proposals-ui` additionally checks that amendment preparation on a
+real citizen detail does not change its public API text, options or ballots.
+Native browser, zoom/contrast, keyboard-only and screen-reader verification remain
+manual acceptance tasks. See `docs/reviews/SHE-305.md` for remaining delivery.
+
+## Structured objections — SHE-307 first slice
+
+On `/proposals/:id`, participants can publish an objection with concern/major/blocking
+severity and a self-described impacted constituency, after explicit public consent.
+The objection binds the existing immutable proposal ID/text. It starts unresolved;
+only the original publishing browser can append a declined response with a reason,
+or reopen it as unresolved with a reason. Losing that anonymous cookie loses this
+response capability; this is not verified identity or a delegate authorization system.
+
+`POST /api/citizen-proposals/:id/objections` accepts either:
+
+- `{ action: "create", text, severity, constituency, confirmedPublic: true, idempotencyKey }`
+- `{ action: "respond", objectionId, expectedVersion, status: "declined" | "unresolved", reason }`
+
+Creation UUID retries return the same objection; different content with the same
+key conflicts. `expectedVersion` is the number of prior responses. Stale responses
+return 409; reload the page to inspect the ledger before deliberately submitting
+again. The timeline retains all proposer decisions with timestamps. Save failures
+restore the previous ledger. Existing cookies, same-origin restrictions, body bounds,
+rate limits and serialized single-writer persistence apply to the new endpoint.
+Public projections omit ownership and retry hashes. These records survive demo reset
+with the rest of the proposal. No location is inferred from constituency text.
+
+Acceptance is deliberately unavailable until a published revision/redline can be
+linked. No revisions, voting rounds, rule configuration, quorum, consent thresholds,
+community agreement or automatic action are introduced by this slice. Existing
+proposal votes remain legacy/unwindowed advisory browser responses.
+
+Local walkthrough: publish a proposal at `/proposals/new`, open its detail link,
+submit a major accessibility objection with constituency “Wheelchair users”, and
+confirm it starts unresolved. From the publishing browser decline with a reason,
+then reopen it; both events remain visible. Another browser may object but must not
+get proposer controls. Existing support/oppose/unsure totals must remain unchanged.
+Do not run this walkthrough against production.
+
+`src/server/proposal-objections.test.ts` covers retry conflicts, legacy compatibility,
+private field filtering, scope/authority, invalid decisions, stale concurrent writes,
+serialization and disk failure rollback. `src/client/proposal-objections.test.tsx`
+runs a Happy DOM form walkthrough with failed-save recovery and safe markup rendering.
+Controls have native labels, fieldsets, public consent, status/error announcements
+and error focus recovery. Native keyboard, screen-reader, mobile/zoom and visual QA
+remain manual acceptance work. The existing HTTP/restart journey also includes
+objection creation and proposer response; it requires a working local server bind.
+
+### Reading assistance
+
+Loaded proposal detail pages include **Help with civic terms**, an English
+explanation of citizen proposal, advisory response and browser identity. Each
+entry links to its original visible notice; opening help never submits a choice
+or changes proposal text. Use the native summary control to open/close it, or
+Escape within help to close and return focus. No preference is stored. This
+first slice does not provide Spanish localization or reviewed legal summaries;
+see `docs/reviews/SHE-318.md` for remaining acceptance and verification limits.
+
+## Optional discussion reading guide (SHE-308 first slice)
+
+Open a published proposal from `/votes` and enable **Show optional reading guide**
+in Public discussion. This local template repeats all loaded public comments
+with source links and offers clarifying questions. It defaults off and uses no
+AI provider, storage, journal content or votes. It does not summarize positions
+or infer consensus. Ordinary commenting works with the guide off. Formal
+summary corrections, appeals and comment reporting are pending; see
+[the SHE-308 follow-up and acceptance gaps](reviews/SHE-308.md).
