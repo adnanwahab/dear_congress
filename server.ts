@@ -396,6 +396,8 @@ function state(voterId = "anon") {
   const measuredOutcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
   const ctxReal = buildContext(db, undefined, { outcomes: measuredOutcomes });
   const ctxBlended = buildContext(db, undefined, { includeSynthetic: true, outcomes: measuredOutcomes });
+  // Presentation-only simulated view: exclude real journals and priority allocations.
+  const ctxSimulated = buildContext({ ...db, entries: db.entries.filter(e => e.synthetic), allocationByVoter: {} }, undefined, { includeSynthetic: true, outcomes: measuredOutcomes });
   const userVotes = db.votesByVoter[voterId] ?? {};
   const userAllocation = db.allocationByVoter[voterId] ?? {};
   const userGoalVotes = db.goalVotesByVoter[voterId] ?? {};
@@ -424,6 +426,7 @@ function state(voterId = "anon") {
     demand: ctxReal.demand,
     demandReal: ctxReal.demand,
     demandBlended: ctxBlended.demand,
+    demandSimulated: ctxSimulated.demand,
     mechanismShare: ctxReal.mechanismShare,
     goalSupport: ctxReal.goalSupport,
     entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal),
