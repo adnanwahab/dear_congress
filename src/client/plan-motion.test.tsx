@@ -16,6 +16,8 @@ test('transition names preserve identity and isolate package/real/simulated scop
   expect(new Set(names).size).toBe(9);
   for (const name of names) expect(name).toMatch(/^plan-item-[a-f0-9-]+$/);
   const css = renderToStaticMarkup(<PlanTransitionStyles scope="real:A" items={['a', 'b']} />);
+  expect(css).toContain('animation-duration: var(--motion-plan)');
+  expect(css).toContain(':active-view-transition-type(plan-rerank)');
   expect(css).toContain(':only-child'); expect(css).toContain('plan-leave'); expect(css).toContain('plan-enter');
   const html = renderToStaticMarkup(<PlanNumber value={12.3} format={n => `$${n.toFixed(1)}B`} />);
   expect(html).toContain('aria-label="$12.3B"');
@@ -26,8 +28,8 @@ test('result commits in transition callback; reduced motion and unsupported brow
   let reduced = false;
   let starts = 0;
   let updates = 0;
-  const doc: { startViewTransition?: (callback: () => void) => unknown } = {
-    startViewTransition(callback) { starts++; callback(); return { updateCallbackDone: Promise.resolve(), finished: Promise.reject(new Error('skipped')) }; },
+  const doc: { startViewTransition?: (options: { update: () => void; types: string[] }) => unknown } = {
+    startViewTransition(options) { expect(options.types).toEqual(['plan-rerank']); starts++; options.update(); return { updateCallbackDone: Promise.resolve(), finished: Promise.reject(new Error('skipped')) }; },
   };
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { matchMedia: () => ({ matches: reduced }) } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: doc });
@@ -73,6 +75,13 @@ test('counters interpolate upward and downward, respect reduced motion, and canc
     await render(0); await step(200);
     expect(Number(host.textContent)).toBeLessThan(30); expect(Number(host.textContent)).toBeGreaterThan(0);
     await step(1000); expect(host.textContent).toBe('0.0');
+    document.documentElement.dataset.motion = 'slow';
+    await render(35); await step(1000);
+    expect(Number(host.textContent)).toBeGreaterThan(0); expect(Number(host.textContent)).toBeLessThan(35);
+    await step(4000); expect(host.textContent).toBe('35.0');
+    document.documentElement.dataset.motion = 'off';
+    await render(99); expect(host.textContent).toBe('99.0'); expect(frames.size).toBe(0);
+    delete document.documentElement.dataset.motion;
     reduced = true; await render(42); expect(host.textContent).toBe('42.0'); expect(frames.size).toBe(0);
     reduced = false; await render(10); expect(frames.size).toBe(1);
   } finally {

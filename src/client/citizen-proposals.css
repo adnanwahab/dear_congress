@@ -24,7 +24,7 @@
 .cp-eyebrow { font: 650 11px/1.6 var(--sans); letter-spacing: .14em; color: var(--accent); margin-bottom: 13px; }
 .cp-lede { font-size: 17px; color: var(--muted); max-width: 640px; margin: 18px 0 24px; }
 .cp-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--card) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; transition: filter .15s; }
+.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--card) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; transition: filter calc(.15s * var(--motion-scale, 1)); }
 .cp-button:hover { filter: brightness(.94); }
 .cp-button-secondary { background: transparent; color: var(--accent) !important; border-color: var(--line); }
 .cp-text-link { display: inline-block; font-weight: 600; font-size: 13px; }
@@ -199,3 +199,8 @@
   .cp-button-secondary { color: var(--accent) !important; }
 }
 @media (prefers-reduced-motion: reduce) { .cp-button { transition: none; } }
+
+.cp-reading-help { margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }
+.cp-reading-help summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.cp-reading-help dt { font-weight: 700; margin-top: 16px; }
+.cp-reading-help dd { margin: 6px 0 0; line-height: 1.6; }
