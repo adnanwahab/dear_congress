@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { DEFAULT_WEIGHTS, buildContext, emptyDB, extract, synthesize } from "./src/engine/engine";
 import { SEED_JOURNALS } from "./src/engine/catalog";
-import type { DB } from "./src/engine/types";
+import type { DB, PackageResult } from "./src/engine/types";
 
 const startedServers: Array<{ stop: (closeConnections?: boolean) => void }> = [];
 const tempDbPaths: string[] = [];
@@ -66,7 +66,16 @@ describe("/api/synthesize what-if", () => {
     });
 
     expect(synthRes.status).toBe(200);
-    const packages = await synthRes.json() as Array<{ id: string; items: Array<{ proposal: { id: string } }> }>;
+    const packages = await synthRes.json() as PackageResult[];
+    for (const pkg of packages) {
+      expect(pkg.scoreAudit.version).toBe("score-arithmetic-v1");
+      expect(pkg.scoreAudit.proposals.length).toBeGreaterThanOrEqual(pkg.items.length);
+      for (const row of pkg.scoreAudit.proposals) {
+        const b = row.base;
+        const sum = Object.values(b.parts).reduce((total, term) => total + term.contribution, 0);
+        expect(Math.abs(sum - b.changePenalty + b.roundingAdjustment - b.total)).toBeLessThan(1e-9);
+      }
+    }
     const balanced = packages.find((p) => p.id === "A")!;
     expect(balanced).toBeDefined();
     expect(Array.isArray(balanced.items)).toBe(true);

@@ -318,6 +318,8 @@ export interface ScoreParts {
 
 export interface PlanItemExplanation {
   parts: { [K in keyof Weights]: { raw: number; weight: number; contribution: number } };
+  roundingAdjustment: number;
+  weightDivisor: number;
   changePenalty: number;
   stabilityBonus: number;
   total: number;
@@ -360,7 +362,20 @@ export interface MajorChange {
   reason: string;
 }
 
+export interface ProposalScoreAudit {
+  id: string;
+  title: string;
+  costB: number | null;
+  status: "selected" | "excluded";
+  reason: string;
+  base: Omit<PlanItemExplanation, "ifDropped">;
+  selectedRank: number | null;
+  selectedStabilityBonus: number | null;
+  evidenceInputs: { catalog: number; measuredImpact: number | null };
+}
+
 export interface PackageResult {
+  scoreAudit: { version: "score-arithmetic-v1"; proposals: ProposalScoreAudit[] };
   id: string;
   name: string;
   description: string;
