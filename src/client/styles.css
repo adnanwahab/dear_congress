@@ -622,3 +622,8 @@ table.versions .badge { margin-left: 6px; }
 .bottom-app-links { display: flex; align-items: center; gap: 16px; margin-left: auto; white-space: nowrap; }
 .bottom-app-links a { color: #27589d; }
 @media (max-width: 600px) { .bottom-app-links { gap: 14px; } }
+
+.proposal-search { min-width: 0; }
+.proposal-search label { min-width: 0; display: grid; gap: 5px; }
+.proposal-search input, .proposal-search select { width: 100%; min-width: 0; box-sizing: border-box; }
+.proposal-search p { overflow-wrap: anywhere; }
