@@ -35,3 +35,10 @@ test('missing, unsafe, stale and invalid references cannot acquire a current che
     expect(html).toContain('Source not available');
   }
 });
+
+test('integrated workflow retains source provenance through API retry and all civic stages', async () => {
+  const child = Bun.spawn([process.execPath, 'scripts/verify-provenance-ui.tsx'], { stdout: 'pipe', stderr: 'pipe' });
+  const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
+  for (const stage of ['published', 'feed', 'votes', 'draft']) expect(stdout).toContain(`PASS ${stage}:`);
+});

@@ -21,7 +21,7 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     return demoPayload({}, 'test') as T;
   };
   await act(async () => { root.render(<WorkflowScreen stage={stage} request={request} />); });
-  assert.match(container.textContent!, /Could not load proposals/);
+  assert.match(container.textContent!, /Could not load sample proposals/);
   unavailable = false;
   await act(async () => { (container.querySelector('[role=alert] button') as any).click(); });
   const sections = [...container.querySelectorAll('[aria-label="Scenario and background source"]')];
