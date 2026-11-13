@@ -1,5 +1,7 @@
 import { motionDuration } from "./motion";
 import { NeedTopicChip } from './TopicChip';
+import { DemoTour } from './DemoTour';
+import { tourState } from './demo-tour';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -145,7 +147,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
+  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div><DemoTour /></div>;
 }
 
 function LegacyApp() {
