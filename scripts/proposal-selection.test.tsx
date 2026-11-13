@@ -4,7 +4,9 @@ import { DEMO_ITEMS, type DemoPayload } from '../src/engine/demo';
 
 test('browsing never votes; only acknowledged submissions confirm, with retry and URL restoration', async () => {
   const dom = new Window({ url: 'http://localhost/' });
-  for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage', 'sessionStorage']) {
+  const keys = ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage', 'sessionStorage'];
+  const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  for (const key of keys) {
     Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
   }
   (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -16,6 +18,8 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
   try {
     for (const page of ['/', '/feed', '/votes']) {
       dom.happyDOM.setURL('http://localhost' + page);
+      // Each page is a fresh visit: no remembered selection or snapshot from the previous page.
+      sessionStorage.clear();
       document.body.innerHTML = '<div id="root"></div>';
       const root = createRoot(document.getElementById('root')!);
       let payload: DemoPayload = { items: DEMO_ITEMS.slice(0, 2), votes: {}, updatedAt: '2026-11-13', closesAt: '2026-11-20' };
@@ -49,6 +53,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         expect(writes).toHaveLength(1);
         expect(writes[0].votes[0].proposalId).toBe(DEMO_ITEMS[1]!.id);
         expect(support().getAttribute('aria-pressed')).toBe('false');
+        expect(support().classList.contains('vote-confirmed')).toBe(false);
         expect(document.body.textContent).not.toContain('vote saved');
         fail = true;
         await act(async () => { settle!(); });
@@ -58,6 +63,10 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         await act(async () => { fireEvent.click(support()); });
         await act(async () => { settle!(); });
         expect(support().getAttribute('aria-pressed')).toBe('true');
+        expect(support().classList.contains('vote-confirmed')).toBe(true);
+        expect(support().getAttribute('aria-label')).toMatch(/responses, [0-9.]+%/);
+        expect(document.querySelectorAll('.advisory-track')).toHaveLength(3);
+        expect(document.body.textContent).toContain('Illustrative responses, not a representative poll.');
         expect(q().getAllByRole('status').map(node => node.textContent).join(' ')).toMatch(page === '/votes' ? /Server confirmed advisory choice/ : /vote (is )?saved/);
       }
       await act(async () => { root.unmount(); });
@@ -67,5 +76,9 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
       expect(writes).toHaveLength(page === '/feed' ? 0 : 2);
       await act(async () => { restored.unmount(); });
     }
-  } finally { await dom.happyDOM.close(); }
+  } finally {
+    // Restore globals so later test files never see this page's storage (e.g. a proposal snapshot).
+    for (const key of keys) { const descriptor = previous.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }
+    await dom.happyDOM.close();
+  }
 });
