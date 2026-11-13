@@ -790,6 +790,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
     <div className="grid two">
       <section className="card">
         <h2>Shared needs</h2>
+        <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
         <div className="row" style={{ marginBottom: 8 }}>
           <button className={geoMode === "real" ? "" : "ghost"} onClick={() => setGeoMode("real")}>Real voices</button>
