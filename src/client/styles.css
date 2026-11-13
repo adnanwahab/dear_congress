@@ -574,6 +574,12 @@ table.versions .badge { margin-left: 6px; }
 .county-metrics strong { font-size: clamp(24px, 2.6vw, 38px); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .county-metrics small { font-size: 16px; font-weight: 400; color: #84918b; }
 .county-metrics span { font-size: 12px; color: #65716c; }
+.county-methodology { margin: 20px 0; padding: 18px; border: 1px solid #dce2df; border-radius: 12px; background: white; line-height: 1.6; overflow-wrap: anywhere; }
+.county-methodology summary { cursor: pointer; font-weight: 600; }
+.county-methodology summary:focus-visible { outline: 2px solid #17694c; outline-offset: 4px; }
+.county-methodology dt { margin-top: 14px; font-weight: 600; }
+.county-methodology dd { margin: 4px 0 0; }
+.county-progress > small { display: block; margin-bottom: 8px; line-height: 1.5; }
 .county-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 345px; gap: 22px; align-items: start; }
 .county-atlas { background: #101f32; color: #eaf0f7; border-radius: 16px; overflow: hidden; }
 .county-atlas-head { display: flex; justify-content: space-between; gap: 12px; padding: 25px 26px 0; }
