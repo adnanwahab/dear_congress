@@ -281,7 +281,7 @@ function LegacyApp() {
         <div className="brand">
           <span className="mark" aria-hidden>◎</span>
           <div>
-            <h1>Civic Synthesis</h1><a href="/vote/happybearlandia">Repository voting ↗</a>
+            <h1>Civic Synthesis</h1>
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>
