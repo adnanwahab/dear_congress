@@ -1,5 +1,6 @@
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
-import index from "./index.html";
+import { renderPage, sitemap } from "./src/server/pages";
+import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
@@ -800,23 +801,23 @@ function parseWhatIfExtraEntries(input: unknown) {
   return { ok: true as const, entries };
 }
 
+// Build the browser shell once; render per-request canonical and social metadata.
+const browserBuild = await Bun.build({
+  entrypoints: ["./index.html"], target: "browser", publicPath: "/",
+  naming: "[name]-[hash].[ext]", minify: process.env.NODE_ENV === "production",
+});
+if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
+const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
+
 const publicSecurity = createPublicSecurity();
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
-    "/": index,
-    "/journal": index,
-    "/needs": index,
-    "/vote": index,
-    "/votes": index,
-    "/feed": index,
-    "/proposals/new": index,
-    "/proposals/:id": index,
-    "/synth": index,
-
-    // Explicit embed route.
-    "/embed": index,
+    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
+    "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
+    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
 
     "/api/debug/request": {
       GET: (req) => {
@@ -1546,6 +1547,17 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         return Response.json({ ok: true });
       },
     },
+  },
+  fetch(req) {
+    const path = new URL(req.url).pathname;
+    const asset = browserAssets.get(path);
+    if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
+    if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
+    if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
+    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const secured = securityHeaders(response);
+    if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
+    return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
   },
   error(error: Error) {
     console.error("[SERVER_ERROR]", JSON.stringify({
