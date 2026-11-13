@@ -681,6 +681,9 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
 @keyframes county-completion {
   from { transform: translateX(0); }
   to { transform: translateX(1350px); }
+}
 .county-metrics strong { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
   .county-shape { transition: none !important; }
   .county-completion-sweep { display: none; animation: none; }
+}
