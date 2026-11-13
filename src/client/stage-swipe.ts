@@ -15,7 +15,7 @@ export function installStageSwipe(target: Window) {
     if (start || !e.isPrimary) { cancel(); return; }
     if (e.pointerType !== 'touch' || !target.matchMedia('(max-width: 600px)').matches) return;
     let node = e.target instanceof Element ? e.target : null;
-    if (!node?.closest('.workflow-main') || node.closest('a,button,input,select,textarea,dialog,[contenteditable],canvas,[role="slider"],.maplibregl-map,[data-no-stage-swipe]')) return;
+    if (!node?.closest('.workflow-main') || node.closest('a,button,input,select,textarea,dialog,[contenteditable],canvas,[role="slider"],[data-no-stage-swipe]')) return;
     for (; node && node !== target.document.body; node = node.parentElement) {
       const style = target.getComputedStyle(node);
       if (node.scrollWidth > node.clientWidth + 1 && /auto|scroll/.test(style.overflowX)) return;

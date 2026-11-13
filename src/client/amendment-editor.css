@@ -1,0 +1,13 @@
+.amendment-editor { margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: .5rem; }
+.amendment-editor label { display: block; margin: 1rem 0; }
+.amendment-editor textarea { display: block; box-sizing: border-box; width: 100%; margin-top: .4rem; font: inherit; padding: .6rem; color: var(--ink); background: var(--card); border: 1px solid var(--line); }
+.amendment-editor p { overflow-wrap: anywhere; }
+.amendment-editor button { margin: .4rem; }
+.amendment-editor :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.amendment-comparison { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 1rem; }
+.amendment-comparison section { min-width: 0; padding: .7rem; border: 1px solid var(--line); }
+.amendment-comparison p, .amendment-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.amendment-comparison del { color: var(--bad-ink); background: var(--card)0f0; }
+.amendment-comparison ins { color: var(--good-ink); background: var(--good-bg); }
+.amendment-marker { font-weight: bold; }
+@media (max-width: 700px) { .amendment-comparison { grid-template-columns: minmax(0,1fr); } }
