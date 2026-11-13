@@ -816,6 +816,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    // Process liveness only: no database writes or upstream calls.
+    "/healthz": {
+      GET: () => securityHeaders(Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }, { headers: { "Cache-Control": "no-store" } })),
+      HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
+    },
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
