@@ -578,3 +578,8 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+Accessibility browser checks and the required manual screen-reader journey:
+[acceptance evidence guide](docs/accessibility-acceptance.md).
+Run `bun run test:a11y` after installing its separate browser tooling as documented.
+Automated results do not establish full WCAG conformance or human acceptance.

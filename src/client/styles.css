@@ -1053,3 +1053,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .home-how .stage-card h3 { font-size: 20px; margin-bottom: 5px; }
 .home-how .stage-card h3 a { color: inherit; }
 @media (max-width: 680px) { .home-start-choices { grid-template-columns: 1fr; } }
+
+/* Shared keyboard navigation stays above sticky headers and phone navigation. */
+.skip-navigation { position: fixed; top: 8px; left: 8px; z-index: 10000; padding: 12px 18px; background: var(--bg, white); color: var(--ink, black); border: 2px solid currentColor; transform: translateY(-200%); }
+.skip-navigation:focus { transform: none; }
+:focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
+#main-content { scroll-margin-top: 90px; }
+@media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }

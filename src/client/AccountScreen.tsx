@@ -1,7 +1,7 @@
 import { ParticipationNotice } from './ParticipationNotice';
 import './workflow.css';
 export default function AccountScreen() {
-  return <div className="civic-shell workflow-shell"><main className="civic-main workflow-main">
+  return <div className="civic-shell workflow-shell"><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
     <section className="panel"><h2>Unverified browser votes — advisory</h2>
