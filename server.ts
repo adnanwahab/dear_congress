@@ -1,3 +1,4 @@
+import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
 import { liveQR } from './src/server/live-qr';
@@ -1154,7 +1155,12 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const url = new URL(req.url);
         const limit = Number(url.searchParams.get("limit") ?? 50);
         if (!Number.isInteger(limit) || limit < 1 || limit > 100) return withReadCors(req, bad("limit must be an integer between 1 and 100"));
-        const all = entriesNewestFirst();
+        let all = entriesNewestFirst();
+        if (url.searchParams.get("discovery") === "1") {
+          const entryId = url.searchParams.get("entry");
+          if (entryId) all = all.filter(e => e.id === entryId);
+          else try { all = discoverJournal(all, url.searchParams); } catch (error) { return withReadCors(req, bad((error as Error).message)); }
+        }
         const cursor = url.searchParams.get("cursor");
         const index = cursor ? all.findIndex(entry => entry.id === cursor) : -1;
         if (cursor && index === -1) return withReadCors(req, bad("unknown cursor"));

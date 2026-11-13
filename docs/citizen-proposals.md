@@ -212,3 +212,16 @@ AI provider, storage, journal content or votes. It does not summarize positions
 or infer consensus. Ordinary commenting works with the guide off. Formal
 summary corrections, appeals and comment reporting are pending; see
 [the SHE-308 follow-up and acceptance gaps](reviews/SHE-308.md).
+
+## Browser-local following (SHE-358)
+
+Sample feed/vote/draft/outcome views and citizen detail offer **Follow this proposal**.
+Navigation → Watchlist opens `/outcomes#watchlist`, with unfollow, JSON export and
+local deletion. Following is independent of votes. Public text snapshots are stored
+in `civic_proposal_follows_v1`, isolated by sample/citizen kind and ID. This is
+browser-profile storage, without account recovery or cross-device synchronization.
+Revisiting a followed proposal can show its last two observed text versions;
+observation time is not a source update date. No background monitoring or notification
+delivery exists, and missing/withdrawn source status is not inferred. See
+[scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
+subscription service. No notification permission or identity is collected.

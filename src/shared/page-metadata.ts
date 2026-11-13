@@ -9,7 +9,7 @@ export const PAGE_TITLES: Record<string, string> = {
   ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),
   "/account": "Participation & privacy",
   "/map": "County map",
-  "/documentation": "Documentation", "/docs": "Documentation",
+  "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",
   "/journals": "Journal", "/api-docs": "Journal API",
   "/privacy": "Privacy & removal",
   "/": "Overview", "/journal": "Journal", "/needs": "Shared needs",
