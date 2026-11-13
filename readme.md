@@ -479,3 +479,13 @@ separate review. This uses the existing durable single-writer JSON store.
 ## Recovered application shell
 
 Dashboard, map, workflow and documentation source recovered from the local application in SHE-281. See docs/source-recovery.md.
+
+## Standalone sample stages
+
+`/draft`, `/sponsors` and `/outcomes` open the first available fictional sample
+on a fresh visit. A selected sample is retained for the tab session and included
+in stage links; an explicit `?proposal=...` takes precedence. An unavailable ID
+shows a proposal chooser instead of silently opening a different proposal.
+Loading, retry and empty states explain how to continue. Browser storage is
+optional; query links still work when storage is blocked. Sponsor progress stays
+browser-local and simulated. No outreach or official action occurs.
