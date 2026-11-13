@@ -10,6 +10,7 @@ const dom = new Window({ url: 'http://localhost/map' });
 for (const key of ['window', 'document', 'navigator']) {
   Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
 }
+Object.defineProperty(dom, 'matchMedia', { value: () => ({ matches: true, addEventListener() {}, removeEventListener() {} }) });
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 const { createRoot } = await import('react-dom/client');
 const container = dom.document.createElement('div');

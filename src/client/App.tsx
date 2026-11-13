@@ -129,7 +129,7 @@ const EMPTY_FLOW: PublishFlow = {
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
-const WorkflowScreen = lazy(() => import("./WorkflowScreen"));
+import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
