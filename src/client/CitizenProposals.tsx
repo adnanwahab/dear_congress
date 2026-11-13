@@ -5,6 +5,8 @@ import {
   type AdvisoryChoice, type CitizenProposalInput, type CitizenProposalView, type ProposalJurisdiction,
 } from "../shared/citizen-proposals";
 import "./citizen-proposals.css";
+import ProposalWorkspace from "./ProposalWorkspace";
+import AmendmentEditor from "./AmendmentEditor";
 
 const API = "/api/citizen-proposals";
 const DRAFTS_KEY = "civic_synthesis_proposal_drafts_v1";
@@ -76,6 +78,7 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
 
 export function CitizenProposalsApp() {
   const path = window.location.pathname.replace(/\/+$/, "");
+  if (path === "/proposals/new" && new URLSearchParams(window.location.search).get("guided") === "1") return <Shell current="new"><ProposalWorkspace /></Shell>;
   if (path === "/proposals/new") return <Shell current="new"><ProposalEditor /></Shell>;
   if (path.startsWith("/proposals/")) {
     let id: string;
@@ -346,6 +349,7 @@ function ProposalDetail({ id }: { id: string }) {
       <div className="cp-detail-layout"><article className="cp-panel cp-proposal-text"><section><p className="cp-eyebrow">01 · THE PROBLEM</p><h2>Why this matters</h2><p>{proposal.problem}</p></section><section className="cp-change"><p className="cp-eyebrow">02 · THE PROPOSAL</p><h2>What would change</h2><p>{proposal.proposedChange}</p></section><section><p className="cp-eyebrow">03 · WHERE IT APPLIES</p><h2>{placeLabel(proposal)}</h2>{proposal.jurisdiction === "unsure" && <p>The appropriate jurisdiction still needs to be identified.</p>}</section>{proposal.supportingInfo && <section><p className="cp-eyebrow">04 · SUPPORTING INFORMATION</p><h2>Sources, benefits, and open questions</h2><p>{proposal.supportingInfo}</p></section>}{proposal.sourceEntryId && <section className="cp-origin"><p className="cp-eyebrow">STARTED WITH AN EXPERIENCE</p><p>This proposal was created from a shared journal entry.</p><a className="cp-text-link" href={`/journal#entry-${encodeURIComponent(proposal.sourceEntryId)}`}>Read the source journal entry →</a></section>}</article>
         <aside className="cp-panel cp-vote-panel" aria-labelledby="cp-vote-title"><p className="cp-eyebrow">ADD YOUR VOICE</p><h2 id="cp-vote-title">What do you think?</h2><p>You can change or remove your choice at any time.</p><div className="cp-vote-buttons" role="group" aria-label="Your advisory response">{ADVISORY_CHOICES.map(choice => <button key={choice} className={`cp-vote-choice cp-choice-${choice}${proposal.ownVote === choice ? " cp-choice-selected" : ""}`} aria-pressed={proposal.ownVote === choice} disabled={voting || commenting} onClick={() => vote(choice)}><span>{proposal.ownVote === choice ? "✓ " : ""}{choiceLabels[choice]}</span><b>{proposal.counts[choice].toLocaleString()}</b></button>)}</div><p className="cp-response-total"><b>{proposal.countTotal.toLocaleString()}</b> advisory response{proposal.countTotal === 1 ? "" : "s"} from browsers</p><p className="cp-vote-caveat">One current choice per browser identity. These counts do not verify residency or represent a public poll.</p>{proposal.ownVote && <button className="cp-inline-button" disabled={voting || commenting} onClick={() => vote(null)}>Remove my response</button>}{voting && <p role="status">Saving your response…</p>}{voteError && <Notice error>{voteError}</Notice>}<p className="cp-save-status" role="status">{status}</p><div className="cp-vote-boundary"><b>What happens next?</b><p>This proposal stays available for public discussion and advisory voting. Adoption by a government requires a separate process.</p></div></aside>
       </div>
+      <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
       <ProposalObjections proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/objections`, body);
         setProposal(result.proposal);
