@@ -1,3 +1,4 @@
+import { readBills } from './src/server/legislation/import';
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -899,6 +900,13 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/legislation": {
+      GET: async () => {
+        const headers = { "cache-control": "no-store" };
+        try { return Response.json({ bills: await readBills(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
+        catch { return Response.json({ error: "Official metadata unavailable" }, { status: 503, headers }); }
+      },
+    },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },

@@ -513,3 +513,10 @@ shows a proposal chooser instead of silently opening a different proposal.
 Loading, retry and empty states explain how to continue. Browser storage is
 optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
+
+## Official legislative metadata (opt-in first slice)
+
+A single-bill Congress.gov metadata importer and separate read-only lane are
+available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
+See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
+Metadata check times do not verify full bill text or current legal status.
