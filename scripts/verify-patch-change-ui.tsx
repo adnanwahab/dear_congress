@@ -46,8 +46,9 @@ try {
   transitionProposal(() => updates++);
   assert.equal(updates, 2);
   let snapshots = 0;
-  (document as any).startViewTransition = (update: () => void) => {
-    snapshots++; update(); return { ready: Promise.reject(new Error('Skipped visual transition')) };
+  (document as any).startViewTransition = (options: { update: () => void; types: string[] }) => {
+    assert.deepEqual(options.types, ['proposal-change']);
+    snapshots++; options.update(); return { ready: Promise.reject(new Error('Skipped visual transition')) };
   };
   await act(async () => transitionProposal(() => root.render(<PatchChange key="second" item={{ ...item, id: 'second', proposedText: 'Second proposal.' }} />)));
   assert.equal(snapshots, 1);

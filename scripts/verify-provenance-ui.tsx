@@ -31,8 +31,25 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     assert.match(section.textContent!, /Source not available \/ not checked/);
     const link = section.querySelector('a')!;
     assert.equal(link.getAttribute('rel'), 'noopener noreferrer');
-    assert.match(link.textContent!, /—/);
+    if (section.tagName !== 'DETAILS') assert.match(link.textContent!, /—/);
   }
+  const disclosures = [...container.querySelectorAll('details.workflow-provenance-compact')];
+  if (stage === 'feed' || stage === 'published') {
+    assert.equal(disclosures.length, 12);
+    for (const disclosure of disclosures) {
+      assert.equal(disclosure.hasAttribute('open'), false);
+      const summary = disclosure.querySelector('summary')!;
+      assert.match(summary.textContent!, /Sample scenario \/ not introduced bill/);
+      assert.match(summary.textContent!, /Not checked/);
+      assert(summary.querySelector('a[href^="https:"]'));
+      (summary as any).click();
+      assert.equal(disclosure.hasAttribute('open'), true);
+      (summary as any).click();
+      assert.equal(disclosure.hasAttribute('open'), false);
+      assert.match(disclosure.querySelector('.workflow-provenance-body')!.textContent!, /Background only/);
+    }
+  } else assert.equal(disclosures.length, 0);
+  if (stage === 'feed') assert(container.querySelector('aside .workflow-provenance:not(details)'));
   const food = sections.find(section => section.textContent!.includes('Food Access Research Atlas'))!;
   assert(food, stage);
   assert.match(food.textContent!, /Scenario jurisdiction: County/);
