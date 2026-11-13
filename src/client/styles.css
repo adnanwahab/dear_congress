@@ -641,3 +641,15 @@ table.versions .badge { margin-left: 6px; }
 .proposal-search label { min-width: 0; display: grid; gap: 5px; }
 .proposal-search input, .proposal-search select { width: 100%; min-width: 0; box-sizing: border-box; }
 .proposal-search p { overflow-wrap: anywhere; }
+
+/* One compositor-friendly sweep after the final 1.2s county wave settles. */
+.county-completion-sweep { pointer-events: none; animation: county-completion 900ms 1200ms ease-out both; }
+@keyframes county-completion {
+  from { transform: translateX(0); }
+  to { transform: translateX(1350px); }
+}
+.county-metrics strong { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .county-shape { transition: none !important; }
+  .county-completion-sweep { display: none; animation: none; }
+}
