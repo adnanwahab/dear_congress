@@ -1039,3 +1039,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .journal-feed article:target { outline: 2px solid #5b4b9a; outline-offset: 4px; }
 @keyframes journal-ticker-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .journal-ticker a { animation: none; } }
+
+/* First action remains available without demo data or browser storage. */
+.home-start { margin-bottom: 28px; }
+.home-start h1 { font-size: clamp(26px, 3vw, 36px); line-height: 1.2; margin: 0 0 16px; }
+.home-start-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 850px; margin-bottom: 16px; }
+.home-start-choices .dashboard-button { display: flex; align-items: center; justify-content: center; min-height: 48px; text-align: center; box-sizing: border-box; }
+.home-start > p { max-width: 900px; color: var(--muted); }
+.hero > h2 { font-size: 24px; margin: 0 0 12px; }
+.home-how { margin: 18px 0 24px; }
+.home-how summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; font-weight: 700; }
+.home-start a:focus-visible, .home-how summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.home-how .stage-card h3 { font-size: 20px; margin-bottom: 5px; }
+.home-how .stage-card h3 a { color: inherit; }
+@media (max-width: 680px) { .home-start-choices { grid-template-columns: 1fr; } }
