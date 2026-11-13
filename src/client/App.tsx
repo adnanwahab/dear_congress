@@ -12,6 +12,7 @@ import { livingCityUrl } from "./living-city-link";
 import { constitutionCityUrl } from "./constitution-city-link";
 import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
 import { loadMapLibre } from "./maplibre";
+import { HouseholdImpacts } from "./HouseholdImpacts";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -1572,6 +1573,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
           {side === "real" && <a className="sim-link" href={constitutionCityUrl(HBL_URL, { packageId: pkg.id, sourceOrigin: window.location.origin })} target="_blank" rel="noopener">⭐ Constitution → World Diff · package {pkg.id}</a>}
           <a className="muted s" href={simulatePlanUrl(pkg, side)} target="_blank" rel="noopener">Quick 8-future summary →</a>
         </div>
+        {side === "real" && <HouseholdImpacts key={JSON.stringify([pkg.id, pkg.budget, pkg.items.map(item => [item.proposal.id, item.proposal.costB])])} />}
         <ol className="plan">
           {pkg.items.map((it) => {
             const onlyHere = !otherIds.has(it.proposal.id);

@@ -250,6 +250,12 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--muted); text-align: c
 
 .sim-realities { margin-top: 14px; }
 .sim-realities.compact { margin-top: 0; }
+.household-impacts { margin-top: 16px; min-width: 0; max-width: 100%; }
+.household-impacts select { display: block; width: 100%; max-width: 100%; margin: 8px 0; }
+.household-table { overflow-x: auto; max-width: 100%; }
+.household-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.household-table th, .household-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--muted); overflow-wrap: anywhere; }
+.household-table caption { text-align: left; padding: 8px 0; }
 .sim-realities.ready { margin-top: 14px; padding: 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--accent-soft); display: grid; gap: 8px; }
 .sim-realities.ready .row { display: flex; gap: 8px; }
 .sim-realities.ready input { flex: 1; min-width: 0; font-size: 12px; }
