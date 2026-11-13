@@ -19,7 +19,9 @@ async function render(stage: 'draft' | 'sponsors' | 'outcomes', request: any, se
   dom.happyDOM.setURL(`http://localhost/${stage}${search}`);
   document.body.innerHTML = '<div id="root"></div>';
   root = createRoot(document.getElementById('root')!);
-  await act(async () => root.render(<WorkflowScreen stage={stage} request={request} />));
+  // Stage-state checks cover proposal loading; answer the official-bills lane separately.
+  const scoped = async (path: string, ...rest: unknown[]) => String(path).startsWith('/api/legislation') ? { bills: [] } : request(path, ...rest);
+  await act(async () => root.render(<WorkflowScreen stage={stage} request={scoped} />));
 }
 const request = async () => payload;
 for (const stage of ['draft', 'sponsors', 'outcomes'] as const) {
