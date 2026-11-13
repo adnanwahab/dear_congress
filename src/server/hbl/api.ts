@@ -1,0 +1,98 @@
+import { REPOSITORIES, isRepoKey, type RepoKey, type ItemKind } from '../../shared/repository-voting';
+import { previewFor,previewImage } from './previews';
+import { createVoteSummary } from './vote-summary';
+import { createCommunityVotes } from './community';
+import { boundedText } from './http';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
+import { HBL_CONTRACT, HBL_REPOSITORY, type Policy, type Pull, type PublicPull } from '../../shared/hbl-governance';
+import { GovernanceStore, GovernanceError } from './store';
+import { createAuth } from './auth';
+import { GitHubSource, GitHubError, PartialGitHubError } from './github';
+import { DEFAULT_POLICY, evaluateEligibility, nextBatch } from './policy';
+import { BatchWorker } from './worker';
+import { createOutbox, publicText } from './outbox';
+export function policyFromEnv(env:Record<string,string|undefined>):Policy {
+ const integer=(key:string,fallback:number,min:number,max:number)=>{const value=env[key]===undefined?fallback:Number(env[key]);if(!Number.isSafeInteger(value)||value<min||value>max)throw new Error('Invalid governance policy '+key);return value;};
+ const allowedBases=(env.HBL_ALLOWED_BASES??'').split(',').map(x=>x.trim()).filter(Boolean);if(allowedBases.some(x=>['main','master'].includes(x))&&env.HBL_PRODUCTION_BASE_AUTHORIZED!=='1')throw Error('Production branch integration is not authorized.');
+ return{...DEFAULT_POLICY,version:env.HBL_POLICY_VERSION??'pilot-1',quorum:integer('HBL_QUORUM',10,1,100),minExposureHours:integer('HBL_EXPOSURE_HOURS',24,1,720),requiredApprovals:integer('HBL_REQUIRED_APPROVALS',1,1,20),allowedBases,requiredChecks:(env.HBL_REQUIRED_CHECKS??'').split(',').map(x=>x.trim()).filter(Boolean),enabled:env.HBL_MERGE_ENABLED==='1',dryRun:env.HBL_MERGE_DRY_RUN!=='0',maxRecoveryHours:integer('HBL_RECOVERY_HOURS',6,0,6)};
+}
+interface Options {store:GovernanceStore;source:Pick<GitHubSource,'listPulls'|'detail'|'merge'>;policy:Policy;origin:string;env?:Record<string,string|undefined>;now?:()=>number;fetch?:typeof fetch;}
+export function createGovernanceAPI(options:Options){
+ const{store,source,origin}=options,env=options.env??{},clock=options.now??Date.now;
+ const legacy=store.repoKey==='happybearlandia'&&store.kind==='pr';
+ const policy=legacy?options.policy:{...options.policy,enabled:false,dryRun:true,allowedBases:[],requiredChecks:[]};
+ const community=createCommunityVotes(store,env.NODE_ENV==='production');
+ const summaries=createVoteSummary(store,{enabled:legacy&&env.HBL_PUBLISH_VOTE_SUMMARIES==='1',token:env.HBL_COMMENT_TOKEN,botId:Number(env.HBL_BOT_USER_ID)||undefined,now:clock,fetch:options.fetch});
+ const auth=createAuth({store,origin,clientId:env.HBL_OAUTH_CLIENT_ID??'',clientSecret:env.HBL_OAUTH_CLIENT_SECRET??'',secure:env.NODE_ENV==='production',now:clock,fetch:options.fetch});
+ const outbox=createOutbox(store,{publish:env.HBL_PUBLISH_FEEDBACK==='1'&&(env.HBL_FEEDBACK_REPOSITORIES??'happybearlandia').split(',').includes(store.repoKey),repoKey:store.repoKey,kind:store.kind,token:env.HBL_COMMENT_TOKEN,botId:Number(env.HBL_BOT_USER_ID)||undefined,intake:legacy&&env.HBL_INTAKE_ENABLED==='1',intakeUrl:env.HBL_INTAKE_URL,intakeSecret:env.HBL_INTAKE_SECRET,webhookSecret:env.HBL_WEBHOOK_SECRET,now:clock,fetch:options.fetch});
+ new BatchWorker(store,source,policy,{clock});
+ store.db.exec('CREATE TABLE IF NOT EXISTS hbl_sync(id INTEGER PRIMARY KEY CHECK(id=1),synced_at INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS hbl_service_nonces(signature TEXT PRIMARY KEY,created_at INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS hbl_limits(key TEXT PRIMARY KEY,window_at INTEGER NOT NULL,count INTEGER NOT NULL)');
+ let syncPromise:Promise<void>|null=null,sourceStatus='not-synced',warning:string|undefined;
+ const lastSync=()=>((store.db.query('SELECT synced_at FROM hbl_sync WHERE id=1').get() as any)?.synced_at as number|undefined);
+ function limit(key:string,max=60){const minute=Math.floor(clock()/60000);store.db.query('INSERT INTO hbl_limits VALUES(?,?,1) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN window_at=excluded.window_at THEN count+1 ELSE 1 END,window_at=excluded.window_at').run(key,minute);const row=store.db.query('SELECT count FROM hbl_limits WHERE key=?').get(key) as any;if(row.count>max)throw new GovernanceError(429,'rate_limited','Too many requests. Try again in a minute.');if(Math.random()<.01)store.db.query('DELETE FROM hbl_limits WHERE window_at<?').run(minute-10);}
+ async function sync(){if(syncPromise)return syncPromise;if(lastSync()&&clock()-lastSync()!<60000)return;syncPromise=(async()=>{try{const pulls=await source.listPulls();const open=new Set(pulls.map(p=>p.number));for(const p of pulls){const prior=store.getPull(p.number);store.upsertPull(prior?.version===p.version?{...prior,...p,evidence:prior.evidence,files:prior.files}:p,clock());}for(const p of store.listPulls())if(p.state==='open'&&!open.has(p.number))store.upsertPull({...p,state:'closed'},clock());store.db.query('INSERT OR REPLACE INTO hbl_sync VALUES(1,?)').run(clock());sourceStatus='live';warning=undefined;}catch(e){if(e instanceof PartialGitHubError){for(const p of e.pulls)store.upsertPull(p,clock());sourceStatus='partial';warning='Only part of the repository could be fetched ('+e.causeKind+'). Counts are incomplete; previously cached items were preserved.';return;}sourceStatus=e instanceof GitHubError?e.kind:'unavailable';warning='GitHub sync failed. Cached pull requests may be outdated; no sample requests have been substituted.';if(!store.listPulls().length)throw e;}})().finally(()=>syncPromise=null);return syncPromise;}
+ const viewer=(req:Request)=>{const identity=auth.viewer(req);return identity?{authenticated:true,approved:!!store.member(identity.id)?.approved,alias:identity.alias,csrf:identity.csrf}:{authenticated:false,approved:false};};
+ function publicPull(p:Pull,req?:Request):PublicPull {const tally=store.tally(p.number,p.version);return{...p,verifiedChoice:req&&auth.viewer(req)?store.choice(auth.viewer(req)!.id,p.number,p.version):null,preview:legacy?previewFor(p.number,p.headSha):undefined,tally,...(req?{community:community.read(p.number,p.version,community.identity(req).id)}:{}),eligibility:store.kind==='issue'?{eligible:false,state:'blocked',reason:'Issue priority vote only. Issues are never merge candidates.'}:evaluateEligibility(p,tally,policy,clock()),earliestBatch:store.kind==='pr'&&policy.enabled?nextBatch(p.firstSeenAt+policy.minExposureHours*3600000-1):undefined};}
+ function browserJson(req:Request,value:unknown){const response=json(value);const identity=community.identity(req);if(identity.cookie)response.headers.set('Set-Cookie',identity.cookie);return response;}
+ const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"frame-ancestors 'none'"}});
+ async function body(req:Request){if(Number(req.headers.get('content-length')??0)>16384)throw new GovernanceError(413,'request_too_large');const text=await boundedText(req,16384);if(Buffer.byteLength(text)>16384)throw new GovernanceError(413,'request_too_large');try{return JSON.parse(text);}catch{throw new GovernanceError(400,'invalid_json');}}
+ function strict(value:any,keys:string[]){if(!value||Array.isArray(value)||typeof value!=='object'||Object.keys(value).some(k=>!keys.includes(k)))throw new GovernanceError(400,'invalid_input');}
+ async function detail(number:number,req:Request){let stale=false,p:Pull|null;try{p=await source.detail(number);store.upsertPull(p,clock());p=store.getPull(number);}catch{p=store.getPull(number);stale=true;if(!p)throw new GovernanceError(503,'github_unavailable','GitHub is unavailable. Refresh later.');}const identity=auth.viewer(req);const historical=store.db.query('SELECT version FROM pull_versions WHERE number=? AND version!=?').all(number,p!.version) as any[];return{contract:HBL_CONTRACT,pull:publicPull(p!,req),viewer:viewer(req),stale,warning:stale?'GitHub detail is stale. Refresh before submitting.':undefined,choice:identity?store.choice(identity.id,number,p!.version):null,feedback:store.feedback(number,identity?.id??-1),historicalVotes:historical.map(r=>({version:r.version,...store.tally(number,r.version)}))};}
+ async function trusted(req:Request){const secret=env.HBL_WORKER_SECRET;if(!secret)throw new GovernanceError(503,'worker_unconfigured');const text=await boundedText(req,16384);if(Buffer.byteLength(text)>4096)throw new GovernanceError(413,'request_too_large');const ts=req.headers.get('x-hbl-timestamp')??'',sig=req.headers.get('x-hbl-signature')??'';if(!/^\d{10}$/.test(ts)||Math.abs(clock()-Number(ts)*1000)>300000)throw new GovernanceError(401,'invalid_worker_signature');const expected=createHmac('sha256',secret).update(ts+'.'+text).digest('hex');if(sig.length!==expected.length||!timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))throw new GovernanceError(401,'invalid_worker_signature');store.db.query('DELETE FROM hbl_service_nonces WHERE created_at<?').run(clock()-600000);try{store.db.query('INSERT INTO hbl_service_nonces VALUES(?,?)').run(sig,clock());}catch{throw new GovernanceError(409,'worker_replay');}let input:any;try{input=JSON.parse(text);}catch{throw new GovernanceError(400,'invalid_json');}strict(input,['dryRun']);if(input.dryRun!==undefined&&typeof input.dryRun!=='boolean')throw new GovernanceError(400,'invalid_input');return input;}
+ async function handle(req:Request):Promise<Response>{const requestId=randomUUID();try{const url=new URL(req.url),path=url.pathname;if(path==='/api/internal/hbl/batch'&&req.method==='POST'){if(!legacy)throw new GovernanceError(403,'merge_not_enabled');const input=await trusted(req);const effective={...policy,dryRun:policy.dryRun||input.dryRun!==false};const worker=new BatchWorker(store,source,effective,{clock,killSwitch:()=>env.HBL_KILL_SWITCH!=='0'});const run=await worker.run();const deliveries=effective.dryRun||env.HBL_KILL_SWITCH!=='0'?{processed:0}:await outbox.drain();const voteSummaries=input.dryRun===false?await summaries.run():{processed:0};return json({contract:HBL_CONTRACT,run,deliveries,voteSummaries});}if(path==='/api/webhooks/github'&&req.method==='POST')return json(await outbox.webhook(req));
+   if(path.startsWith('/api/hbl/auth/'))limit('auth:'+path,120);
+   const authResponse=await auth.handle(req);if(authResponse)return authResponse;
+   const imageMatch=path.match(/^\/api\/hbl\/previews\/(\d+)\/([a-f0-9]{40})\/image$/);if(imageMatch&&req.method==='GET'){const image=previewImage(Number(imageMatch[1]),imageMatch[2]!);if(!image)throw new GovernanceError(404,'preview_not_found');return new Response(Bun.file(image),{headers:{'Content-Type':'image/png','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'}});}
+   if(path==='/api/hbl/community-votes'&&req.method==='GET'){limit('community-read',120);const offset=Number(url.searchParams.get('offset')??0);if(!Number.isSafeInteger(offset)||offset<0)throw new GovernanceError(400,'invalid_offset');return json({...community.list(offset),schedule:summaries.status()});}
+   if(path==='/api/hbl/pulls'&&req.method==='GET'){limit('public-list',120);await sync();const last=lastSync();return browserJson(req,{contract:HBL_CONTRACT,repository:REPOSITORIES[store.repoKey].repository,kind:store.kind,integration:{state:store.kind==='issue'?'not-applicable':policy.enabled?'enabled':'disabled',reason:store.kind==='issue'?'Issues rank implementation priority; never merge candidates.':policy.enabled?'Existing operator policy applies.':'Merge integration is disabled for this repository.'},voteSummary:summaries.status(),pulls:store.listPulls().filter(p=>p.state==='open').map(p=>publicPull(p,req)),policy,nextBatch:store.kind==='pr'&&policy.enabled?nextBatch(clock()):null,lastSync:last?new Date(last).toISOString():null,stale:sourceStatus!=='live'||!last||clock()-last>120000,sourceStatus,warning,roster:{approved:store.rosterCount(),capacity:100},viewer:viewer(req)});}
+   if(path==='/api/hbl/merge-runs'&&req.method==='GET'){const rows=store.db.query('SELECT cutoff,status,receipts FROM hbl_batch_runs ORDER BY cutoff DESC LIMIT 100').all();return json({contract:HBL_CONTRACT,runs:rows});}
+   const match=path.match(/^\/api\/hbl\/pulls\/(\d+)(?:\/(ballot|feedback|community-ballot))?$/);if(!match)throw new GovernanceError(404,'not_found');const number=Number(match[1]);if(!Number.isSafeInteger(number)||number<1)throw new GovernanceError(400,'invalid_pull');
+   if(!match[2]&&req.method==='GET'){limit('public-detail',240);return browserJson(req,await detail(number,req));}
+   if(match[2]==='community-ballot'&&req.method==='PUT'){
+     if(!legacy)auth.requireVoter(req);
+     if(req.headers.get('origin')!==origin||req.headers.get('content-type')?.split(';')[0]?.trim()!=='application/json')throw new GovernanceError(403,'same_origin_required','Please vote from this site.');
+     const identity=community.identity(req);limit('community:'+identity.id,30);limit('community-global',600);
+     const input=await body(req);strict(input,['version','choice']);
+     if(typeof input.version!=='string'||input.version.length>500||!['yes','no'].includes(input.choice))throw new GovernanceError(400,'invalid_ballot','Choose Yes or No.');
+     const current=store.getPull(number);if(!current)throw new GovernanceError(404,'not_found','Refresh the patch list before voting.');
+     store.upsertPull(current,clock());
+     if(current.version!==input.version)throw new GovernanceError(409,'stale_version','The patch changed. Refresh before voting on its new version.');
+     if(current.state!=='open')throw new GovernanceError(409,'pull_closed','This pull request is closed.');
+     const result=community.vote(identity.id,number,current.version,input.choice,clock());
+     const response=json({contract:HBL_CONTRACT,status:'vote-saved',community:result});if(identity.cookie)response.headers.set('Set-Cookie',identity.cookie);return response;
+   }
+   if((match[2]==='ballot'&&req.method==='PUT')||(match[2]==='feedback'&&req.method==='POST')){const identity=auth.requireVoter(req);limit('voter:'+identity.id,30);const input=await body(req);strict(input,match[2]==='ballot'?['version','choice']:['version','text','consent','idempotencyKey']);if(typeof input.version!=='string'||input.version.length>500)throw new GovernanceError(400,'invalid_version');let current:Pull;try{current=await source.detail(number);}catch{throw new GovernanceError(503,'github_unavailable','GitHub revision could not be verified; nothing was submitted.');}store.upsertPull(current,clock());if(current.version!==input.version)throw new GovernanceError(409,'stale_version','The pull request changed. Refresh and reconfirm your choice for the new revision.');if(match[2]==='ballot'){store.vote(identity.id,number,input.version,input.choice,clock());return json({contract:HBL_CONTRACT,status:'vote-saved',choice:input.choice,tally:store.tally(number,input.version)});}const text=publicText(input.text);if(input.consent!==true||typeof input.idempotencyKey!=='string')throw new GovernanceError(400,'consent_required');const feedback=store.createFeedback(identity.id,number,input.version,text,true,input.idempotencyKey,clock());return json({contract:HBL_CONTRACT,status:'feedback-saved',feedback},201);}
+   throw new GovernanceError(405,'method_not_allowed');
+ }catch(e){const status=e instanceof GovernanceError?e.status:e instanceof GitHubError?(e.kind==='rate-limit'?429:e.kind==='credentials'?503:502):500;return json({error:{code:e instanceof GovernanceError?e.code:e instanceof GitHubError?'github_'+e.kind:'internal_error',message:e instanceof GovernanceError?e.message:'The governance service is temporarily unavailable.',requestId}},status);}}
+ return{handle,auth,sync,outbox,summaries};
+}
+const configured = new Map<string, ReturnType<typeof createGovernanceAPI>>();
+export async function handleHblGovernance(req:Request){
+ const url=new URL(req.url), match=/^\/api\/hbl\/repos\/([^/]+)\/(pulls|issues)(\/.*)?$/.exec(url.pathname);
+ if(url.pathname.startsWith('/api/hbl/repos/')&&!match)return Response.json({error:{code:'repository_not_allowed'}},{status:404});
+ const repoKey=match?.[1]??'happybearlandia';
+ if(!isRepoKey(repoKey))return Response.json({error:{code:'repository_not_allowed'}},{status:404});
+ const kind:ItemKind=match?.[2]==='issues'?'issue':'pr',key=repoKey+':'+kind;
+ try{
+  let api=configured.get(key);
+  if(!api){
+   if(process.env.NODE_ENV==='production'&&process.env.HBL_SINGLE_WRITER!=='1')throw Error('Single writer not confirmed');
+   const path=process.env.HBL_DB_PATH??(process.env.DB_PATH??'data/db.json')+'.hbl.sqlite';mkdirSync(dirname(path),{recursive:true});
+   const store=new GovernanceStore(path,repoKey,kind);
+   const readSource=new GitHubSource({token:process.env.HBL_READ_TOKEN,repoKey,kind});
+   const mergeSource=new GitHubSource({token:repoKey==='happybearlandia'&&kind==='pr'?process.env.HBL_MERGE_TOKEN:undefined,repoKey,kind});
+   api=createGovernanceAPI({store,source:{listPulls:()=>readSource.listPulls(),detail:n=>readSource.detail(n),merge:(n,sha)=>mergeSource.merge(n,sha)},policy:policyFromEnv(process.env),origin:process.env.HBL_PUBLIC_ORIGIN??'http://localhost:'+String(process.env.PORT??8000),env:process.env});
+   configured.set(key,api);
+   if(process.env.HBL_PUBLISH_FEEDBACK==='1'&&(process.env.HBL_FEEDBACK_REPOSITORIES??'happybearlandia').split(',').includes(repoKey)){
+    const timer=setInterval(()=>{void api?.outbox.drain().catch(()=>{});},30000);timer.unref();
+   }
+   if(repoKey==='happybearlandia'&&kind==='pr'&&process.env.HBL_PUBLISH_VOTE_SUMMARIES==='1'){
+    const timer=setInterval(()=>{void api?.summaries.run().catch(()=>{});},30000);timer.unref();
+   }
+  }
+  if(match){url.pathname='/api/hbl/pulls'+(match[3]??'');req=new Request(url,req);}
+  return await api.handle(req);
+ }catch{return Response.json({error:{code:'configuration_required',message:'Game patches requires verified single-writer storage and valid operator configuration.',requestId:randomUUID()}},{status:503,headers:{'Cache-Control':'no-store'}});}
+}

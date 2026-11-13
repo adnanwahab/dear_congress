@@ -1,5 +1,5 @@
 import { pageTitle, SITE_URL } from "../shared/page-metadata";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
   VariantFit, VariantId, Weights, WorldsResult,
@@ -115,6 +115,10 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const GamePatches = lazy(() => import("./GamePatches"));
+const isRepositoryVotingPath = (path: string) =>
+  /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
+
 export function App() {
   const [pathname, setPathname] = useState(() => window.location.pathname);
   useEffect(() => {
@@ -123,6 +127,7 @@ export function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  if (isRepositoryVotingPath(pathname)) return <Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches /></Suspense>;
   return isCitizenProposalPath(pathname) ? <CitizenProposalsApp /> : <LegacyApp />;
 }
 
@@ -265,7 +270,7 @@ function LegacyApp() {
         <div className="brand">
           <span className="mark" aria-hidden>◎</span>
           <div>
-            <h1>Civic Synthesis</h1>
+            <h1>Civic Synthesis</h1><a href="/vote/happybearlandia">Repository voting ↗</a>
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>

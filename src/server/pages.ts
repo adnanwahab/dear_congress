@@ -31,8 +31,9 @@ export function metadata(title: string, description: string, path: string) {
 export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[]) {
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
-  const found = Object.hasOwn(PAGE_TITLES, path) || !!proposal;
-  const title = proposal ? `${proposal.title} | ${SITE_NAME}` : found ? pageTitle(path) : `Page not found | ${SITE_NAME}`;
+  const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
+  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || repositoryVote;
+  const title = proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
   const description = proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
   let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
   if (!found) html = html.replace('<div id="root"></div>', `<main style="max-width:40rem;margin:12vh auto;padding:24px;font:20px/1.6 system-ui"><h1>Page not found</h1><p>The link may have changed, or this page may no longer exist.</p><p><a href="/feed">Go to Feed</a> · <a href="/votes">Go to Votes</a></p></main>`).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");

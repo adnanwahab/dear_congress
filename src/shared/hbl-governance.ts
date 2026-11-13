@@ -1,0 +1,15 @@
+/** Cross-repository wire contract. Changes require a new version. No credentials or provider IDs in public payloads. */
+export const HBL_CONTRACT = 'hbl-governance.v1' as const;
+export const HBL_REPOSITORY = 'adnanwahab/happybearlandia' as const;
+export type Choice = 'yes' | 'no';
+export interface Policy { version:string; timezone:'America/Chicago'; quorum:number; minExposureHours:number; allowedBases:string[]; requiredChecks:string[]; requiredApprovals:number; enabled:boolean; dryRun:boolean; maxRecoveryHours:number; }
+export interface Evidence { checks:{name:string;status:string;conclusion:string|null;sha:string}[]; reviews:{userId:number;state:string;commitId:string|null}[]; requestedReviewers:number; mergeable:boolean|null; mergeableState:string; baseSha:string; protectionsKnown:boolean; protectedBase:boolean; sensitive:boolean; maintainerApproved:boolean; }
+export interface Pull { kind?:'pr'|'issue'; links?:string[]; workflow?:{state:string;reason:string}; number:number; repositoryId:number; title:string; body:string; author:string; url:string; updatedAt:string; headSha:string; base:string; draft:boolean; state:string; version:string; firstSeenAt:number; labels:string[]; evidence?:Evidence; files?:{filename:string;status:string;additions:number;deletions:number;patch?:string}[]; }
+export interface Tally { yes:number; no:number; participation:number; feedback:number; }
+export interface Eligibility { eligible:boolean; reason:string; state:'draft'|'open-for-voting'|'approved'|'waiting-for-checks'|'blocked'; }
+export interface PublicPull extends Pull { verifiedChoice?:Choice|null; preview?:{headSha:string;route:string;screenshotUrl:string;capturedAt:string;note?:string;exploreUrl?:string;deploymentVerifiedAt?:string}; tally:Tally; community?:{yes:number;no:number;participation:number;choice:Choice|null}; eligibility:Eligibility; earliestBatch?:string; }
+export interface Viewer { authenticated:boolean; approved:boolean; alias?:string; csrf?:string; }
+export interface Feedback { id:string; number:number; version:string; alias:string; text:string; choice:Choice|null; createdAt:number; commentStatus:string; commentUrl:string|null; intakeStatus:string; taskUrl:string|null; error?:string; }
+export interface PullList { kind?:'pr'|'issue'; integration?:{state:string;reason:string}; contract:typeof HBL_CONTRACT; repository:string; pulls:PublicPull[]; voteSummary?:{enabled:boolean;nextBatch:string;timezone:string}; policy:Policy; nextBatch:string|null; lastSync:string|null; stale:boolean; sourceStatus:string; warning?:string; roster:{approved:number;capacity:number}; viewer:Viewer; }
+export interface PullDetail { contract:typeof HBL_CONTRACT; pull:PublicPull; viewer:Viewer; choice:Choice|null; feedback:Feedback[]; historicalVotes:{version:string;yes:number;no:number}[]; }
+export interface FeedbackEnvelope { contract:typeof HBL_CONTRACT; repository:string; repositoryId:number; feedbackId:string; number:number; version:string; headSha:string; base:string; commentId:number; commentUrl:string; alias:string; text:string; choice:Choice|null; createdAt:number; }

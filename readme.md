@@ -284,6 +284,8 @@ A citizen idea runs through a pipeline instead of a yes/no:
 - **Storage is a JSON file.** The Postgres schema in the design doc (journals, needs, proposals, votes, plans, experiments, outcomes) is the natural next step.
 - Not yet built: user accounts, outcome measurement / policy experiments feeding back into journals, district-level views.
 
+Repository voting: see [setup, contracts and verification](docs/repository-voting.md).
+
 ## Public-write security
 
 Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
