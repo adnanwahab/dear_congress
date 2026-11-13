@@ -40,7 +40,8 @@ export function validateJournal(body: Record<string, unknown>) {
   for (const field of ["labels", "needs"]) if (body[field] !== undefined && (!Array.isArray(body[field]) || !(body[field] as unknown[]).every(x => typeof x === "string"))) throw new PublicInputError(`${field} must be an array of IDs.`);
 }
 export function validateVotes(body: Record<string, unknown>, proposals: string[], needs: string[]) {
-  if (!Object.keys(body).some(k => ["votes", "allocation", "goalVotes"].includes(k))) throw new PublicInputError("Votes, allocation, or goalVotes are required.");
+  if (!Object.keys(body).some(k => ["votes", "allocation", "goalVotes", "withdrawVotes"].includes(k))) throw new PublicInputError("Votes, allocation, or goalVotes are required.");
+  if (body.withdrawVotes !== undefined && (!Array.isArray(body.withdrawVotes) || !body.withdrawVotes.every(id => typeof id === "string" && proposals.includes(id)))) throw new PublicInputError("Invalid withdrawal proposal IDs.");
   if (body.votes !== undefined) {
     if (!Array.isArray(body.votes)) throw new PublicInputError("votes must be an array.");
     for (const v of body.votes) {
@@ -50,7 +51,7 @@ export function validateVotes(body: Record<string, unknown>, proposals: string[]
   for (const field of ["allocation", "goalVotes"]) {
     const value = body[field]; if (value === undefined) continue;
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new PublicInputError(`Invalid ${field}.`);
-    for (const [id, v] of Object.entries(value)) if (!needs.includes(id) || (field === "goalVotes" ? typeof v !== "boolean" : typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 100)) throw new PublicInputError(`Invalid ${field} ID or value.`);
+    for (const [id, v] of Object.entries(value)) if (!needs.includes(id) || (field === "goalVotes" ? v !== null && typeof v !== "boolean" : typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 100)) throw new PublicInputError(`Invalid ${field} ID or value.`);
     if (field === "allocation" && Object.values(value).reduce<number>((s,v) => s + Number(v), 0) > 100) throw new PublicInputError("allocation exceeds 100 points");
   }
 }
@@ -114,7 +115,7 @@ export async function publicHandler(publicSecurity: ReturnType<typeof createPubl
   };
   const write = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const journal = ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path);
-  const protectedWrite = write && (journal || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path === "/api/publish_labels" || path === "/api/journal/:id");
+  const protectedWrite = write && (journal || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path === "/api/publish_labels" || path === "/api/journal/:id" || path === "/api/forks/:id/undo");
   try {
     if (protectedWrite) {
       const limited = publicSecurity.check(req, peer, identity.id, journal);
@@ -122,8 +123,8 @@ export async function publicHandler(publicSecurity: ReturnType<typeof createPubl
       const origin = req.headers.get("origin");
       const expected = publicSecurity.origin(req);
       if (origin && origin !== expected) return finish(Response.json({ error: "Use a same-origin submission or a cookie-aware API client." }, { status: 403 }));
-      if (path === "/api/publish_labels" || path === "/api/journal/:id") return finish(Response.json({ error: "Public label editing is disabled until ownership authorization is available." }, { status: 403 }));
-      const body = await boundedJson(req.clone());
+      if (path === "/api/publish_labels" || (path === "/api/journal/:id" && method !== "DELETE")) return finish(Response.json({ error: "Public label editing is disabled until ownership authorization is available." }, { status: 403 }));
+      const body = method === "DELETE" ? {} : await boundedJson(req.clone());
       if (journal || path === "/api/answers") validateJournal(body);
       if (path === "/api/votes") validateVoteBody(body);
     }

@@ -1,8 +1,10 @@
+import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
 import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
+import { buildBrowser } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
@@ -137,7 +139,7 @@ function withReadCors(req: Request, res: Response) {
 }
 
 function entriesNewestFirst() {
-  return [...db.entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return db.entries.map(publicJournal).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 const DB_SCHEMA_VERSION = 2;
@@ -386,7 +388,11 @@ function state(voterId = "anon") {
     ...Object.keys(db.votesByVoter),
     ...Object.keys(db.allocationByVoter),
     ...Object.keys(db.goalVotesByVoter),
-  ].filter((id) => id !== "anon" && id !== "legacy")).size;
+  ].filter((id) => id !== "anon" && id !== "legacy" && (
+    Object.keys(db.votesByVoter[id] ?? {}).length > 0 ||
+    Object.values(db.allocationByVoter[id] ?? {}).some(points => points > 0) ||
+    Object.keys(db.goalVotesByVoter[id] ?? {}).length > 0
+  ))).size;
 
   const userAnswers = db.answers.filter((a) => a.voterId === voterId || (voterId === "anon" && !a.voterId));
 
@@ -405,7 +411,8 @@ function state(voterId = "anon") {
     demandBlended: ctxBlended.demand,
     mechanismShare: ctxReal.mechanismShare,
     goalSupport: ctxReal.goalSupport,
-    entries: [...db.entries].reverse(),
+    entries: [...db.entries].reverse().map(publicJournal),
+    ownEntryIds: ownJournalIds(db, voterId),
     population: {
       n: POPULATION.length,
       archetypes: ARCHETYPES.map((a) => ({ name: a.name, share: a.share })),
@@ -486,7 +493,7 @@ const entryListeners = new Set<(payload: string) => void>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function entriesPayload() {
-  return JSON.stringify({ entries: [...db.entries].reverse() });
+  return JSON.stringify({ entries: [...db.entries].reverse().map(publicJournal) });
 }
 
 function emitEntriesUpdate() {
@@ -805,10 +812,7 @@ function parseWhatIfExtraEntries(input: unknown) {
 }
 
 // Build the browser shell once; render per-request canonical and social metadata.
-const browserBuild = await Bun.build({
-  entrypoints: ["./index.html"], target: "browser", publicPath: "/",
-  naming: "[name]-[hash].[ext]", minify: process.env.NODE_ENV === "production",
-});
+const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
 if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
 const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
@@ -826,6 +830,12 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    // Process liveness only: no database writes or upstream calls.
+    "/healthz": {
+      GET: () => securityHeaders(Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }, { headers: { "Cache-Control": "no-store" } })),
+      HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
+    },
+    "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
@@ -938,14 +948,22 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           ...(roundedLoc ? { location: roundedLoc } : {}),
         };
         db.entries.push(entry);
+        claimJournal(db, entry.id, resolveVoterId(req));
         await save();
         emitEntriesUpdate();
-        return Response.json(entry);
+        return Response.json(publicJournal(entry));
       },
     },
 
     // "No, that's not what I meant" — the person corrects the interpretation
     "/api/journal/:id": {
+      DELETE: async (req) => {
+        const result = deleteJournal(db, req.params.id!, resolveVoterId(req));
+        if (result !== 200) return bad(result === 404 ? "Entry not found." : "Only the publishing browser can delete this entry.", result);
+        await save();
+        emitEntriesUpdate();
+        return Response.json({ ok: true });
+      },
       PATCH: async (req) => {
         const entry = db.entries.find((e) => e.id === req.params.id!);
         if (!entry) return bad("entry not found");
@@ -954,17 +972,18 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         entry.extraction.needs = valid.map((id) => entry.extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
         entry.corrected = true;
         await save();
-        return Response.json(entry);
+        return Response.json(publicJournal(entry));
       },
     },
 
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const body = (await req.json()) as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean> };
+        const body = (await req.json()) as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean | null>; withdrawVotes?: string[] };
 
         const existingVotes = db.votesByVoter[voterId] ?? {};
         for (const v of body.votes ?? []) existingVotes[v.proposalId] = v;
+        for (const id of body.withdrawVotes ?? []) delete existingVotes[id];
         db.votesByVoter[voterId] = existingVotes;
 
         if (body.allocation) {
@@ -974,7 +993,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         }
 
         if (body.goalVotes) {
-          db.goalVotesByVoter[voterId] = { ...(db.goalVotesByVoter[voterId] ?? {}), ...body.goalVotes };
+          const goals = db.goalVotesByVoter[voterId] ?? {};
+          for (const [id, choice] of Object.entries(body.goalVotes)) {
+            if (choice === null) delete goals[id]; else goals[id] = choice;
+          }
+          db.goalVotesByVoter[voterId] = goals;
         }
 
         await save();
@@ -1084,6 +1107,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         };
 
         db.entries.push(entry);
+        claimJournal(db, entry.id, resolveVoterId(req));
         await save();
         emitEntriesUpdate();
 
@@ -1105,7 +1129,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         emitForkEvent(fork, { stage: "journal", status: "done", entry_id: entry.id, labels: fork.labels });
         void runPipeline(forkId);
 
-        return Response.json({ entry_id: entry.id, fork_id: forkId, entry });
+        return Response.json({ entry_id: entry.id, fork_id: forkId, entry: publicJournal(entry) });
       },
     },
 
@@ -1154,15 +1178,14 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       POST: async (req) => {
         const fork = forks.get(req.params.id!);
         if (!fork) return bad("fork not found");
+        if (!ownJournalIds(db, resolveVoterId(req)).includes(fork.entryId)) return bad("Only the publishing browser can undo this entry.", 403);
         if (fork.undone) return bad("fork already undone");
         if (!fork.undoUntil || Date.now() > fork.undoUntil) return bad("undo window expired");
 
-        const idx = db.entries.findIndex((e) => e.id === fork.entryId);
-        if (idx >= 0) {
-          db.entries.splice(idx, 1);
-          await save();
-          emitEntriesUpdate();
-        }
+        const result = deleteJournal(db, fork.entryId, resolveVoterId(req));
+        if (result !== 200) return bad("Only the publishing browser can undo this entry.", result);
+        await save();
+        emitEntriesUpdate();
         fork.undone = true;
         fork.done = true;
         emitForkEvent(fork, { stage: "journal", status: "error", message: "Publish undone" });
@@ -1265,7 +1288,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
             extractWithLLM,
             ensureNeedCoverage,
             recordAnswer,
-            createJournalEntry,
+            createJournalEntry: (input) => {
+              const entry = createJournalEntry(input);
+              claimJournal(db, entry.id, voterId);
+              return publicJournal(entry);
+            },
             save: async () => { await save(); },
             onExtract: (meta) => {
               logPublishEvent("EXTRACT_PROVIDER", {
@@ -1320,7 +1347,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           await save();
           const runs = Math.min(1000, Math.max(1, Math.floor(Number(body.runs) || DEFAULT_RUNS)));
           const years = Math.min(10, Math.max(1, Math.floor(Number(body.years) || DEFAULT_YEARS)));
-          return Response.json({ snapshot, simulationUrl: simulationUrl(HBL_URL, snapshot, { runs, years }) }, { status: 201 });
+          return Response.json({ snapshot: { ...snapshot, location: null }, simulationUrl: simulationUrl(HBL_URL, snapshot, { runs, years }) }, { status: 201 });
         } catch (err) {
           if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
           throw err;
@@ -1333,7 +1360,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       GET: (req) => {
         const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id!);
         if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
-        return withReadCors(req, Response.json({ snapshot }));
+        return withReadCors(req, Response.json({ snapshot: { ...snapshot, location: null } }));
       },
     },
 
@@ -1554,10 +1581,12 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       POST: async () => {
         // Resetting sample synthesis data must not erase public proposals or their votes.
         const citizenProposals = db.citizenProposals;
+        const journalOwners = db.journalOwners;
         const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
         const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
         db.citizenProposals = citizenProposals;
+        db.journalOwners = journalOwners;
         const seededIds = new Set(db.entries.map((entry) => entry.id));
         db.entries.push(...citedEntries.filter((entry) => !seededIds.has(entry.id)));
         await save();

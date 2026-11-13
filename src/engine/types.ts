@@ -244,6 +244,8 @@ export interface DB {
   /** Incremented when one-time data migrations are applied. */
   schemaVersion?: number;
   entries: JournalEntry[];
+  /** Private ownership hashes; never serialized in public responses. Legacy entries are unclaimed. */
+  journalOwners?: Record<string, string>;
   // Legacy single-user fields (kept for migration/backward compatibility)
   votes: Record<string, UserVote>;
   allocation: Record<string, number>;
