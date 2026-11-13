@@ -33,6 +33,16 @@ checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+## Public guide
+
+`/documentation` (alias `/docs`) explains participation and trust limits in
+plain English. Copy lives in `src/client/public-guide.ts`; the November 12 design
+report remains unchanged in a collapsed historical appendix. When behavior changes,
+update the guide together with privacy/participation wording and the focused guide
+contract test. Spanish translation approval and critical-copy synchronization follow
+[the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
+translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
+
 ## Appearance
 
 The shared civic header cycles **System → Light → Dark**. System is the default;
