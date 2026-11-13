@@ -1,3 +1,4 @@
+import { onPageActivation } from './page-activation';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
@@ -189,7 +190,7 @@ function LegacyApp() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => onPageActivation(() => {
     const es = new EventSource("/api/entries/events");
 
     es.onopen = () => {
@@ -211,7 +212,7 @@ function LegacyApp() {
     };
 
     return () => es.close();
-  }, []);
+  }), []);
 
   const onPublishStart = (forkId: string) => {
     setPublishFlow({
