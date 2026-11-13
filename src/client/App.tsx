@@ -598,11 +598,12 @@ export function JournalView({
     setBusy(true);
     setSubmitError("");
     try {
-    const published = await api<{ entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
+    const published = await api<{ status?: "pending"; message?: string; entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
       text,
       author,
       labels: preview?.labels ?? [],
     });
+    if (published.status === "pending") { setSubmitError(published.message ?? "Held for review."); setText(""); setConfirmedPublic(false); return; }
     onPublishStart(published.fork_id);
     setEntry(published.entry);
     setText("");
@@ -715,6 +716,7 @@ export function JournalView({
                 <span className="who">{e.author}</span>
                 <a href={`#entry-${encodeURIComponent(e.id)}`}>Entry link</a>
                 {state.ownEntryIds?.includes(e.id) && <button className="ghost small" onClick={() => removeEntry(e.id)}>Delete my entry</button>}
+                <ReportEntry entryId={e.id} />
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
                 {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
@@ -726,6 +728,19 @@ export function JournalView({
       </section>
     </div>
   );
+}
+
+function ReportEntry({ entryId }: { entryId: string }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  return <span><button className="ghost" onClick={() => setOpen(!open)}>Report</button>{open && <form onSubmit={async event => {
+    event.preventDefault(); setBusy(true);
+    try { await api("/api/reports", { entryId, reason }); setMessage("Report received for private admin review."); setOpen(false); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Report failed."); }
+    finally { setBusy(false); }
+  }}><label>Reason (avoid repeating private details)<input value={reason} onChange={e => setReason(e.target.value)} required maxLength={1000} /></label><button disabled={busy}>Send report</button></form>}<span role="status">{message}</span></span>;
 }
 
 /* --------------------------------- Needs --------------------------------- */

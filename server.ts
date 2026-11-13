@@ -1,6 +1,9 @@
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
 import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
+import { publicEntry } from "./src/shared/moderation";
+import { contactReasons, isPublicEntry, moderate, moderationAuthorized, moderationPage, moderationScript } from "./src/server/moderation";
+import { boundedJson, PublicInputError } from "./src/server/public-security";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
@@ -139,7 +142,7 @@ function withReadCors(req: Request, res: Response) {
 }
 
 function entriesNewestFirst() {
-  return db.entries.map(publicJournal).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return db.entries.filter(isPublicEntry).map(publicEntry).map(publicJournal).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 const DB_SCHEMA_VERSION = 2;
@@ -411,7 +414,7 @@ function state(voterId = "anon") {
     demandBlended: ctxBlended.demand,
     mechanismShare: ctxReal.mechanismShare,
     goalSupport: ctxReal.goalSupport,
-    entries: [...db.entries].reverse().map(publicJournal),
+    entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal),
     ownEntryIds: ownJournalIds(db, voterId),
     population: {
       n: POPULATION.length,
@@ -493,7 +496,7 @@ const entryListeners = new Set<(payload: string) => void>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function entriesPayload() {
-  return JSON.stringify({ entries: [...db.entries].reverse().map(publicJournal) });
+  return JSON.stringify({ entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal) });
 }
 
 function emitEntriesUpdate() {
@@ -615,7 +618,7 @@ function recencyWeight(createdAt: string, newestMs: number) {
 function needsGeo(bbox: { s: number; w: number; n: number; e: number }, mode: "real" | "simulated" | "both") {
   const includeReal = mode === "real" || mode === "both";
   const includeSim = mode === "simulated" || mode === "both";
-  const entries = db.entries.filter((e) => e.location
+  const entries = db.entries.filter((e) => isPublicEntry(e) && e.location
     && e.location.lat >= bbox.s && e.location.lat <= bbox.n
     && e.location.lng >= bbox.w && e.location.lng <= bbox.e
     && ((includeReal && !e.synthetic) || (includeSim && !!e.synthetic)));
@@ -838,6 +841,28 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
+    "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
+    "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },
+    "/api/admin/moderation": {
+      POST: async (req) => {
+        if (!moderationAuthorized(req, ADMIN_TOKEN)) return bad("Unauthorized", 401);
+        if (req.headers.get("origin") !== publicSecurity.origin(req)) return bad("Same-origin request required", 403);
+        try { return await moderate(req, db, save, emitEntriesUpdate); }
+        catch (error) { if (error instanceof PublicInputError) return bad(error.message, error.status); throw error; }
+      },
+    },
+    "/api/reports": {
+      POST: async (req) => {
+        const body = await boundedJson(req);
+        if (typeof body.entryId !== "string" || !db.entries.some(e => e.id === body.entryId && isPublicEntry(e))) return bad("Entry not found", 404);
+        if (typeof body.reason !== "string" || !body.reason.trim() || body.reason.length > 1000) return bad("A reason of 1–1000 characters is required.");
+        const reports = db.journalReports ??= [];
+        const reporterId = resolveVoterId(req);
+        if (!reports.some(r => r.entryId === body.entryId && r.reporterId === reporterId)) reports.push({ id: crypto.randomUUID(), entryId: body.entryId, reason: body.reason.trim(), reporterId, createdAt: new Date().toISOString() });
+        await save();
+        return Response.json({ ok: true });
+      },
+    },
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
@@ -1582,13 +1607,19 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         // Resetting sample synthesis data must not erase public proposals or their votes.
         const citizenProposals = db.citizenProposals;
         const journalOwners = db.journalOwners;
+        const journalReports = db.journalReports;
+        const journalModerationLog = db.journalModerationLog;
+        const reportedIds = new Set((journalReports ?? []).map(r => r.entryId));
+        const moderatedEntries = db.entries.filter(e => e.moderation || reportedIds.has(e.id));
         const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
         const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
         db.citizenProposals = citizenProposals;
         db.journalOwners = journalOwners;
+        db.journalReports = journalReports;
+        db.journalModerationLog = journalModerationLog;
         const seededIds = new Set(db.entries.map((entry) => entry.id));
-        db.entries.push(...citedEntries.filter((entry) => !seededIds.has(entry.id)));
+        db.entries.push(...[...new Map([...citedEntries, ...moderatedEntries].map(e => [e.id, e])).values()].filter((entry) => !seededIds.has(entry.id)));
         await save();
         return Response.json({ ok: true });
       },
@@ -1620,6 +1651,24 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
     if (typeof handler !== "function") continue;
     (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
       return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
+        // Run after shared validation/limits and before extraction or answer creation.
+        if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {
+          const body = await boundedJson(req.clone());
+          const reasons = contactReasons(`${body.text ?? ""}\n${body.author ?? ""}`);
+          if (reasons.length) {
+            const text = String(body.text).trim();
+            const synthetic = [true, "true", 1, "1"].includes(body.synthetic as boolean | string | number);
+            const meta = body.metadata && typeof body.metadata === "object" ? body.metadata as Record<string, unknown> : {};
+            let location;
+            try { location = parseAndRoundLocation(body.location ?? (meta.lat !== undefined ? { lat: meta.lat, lng: meta.lng } : undefined), synthetic); }
+            catch { return bad("Invalid location"); }
+            const entry = createJournalEntry({ text, author: typeof body.author === "string" ? body.author : undefined, extraction: extract(text), corrected: false, synthetic, source: typeof body.source === "string" ? body.source.trim().slice(0, 64) : undefined, tileId: typeof body.tileId === "string" ? body.tileId : typeof meta.tileId === "string" ? meta.tileId : undefined });
+            if (location) entry.location = location;
+            entry.moderation = { status: "pending", reason: reasons.join(", "), decidedAt: new Date().toISOString() };
+            await save();
+            return Response.json({ ok: true, status: "pending", entryId: entry.id, message: "Held for review because this submission may contain contact details." }, { status: 202 });
+          }
+        }
         const observation = req.clone();
         const response = await (handler as Function)(req, bunServer);
         return observePublicResponse(launchStats, observation, response, () => {

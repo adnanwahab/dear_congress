@@ -1,3 +1,4 @@
+import { isPublicEntry } from "../shared/moderation";
 // "Simulate realities": synthesize the plan ONCE, freeze it, and hand HappyBearLandia an
 // opaque snapshot id. HBL then runs the same frozen plan in many paired futures.
 // No journal text ever leaves Dear Congress in a snapshot or a URL.
@@ -29,7 +30,7 @@ export function createSimulationSnapshot(
   opts: { entryId?: string | null; packageName?: string; needs: NeedDef[]; outcomes?: SynthesisOutcomes; now?: Date },
 ): SimulationSnapshot {
   const entryId = opts.entryId?.trim() || null;
-  const entry = entryId ? db.entries.find((e) => e.id === entryId) : null;
+  const entry = entryId ? db.entries.find((e) => e.id === entryId && isPublicEntry(e)) : null;
   if (entryId && !entry) throw new SnapshotError("journal entry not found", 404);
 
   // Same synthesis the Synthesize tab runs on real voices, but read-only: it must not

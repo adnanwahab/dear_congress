@@ -13,6 +13,7 @@ test("journal escapes published text and shows consent/removal guidance before s
   expect(html).toContain('open a removal request');
   expect(html).toContain('I want to publish this entry publicly.');
   expect(html.indexOf('This entry is public')).toBeLessThan(html.indexOf('Publish publicly'));
+  expect(html).toContain('>Report</button>');
   expect(html).toContain('maxLength="10000"');
   expect(html).toContain('disabled=""');
 });

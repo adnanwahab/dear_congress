@@ -115,7 +115,7 @@ export async function publicHandler(publicSecurity: ReturnType<typeof createPubl
   };
   const write = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const journal = ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path);
-  const protectedWrite = write && (journal || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path === "/api/publish_labels" || path === "/api/journal/:id" || path === "/api/forks/:id/undo");
+  const protectedWrite = write && (journal || path === "/api/reports" || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path === "/api/publish_labels" || path === "/api/journal/:id" || path === "/api/forks/:id/undo");
   try {
     if (protectedWrite) {
       const limited = publicSecurity.check(req, peer, identity.id, journal);
