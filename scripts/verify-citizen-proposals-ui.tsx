@@ -34,9 +34,11 @@ for (const key of ['window','document','navigator','HTMLElement','HTMLInputEleme
 }
 Object.defineProperty(globalThis, 'getComputedStyle', { configurable: true, value: dom.getComputedStyle.bind(dom) });
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+let writeRequests = 0;
 let dropNextPublishResponse = false;
 let browserCookie = "";
 globalThis.fetch = (async (input: any, init?: any) => {
+  if (init?.method && !['GET', 'HEAD'].includes(init.method)) writeRequests++;
   const url = new URL(typeof input === 'string' ? input : input.url ?? String(input), dom.location.href);
   const headers = new Headers(init?.headers);
   if (browserCookie) headers.set('cookie', browserCookie);
@@ -115,6 +117,31 @@ try {
   check('Publication requires confirmation and creates a permanent page without an automatic vote');
   await click(/^Support 0$/);
   await until(() => !!query().queryByText('Your advisory response is saved: Support.'), 'support');
+  await fill('comment-name', 'Keep my name');
+  await fill('comment-text', 'Keep this unsent question');
+  const beforeHelp = writeRequests;
+  const help = document.querySelector('.cp-reading-help') as HTMLDetailsElement;
+  const summary = help.querySelector('summary')!;
+  assert.equal(help.open, false);
+  help.open = true; // Happy DOM does not emulate native summary keyboard activation.
+  const originalText = query().getByRole('heading', { name: 'What would change' }).parentElement!.textContent;
+  for (const link of help.querySelectorAll('a')) {
+    const target = document.querySelector(link.getAttribute('href')!);
+    assert.ok(target, 'Every explanation links to an existing notice');
+    assert.ok(!target.closest('details'), 'Essential notice remains visible when help closes');
+    assert.equal(target.getAttribute('tabindex'), '-1');
+  }
+  const link = help.querySelector('a')!;
+  link.focus();
+  await act(async () => { fireEvent.keyDown(link, { key: 'Escape' }); });
+  assert.equal(help.open, false);
+  assert.equal(document.activeElement, summary);
+  assert.equal(writeRequests, beforeHelp, 'Reading help must never write or vote');
+  assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'true');
+  assert.equal((document.getElementById('comment-name') as HTMLInputElement).value, 'Keep my name');
+  assert.equal((document.getElementById('comment-text') as HTMLTextAreaElement).value, 'Keep this unsent question');
+  assert.equal(query().getByRole('heading', { name: 'What would change' }).parentElement!.textContent, originalText);
+  check('Reading help preserves choice, source text and unsent discussion, returns focus on Escape, and makes no writes');
   await click(/^Oppose 0$/);
   await until(() => !!query().queryByText('Your advisory response is saved: Oppose.'), 'oppose');
   await click('Remove my response');
@@ -132,6 +159,24 @@ try {
   await until(() => !!query().queryByRole('button', { name: /^Support 1$/ }), 'first browser shared counts');
   assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'false');
   check('Independent browser identity sees shared totals and its own choice');
+  const beforeAmendment = await api('/api/citizen-proposals/' + id);
+  await click('Suggest amendment');
+  for (const [label, value] of [
+    ['Suggested replacement text', 'Publish one accessible checklist and monthly processing times for common permits.'],
+    ['Rationale', 'Help applicants plan visits.'],
+    ['Impact / cost note (unknown is acceptable)', 'Additional cost unknown.'],
+    ['Citation note (title, URL, locator, date and excerpt/version)', 'Illustrative permit fixture, https://example.test/permits, section 1, 2026-11-13.'],
+  ]) await act(async () => { fireEvent.change(query().getByLabelText(label!), { target: { value } }); });
+  await click('Save new private version');
+  assert.deepEqual(await api('/api/citizen-proposals/' + id), beforeAmendment);
+  assert.equal((await api('/api/citizen-proposals')).proposals.length, 1);
+  await render(detailPath);
+  await until(() => !!query().queryByRole('button', { name: 'Suggest amendment' }), 'amendment reload');
+  await click('Suggest amendment'); await click('View version 1');
+  assert.equal((query().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value,
+    'Publish one accessible checklist and monthly processing times for common permits.');
+  check('Private amendment reloads against exact citizen source without changing public text, options, or ballots');
+
   await fill('comment-name', 'Demo participant');
   await fill('comment-text', 'Could the checklist include expected processing times? <img src=x onerror=alert(1)>');
   await click('Post public comment');

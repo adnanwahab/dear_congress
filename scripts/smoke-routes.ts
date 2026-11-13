@@ -32,7 +32,7 @@ try {
   const headVersion = await fetch(new URL('/version', server!.url), { method: 'HEAD' });
   assert.equal(headVersion.status, 200);
   assert.equal(await headVersion.text(), '');
-  for (const path of ['/', '/journal', '/needs', '/vote', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
+  for (const path of ['/', '/journal', '/needs', '/vote', '/vote/happybearlandia', '/vote/happybearlandia/pr/282', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/, path);
