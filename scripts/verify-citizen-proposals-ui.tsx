@@ -132,6 +132,24 @@ try {
   await until(() => !!query().queryByRole('button', { name: /^Support 1$/ }), 'first browser shared counts');
   assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'false');
   check('Independent browser identity sees shared totals and its own choice');
+  const beforeAmendment = await api('/api/citizen-proposals/' + id);
+  await click('Suggest amendment');
+  for (const [label, value] of [
+    ['Suggested replacement text', 'Publish one accessible checklist and monthly processing times for common permits.'],
+    ['Rationale', 'Help applicants plan visits.'],
+    ['Impact / cost note (unknown is acceptable)', 'Additional cost unknown.'],
+    ['Citation note (title, URL, locator, date and excerpt/version)', 'Illustrative permit fixture, https://example.test/permits, section 1, 2026-11-13.'],
+  ]) await act(async () => { fireEvent.change(query().getByLabelText(label!), { target: { value } }); });
+  await click('Save new private version');
+  assert.deepEqual(await api('/api/citizen-proposals/' + id), beforeAmendment);
+  assert.equal((await api('/api/citizen-proposals')).proposals.length, 1);
+  await render(detailPath);
+  await until(() => !!query().queryByRole('button', { name: 'Suggest amendment' }), 'amendment reload');
+  await click('Suggest amendment'); await click('View version 1');
+  assert.equal((query().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value,
+    'Publish one accessible checklist and monthly processing times for common permits.');
+  check('Private amendment reloads against exact citizen source without changing public text, options, or ballots');
+
   await fill('comment-name', 'Demo participant');
   await fill('comment-text', 'Could the checklist include expected processing times? <img src=x onerror=alert(1)>');
   await click('Post public comment');

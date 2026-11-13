@@ -66,3 +66,44 @@ For a UI check, use a temporary database and open `/votes`. Save and reload a dr
 This branch was prepared against GitHub `main` at `f53852e9d6537ae98e3e09fe792d0f4d9fdc5711`. At implementation time, that source used `/vote` and `fly.toml` targeted `dear-congress`, while the inspected `civic-synthesis.fly.dev` deployment already had newer `/votes`, `/feed`, and sample-draft screens absent from this repository.
 
 Before production rollout, bring the current deployed source into the repository and integrate these modules with its existing screens. On the newer UI, reuse the form/detail components and API, add the proposal CTA to the existing voting screen, include published citizen proposals alongside clearly labelled sample content, and add the journal conversion link. Preserve the deployed app's other routes and features. Verify the intended Fly app and persistent volume before deploying. This branch does not change `fly.toml`, trigger a production deployment, or claim the live app has already changed.
+
+## Private amendment preparation (SHE-305 first slice)
+
+Citizen proposal details now offer **Suggest amendment**. The recovered sample
+`/draft` and `/votes` screens offer the same editor, explicitly labelled fictional.
+The source's entire proposed text is one editable section; this does not infer
+legal clause boundaries. Replace text, supply rationale, impact/cost (unknown is
+valid), and a citation note with title, URL, locator, date and excerpt/version.
+The comparison labels Removed/Added alongside strike/underline and stacks on
+narrow screens. It highlights one changed span between the shared prefix/suffix;
+it is not a semantic legal diff or a minimal word diff.
+
+**Save new private version** appends an exact text/source snapshot and metadata
+in browser-local storage, isolated by source kind and proposal ID. Saved versions
+can be reopened after reload; saving edits creates another version. Origin,
+jurisdiction, title, text, timestamp and an unverified browser author label stay
+attached to each saved version. The editor blocks a stale-source save and offers
+an explicit fresh start, preserving earlier saved versions. An unsaved working
+copy is lost on navigation; save before switching proposals. A fresh start clears
+the working fields, so save any needed work before accepting it.
+
+No amendment API, moderation submission, publication or voting option exists in
+this slice. Publication permission is recorded as **not requested**. There is no
+public author-name field. Citation notes render as escaped plain text, including
+URLs; nothing is fetched or treated as verified evidence. Parent text, votes,
+comments, source journal identity and repository ballots are untouched.
+
+Local storage is accessible to users of the same browser profile and scripts on
+this origin; it is not an authenticated private account or durable audit history.
+Clearing it loses drafts. The app appends snapshots but storage can be edited and
+has no tamper protection, backup or cross-tab transaction guarantee. Each proposal
+is limited to 30 saved versions. Corrupt/unreadable storage and failed saves
+produce an error without intentionally overwriting earlier records. Do not use
+this preparation feature for sensitive personal information.
+
+`bun test` includes model fixtures and an isolated Happy DOM walkthrough through
+`src/client/amendment-ui.test.ts` / `scripts/verify-amendments-ui.tsx`. The existing
+`bun run test:proposals-ui` additionally checks that amendment preparation on a
+real citizen detail does not change its public API text, options or ballots.
+Native browser, zoom/contrast, keyboard-only and screen-reader verification remain
+manual acceptance tasks. See `docs/reviews/SHE-305.md` for remaining delivery.
