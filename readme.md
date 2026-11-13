@@ -646,3 +646,11 @@ gates cannot be overridden. Committing creates only a local ledger revision;
 original synthesis selections and stored plans remain unchanged. Downloadable
 `plan-budget-v1` JSON freezes that fiscal summary, not private scoring inputs or a
 replayable civic decision. See [SHE-360 validation and limits](docs/reviews/SHE-360.md).
+
+Embedded needs and jurisdiction maps are optional. Rankings and jurisdiction
+priorities remain available as text while map assets load or fail. Missing styles
+show a map-free notice; resource failures and a 10-second initial loading timeout
+remove the failed map and offer a manual retry. Retry affects only that map.
+Developer console diagnostics report initialization, resource or timeout failures
+without copying provider URLs or raw errors (which may contain credentials).
+Check provider configuration, connectivity and CSP when investigating those logs.
