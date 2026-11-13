@@ -578,3 +578,21 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+### Plan budget ledger
+
+Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
+uses integer USD millions; the ledger reports any difference from the engine's
+hundredth-billion headline rounding separately. Unknown/negative/nonfinite costs,
+unsupported precision, duplicate items, mismatched totals and infeasible plans
+close the ledger with an error rather than publishing a valid summary.
+
+Current costs are illustrative assumptions. Estimate dates, independently sourced
+fiscal evidence, net incremental spending and calibrated uncertainty ranges are
+unavailable and labeled accordingly. No contingency reserve is modeled. Filtering
+changes visible rows, never totals. Budget-excluded options preview the existing
+engine's deterministic replacement IDs with item and dollar diffs; other exclusion
+gates cannot be overridden. Committing creates only a local ledger revision;
+original synthesis selections and stored plans remain unchanged. Downloadable
+`plan-budget-v1` JSON freezes that fiscal summary, not private scoring inputs or a
+replayable civic decision. See [SHE-360 validation and limits](docs/reviews/SHE-360.md).
