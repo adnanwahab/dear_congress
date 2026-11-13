@@ -36,7 +36,7 @@ jobs:
     # Stay paused until SHE-281 recovers the live source and verifies the Fly target.
     if: vars.PRODUCTION_RELEASES_ENABLED == 'true'
     name: Deploy app
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:

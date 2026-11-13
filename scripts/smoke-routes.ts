@@ -21,6 +21,16 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  for (const topic of ['transit', 'housing', 'childcare']) {
+    const page = await get(`/topics/${topic}`);
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /topic hub/);
+    const hub = await get(`/api/topics/${topic}`);
+    assert.equal(hub.status, 200);
+    assert.equal((await hub.json()).topic.id, topic);
+  }
+  assert.equal((await get('/topics/unknown')).status, 404);
+  assert.equal((await get('/api/topics/unknown')).status, 404);
   const auditIndex = await get('/api/audit-samples');
   assert.equal(auditIndex.status, 200);
   const { samples } = await auditIndex.json();

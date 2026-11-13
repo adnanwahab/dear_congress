@@ -8,15 +8,19 @@ for (const key of ['window', 'document', 'navigator', 'localStorage', 'location'
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 const writes: any[] = [];
 let outcome = 'published';
+const publicEntries: any[] = [];
 const request = async <T,>(path: string, body?: any): Promise<T> => {
   if (path.includes('schema')) return { version: 2, needs: [{ id: 'housing', label: 'Housing' }] } as T;
   if (body) {
     writes.push(body);
     if (outcome === 'pending') return { status: 'pending', message: 'Awaiting review' } as T;
     if (outcome === 'failed') throw new Error('Offline');
-    return { entry: { id: `manual-${writes.length}`, text: body.text, createdAt: '2026-11-13T12:00:00Z', extraction: { needs: body.labels.map((id: string) => ({ id })) } } } as T;
+    const entry = { id: `manual-${writes.length}`, text: body.text, createdAt: '2026-11-13T12:00:00Z', extraction: { needs: body.labels.map((id: string) => ({ id })) } };
+    publicEntries.push(entry);
+    return { entry } as T;
   }
-  return { entries: [], nextCursor: null } as T;
+  const id = new URL(path, 'https://civic.test').searchParams.get('entry');
+  return { entries: id ? publicEntries.filter(e => e.id === id) : publicEntries, nextCursor: null } as T;
 };
 const container = dom.document.createElement('div'); dom.document.body.append(container);
 const root = createRoot(container as any);
@@ -49,19 +53,19 @@ assert.match(container.querySelector('[aria-label="Deliberate public sharing"] [
 assert.match(container.textContent!, /Published without need tags/);
 assert.notEqual(excerpt(), ''); // #73: the working text stays on the page after sharing
 assert.equal(container.querySelectorAll('.journal-feed article').length, 1);
-assert.equal(container.querySelectorAll('.journal-feed a').length, 0);
+assert.equal(container.querySelectorAll('.journal-feed .journal-need-tags a').length, 0);
 // A selected category enters with the acknowledged entry; a declined one did not.
 await sample(); await act(async () => { category.click(); });
 await reviewAndConsent(); await share();
 const first = container.querySelector('.journal-feed article')!;
 assert.equal(first.className, 'journal-story-new');
 assert.match(first.textContent!, /Housing/);
-assert.equal(first.querySelector('a')!.getAttribute('href'), '/needs?need=housing&entry=manual-2');
-assert.equal(container.querySelectorAll('.journal-feed article').length, 2);
+assert.equal(first.querySelector('.journal-need-tags a')!.getAttribute('href'), '/needs?need=housing&entry=manual-2');
+assert.equal(container.querySelectorAll('.journal-feed article').length, 1);
 for (const mode of ['pending', 'failed']) {
   outcome = mode;
   await sample(); await reviewAndConsent(); await share();
-  assert.equal(container.querySelectorAll('.journal-feed article').length, 2);
+  assert.equal(container.querySelectorAll('.journal-feed article').length, 1);
   assert.notEqual(excerpt(), '');
   // Consent is consumed by each attempt; sharing again needs a fresh review.
   assert.equal(byText('Share publicly'), undefined);
