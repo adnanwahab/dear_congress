@@ -255,6 +255,14 @@ Creates a journal entry only (feeds Needs tab), and does **not** force-create a 
 
 You can omit `kind` and it defaults to `"journal"` (or `PUBLISH_DRAFT_DEFAULT_KIND` if set). If `needId` is present and `kind` is omitted, the server treats it as `"answer"` for backward compatibility.
 
+To publish without AI or keyword inference, send `kind: "journal", inference: "none"`.
+Optional `labels` (or `needs`) select catalog categories manually; omitted labels
+or `[]` publish with no tags. Unknown IDs are returned in `ignoredNeedIds`.
+This mode never creates needs, proposals or votes. `/journal` uses this mode.
+Legacy requests omitting `inference`, and the other journal POST aliases, still
+use automatic extraction; they are not the consent-first pilot. Draft text in
+`/journal` stays in page memory until public submission and is lost on reload.
+
 #### 2) Answer mode with explicit need
 Treats text as an open-ended policy answer and routes through the same path as `/api/answers`.
 
