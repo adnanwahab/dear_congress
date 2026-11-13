@@ -1,6 +1,7 @@
-import MapScreen from "./MapScreen";
+const MapScreen = lazy(() => import("./MapScreen"));
 import { BottomNavigation } from "./Navigation";
 import { Dashboard } from "./Dashboard";
+import { pageTitle, SITE_URL } from "../shared/page-metadata";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
@@ -9,6 +10,8 @@ import type {
 import { IDEA_STAGES } from "../engine/types";
 import { livingCityUrl } from "./living-city-link";
 import { constitutionCityUrl } from "./constitution-city-link";
+import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
+import { loadMapLibre } from "./maplibre";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -49,6 +52,7 @@ interface AppState {
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
+  ownEntryIds?: string[];
   population: { n: number; archetypes: { name: string; share: number }[]; realVoices?: number };
   user: { votes: Record<string, UserVote>; allocation: Record<string, number>; goalVotes: Record<string, boolean>; answers: { id: string; needId: string; text: string; proposalId: string }[] };
   defaultWeights: Weights;
@@ -57,23 +61,12 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
-const VOTER_ID_KEY = "civic_synthesis_voter_id";
-
-function getVoterId() {
-  const existing = localStorage.getItem(VOTER_ID_KEY);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  localStorage.setItem(VOTER_ID_KEY, id);
-  return id;
-}
-
 async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
     headers: {
       "content-type": "application/json",
-      "x-voter-id": getVoterId(),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -137,10 +130,11 @@ const WorkflowScreen = lazy(() => import("./WorkflowScreen"));
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
-  const screen = /^\/vote\/happybearlandia(?:\/pr\/\d+)?$/.test(path) ? <GamePatches />
+  const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
+    : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
   return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
@@ -169,6 +163,17 @@ function LegacyApp() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    const title = pageTitle(path);
+    document.title = title;
+    for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) {
+      document.querySelector(selector)?.setAttribute("content", title);
+    }
+    document.querySelector('meta[property="og:url"]')?.setAttribute("content", SITE_URL + path);
+    document.querySelector('link[rel="canonical"]')?.setAttribute("href", SITE_URL + path);
+  }, [tab]);
 
   const gotoTab = (next: Tab) => {
     setTab(next);
@@ -276,7 +281,7 @@ function LegacyApp() {
         <div className="brand">
           <span className="mark" aria-hidden>◎</span>
           <div>
-            <h1>Civic Synthesis</h1>
+            <h1>Civic Synthesis</h1><a href="/vote/happybearlandia">Repository voting ↗</a>
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>
@@ -291,6 +296,7 @@ function LegacyApp() {
       </main>
 
       <footer>
+        <a href="/privacy">Privacy &amp; removal</a> ·
         Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
     </div>
@@ -403,7 +409,7 @@ function NeedsGeoMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({
         container: elRef.current,
@@ -477,7 +483,7 @@ function JurisdictionMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
       map.on("load", async () => {
@@ -528,7 +534,7 @@ function JurisdictionMap({
 
 /* -------------------------------- Journal -------------------------------- */
 
-function JournalView({
+export function JournalView({
   state,
   refresh,
   liveStatus,
@@ -550,6 +556,8 @@ function JournalView({
   const [preview, setPreview] = useState<{ labels: string[]; matched: { need_id: string; name: string; voices: number }[]; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] } | null>(null);
   const [undo, setUndo] = useState<{ forkId: string; expiresAt: number; needId: string | null } | null>(null);
   const [undoLeft, setUndoLeft] = useState(0);
+  const [confirmedPublic, setConfirmedPublic] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (!text.trim()) {
@@ -576,13 +584,16 @@ function JournalView({
   }, [undo]);
 
   async function submit() {
-    if (!text.trim()) return;
+    if (!text.trim() || !confirmedPublic || busy) return;
     setBusy(true);
-    const published = await api<{ entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
+    setSubmitError("");
+    try {
+    const published = await api<{ status?: "pending"; message?: string; entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
       text,
       author,
       labels: preview?.labels ?? [],
     });
+    if (published.status === "pending") { setSubmitError(published.message ?? "Held for review."); setText(""); setConfirmedPublic(false); return; }
     onPublishStart(published.fork_id);
     setEntry(published.entry);
     setText("");
@@ -602,6 +613,20 @@ function JournalView({
       if (ev.status === "error") es.close();
     };
     es.onerror = () => es.close();
+    setConfirmedPublic(false);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Could not publish. Please try again.");
+    } finally { setBusy(false); }
+  }
+
+  async function removeEntry(id: string) {
+    if (!window.confirm("Delete this public journal entry? This cannot be undone.")) return;
+    setSubmitError("");
+    try {
+      await api(`/api/journal/${encodeURIComponent(id)}`, undefined, "DELETE");
+      if (entry?.id === id) { setEntry(null); setUndo(null); }
+      refresh();
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Could not delete. Please retry."); }
   }
 
   async function undoPublish() {
@@ -626,15 +651,19 @@ function JournalView({
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. Rent went up again and the bus to my job takes over an hour…"
           rows={6}
+          maxLength={10000}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(); }}
         />
         {text.trim() && <p className="note faint">{previewNeedsLine}</p>}
         {preview?.labels?.length ? (
           <div className="chips">{preview.labels.map((id) => <span key={id} className="chip s">{needLabel(state, id)}</span>)}</div>
         ) : null}
+        <p>This entry is public if submitted. Do not include addresses, contact details, or other private information. To request removal, <a href="https://github.com/adnanwahab/dear_congress/issues/new?title=Public%20journal%20removal%20request">open a removal request</a> with the entry link or ID only; do not repeat private text.</p>
+        <label><input type="checkbox" checked={confirmedPublic} onChange={e => setConfirmedPublic(e.target.checked)} /> I want to publish this entry publicly.</label>
+        {submitError && <p role="alert">{submitError}</p>}
         <div className="row">
-          <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
-          <button onClick={submit} disabled={busy || !text.trim()}>{busy ? "Publishing…" : "Publish"}</button>
+          <input maxLength={120} value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
+          <button onClick={submit} disabled={busy || !text.trim() || !confirmedPublic}>{busy ? "Publishing…" : "Publish publicly"}</button>
         </div>
 
         {entry && (
@@ -649,6 +678,7 @@ function JournalView({
               {entry.extraction.needs.map((n) => <span key={n.id} className="chip">{needLabel(state, n.id)}</span>)}
             </div>
             <SimulateRealities key={entry.id} entryId={entry.id} />
+            <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(entry.id)}`}>Turn this into a proposal</a>
           </div>
         )}
 
@@ -670,20 +700,37 @@ function JournalView({
         <p className="muted">Every interpretation stays attached to the original words.</p>
         <ul className="feed">
           {state.entries.map((e) => (
-            <li key={e.id}>
+            <li key={e.id} id={`entry-${e.id}`}>
               <p>{e.text}</p>
               <div className="feed-meta">
                 <span className="who">{e.author}</span>
+                <a href={`#entry-${encodeURIComponent(e.id)}`}>Entry link</a>
+                {state.ownEntryIds?.includes(e.id) && <button className="ghost small" onClick={() => removeEntry(e.id)}>Delete my entry</button>}
+                <ReportEntry entryId={e.id} />
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
                 {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
               </div>
+              <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(e.id)}`}>Turn this into a proposal</a>
             </li>
           ))}
         </ul>
       </section>
     </div>
   );
+}
+
+function ReportEntry({ entryId }: { entryId: string }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  return <span><button className="ghost" onClick={() => setOpen(!open)}>Report</button>{open && <form onSubmit={async event => {
+    event.preventDefault(); setBusy(true);
+    try { await api("/api/reports", { entryId, reason }); setMessage("Report received for private admin review."); setOpen(false); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Report failed."); }
+    finally { setBusy(false); }
+  }}><label>Reason (avoid repeating private details)<input value={reason} onChange={e => setReason(e.target.value)} required maxLength={1000} /></label><button disabled={busy}>Send report</button></form>}<span role="status">{message}</span></span>;
 }
 
 /* --------------------------------- Needs --------------------------------- */
@@ -853,6 +900,8 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
   const [answerMsg, setAnswerMsg] = useState("");
   const [votes, setVotes] = useState<Record<string, UserVote>>(() => ({ ...state.user.votes }));
   const [saved, setSaved] = useState("");
+  const [withdrawVotes, setWithdrawVotes] = useState<string[]>([]);
+  const [voteError, setVoteError] = useState("");
 
   const used = Object.values(alloc).reduce((s, v) => s + v, 0);
   const need = state.needs.find((n) => n.id === needId)!;
@@ -866,14 +915,32 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
 
   const vote = (pid: string, patch: Partial<UserVote>) => {
     const cur = votes[pid] ?? { proposalId: pid, stance: 0 as Stance, importance: 0.5, acceptCompromise: true, concern: "", changeMind: "" };
-    setVotes({ ...votes, [pid]: { ...cur, ...patch } });
+    if (patch.stance !== undefined && votes[pid]?.stance === patch.stance) {
+      const next = { ...votes }; delete next[pid]; setVotes(next);
+      setWithdrawVotes(ids => [...new Set([...ids, pid])]);
+    } else {
+      setVotes({ ...votes, [pid]: { ...cur, ...patch } });
+      setWithdrawVotes(ids => ids.filter(id => id !== pid));
+    }
   };
 
   async function saveAll(msg: string) {
-    await api("/api/votes", { votes: Object.values(votes), allocation: alloc });
-    setSaved(msg);
-    setTimeout(() => setSaved(""), 2500);
-    refresh();
+    setVoteError("");
+    try {
+      await api("/api/votes", { votes: Object.values(votes), allocation: alloc, withdrawVotes });
+      setWithdrawVotes([]);
+      setSaved(msg);
+      setTimeout(() => setSaved(""), 2500);
+      refresh();
+    } catch (error) { setVoteError(error instanceof Error ? error.message : "Could not save votes. Please retry."); }
+  }
+
+  async function setGoal(choice: boolean) {
+    setVoteError("");
+    try {
+      await api("/api/votes", { goalVotes: { [needId]: goalVote === choice ? null : choice } });
+      refresh();
+    } catch (error) { setVoteError(error instanceof Error ? error.message : "Could not save vote. Please retry."); }
   }
 
   async function submitAnswer() {
@@ -914,11 +981,13 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
             {state.needs.map((n) => <button key={n.id} className={`chip-btn ${n.id === needId ? "on" : ""}`} onClick={() => { setNeedId(n.id); setAnswerMsg(""); }}>{n.label}</button>)}
           </div>
 
+          {voteError && <p role="alert">{voteError}</p>}
+          <p className="muted">Click a selected choice again to withdraw. Use Save votes to save option changes.</p>
           <h3 className="q">Step 1 · Agree on the goal</h3>
           <p className="goal">Should we commit to this: <b>{need.goal}</b>?</p>
           <div className="row">
-            <button className={goalVote === true ? "" : "ghost"} onClick={async () => { await api("/api/votes", { goalVotes: { [needId]: true } }); refresh(); }}>Yes</button>
-            <button className={goalVote === false ? "" : "ghost"} onClick={async () => { await api("/api/votes", { goalVotes: { [needId]: false } }); refresh(); }}>No</button>
+            <button className={goalVote === true ? "" : "ghost"} aria-pressed={goalVote === true} onClick={() => setGoal(true)}>Yes</button>
+            <button className={goalVote === false ? "" : "ghost"} aria-pressed={goalVote === false} onClick={() => setGoal(false)}>No</button>
             <div className="goal-res"><Bar value={state.goalSupport[needId]!} tone="sup" /><span>{pct(state.goalSupport[needId]!)} say yes</span></div>
           </div>
 
@@ -955,7 +1024,7 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
                   {p.emergent && p.costEstimate !== "assessed" && <EstimateForm key={`${p.id}:${(p as IdeaProposal).myEstimate?.costB ?? ""}`} p={p as IdeaProposal} changeLevels={state.changeLevels} onSaved={refresh} />}
                   <div className="stances">
                     {STANCES.map((s) => (
-                      <button key={s.v} className={`st st${s.v} ${v?.stance === s.v ? "on" : ""}`} onClick={() => vote(p.id, { stance: s.v })}>{s.label}</button>
+                      <button key={s.v} aria-pressed={v?.stance === s.v} className={`st st${s.v} ${v?.stance === s.v ? "on" : ""}`} onClick={() => vote(p.id, { stance: s.v })}>{s.label}</button>
                     ))}
                   </div>
                   {v && (

@@ -2,6 +2,7 @@ import type { Eligibility, Policy, Pull, Tally } from '../../shared/hbl-governan
 export const DEFAULT_POLICY:Policy={version:'1',timezone:'America/Chicago',quorum:10,minExposureHours:24,allowedBases:[],requiredChecks:[],requiredApprovals:1,enabled:false,dryRun:true,maxRecoveryHours:6};
 export function evaluateEligibility(p:Pull,t:Tally,policy:Policy,cutoff=Date.now()):Eligibility {
   const result=(state:Eligibility['state'],reason:string):Eligibility=>({state,reason,eligible:state==='approved'});
+  if(p.kind==='issue')return result('blocked','Issues are never merge candidates');
   if(p.draft) return result('draft','Draft pull request');
   if(p.state!=='open') return result('blocked','Pull request is not open');
   if(p.labels.some(label=>/(?:^|[\s:_-])(?:hold|do[\s_-]*not[\s_-]*merge|blocked)(?:$|[\s:_-])/i.test(label))) return result('blocked','Pull request has an explicit hold label');

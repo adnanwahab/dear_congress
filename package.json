@@ -6,6 +6,8 @@
     "dev": "bun --hot server.ts",
     "start": "NODE_ENV=production bun server.ts",
     "test": "bun test",
+    "test:routes": "bun scripts/smoke-routes.ts",
+    "test:proposals-ui": "bun scripts/verify-citizen-proposals-ui.tsx",
     "typecheck": "tsc --noEmit",
     "purge:world": "bun scripts/purge-world-journals.ts",
     "outcomes:fetch": "bun scripts/fetch-outcomes.ts",
@@ -22,9 +24,11 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "10.4.2",
     "@types/bun": "latest",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "happy-dom": "21.0.4",
     "typescript": "^5.6.0"
   }
 }

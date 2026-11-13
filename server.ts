@@ -1,8 +1,16 @@
+import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
+import { createStatsHTTP } from "./src/server/launch-stats-http";
+import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
+import { publicEntry } from "./src/shared/moderation";
+import { contactReasons, isPublicEntry, moderate, moderationAuthorized, moderationPage, moderationScript } from "./src/server/moderation";
+import { boundedJson, PublicInputError } from "./src/server/public-security";
+import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
-import index from "./index.html";
+import { renderPage, sitemap } from "./src/server/pages";
+import { buildBrowser } from "./src/server/browser-build";
+import { SITE_URL } from "./src/shared/page-metadata";
+import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
-import { rename } from "node:fs/promises";
-import { NEEDS, PROPOSALS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
@@ -22,6 +30,9 @@ import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
 import { SnapshotError, validateSimulationOptions, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { createPublicPlan } from "./src/server/public-plan";
 import { timingSafeEqual } from "node:crypto";
+import { mkdir, rename } from "node:fs/promises";
+import { dirname } from "node:path";
+import { createCitizenProposalHandlers } from "./src/server/citizen-proposals";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
   loadOutcomesFile,
@@ -33,9 +44,9 @@ import {
 } from "./src/server/outcomes";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
-const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
+const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self'").trim() || "'self'";
 const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
-const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "1") !== "0";
+const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
 const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
@@ -133,7 +144,7 @@ function withReadCors(req: Request, res: Response) {
 }
 
 function entriesNewestFirst() {
-  return [...db.entries].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return db.entries.filter(isPublicEntry).map(publicEntry).map(publicJournal).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 const DB_SCHEMA_VERSION = 2;
@@ -355,19 +366,22 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 let db = await load();
 let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
 let demoCache: { day: string; payload: DemoPayload } | null = null;
+// Serialize snapshots so an older concurrent write cannot replace a newer vote.
+// Atomic rename also keeps a process interruption from leaving a partial JSON DB.
 let saveQueue: Promise<unknown> = Promise.resolve();
-// Serialize snapshots and rename atomically so overlapping writes cannot truncate the file.
 const save = () => {
   demoCache = null;
   const snapshot = JSON.stringify(db, null, 2);
-  const write = saveQueue.catch(() => {}).then(async () => {
-    const temporary = `${DB_PATH}.pending`;
-    await Bun.write(temporary, snapshot);
-    await rename(temporary, DB_PATH);
+  const write = saveQueue.then(async () => {
+    await mkdir(dirname(DB_PATH), { recursive: true });
+    const temporaryPath = `${DB_PATH}.${process.pid}.tmp`;
+    await Bun.write(temporaryPath, snapshot);
+    await rename(temporaryPath, DB_PATH);
   });
-  saveQueue = write;
+  saveQueue = write.catch(() => {});
   return write;
 };
+const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 function dashboardState(voterId: string) {
   const day = new Date().toISOString().slice(0, 10);
   if (!demoCache || demoCache.day !== day) demoCache = { day, payload: demoPayload(db.votesByVoter, "") };
@@ -387,7 +401,11 @@ function state(voterId = "anon") {
     ...Object.keys(db.votesByVoter),
     ...Object.keys(db.allocationByVoter),
     ...Object.keys(db.goalVotesByVoter),
-  ].filter((id) => id !== "anon" && id !== "legacy")).size;
+  ].filter((id) => id !== "anon" && id !== "legacy" && (
+    Object.keys(db.votesByVoter[id] ?? {}).length > 0 ||
+    Object.values(db.allocationByVoter[id] ?? {}).some(points => points > 0) ||
+    Object.keys(db.goalVotesByVoter[id] ?? {}).length > 0
+  ))).size;
 
   const userAnswers = db.answers.filter((a) => a.voterId === voterId || (voterId === "anon" && !a.voterId));
 
@@ -406,7 +424,8 @@ function state(voterId = "anon") {
     demandBlended: ctxBlended.demand,
     mechanismShare: ctxReal.mechanismShare,
     goalSupport: ctxReal.goalSupport,
-    entries: [...db.entries].reverse(),
+    entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal),
+    ownEntryIds: ownJournalIds(db, voterId),
     population: {
       n: POPULATION.length,
       archetypes: ARCHETYPES.map((a) => ({ name: a.name, share: a.share })),
@@ -487,7 +506,7 @@ const entryListeners = new Set<(payload: string) => void>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function entriesPayload() {
-  return JSON.stringify({ entries: [...db.entries].reverse() });
+  return JSON.stringify({ entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal) });
 }
 
 function emitEntriesUpdate() {
@@ -609,7 +628,7 @@ function recencyWeight(createdAt: string, newestMs: number) {
 function needsGeo(bbox: { s: number; w: number; n: number; e: number }, mode: "real" | "simulated" | "both") {
   const includeReal = mode === "real" || mode === "both";
   const includeSim = mode === "simulated" || mode === "both";
-  const entries = db.entries.filter((e) => e.location
+  const entries = db.entries.filter((e) => isPublicEntry(e) && e.location
     && e.location.lat >= bbox.s && e.location.lat <= bbox.n
     && e.location.lng >= bbox.w && e.location.lng <= bbox.e
     && ((includeReal && !e.synthetic) || (includeSim && !!e.synthetic)));
@@ -805,58 +824,69 @@ function parseWhatIfExtraEntries(input: unknown) {
   return { ok: true as const, entries };
 }
 
-export const server = Bun.serve({
+// Build the browser shell once; render per-request canonical and social metadata.
+const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
+if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
+const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
+
+const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
+let statsHealthy = true;
+// Metrics failures must never turn a persisted vote into an apparent failed vote.
+function recordStats(run: () => unknown) {
+  try { run(); } catch { statsHealthy = false; console.error("[STATS_ERROR] Metrics recording failed"); }
+}
+const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
+const publicSecurity = createPublicSecurity();
+const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
+const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
-    "/": index,
-    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs"), { headers: { "content-type": "text/javascript", "cache-control": "public, max-age=3600" } }),
-    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs"), { headers: { "content-type": "text/javascript", "cache-control": "public, max-age=3600" } }),
-    "/documentation": index,
-    "/documentation/": index,
-    "/docs": index,
-    "/docs/": index,
-    "/map": index,
-    "/map/": index,
-    "/published": index,
-    "/published/": index,
-    "/feed": index,
-    "/feed/": index,
-    "/votes": index,
-    "/votes/": index,
-    "/draft": index,
-    "/draft/": index,
-    "/sponsors": index,
-    "/sponsors/": index,
-    "/outcomes": index,
-    "/outcomes/": index,
-    "/journals": index,
-    "/journals/": index,
-    "/api-docs": index,
-    "/api-docs/": index,
-    "/journal": index,
-    "/journal/": index,
-    "/needs": index,
-    "/needs/": index,
-    "/vote": index,
-    "/vote/": index,
-    "/vote/happybearlandia": index,
-    "/vote/happybearlandia/": index,
-    "/vote/happybearlandia/pr/:number": index,
-    "/vote/happybearlandia/pr/:number/": index,
-    "/api/hbl/*": handleHblGovernance,
-    "/api/internal/hbl/batch": handleHblGovernance,
-    "/api/webhooks/github": handleHblGovernance,
-    "/synth": index,
-    "/synth/": index,
+    // Process liveness only: no database writes or upstream calls.
+    "/healthz": {
+      GET: () => securityHeaders(Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }, { headers: { "Cache-Control": "no-store" } })),
+      HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
+    },
+    "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
+    "/admin/stats": (req) => statsHTTP.admin(req),
+    "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
+    "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
+    "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },
+    "/api/admin/moderation": {
+      POST: async (req) => {
+        if (!moderationAuthorized(req, ADMIN_TOKEN)) return bad("Unauthorized", 401);
+        if (req.headers.get("origin") !== publicSecurity.origin(req)) return bad("Same-origin request required", 403);
+        try { return await moderate(req, db, save, emitEntriesUpdate); }
+        catch (error) { if (error instanceof PublicInputError) return bad(error.message, error.status); throw error; }
+      },
+    },
+    "/api/reports": {
+      POST: async (req) => {
+        const body = await boundedJson(req);
+        if (typeof body.entryId !== "string" || !db.entries.some(e => e.id === body.entryId && isPublicEntry(e))) return bad("Entry not found", 404);
+        if (typeof body.reason !== "string" || !body.reason.trim() || body.reason.length > 1000) return bad("A reason of 1–1000 characters is required.");
+        const reports = db.journalReports ??= [];
+        const reporterId = resolveVoterId(req);
+        if (!reports.some(r => r.entryId === body.entryId && r.reporterId === reporterId)) reports.push({ id: crypto.randomUUID(), entryId: body.entryId, reason: body.reason.trim(), reporterId, createdAt: new Date().toISOString() });
+        await save();
+        return Response.json({ ok: true });
+      },
+    },
+    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
+    "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
+    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
+    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs")),
+    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs")),
 
-    // Explicit embed route.
-    "/embed": index,
+    "/api/hbl/*": (req) => handleHblGovernance(req, observeRepositoryVote),
+    "/api/internal/hbl/batch": (req) => handleHblGovernance(req),
+    "/api/webhooks/github": (req) => handleHblGovernance(req),
 
     "/api/debug/request": {
       GET: (req) => {
         logRequest(req, "/api/debug/request");
-        const headers = Object.fromEntries(req.headers.entries());
+        const headers = { "content-type": req.headers.get("content-type") };
         const payload = { ok: true, url: req.url, method: req.method, headers, frameAncestors: FRAME_ANCESTORS, embedCsp: EMBED_CSP };
         const res = Response.json(payload);
         logResponse("/api/debug/request", res);
@@ -864,13 +894,29 @@ export const server = Bun.serve({
       },
     },
 
-    "/healthz": { GET: () => Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }) },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
+    },
+
+    "/api/citizen-proposals": {
+      GET: (req) => citizenProposalHandlers.list(req),
+      POST: (req) => citizenProposalHandlers.publish(req),
+    },
+    "/api/citizen-proposals/journal/:id": {
+      GET: (req) => citizenProposalHandlers.journal(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id": {
+      GET: (req) => citizenProposalHandlers.detail(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/vote": {
+      POST: (req) => citizenProposalHandlers.vote(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/comments": {
+      POST: (req) => citizenProposalHandlers.comment(req, req.params.id!),
     },
 
     "/api/outcomes": {
@@ -897,7 +943,7 @@ export const server = Bun.serve({
 
     "/api/geo/:id": {
       GET: async (req) => {
-        const id = req.params.id;
+        const id = req.params.id!;
         const map: Record<string, string> = {
           houston: "data/geo/houston-city-limits.geojson",
           "harris-county": "data/geo/harris-county.geojson",
@@ -922,7 +968,7 @@ export const server = Bun.serve({
         logPublishEvent("EXTRACT_PROVIDER", {
           route: "/api/journal",
           provider: llm.provider,
-          matchedNeedIds: extraction.needs.map((n) => n.id),
+          matchedNeedCount: extraction.needs.length,
         });
 
         let roundedLoc: { lat: number; lng: number } | undefined;
@@ -942,55 +988,60 @@ export const server = Bun.serve({
           ...(roundedLoc ? { location: roundedLoc } : {}),
         };
         db.entries.push(entry);
+        claimJournal(db, entry.id, resolveVoterId(req));
         await save();
         emitEntriesUpdate();
-        return Response.json(entry);
+        return Response.json(publicJournal(entry));
       },
     },
 
     // "No, that's not what I meant" — the person corrects the interpretation
     "/api/journal/:id": {
+      DELETE: async (req) => {
+        const result = deleteJournal(db, req.params.id!, resolveVoterId(req));
+        if (result !== 200) return bad(result === 404 ? "Entry not found." : "Only the publishing browser can delete this entry.", result);
+        await save();
+        emitEntriesUpdate();
+        return Response.json({ ok: true });
+      },
       PATCH: async (req) => {
-        const entry = db.entries.find((e) => e.id === req.params.id);
+        const entry = db.entries.find((e) => e.id === req.params.id!);
         if (!entry) return bad("entry not found");
         const { needs } = (await req.json()) as { needs: string[] };
         const valid = needs.filter((id) => currentNeeds().some((n) => n.id === id));
         entry.extraction.needs = valid.map((id) => entry.extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 });
         entry.corrected = true;
         await save();
-        return Response.json(entry);
+        return Response.json(publicJournal(entry));
       },
     },
 
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        let raw: unknown;
-        try { raw = await req.json(); } catch { return bad("invalid JSON"); }
-        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return bad("request body must be an object");
-        const body = raw as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean> };
+        const body = (await req.json()) as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean | null>; withdrawVotes?: string[] };
 
-        // Validate the entire request before modifying persistent state.
-        if (body.votes !== undefined && (!Array.isArray(body.votes) || body.votes.length > 500)) return bad("votes must be an array of at most 500 items");
-        const knownIds = new Set([...PROPOSALS.map(p => p.id), ...db.emergent.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)]);
-        for (const v of body.votes ?? []) {
-          if (!v || !knownIds.has(v.proposalId) || ![-2,-1,0,1,2].includes(v.stance)
-            || !Number.isFinite(v.importance) || v.importance < 0 || v.importance > 1
-            || typeof v.acceptCompromise !== "boolean" || typeof v.concern !== "string" || typeof v.changeMind !== "string"
-            || v.concern.length > 4000 || v.changeMind.length > 4000) return bad("invalid vote");
-        }
+        const existingVotes = db.votesByVoter[voterId] ?? {};
+        for (const v of body.votes ?? []) existingVotes[v.proposalId] = v;
+        for (const id of body.withdrawVotes ?? []) delete existingVotes[id];
+        db.votesByVoter[voterId] = existingVotes;
+
         if (body.allocation) {
-          if (typeof body.allocation !== "object" || Array.isArray(body.allocation)) return bad("invalid allocation");
-          const values = Object.values(body.allocation);
-          if (values.some(v => !Number.isFinite(v) || v < 0) || values.reduce((sum,v) => sum + v, 0) > 100) return bad("allocation must contain non-negative values totaling at most 100 points");
+          const total = Object.values(body.allocation).reduce((s, v) => s + v, 0);
+          if (total > 100) return bad("allocation exceeds 100 points");
+          db.allocationByVoter[voterId] = body.allocation;
         }
-        if (body.goalVotes && (typeof body.goalVotes !== "object" || Array.isArray(body.goalVotes) || Object.values(body.goalVotes).some(v => typeof v !== "boolean"))) return bad("invalid goal votes");
-        db.votesByVoter[voterId] = { ...(db.votesByVoter[voterId] ?? {}), ...Object.fromEntries((body.votes ?? []).map(v => [v.proposalId, v])) };
-        if (body.allocation) db.allocationByVoter[voterId] = body.allocation;
-        if (body.goalVotes) db.goalVotesByVoter[voterId] = { ...(db.goalVotesByVoter[voterId] ?? {}), ...body.goalVotes };
+
+        if (body.goalVotes) {
+          const goals = db.goalVotesByVoter[voterId] ?? {};
+          for (const [id, choice] of Object.entries(body.goalVotes)) {
+            if (choice === null) delete goals[id]; else goals[id] = choice;
+          }
+          db.goalVotesByVoter[voterId] = goals;
+        }
 
         await save();
-        return Response.json({ ok: true, voterId });
+        return Response.json({ ok: true });
       },
     },
 
@@ -1083,7 +1134,7 @@ export const server = Bun.serve({
         logPublishEvent("EXTRACT_PROVIDER", {
           route: "/api/entries",
           provider: llm.provider,
-          matchedNeedIds: extraction.needs.map((n) => n.id),
+          matchedNeedCount: extraction.needs.length,
         });
 
         let roundedLoc: { lat: number; lng: number } | undefined;
@@ -1104,6 +1155,7 @@ export const server = Bun.serve({
         };
 
         db.entries.push(entry);
+        claimJournal(db, entry.id, resolveVoterId(req));
         await save();
         emitEntriesUpdate();
 
@@ -1125,13 +1177,13 @@ export const server = Bun.serve({
         emitForkEvent(fork, { stage: "journal", status: "done", entry_id: entry.id, labels: fork.labels });
         void runPipeline(forkId);
 
-        return Response.json({ entry_id: entry.id, fork_id: forkId, entry });
+        return Response.json({ entry_id: entry.id, fork_id: forkId, entry: publicJournal(entry) });
       },
     },
 
     "/api/forks/:id/events": {
       GET: async (req) => {
-        const fork = forks.get(req.params.id);
+        const fork = forks.get(req.params.id!);
         if (!fork) return new Response("fork not found", { status: 404 });
 
         let listener: ((ev: StageEvent) => void) | null = null;
@@ -1172,17 +1224,16 @@ export const server = Bun.serve({
 
     "/api/forks/:id/undo": {
       POST: async (req) => {
-        const fork = forks.get(req.params.id);
+        const fork = forks.get(req.params.id!);
         if (!fork) return bad("fork not found");
+        if (!ownJournalIds(db, resolveVoterId(req)).includes(fork.entryId)) return bad("Only the publishing browser can undo this entry.", 403);
         if (fork.undone) return bad("fork already undone");
         if (!fork.undoUntil || Date.now() > fork.undoUntil) return bad("undo window expired");
 
-        const idx = db.entries.findIndex((e) => e.id === fork.entryId);
-        if (idx >= 0) {
-          db.entries.splice(idx, 1);
-          await save();
-          emitEntriesUpdate();
-        }
+        const result = deleteJournal(db, fork.entryId, resolveVoterId(req));
+        if (result !== 200) return bad("Only the publishing browser can undo this entry.", result);
+        await save();
+        emitEntriesUpdate();
         fork.undone = true;
         fork.done = true;
         emitForkEvent(fork, { stage: "journal", status: "error", message: "Publish undone" });
@@ -1265,45 +1316,14 @@ export const server = Bun.serve({
     // For external journal UIs: publish a draft entry into Civic Synthesis.
     "/api/publish_draft": {
       OPTIONS: (req) => {
-        logPublishEvent("PUBLISH_DRAFT_PREFLIGHT", {
-          method: req.method,
-          origin: req.headers.get("origin"),
-          referer: req.headers.get("referer"),
-          requestMethod: req.headers.get("access-control-request-method"),
-          requestHeaders: req.headers.get("access-control-request-headers"),
-        });
         return new Response(null, { status: 204, headers: publishCorsHeaders(req) });
       },
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const origin = req.headers.get("origin");
-        const referer = req.headers.get("referer");
-        const remote = req.headers.get("fly-client-ip") ?? req.headers.get("x-forwarded-for") ?? null;
-        const contentType = req.headers.get("content-type");
-        const secFetchMode = req.headers.get("sec-fetch-mode");
-
-        logPublishEvent("PUBLISH_DRAFT_HIT", {
-          method: req.method,
-          origin,
-          referer,
-          remote,
-          contentType,
-          secFetchMode,
-        });
-
         let body: PublishDraftBody;
         try {
           body = (await req.json()) as PublishDraftBody;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-            reason: "invalid json body",
-            message,
-            origin,
-            referer,
-            remote,
-            contentType,
-          });
+        } catch {
           return publishBad(req, "invalid json body");
         }
 
@@ -1317,13 +1337,17 @@ export const server = Bun.serve({
             extractWithLLM,
             ensureNeedCoverage,
             recordAnswer,
-            createJournalEntry,
+            createJournalEntry: (input) => {
+              const entry = createJournalEntry(input);
+              claimJournal(db, entry.id, voterId);
+              return publicJournal(entry);
+            },
             save: async () => { await save(); },
             onExtract: (meta) => {
               logPublishEvent("EXTRACT_PROVIDER", {
                 route: "/api/publish_draft",
                 provider: meta.provider,
-                matchedNeedIds: meta.matchedNeedIds,
+                matchedNeedCount: meta.matchedNeedIds.length,
                 mode: meta.mode,
               });
             },
@@ -1331,27 +1355,10 @@ export const server = Bun.serve({
 
           if (result.mode === "journal") emitEntriesUpdate();
 
-          logPublishEvent("PUBLISH_DRAFT_OK", {
-            ...result,
-            textLength: body.text?.trim().length ?? 0,
-            textPreview: body.text?.trim().slice(0, 120) ?? "",
-            origin,
-            referer,
-            remote,
-          });
-
           return withPublishCors(req, Response.json(result));
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           const reason = error instanceof PublishDraftInputError ? message : "publish draft failed";
-          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-            reason,
-            message,
-            origin,
-            referer,
-            remote,
-            contentType,
-          });
           return publishBad(req, reason);
         }
       },
@@ -1389,7 +1396,7 @@ export const server = Bun.serve({
           const snapshot = createSimulationSnapshot(db, { entryId: body.entryId, packageName: body.package, needs: currentNeeds(), outcomes });
           storeSnapshot(db, snapshot);
           await save();
-          return Response.json({ snapshot, simulationUrl: simulationUrl(HBL_URL, snapshot, options) }, { status: 201 });
+          return Response.json({ snapshot: { ...snapshot, location: null }, simulationUrl: simulationUrl(HBL_URL, snapshot, options) }, { status: 201 });
         } catch (err) {
           if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
           throw err;
@@ -1400,9 +1407,9 @@ export const server = Bun.serve({
     "/api/simulation-snapshots/:id": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => {
-        const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id);
+        const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id!);
         if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
-        return withReadCors(req, Response.json({ snapshot }));
+        return withReadCors(req, Response.json({ snapshot: { ...snapshot, location: null } }));
       },
     },
 
@@ -1547,7 +1554,7 @@ export const server = Bun.serve({
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const idea = db.emergent.find((p) => p.id === req.params.id);
+        const idea = db.emergent.find((p) => p.id === req.params.id!);
         if (!idea) return bad("unknown citizen idea", 404);
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
@@ -1580,7 +1587,7 @@ export const server = Bun.serve({
     // Two route styles (id in the path, or { ideaId } in the body), like /api/emergent/estimate.
     "/api/emergent/:id/design": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
-      POST: (req) => designIdea(req.params.id),
+      POST: (req) => designIdea(req.params.id!),
     },
     "/api/emergent/design": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
@@ -1599,7 +1606,7 @@ export const server = Bun.serve({
       POST: async (req) => {
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
-        return chooseVariant(req.params.id, resolveVoterId(req), body);
+        return chooseVariant(req.params.id!, resolveVoterId(req), body);
       },
     },
     "/api/emergent/variant": {
@@ -1616,7 +1623,7 @@ export const server = Bun.serve({
     "/api/admin/emergent/:id/assess": {
       POST: async (req) => {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
-        const idea = db.emergent.find((p) => p.id === req.params.id);
+        const idea = db.emergent.find((p) => p.id === req.params.id!);
         if (!idea) return bad("unknown emergent idea");
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
@@ -1630,23 +1637,82 @@ export const server = Bun.serve({
     "/api/reset": {
       POST: async (req) => {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
+        // Resetting sample synthesis data must not erase public proposals or their votes.
+        const citizenProposals = db.citizenProposals;
+        const journalOwners = db.journalOwners;
+        const journalReports = db.journalReports;
+        const journalModerationLog = db.journalModerationLog;
+        const reportedIds = new Set((journalReports ?? []).map(r => r.entryId));
+        const moderatedEntries = db.entries.filter(e => e.moderation || reportedIds.has(e.id));
+        const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
+        const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
+        db.citizenProposals = citizenProposals;
+        db.journalOwners = journalOwners;
+        db.journalReports = journalReports;
+        db.journalModerationLog = journalModerationLog;
+        const seededIds = new Set(db.entries.map((entry) => entry.id));
+        db.entries.push(...[...new Map([...citedEntries, ...moderatedEntries].map(e => [e.id, e])).values()].filter((entry) => !seededIds.has(entry.id)));
         await save();
         return Response.json({ ok: true });
       },
     },
   },
-  error(error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
+  fetch(req) {
+    const path = new URL(req.url).pathname;
+    const asset = browserAssets.get(path);
+    if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
+    if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
+    if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
+    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const secured = securityHeaders(response);
+    if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
+    return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
+  },
+  error(error: Error) {
     console.error("[SERVER_ERROR]", JSON.stringify({
       ts: new Date().toISOString(),
-      message,
-      stack,
+      name: error.name,
     }));
-    return new Response("Internal Server Error", { status: 500 });
+    return securityHeaders(new Response("Internal Server Error", { status: 500 }));
   },
-});
+};
+// Wrap every API handler so aliases share identity, limits and response headers.
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (!path.startsWith("/api/") || !route || typeof route !== "object") continue;
+  for (const [method, handler] of Object.entries(route)) {
+    if (typeof handler !== "function") continue;
+    (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
+      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
+        // Run after shared validation/limits and before extraction or answer creation.
+        if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {
+          const body = await boundedJson(req.clone());
+          const reasons = contactReasons(`${body.text ?? ""}\n${body.author ?? ""}`);
+          if (reasons.length) {
+            const text = String(body.text).trim();
+            const synthetic = [true, "true", 1, "1"].includes(body.synthetic as boolean | string | number);
+            const meta = body.metadata && typeof body.metadata === "object" ? body.metadata as Record<string, unknown> : {};
+            let location;
+            try { location = parseAndRoundLocation(body.location ?? (meta.lat !== undefined ? { lat: meta.lat, lng: meta.lng } : undefined), synthetic); }
+            catch { return bad("Invalid location"); }
+            const entry = createJournalEntry({ text, author: typeof body.author === "string" ? body.author : undefined, extraction: extract(text), corrected: false, synthetic, source: typeof body.source === "string" ? body.source.trim().slice(0, 64) : undefined, tileId: typeof body.tileId === "string" ? body.tileId : typeof meta.tileId === "string" ? meta.tileId : undefined });
+            if (location) entry.location = location;
+            entry.moderation = { status: "pending", reason: reasons.join(", "), decidedAt: new Date().toISOString() };
+            await save();
+            return Response.json({ ok: true, status: "pending", entryId: entry.id, message: "Held for review because this submission may contain contact details." }, { status: 202 });
+          }
+        }
+        const observation = req.clone();
+        const response = await (handler as Function)(req, bunServer);
+        return observePublicResponse(launchStats, observation, response, () => {
+          statsHealthy = false;
+          console.error("[STATS_ERROR] Metrics observation failed");
+        });
+      }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
+    };
+  }
+}
+export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);
 console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | publishDraftDefaultKind=${PUBLISH_DRAFT_DEFAULT_KIND} | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);

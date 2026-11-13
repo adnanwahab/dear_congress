@@ -1,31 +1,40 @@
+import { REPOSITORIES, isRepoKey, type RepoKey, type ItemKind } from '../../shared/repository-voting';
 import { HBL_REPOSITORY, type Pull, type Evidence } from '../../shared/hbl-governance';
 
 export class GitHubError extends Error {
   constructor(public kind:'credentials'|'rate-limit'|'unavailable'|'rejected'|'unknown', public status=0) { super(`GitHub source ${kind}`); }
 }
+export class PartialGitHubError extends GitHubError {
+ constructor(public pulls:Pull[],public causeKind:string){super('unavailable');}
+}
 type Json = Record<string, any>;
+const evidenceLinks=(body:unknown)=>[...new Set<string>((String(body??'').match(/https:\/\/(?:github\.com|linear\.app)\/[^\s<>\)]+/g)??[]))];
 export class GitHubSource {
   repositoryId:number|null = null;
   private requestFetch:typeof fetch;
   private openHeads=new Map<number,string>();
-  constructor(private options:{token?:string;fetch?:typeof fetch}) { this.requestFetch=options.fetch ?? fetch; }
+  private repository:string;
+  constructor(private options:{token?:string;fetch?:typeof fetch;repoKey?:RepoKey;kind?:ItemKind}) {
+    const key=options.repoKey??'happybearlandia';if(!isRepoKey(key))throw new GitHubError('rejected');
+    this.repository=REPOSITORIES[key].repository; this.requestFetch=options.fetch ?? fetch;
+  }
   private async request(path:string, init:RequestInit={}):Promise<any> {
     if (init.method && init.method!=='GET' && !this.options.token) throw new GitHubError('credentials');
     let response:Response;
-    try { response=await this.requestFetch(`https://api.github.com/repos/${HBL_REPOSITORY}${path}`, { ...init, headers:{Accept:'application/vnd.github+json',...(this.options.token?{Authorization:`Bearer ${this.options.token}`} : {}),'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}, signal:AbortSignal.timeout(20_000) }); }
+    try { response=await this.requestFetch(`https://api.github.com/repos/${this.repository}${path}`, { ...init, headers:{Accept:'application/vnd.github+json',...(this.options.token?{Authorization:`Bearer ${this.options.token}`} : {}),'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}, signal:AbortSignal.timeout(20_000) }); }
     catch { throw new GitHubError('unknown'); }
     if (!response.ok) throw new GitHubError(response.status===429 || (response.status===403 && response.headers.get('x-ratelimit-remaining')==='0') ? 'rate-limit' : response.status===401 ? 'credentials' : response.status>=500 ? 'unavailable' : 'rejected', response.status);
     try { return await response.json(); } catch { throw new GitHubError('unknown', response.status); }
   }
   private async pin() {
     const repo=await this.request('');
-    if(repo.full_name?.toLowerCase()!==HBL_REPOSITORY || repo.id!==1364565814 || (this.repositoryId!==null && this.repositoryId!==repo.id)) throw new GitHubError('rejected');
+    if(repo.full_name?.toLowerCase()!==this.repository || (this.repository===HBL_REPOSITORY && repo.id!==1364565814) || !Number.isSafeInteger(repo.id) || (this.repositoryId!==null && this.repositoryId!==repo.id)) throw new GitHubError('rejected');
     this.repositoryId=repo.id;
   }
-  private async pages(path:string,key?:string):Promise<Json[]> {
+  private async pages(path:string,key?:string,partial=false):Promise<Json[]> {
     const all:Json[]=[];
     for(let page=1;;page++) {
-      const data=await this.request(`${path}${path.includes('?')?'&':'?'}per_page=100&page=${page}`);
+      let data:any;try{data=await this.request(`${path}${path.includes('?')?'&':'?'}per_page=100&page=${page}`);}catch(e){if(partial&&all.length)throw Object.assign(new GitHubError(e instanceof GitHubError?e.kind:'unknown'),{partialRows:all});throw e;}
       const rows=key?data[key]:data;
       if(!Array.isArray(rows)) throw new GitHubError('unknown');
       all.push(...rows);
@@ -33,13 +42,23 @@ export class GitHubSource {
     }
   }
   private pull(p:Json):Pull {
-    if(p.base?.repo?.id!==this.repositoryId || p.base?.repo?.full_name?.toLowerCase()!==HBL_REPOSITORY) throw new GitHubError('rejected');
-    return {number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
+    if(p.base?.repo?.id!==this.repositoryId || p.base?.repo?.full_name?.toLowerCase()!==this.repository) throw new GitHubError('rejected');
+    return {links:evidenceLinks(p.body),number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
   }
-  async listPulls():Promise<Pull[]> { await this.pin(); const pulls=(await this.pages('/pulls?state=open&sort=created&direction=asc')).map(p=>this.pull(p)); this.openHeads=new Map(pulls.map(p=>[p.number,p.headSha])); return pulls; }
+  private issue(p:Json):Pull {
+    if(p.pull_request)throw new GitHubError('rejected');
+    const version=`${this.repositoryId}:issue:${p.number}`;
+    const links=evidenceLinks(p.body);
+    return {kind:'issue',number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:'',base:'',draft:false,state:p.state,version,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name),links,workflow:{state:'not-configured',reason:'Companion Symphony integration is not configured. Votes rank priority and do not authorize implementation.'}};
+  }
+  async listPulls():Promise<Pull[]> { await this.pin();
+    const path=this.options.kind==='issue'?'/issues?state=open&sort=created&direction=asc':'/pulls?state=open&sort=created&direction=asc';
+    const convert=(rows:Json[])=>this.options.kind==='issue'?rows.filter(p=>!p.pull_request).map(p=>this.issue(p)):rows.map(p=>this.pull(p));
+    let pulls:Pull[];try{pulls=convert(await this.pages(path,undefined,true));}catch(e){if(e instanceof GitHubError&&'partialRows' in e)throw new PartialGitHubError(convert((e as any).partialRows),e.kind);throw e;} this.openHeads=new Map(pulls.map(p=>[p.number,p.headSha])); return pulls; }
   async detail(number:number):Promise<Pull> {
     if(!Number.isSafeInteger(number)||number<1) throw new GitHubError('rejected');
     await this.pin();
+    if(this.options.kind==='issue')return this.issue(await this.request(`/issues/${number}`));
     const raw=await this.request(`/pulls/${number}`), pull=this.pull(raw);
     const files=await this.pages(`/pulls/${number}/files`);
     if(files.length>=3000 || (typeof raw.changed_files==='number' && files.length!==raw.changed_files)) throw new GitHubError('unknown');
@@ -71,6 +90,7 @@ export class GitHubSource {
     return pull;
   }
   async merge(number:number,expectedSha:string):Promise<{merged:boolean;sha?:string}> {
+    if(this.options.kind==='issue'||this.repository!==HBL_REPOSITORY)throw new GitHubError('rejected');
     if(!this.options.token) throw new GitHubError('credentials');
     if(!Number.isSafeInteger(number)||number<1||!expectedSha) throw new GitHubError('rejected');
     await this.pin();
