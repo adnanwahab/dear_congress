@@ -920,6 +920,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/citizen-proposals/:id/vote": {
       POST: (req) => citizenProposalHandlers.vote(req, req.params.id!),
     },
+    "/api/citizen-proposals/:id/objections": {
+      POST: (req) => citizenProposalHandlers.objection(req, req.params.id!),
+    },
     "/api/citizen-proposals/:id/comments": {
       POST: (req) => citizenProposalHandlers.comment(req, req.params.id!),
     },

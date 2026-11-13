@@ -66,3 +66,47 @@ For a UI check, use a temporary database and open `/votes`. Save and reload a dr
 This branch was prepared against GitHub `main` at `f53852e9d6537ae98e3e09fe792d0f4d9fdc5711`. At implementation time, that source used `/vote` and `fly.toml` targeted `dear-congress`, while the inspected `civic-synthesis.fly.dev` deployment already had newer `/votes`, `/feed`, and sample-draft screens absent from this repository.
 
 Before production rollout, bring the current deployed source into the repository and integrate these modules with its existing screens. On the newer UI, reuse the form/detail components and API, add the proposal CTA to the existing voting screen, include published citizen proposals alongside clearly labelled sample content, and add the journal conversion link. Preserve the deployed app's other routes and features. Verify the intended Fly app and persistent volume before deploying. This branch does not change `fly.toml`, trigger a production deployment, or claim the live app has already changed.
+
+## Structured objections — SHE-307 first slice
+
+On `/proposals/:id`, participants can publish an objection with concern/major/blocking
+severity and a self-described impacted constituency, after explicit public consent.
+The objection binds the existing immutable proposal ID/text. It starts unresolved;
+only the original publishing browser can append a declined response with a reason,
+or reopen it as unresolved with a reason. Losing that anonymous cookie loses this
+response capability; this is not verified identity or a delegate authorization system.
+
+`POST /api/citizen-proposals/:id/objections` accepts either:
+
+- `{ action: "create", text, severity, constituency, confirmedPublic: true, idempotencyKey }`
+- `{ action: "respond", objectionId, expectedVersion, status: "declined" | "unresolved", reason }`
+
+Creation UUID retries return the same objection; different content with the same
+key conflicts. `expectedVersion` is the number of prior responses. Stale responses
+return 409; reload the page to inspect the ledger before deliberately submitting
+again. The timeline retains all proposer decisions with timestamps. Save failures
+restore the previous ledger. Existing cookies, same-origin restrictions, body bounds,
+rate limits and serialized single-writer persistence apply to the new endpoint.
+Public projections omit ownership and retry hashes. These records survive demo reset
+with the rest of the proposal. No location is inferred from constituency text.
+
+Acceptance is deliberately unavailable until a published revision/redline can be
+linked. No revisions, voting rounds, rule configuration, quorum, consent thresholds,
+community agreement or automatic action are introduced by this slice. Existing
+proposal votes remain legacy/unwindowed advisory browser responses.
+
+Local walkthrough: publish a proposal at `/proposals/new`, open its detail link,
+submit a major accessibility objection with constituency “Wheelchair users”, and
+confirm it starts unresolved. From the publishing browser decline with a reason,
+then reopen it; both events remain visible. Another browser may object but must not
+get proposer controls. Existing support/oppose/unsure totals must remain unchanged.
+Do not run this walkthrough against production.
+
+`src/server/proposal-objections.test.ts` covers retry conflicts, legacy compatibility,
+private field filtering, scope/authority, invalid decisions, stale concurrent writes,
+serialization and disk failure rollback. `src/client/proposal-objections.test.tsx`
+runs a Happy DOM form walkthrough with failed-save recovery and safe markup rendering.
+Controls have native labels, fieldsets, public consent, status/error announcements
+and error focus recovery. Native keyboard, screen-reader, mobile/zoom and visual QA
+remain manual acceptance work. The existing HTTP/restart journey also includes
+objection creation and proposer response; it requires a working local server bind.
