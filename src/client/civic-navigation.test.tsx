@@ -18,10 +18,13 @@ test('home, navigation and stage headings use the same six labels before API loa
     expect(renderToStaticMarkup(<WorkflowScreen stage="votes" request={request} />)).toContain("Today&#x27;s question");
     expect(nav).toContain('href="/draft?proposal=sample%26one" aria-current="page"');
     for (const s of CIVIC_STAGES) {
-      expect(home).toContain(`>${s.title}</a>`);
+      expect(home).toContain(`<h2>${s.title}</h2>`);
+      expect(home).toContain(`href="${s.route}?proposal=sample%26one"`);
+      expect(home).toContain(`style="--i:${s.n - 1}"`);
       expect(nav).toContain(`<span>${s.title}</span>`);
       const html = renderToStaticMarkup(<WorkflowScreen stage={s.route.slice(1) as any} request={request} />);
       expect(html).toContain(`<h1>${s.title}</h1>`);
+      expect(html).toContain(`view-transition-name:journey-stage-${s.n}`);
       expect(html).toContain('Next: ');
       expect(html).toContain(`href="/${s.next}?proposal=sample%26one"`);
     }

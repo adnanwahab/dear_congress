@@ -15,3 +15,6 @@ data/test-db*
 
 # Generated release identity must be built inside the image.
 build-identity.json
+
+# Operator-imported official metadata archive (never seed live evidence)
+data/legislation/

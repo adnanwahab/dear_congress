@@ -19,7 +19,9 @@ async function render(stage: 'draft' | 'sponsors' | 'outcomes', request: any, se
   dom.happyDOM.setURL(`http://localhost/${stage}${search}`);
   document.body.innerHTML = '<div id="root"></div>';
   root = createRoot(document.getElementById('root')!);
-  await act(async () => root.render(<WorkflowScreen stage={stage} request={request} />));
+  // Stage-state checks cover proposal loading; answer the official-bills lane separately.
+  const scoped = async (path: string, ...rest: unknown[]) => String(path).startsWith('/api/legislation') ? { bills: [] } : request(path, ...rest);
+  await act(async () => root.render(<WorkflowScreen stage={stage} request={scoped} />));
 }
 const request = async () => payload;
 for (const stage of ['draft', 'sponsors', 'outcomes'] as const) {
@@ -43,9 +45,14 @@ assert.ok(q().getByRole('button', { name: 'Add to tracker' }));
 for (const stage of ['draft', 'sponsors', 'outcomes'] as const) {
   let resolve!: (v: any) => void;
   const pending = new Promise(r => { resolve = r; });
+  // First-ever load: no same-tab snapshot from #87, so the stage skeleton is what should show.
+  sessionStorage.clear();
   await render(stage, () => pending);
-  assert.ok(document.body.textContent?.includes('Loading sample proposals.'));
+  assert.ok(document.querySelector(`[data-skeleton-stage="${stage}"]`));
+  assert.ok(q().getAllByRole('status', { name: 'Loading content' }).length > 0);
+  assert.equal(q().queryByRole('button', { name: 'Add to tracker' }), null);
   await act(async () => resolve({ ...payload, items: [] }));
+  assert.equal(document.querySelector('[data-skeleton-stage]'), null);
   assert.ok(q().getByRole('heading', { name: 'No sample proposals available' }));
   assert.ok(q().getByRole('button', { name: 'Check again' }));
   let calls = 0;
