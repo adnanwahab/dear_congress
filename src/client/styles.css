@@ -687,3 +687,17 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   .county-shape { transition: none !important; }
   .county-completion-sweep { display: none; animation: none; }
 }
+
+/* Synthesis: stable, scoped names let retained rows glide and exiting snapshots fade. */
+@keyframes plan-enter { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes plan-leave { from { opacity: 1; } to { opacity: 0; } }
+.plan-added { animation: plan-enter 700ms ease-out; }
+.plan-removed { animation: plan-leave 1500ms ease-out forwards; }
+.plan-movement { font-variant-numeric: tabular-nums; margin-right: 8px; }
+.plan-number { font-variant-numeric: tabular-nums; }
+.synthesis-package .fill, .synthesis-package .split > * { transition: width 700ms ease-in-out, flex 700ms ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .plan-added, .plan-removed { animation: none; }
+  .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
+}
