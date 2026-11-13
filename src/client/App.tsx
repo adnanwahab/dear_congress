@@ -1,3 +1,4 @@
+import { LiveRound } from './LiveRound';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -135,6 +136,9 @@ import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
+  if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
+
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />

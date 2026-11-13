@@ -1,3 +1,6 @@
+import { LiveRounds } from './src/server/live-rounds';
+import { liveQR } from './src/server/live-qr';
+const liveRounds = new LiveRounds();
 import { handleRulePreview } from "./src/server/synthesis-rule-preview";
 import { createPolicyComparison, storePolicyComparison } from "./src/server/policy-comparison";
 import { auditSampleResponse } from "./src/server/audit-samples";
@@ -1033,6 +1036,15 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/live": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.start(body.proposalId, resolveVoterId(req))); } },
+    "/api/live/:code": { GET: req => Response.json(liveRounds.snapshot(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/vote": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.vote(req.params.code!, resolveVoterId(req), body.stance)); } },
+    "/api/live/:code/end": { POST: req => Response.json(liveRounds.end(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/events": { GET: req => liveRounds.events(req.params.code!, resolveVoterId(req), req.signal) },
+    "/api/live/:code/qr": { GET: req => {
+      liveRounds.snapshot(req.params.code!, resolveVoterId(req));
+      return new Response(liveQR(publicSecurity.origin(req) + '/live/' + req.params.code!), { headers: { 'content-type': 'image/svg+xml' } });
+    } },
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
