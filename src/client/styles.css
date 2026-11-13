@@ -701,3 +701,13 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
 }
+
+.journal-ticker { position: absolute; bottom: 100%; left: 12px; right: 12px; max-width: 680px; margin: 0 auto 8px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #d7d0e9; border-radius: 10px; background: #fff; color: #332955; box-shadow: 0 2px 12px #24344718; font: 13px/1.4 Arial,sans-serif; }
+.journal-ticker a { color: inherit; flex: 1; text-decoration: none; animation: journal-ticker-in .2s ease-out; }
+.journal-ticker button { background: none; color: inherit; border: 0; padding: 6px 10px; cursor: pointer; font-size: 20px; }
+.product-shell .journal-ticker :focus-visible { outline-color: #493b80; }
+.journal-ticker-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.journal-feed article { scroll-margin-block: 120px 220px; }
+.journal-feed article:target { outline: 2px solid #5b4b9a; outline-offset: 4px; }
+@keyframes journal-ticker-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .journal-ticker a { animation: none; } }

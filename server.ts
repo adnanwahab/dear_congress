@@ -509,7 +509,7 @@ const entryListeners = new Set<(payload: string) => void>();
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function entriesPayload() {
-  return JSON.stringify({ entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal) });
+  return JSON.stringify({ needs: currentNeeds().map(n => ({ id: n.id, label: n.label })), entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal) });
 }
 
 function emitEntriesUpdate() {
