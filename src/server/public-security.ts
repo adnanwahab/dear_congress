@@ -4,7 +4,7 @@ import { isIP } from "node:net";
 export class PublicInputError extends Error {
   constructor(message: string, readonly status = 400) { super(message); }
 }
-export const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; connect-src 'self' https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.bugsnag.com; worker-src 'self' blob:; font-src 'self' data: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+export const CSP = "default-src 'self'; script-src 'self' 'sha256-HO0qYDJrCW2A6ld+cpXkVWe9KgZqF7RY5gfRmB2zy9E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; connect-src 'self' https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.bugsnag.com; worker-src 'self' blob:; font-src 'self' data: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
 export function securityHeaders(res: Response) {
   const headers = new Headers(res.headers);
   headers.set("content-security-policy", CSP);

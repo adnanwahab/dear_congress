@@ -1,6 +1,6 @@
 .civic-shell .advisory-bars button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
 .advisory-value { font-variant-numeric: tabular-nums; }
-.advisory-track { grid-column: 1 / -1; height: 9px; border-radius: 5px; overflow: hidden; background: #d1ccbf; }
+.advisory-track { grid-column: 1 / -1; height: 9px; border-radius: 5px; overflow: hidden; background: var(--neu); }
 .advisory-track > span { display: block; height: 100%; background: var(--accent, #244f8b); transform-origin: left; transform: scaleX(var(--vote-share)); transition: transform 550ms ease-out; }
 .civic-shell .advisory-bars .vote-confirmed { animation: advisory-confirm 1s ease-out; }
 @keyframes advisory-confirm { from { box-shadow: 0 0 0 3px var(--accent, #244f8b); } to { box-shadow: 0 0 0 0 transparent; } }

@@ -10,7 +10,7 @@
 .documentation-toc a:hover { text-decoration: underline; }
 .documentation-api-link { display: block; padding-top: 20px; border-top: 1px solid var(--line); margin-top: 24px; }
 .civic-shell .documentation-article { padding: 36px 40px; }
-.documentation-note { padding: 12px 16px; background: #f3f5f8; color: #586573; font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
+.documentation-note { padding: 12px 16px; background: var(--bg); color: var(--muted); font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
 .documentation-article .document-title { font-size: 29px; line-height: 1.25; margin-bottom: 12px; }
 .documentation-article > p { font-size: 16px; line-height: 1.8; margin: 14px 0; white-space: pre-line; overflow-wrap: anywhere; }
 .documentation-article h3 { font-size: 25px; margin: 38px 0 14px; padding-top: 22px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
@@ -19,9 +19,9 @@
 .documentation-article li { padding-left: 4px; margin: 10px 0; line-height: 1.75; }
 .document-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; margin: 22px 0; }
 .document-table table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 580px; }
-.document-table th { text-align: left; background: #f7f5ef; padding: 13px 15px; font-size: 12px; }
+.document-table th { text-align: left; background: var(--bg); padding: 13px 15px; font-size: 12px; }
 .document-table td { padding: 14px 15px; line-height: 1.6; border-top: 1px solid var(--line); vertical-align: top; }
-.document-embed { padding: 16px 20px; border-left: 3px solid #9db3ce; border-radius: 0 8px 8px 0; background: #f6f8fb; display: grid; gap: 6px; margin: 24px 0; font-size: 13px; color: var(--muted); }
+.document-embed { padding: 16px 20px; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: var(--bg); display: grid; gap: 6px; margin: 24px 0; font-size: 13px; color: var(--muted); }
 .document-embed code { font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .documentation-layout { grid-template-columns: 1fr; } .documentation-toc { position: static; } .documentation-toc nav { display: flex; flex-wrap: wrap; gap: 10px 20px; } }
 @media (max-width: 600px) { .documentation-heading { align-items: start; flex-direction: column; } .documentation-heading p:last-child { font-size: 16px; } .civic-shell .documentation-article { padding: 24px 20px; } .documentation-article .document-title { font-size: 24px; } .documentation-article > p, .documentation-article li { font-size: 15px; } }
