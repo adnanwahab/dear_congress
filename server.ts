@@ -1,4 +1,6 @@
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
+import { createStatsHTTP } from "./src/server/launch-stats-http";
+import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
@@ -815,7 +817,15 @@ if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser 
 const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
+const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
+let statsHealthy = true;
+// Metrics failures must never turn a persisted vote into an apparent failed vote.
+function recordStats(run: () => unknown) {
+  try { run(); } catch { statsHealthy = false; console.error("[STATS_ERROR] Metrics recording failed"); }
+}
+const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
@@ -826,13 +836,15 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
     },
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
-    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
+    "/admin/stats": (req) => statsHTTP.admin(req),
+    "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
+    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
 
-    "/api/hbl/*": handleHblGovernance,
-    "/api/internal/hbl/batch": handleHblGovernance,
-    "/api/webhooks/github": handleHblGovernance,
+    "/api/hbl/*": (req) => handleHblGovernance(req, observeRepositoryVote),
+    "/api/internal/hbl/batch": (req) => handleHblGovernance(req),
+    "/api/webhooks/github": (req) => handleHblGovernance(req),
 
     "/api/debug/request": {
       GET: (req) => {
@@ -1607,7 +1619,14 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
   for (const [method, handler] of Object.entries(route)) {
     if (typeof handler !== "function") continue;
     (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
-      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", () => (handler as Function)(req, bunServer), body => validateVotes(body, buildContext(db).proposals.map(p => p.id), currentNeeds().map(n => n.id)));
+      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
+        const observation = req.clone();
+        const response = await (handler as Function)(req, bunServer);
+        return observePublicResponse(launchStats, observation, response, () => {
+          statsHealthy = false;
+          console.error("[STATS_ERROR] Metrics observation failed");
+        });
+      }, body => validateVotes(body, buildContext(db).proposals.map(p => p.id), currentNeeds().map(n => n.id)));
     };
   }
 }

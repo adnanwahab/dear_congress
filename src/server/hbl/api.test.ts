@@ -49,3 +49,27 @@ test('community vote handler makes zero GitHub requests and vote browser aliases
  const report=await (await api.handle(new Request(origin+'/api/hbl/community-votes'))).json();
  expect(report.votes[0]).toMatchObject({choice:'yes',number:8});expect(report.total).toBe(1);expect(report.schedule.enabled).toBe(false);expect(report.votes[0].voter).toBeUndefined();store.db.close();
 });
+
+test('launch metrics observe saved ballots after auth and retain repository, kind and revision',async()=>{
+ const s=setup();const activities:import('../launch-stats').VoteActivity[]=[];
+ const send=(suffix:string,input:unknown,headers:Record<string,string>=s.headers)=>s.api.handle(new Request(origin+'/api/hbl/pulls/1/'+suffix,{method:'PUT',headers,body:JSON.stringify(input)}),activity=>activities.push(activity));
+ try{
+  expect((await send('ballot',{version:'v1',choice:'yes'},{...s.headers,'x-csrf-token':'bad'})).status).toBe(403);
+  expect(activities).toHaveLength(0);
+  expect((await send('ballot',{version:'v1',choice:'yes'})).status).toBe(200);
+  expect(activities).toEqual([{identity:'github:42',scope:'happybearlandia/pr/verified',target:JSON.stringify([1,'v1'])}]);
+  const list=await s.api.handle(new Request(origin+'/api/hbl/pulls'));
+  const cookie=list.headers.get('set-cookie')!.split(';')[0]!;
+  expect((await send('community-ballot',{version:'v1',choice:'no'},{origin,cookie,'Content-Type':'application/json'})).status).toBe(200);
+  expect(activities[1]!.scope).toBe('happybearlandia/pr/community');
+  expect(activities[1]!.identity).toStartWith('community:');
+  expect(activities[1]!.target).toBe(JSON.stringify([1,'v1']));
+  s.change();
+  expect((await send('ballot',{version:'v1',choice:'yes'})).status).toBe(409);
+  expect(activities).toHaveLength(2);
+  expect((await send('ballot',{version:'v2',choice:'yes'})).status).toBe(200);
+  expect(activities[2]!.target).toBe(JSON.stringify([1,'v2']));
+  expect(s.store.tally(1,'v1').participation).toBe(1);
+  expect(s.store.tally(1,'v2').participation).toBe(1);
+ }finally{s.store.db.close();}
+});
