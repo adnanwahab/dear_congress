@@ -13,7 +13,11 @@ test("all existing pages expose full crawler metadata in the initial HTML", asyn
     const html = await response.text();
     for (const key of ['name="description"', 'property="og:title"', 'property="og:description"', 'property="og:url"', 'property="og:image"', 'content="1200"', 'content="630"', 'name="twitter:card"', 'name="twitter:title"', 'name="twitter:description"', 'name="twitter:image"']) expect(html).toContain(key);
     expect(html).toContain(SITE_URL + path);
-    expect(html).toContain('<script src="/app.js">');
+    if (path === "/privacy") {
+      expect(html).not.toContain("<script");
+      expect(html).toContain("<h1>Privacy &amp; removal</h1>");
+      expect(html).toContain("no automatic expiry");
+    } else expect(html).toContain('<script src="/app.js">');
   }
 });
 
