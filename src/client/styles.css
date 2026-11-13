@@ -701,3 +701,29 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
 }
+
+/* Journal → Needs: only the acknowledged local publication enters. */
+.journal-feed > .journal-story-new { transition: opacity var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out); }
+@starting-style {
+  .journal-feed > .journal-story-new { opacity: 0; transform: translateY(-24px); }
+}
+.journal-need-tags a { background: #e8eff8; color: var(--accent); font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+.journal-need-link { background: none !important; padding: 0 !important; }
+.journal-story-new .journal-need-tags a { animation: journal-label-in var(--motion-base) var(--ease-out) both; }
+@keyframes journal-label-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.need-arrival { animation: need-arrival 1200ms var(--ease-out); scroll-margin-block: 100px; }
+.need-arrival .fill { transform-origin: left; animation: need-bar-pulse 900ms var(--ease-out) 1; }
+@keyframes need-arrival { from { background: #dcebd6; box-shadow: 0 0 0 3px #7ba76e; } to { box-shadow: 0 0 0 0 transparent; } }
+@keyframes need-bar-pulse { 50% { filter: brightness(1.5); transform: scaleY(1.7); } }
+.need-mention-count { display: inline-grid; overflow: hidden; vertical-align: bottom; }
+.need-mention-count > span { grid-area: 1 / 1; }
+.need-count-before { animation: need-count-out 600ms var(--ease-out) forwards; }
+.need-mention-count .need-count-final { animation: need-count-in 600ms var(--ease-out) both; }
+@keyframes need-count-out { to { transform: translateY(-100%); opacity: 0; } }
+@keyframes need-count-in { from { transform: translateY(100%); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .journal-feed > .journal-story-new { transition: none; opacity: 1; transform: none; }
+  .journal-story-new .journal-need-tags a, .need-arrival, .need-arrival .fill,
+  .need-mention-count .need-count-final { animation: none; }
+  .need-count-before { display: none; }
+}

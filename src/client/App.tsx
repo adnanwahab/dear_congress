@@ -1,3 +1,4 @@
+import { needTransitionName, NeedMentionCount } from "./journal-motion";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
@@ -148,7 +149,7 @@ export function App() {
 function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
-  const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
+  const [focusNeedId, setFocusNeedId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("need"));
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
   const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
   const [loadError, setLoadError] = useState("");
@@ -164,6 +165,7 @@ function LegacyApp() {
     const onPopState = () => {
       const next = tabFromPath(window.location.pathname);
       if (next) setTab(next);
+      setFocusNeedId(new URLSearchParams(window.location.search).get("need"));
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -745,12 +747,17 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const [measured, setMeasured] = useState<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>({ mode: state.outcomesMode ?? "shadow", outcomes: null });
   const demandBlended = state.demandBlended ?? state.demand;
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
-  const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
+  const validFocus = state.needs.some(n => n.id === focusNeedId) ? focusNeedId : null;
+  const [sel, setSel] = useState(validFocus ?? sorted[0]!.id);
+  const focusedRow = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (!validFocus) return;
+    setSel(validFocus);
+    focusedRow.current?.scrollIntoView?.({ block: "center", behavior: "instant" });
+  }, [validFocus]);
   const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
-  useEffect(() => {
-    if (focusNeedId) setSel(focusNeedId);
-  }, [focusNeedId]);
+
   useEffect(() => {
     const run = async () => {
       try {
@@ -807,14 +814,14 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
           {sorted.map((n) => {
             const d = state.demand[n.id]!;
             return (
-              <li key={n.id} className={sel === n.id ? "on" : ""}>
+              <li key={n.id} ref={validFocus === n.id ? focusedRow : undefined} style={{ viewTransitionName: needTransitionName(n.id) }} className={`${sel === n.id ? "on" : ""} ${validFocus === n.id ? "need-arrival" : ""}`}>
                 <button onClick={() => setSel(n.id)}>
                   <div className="need-top"><b>{n.label}</b><span className="num-s">{Math.round(d.demand * 100)}</span></div>
                   <Bar value={d.demand} />
                   <small>
                     rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
                     {rankReal.get(n.id) !== rankBlend.get(n.id) ? ` (${rankReal.get(n.id)} → ${rankBlend.get(n.id)})` : ""}
-                    {" · "}{d.journalCount} journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts
+                    {" · "}<NeedMentionCount count={d.journalCount} added={validFocus === n.id && state.entries.some(e => e.id === new URLSearchParams(window.location.search).get("entry") && e.extraction.needs.some(tag => tag.id === n.id))} /> journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts
                   </small>
                 </button>
               </li>
