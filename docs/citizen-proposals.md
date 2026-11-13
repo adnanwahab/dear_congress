@@ -66,3 +66,13 @@ For a UI check, use a temporary database and open `/votes`. Save and reload a dr
 This branch was prepared against GitHub `main` at `f53852e9d6537ae98e3e09fe792d0f4d9fdc5711`. At implementation time, that source used `/vote` and `fly.toml` targeted `dear-congress`, while the inspected `civic-synthesis.fly.dev` deployment already had newer `/votes`, `/feed`, and sample-draft screens absent from this repository.
 
 Before production rollout, bring the current deployed source into the repository and integrate these modules with its existing screens. On the newer UI, reuse the form/detail components and API, add the proposal CTA to the existing voting screen, include published citizen proposals alongside clearly labelled sample content, and add the journal conversion link. Preserve the deployed app's other routes and features. Verify the intended Fly app and persistent volume before deploying. This branch does not change `fly.toml`, trigger a production deployment, or claim the live app has already changed.
+
+### Reading assistance
+
+Loaded proposal detail pages include **Help with civic terms**, an English
+explanation of citizen proposal, advisory response and browser identity. Each
+entry links to its original visible notice; opening help never submits a choice
+or changes proposal text. Use the native summary control to open/close it, or
+Escape within help to close and return focus. No preference is stored. This
+first slice does not provide Spanish localization or reviewed legal summaries;
+see `docs/reviews/SHE-318.md` for remaining acceptance and verification limits.
