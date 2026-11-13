@@ -1,3 +1,4 @@
+import { PageSkeleton } from "./LoadingSkeleton";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { RuleSandbox } from "./RuleSandbox";
 const MapScreen = lazy(() => import("./MapScreen"));
@@ -141,7 +142,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
+  return <div className="product-shell"><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /></div>;
 }
 
 function LegacyApp() {
@@ -277,7 +278,7 @@ function LegacyApp() {
     });
   };
 
-  if (!state) return <div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div>;
+  if (!state) return loadError ? <div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div> : <PageSkeleton path={window.location.pathname} />;
 
   return (
     <div className="app engine-workspace">
