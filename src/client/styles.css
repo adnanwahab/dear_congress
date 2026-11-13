@@ -789,3 +789,19 @@ details[open] > summary::before { transform: rotate(135deg); }
 .journal-similar { margin-top: 12px; }
 .journal-similar summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .journal-similar article { border-top: 1px solid var(--line); padding: 16px 0; margin-top: 12px; }
+
+/* Content remains readable unless both the platform and motion preference opt in. */
+@keyframes scroll-reveal {
+  from { opacity: .15; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-reveal {
+      animation: scroll-reveal var(--motion-base) var(--ease-out) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+    .scroll-reveal:focus-within { animation: none; }
+  }
+}

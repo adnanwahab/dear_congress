@@ -36,3 +36,17 @@
 .three-app-loop-pulse { animation: three-app-loop-travel 6s linear infinite; pointer-events: none; }
 @keyframes three-app-loop-travel { to { stroke-dashoffset: -100; } }
 @media (prefers-reduced-motion: reduce) { .three-app-loop-pulse { animation: none; display: none; } }
+.documentation-toc a[aria-current="location"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.documentation-progress { position: sticky; top: 0; z-index: 20; height: 3px; margin-bottom: -3px; pointer-events: none; }
+.documentation-progress > div { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+@keyframes document-progress { to { transform: scaleX(1); } }
+@supports (animation-timeline: scroll(root)) {
+  .documentation-progress > div {
+    animation: document-progress auto linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Position feedback follows scrolling directly; no eased motion or reveal. */
+  .documentation-progress > div { animation-duration: auto !important; }
+}
