@@ -38,8 +38,9 @@ test('updates run inside transition callback; reduced motion and missing API upd
   const previous = Object.fromEntries(['window', 'document'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   let reduced = false, updates = 0, starts = 0;
   let callback: (() => void) | undefined;
-  const doc: { startViewTransition?: (update: () => void) => unknown } = {
-    startViewTransition(update) { starts++; callback = update; return { ready: Promise.reject(Error('skipped')), finished: Promise.resolve() }; },
+  // Accept both the typed form ({ update, types }) used by the shared motion helper and the legacy callback form.
+  const doc: { startViewTransition?: (arg: (() => void) | { update: () => void }) => unknown } = {
+    startViewTransition(arg) { starts++; callback = typeof arg === 'function' ? arg : arg.update; return { ready: Promise.reject(Error('skipped')), finished: Promise.resolve() }; },
   };
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { matchMedia: () => ({ matches: reduced }) } });
   Object.defineProperty(globalThis, 'document', { configurable: true, value: doc });

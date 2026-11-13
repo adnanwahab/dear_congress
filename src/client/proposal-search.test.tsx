@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { filterProposals, ProposalSearch } from './ProposalSearch';
+import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSearch';
 import { DEMO_ITEMS } from '../engine/demo';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -17,9 +17,16 @@ test('search scope, topic intersection, literal matching and empty payload', () 
   expect(renderToStaticMarkup(<ProposalSearch {...props} loaded={false} failed />)).toContain('Sample proposals unavailable');
 });
 
-test('integrated home and feed search controls recover without extra API calls', async () => {
+test('integrated home, feed and published filtering handles debounce, interruption and reduced motion', async () => {
   const child = Bun.spawn([process.execPath, 'scripts/verify-proposal-search-ui.tsx'], { stdout: 'pipe', stderr: 'pipe' });
   const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   expect(stdout).toContain('PASS home:'); expect(stdout).toContain('PASS feed:');
+});
+
+test('card names encode punctuation, Unicode and scope without title-name collisions', () => {
+  const ids = ['a:b', 'a-b', 'a b', 'é', '😀', ''];
+  const names = ids.flatMap(id => ['home', 'workflow'].map(scope => proposalCardStyle(scope, id).viewTransitionName!));
+  expect(new Set(names).size).toBe(names.length);
+  for (const name of names) expect(name).toMatch(/^proposal-card-[a-f0-9-]+$/);
 });

@@ -1,4 +1,4 @@
-import { flushSync } from 'react-dom';
+import { runViewTransition } from './motion';
 import type { DemoPayload } from '../engine/demo';
 
 /** Encode all code points so punctuation, Unicode and escape-like IDs cannot collide. */
@@ -6,12 +6,8 @@ export const proposalTitleName = (id: string) =>
   `proposal-title-${Array.from(id, c => c.codePointAt(0)!.toString(16)).join('-') || 'empty'}`;
 
 export function updateProposal(update: () => void) {
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
-      typeof document.startViewTransition !== 'function') { update(); return; }
-  const transition = document.startViewTransition(() => flushSync(update));
-  // Hidden tabs or interrupted transitions can skip animation without losing the update.
-  void transition.ready.catch(() => {});
-  void transition.finished.catch(() => {});
+  // Shared helper: typed transition, flushes the update, instant when motion is off.
+  void runViewTransition(update, 'proposal-change');
 }
 
 // A same-tab snapshot lets the incoming document paint the shared title before
