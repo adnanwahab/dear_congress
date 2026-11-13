@@ -58,8 +58,8 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   assert.match(food.textContent!, /Federal food access data background; not evidence of a county pilot/);
   if (stage === 'votes') {
     const browser = () => container.querySelector('[aria-label="Unverified browser votes — advisory"]')!;
-    assert(browser, 'separate browser counts shown');
-    assert.match(browser.textContent!, /Support: 0 · Oppose: 0 · Not sure: 0/);
+    assert(browser(), 'separate browser counts shown');
+    assert.match(browser().textContent!, /Support: 0 · Oppose: 0 · Not sure: 0/);
     assert.match(container.textContent!, /No verified participant count is reported/);
     assert.match(container.textContent!, /Synthetic demo data — illustrative/);
     for (const [label, expected] of [['Support', /Support: 1 · Oppose: 0/], ['Oppose', /Support: 0 · Oppose: 1/]] as const) {
