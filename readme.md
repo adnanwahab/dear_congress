@@ -503,3 +503,13 @@ Build link. Verify all machines during a rolling release; a single request canno
 prove fleet convergence. A missing Fly release version is represented as null.
 These fields provide deployment traceability, not artifact signatures or official
 civic authority. See [build diagnostics review](docs/reviews/SHE-300.md).
+
+## Standalone sample stages
+
+`/draft`, `/sponsors` and `/outcomes` open the first available fictional sample
+on a fresh visit. A selected sample is retained for the tab session and included
+in stage links; an explicit `?proposal=...` takes precedence. An unavailable ID
+shows a proposal chooser instead of silently opening a different proposal.
+Loading, retry and empty states explain how to continue. Browser storage is
+optional; query links still work when storage is blocked. Sponsor progress stays
+browser-local and simulated. No outreach or official action occurs.
