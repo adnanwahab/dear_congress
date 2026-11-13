@@ -4,6 +4,7 @@ import {
   type AdvisoryChoice, type CitizenProposalInput, type CitizenProposalView, type ProposalJurisdiction,
 } from "../shared/citizen-proposals";
 import "./citizen-proposals.css";
+import ProposalWorkspace from "./ProposalWorkspace";
 
 const API = "/api/citizen-proposals";
 const DRAFTS_KEY = "civic_synthesis_proposal_drafts_v1";
@@ -75,6 +76,7 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
 
 export function CitizenProposalsApp() {
   const path = window.location.pathname.replace(/\/+$/, "");
+  if (path === "/proposals/new" && new URLSearchParams(window.location.search).get("guided") === "1") return <Shell current="new"><ProposalWorkspace /></Shell>;
   if (path === "/proposals/new") return <Shell current="new"><ProposalEditor /></Shell>;
   if (path.startsWith("/proposals/")) {
     let id: string;
