@@ -701,3 +701,55 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
 }
+
+/* Shared native disclosure motion. Unsupported engines retain native instant toggles.
+   flow-root contains child margins so auto size and zero size never jump. */
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) and (transition-behavior: allow-discrete) {
+  :root { interpolate-size: allow-keywords; }
+  details::details-content {
+    display: flow-root;
+    block-size: 0;
+    opacity: 0;
+    overflow: clip;
+    transition: block-size var(--motion-base) var(--ease-out), opacity var(--motion-base) var(--ease-out), content-visibility var(--motion-base) allow-discrete;
+  }
+  details[open]::details-content { block-size: auto; opacity: 1; }
+  details > summary::before { transition: transform var(--motion-base) var(--ease-out); }
+}
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before {
+  content: '';
+  display: inline-block;
+  width: .45em;
+  height: .45em;
+  border-block-start: .12em solid currentColor;
+  border-inline-end: .12em solid currentColor;
+  margin-inline: .15em .65em;
+  vertical-align: .1em;
+  transform: rotate(45deg);
+}
+details[open] > summary::before { transform: rotate(135deg); }
+
+/* Native close() also gets an exit; closeDialog delays focus restoration until exit. */
+@supports (transition-behavior: allow-discrete) and (overlay: auto) {
+  dialog {
+    opacity: 0;
+    transform: scale(.96);
+    transition: opacity var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out), display var(--motion-base) allow-discrete, overlay var(--motion-base) allow-discrete;
+  }
+  dialog[open]:not([data-closing]) { opacity: 1; transform: scale(1); }
+  dialog::backdrop {
+    background: rgb(0 0 0 / .45);
+    opacity: 0;
+    transition: opacity var(--motion-base) var(--ease-out), display var(--motion-base) allow-discrete, overlay var(--motion-base) allow-discrete;
+  }
+  dialog[open]:not([data-closing])::backdrop { opacity: 1; }
+  @starting-style {
+    dialog[open]:not([data-closing]) { opacity: 0; transform: scale(.96); }
+    dialog[open]:not([data-closing])::backdrop { opacity: 0; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  details::details-content, details > summary::before, dialog, dialog::backdrop { transition: none !important; }
+}
