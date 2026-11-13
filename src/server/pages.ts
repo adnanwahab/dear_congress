@@ -51,11 +51,12 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
   const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
-  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || repositoryVote;
+  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
   const title = proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
   const description = proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
   let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
+  if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
   if (!found) html = html.replace('<div id="root"></div>', `<main style="max-width:40rem;margin:12vh auto;padding:24px;font:20px/1.6 system-ui"><h1>Page not found</h1><p>The link may have changed, or this page may no longer exist.</p><p><a href="/feed">Go to Feed</a> · <a href="/votes">Go to Votes</a></p><footer><a href="/privacy">Privacy &amp; removal</a></footer></main>`).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
   html = html.replace("</body>", `<footer data-build-commit="${buildIdentity.commit ?? "unknown"}"><a href="/version">Build ${buildIdentity.commit?.slice(0, 12) ?? "unknown"}</a> · ${buildIdentity.builtAt ?? "date unavailable"} · ${buildIdentity.environment} · ${buildIdentity.mode}</footer></body>`);

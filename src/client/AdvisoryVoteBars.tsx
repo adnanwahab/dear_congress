@@ -5,9 +5,26 @@ import './advisory-vote-bars.css';
 
 const OPTIONS = [['Support', 1, 'support'], ['Oppose', -1, 'oppose'], ['Not sure', 0, 'unsure']] as const;
 
+function LivePulse({ count = 0 }: { count?: number }) {
+  const previous = useRef(count);
+  const queue = useRef(0);
+  const [pulse, setPulse] = useState(0);
+  useEffect(() => {
+    queue.current += Math.max(0, count - previous.current);
+    previous.current = count;
+  }, [count]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (queue.current > 0) { queue.current--; setPulse(n => n + 1); }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <span key={pulse} className={pulse ? 'live-pulse live-pulse-marker' : 'live-pulse-marker'} aria-hidden="true" />;
+}
+
 /** Presentation only: choices and counts always come from the acknowledged payload. */
-export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote }: {
-  item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
+export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, live, pulses }: {
+  live?: boolean; pulses?: number[]; item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -59,7 +76,7 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote }: {
     return () => cancelAnimationFrame(frame);
   }, [visible, reduced, item.support, item.oppose, item.unsure]);
   return <div ref={host} className="advisory-tallies">
-    <p>Illustrative responses, not a representative poll.</p>
+    <p>{live ? 'Live round · advisory · not a poll' : 'Illustrative responses, not a representative poll.'}</p>
     <div className="vote-options advisory-bars">{OPTIONS.map(([label, stance, field], index) => {
       const count = item[field];
       const share = total ? count / total : 0;
@@ -67,7 +84,7 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote }: {
       return <button key={field} className={highlight === stance ? 'vote-confirmed' : undefined}
         aria-pressed={choice === stance} disabled={busy} onClick={() => onVote(stance)}
         aria-label={`Cast advisory vote: ${label}${choice === stance ? ', selected' : ''}. ${count.toLocaleString()} responses, ${percentage}`}>
-        <span className="advisory-label">Cast advisory vote: {label}{choice === stance ? ' ✓' : ''}</span>
+        <span className="advisory-label">{live && <LivePulse count={pulses?.[index]} />}Cast advisory vote: {label}{choice === stance ? ' ✓' : ''}</span>
         <span className="advisory-value" aria-hidden="true">{(reduced ? count : shown[index]!).toLocaleString()} · {percentage}</span>
         <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': reduced || visible ? share : 0 } as CSSProperties} /></span>
       </button>;
