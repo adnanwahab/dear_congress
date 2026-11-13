@@ -675,3 +675,12 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   ::view-transition-old(*) { opacity: 0; }
 }
+
+/* One compositor-friendly sweep after the final 1.2s county wave settles. */
+.county-completion-sweep { pointer-events: none; animation: county-completion 900ms 1200ms ease-out both; }
+@keyframes county-completion {
+  from { transform: translateX(0); }
+  to { transform: translateX(1350px); }
+.county-metrics strong { font-variant-numeric: tabular-nums; }
+  .county-shape { transition: none !important; }
+  .county-completion-sweep { display: none; animation: none; }
