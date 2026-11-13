@@ -654,3 +654,8 @@ remove the failed map and offer a manual retry. Retry affects only that map.
 Developer console diagnostics report initialization, resource or timeout failures
 without copying provider URLs or raw errors (which may contain credentials).
 Check provider configuration, connectivity and CSP when investigating those logs.
+
+Production acceptance also requires the [release parity contract](docs/release-parity.md):
+HTTP trust/identity checks and rendered desktop/mobile smoke checks against the
+served origin. Failed or missing evidence is NO-GO; SHE-280 retains the human
+rollout and rollback decision.
