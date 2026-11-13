@@ -1,4 +1,5 @@
 const MapScreen = lazy(() => import("./MapScreen"));
+import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
 import { Dashboard } from "./Dashboard";
 import { pageTitle, SITE_URL } from "../shared/page-metadata";
@@ -1565,7 +1566,8 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
             <div><b>{pkg.avgChange.toFixed(1)}</b><small>avg change level</small></div>
           </div>
         </div>
-        <Bar value={pkg.totalCost / pkg.budget} tone="accent" />
+        <ScoreInspector pkg={pkg} />
+        <Bar value={pkg.budget > 0 ? pkg.totalCost / pkg.budget : 0} tone="accent" />
         <div className="sim-link-row">
           {side === "real"
             ? <SimulateRealities key={pkg.id} packageName={pkg.id} compact />
@@ -1723,6 +1725,7 @@ function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state
                     <b>{part.contribution.toFixed(3)}</b>
                   </li>
                 ))}
+                <li><span>Rounding adjustment</span><b>{it.explanation.roundingAdjustment.toFixed(6)}</b></li>
                 <li><span>Change penalty</span><Bar value={Math.min(1, Math.max(0, it.explanation.changePenalty))} tone="opp" /><b>−{it.explanation.changePenalty.toFixed(3)}</b></li>
                 <li><span>Stability bonus</span><Bar value={Math.min(1, Math.max(0, it.explanation.stabilityBonus * 10))} tone="sup" /><b>+{it.explanation.stabilityBonus.toFixed(3)}</b></li>
               </ul>
