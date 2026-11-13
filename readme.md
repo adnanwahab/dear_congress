@@ -19,7 +19,12 @@ bun install
 bun dev          # http://localhost:3000 (hot reload)
 bun test         # engine tests
 bun run typecheck
+bun run test:routes # isolated production-router smoke check
 ```
+
+Launch review, required main checks and tagged releases are documented in
+[docs/launch-merge-policy.md](docs/launch-merge-policy.md). Agents leave launch
+PRs for human review and merge; analysis-only PRs must leave Linear issues open.
 
 `bun start` builds the browser shell with production minification and code splitting.
 MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
@@ -291,6 +296,8 @@ A citizen idea runs through a pipeline instead of a yes/no:
 
 Repository voting: see [setup, contracts and verification](docs/repository-voting.md).
 
+Launch monitoring: see [health checks, alert setup and on-call evidence](docs/launch-alerts.md).
+
 ## Public-write security
 
 Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
@@ -366,3 +373,28 @@ only the entry ID, not private text, in a public removal request. Journal text i
 rendered through React text interpolation. Private browser drafts are never read
 or uploaded by the journal submission path. No identity verification, CAPTCHA,
 paid incentives, merge policy changes, or deployment is included.
+
+## Privacy and removal
+
+`/privacy` is a static notice linked from the civic and proposal footers. Public
+journal responses (including aliases, state, creation responses and SSE) omit
+coordinates and tile IDs. Aggregate `/api/needs/geo` cells retain the existing
+0.01° grid and minimum-three-real-entry rule. Stored source identities and
+coordinates are preserved; simulation snapshot responses omit location too.
+
+New journals published through all three aliases get a private ownership hash in
+`journalOwners`. `GET /api/state` includes only the current browser's
+`ownEntryIds`; `DELETE /api/journal/:id` checks the signed anonymous cookie,
+same-origin rule and rate limit. Legacy records are not claimed automatically.
+The Journal feed offers **Delete my entry** after publication and reload.
+Deletion does not rewrite independently published proposals or their source IDs.
+Lost-cookie and legacy removal requests use the public GitHub link in the notice;
+no private contact mailbox or guaranteed backup expiry is currently configured.
+
+`POST /api/votes` accepts `withdrawVotes: [proposalId]` and
+`goalVotes: { [needId]: null }`. Other browsers' choices remain unchanged.
+Click a selected civic choice again to withdraw; option changes require
+**Save votes**. Citizen-proposal response removal continues to use its existing
+`choice: null` contract. Repository PR/issue ballots and revision audit history
+are separate and unchanged. See [SHE-284 review](docs/reviews/SHE-284.md) for
+source alignment and verification limitations.

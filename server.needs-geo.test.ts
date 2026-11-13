@@ -57,7 +57,8 @@ describe("/api/needs/geo", () => {
     });
     expect(realRes.status).toBe(200);
     const realEntry = await realRes.json() as JournalEntry;
-    expect(realEntry.location).toEqual({ lat: 29.72, lng: -95.48 });
+    expect(realEntry.location).toBeUndefined();
+    expect((await Bun.file(dbPath).json()).entries.find((e: JournalEntry) => e.id === realEntry.id).location).toEqual({ lat: 29.72, lng: -95.48 });
 
     const simRes = await fetch(new URL("/api/publish_draft", server.url), {
       method: "POST",
@@ -73,8 +74,11 @@ describe("/api/needs/geo", () => {
     expect(simRes.status).toBe(200);
     const simOut = await simRes.json() as { mode: string; entry: JournalEntry };
     expect(simOut.mode).toBe("journal");
-    expect(simOut.entry.location).toEqual({ lat: 29.729, lng: -95.475 });
-    expect(simOut.entry.tileId).toBe("tile-abc");
+    expect(simOut.entry.location).toBeUndefined();
+    expect(simOut.entry.tileId).toBeUndefined();
+    const stored = (await Bun.file(dbPath).json()).entries.find((e: JournalEntry) => e.id === simOut.entry.id);
+    expect(stored.location).toEqual({ lat: 29.729, lng: -95.475 });
+    expect(stored.tileId).toBe("tile-abc");
   });
 
   test("real and simulated at same point land in the same 0.01° cell (mode=both)", async () => {
