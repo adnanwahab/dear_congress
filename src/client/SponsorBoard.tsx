@@ -1,3 +1,5 @@
+import { TopicChip } from './TopicChip';
+import { topicForProposal } from '../shared/topics';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import './sponsor-board.css';
@@ -13,7 +15,7 @@ export function moveWithMotion(update: () => void) {
 }
 const transitionName = (id: string) => `sponsor-card-${Array.from(id).map(c => c.codePointAt(0)!.toString(16)).join('-')}`;
 
-export function SponsorBoard({ cards, save, className }: { cards: SponsorCard[]; save: (cards: SponsorCard[]) => boolean; className: string }) {
+export function SponsorBoard({ cards, save, className, items = [] }: { items?: readonly { id: string; topic: string }[]; cards: SponsorCard[]; save: (cards: SponsorCard[]) => boolean; className: string }) {
   const board = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; dx: number; dy: number; target: number | null } | null>(null);
   const [announcement, setAnnouncement] = useState('');
@@ -34,7 +36,7 @@ export function SponsorBoard({ cards, save, className }: { cards: SponsorCard[];
         const target = lane && board.current?.contains(lane) ? Number(lane.dataset.sponsorLane) : null;
         setDrag({ ...drag, dx: e.clientX - drag.x, dy: e.clientY - drag.y, target });
       }} onPointerUp={() => { const target = drag?.target; flushSync(() => setDrag(null)); if (target != null) move(c.id, target); }} onPointerCancel={() => setDrag(null)} onLostPointerCapture={() => setDrag(null)} onKeyDown={e => { if (e.key === 'Escape') setDrag(null); }}>⠿ <span>Drag card</span></button>
-      <strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p></>;
+      <TopicChip topic={topicForProposal(c.id, items)} /><strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p></>;
 }
 
 export function OutcomeTotal({ value }: { value: number }) {
