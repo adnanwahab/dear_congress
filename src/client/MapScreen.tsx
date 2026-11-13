@@ -1,3 +1,4 @@
+import { tourState } from './demo-tour';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import counties from './data/counties.json';
 import { CountyCountMethodology, modeledCountyPercent } from './CountyCountMethodology';
@@ -47,7 +48,12 @@ function HeaderMetrics({ agreed, round }: { agreed: number; round: number }) {
 export default function MapScreen() {
   const [plan, setPlan] = useState([...INITIAL_PLAN]);
   const [round, setRound] = useState(1);
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(() => { const tour = tourState(new URL(window.location.href)); return !!tour && !tour.paused; });
+  useEffect(() => {
+    const pause = (event: Event) => setRunning(!(event as CustomEvent<boolean>).detail);
+    window.addEventListener('demo:paused', pause);
+    return () => window.removeEventListener('demo:paused', pause);
+  }, []);
   const [selected, setSelected] = useState('48201');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');

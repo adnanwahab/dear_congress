@@ -531,3 +531,12 @@ optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
 
 Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
+
+## Guided demo
+
+Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only
+sample tour visits Published, Feed, Votes, Draft, Sponsors, Outcomes and Map in
+about 60 seconds plus page loading time. Space pauses/resumes, ←/→ step, and Esc
+exits. Clicking the page pauses; exit the tour to interact with voting or saved
+work. Map runs only its local illustrative simulation. No votes or drafts are saved
+by the tour. See [SHE-331 review notes](docs/reviews/SHE-331.md) for validation limits.

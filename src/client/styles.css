@@ -701,3 +701,9 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
 }
+
+.demo-tour { position: fixed; z-index: 110; bottom: 170px; left: 12px; right: 12px; max-width: 780px; margin: auto; padding: 14px 18px; border: 2px solid #5b4b9a; border-radius: 12px; background: #fff; color: #242421; box-shadow: 0 4px 24px #0003; max-height: 50vh; overflow: auto; }
+.demo-tour p { margin: 0 0 6px; }
+.demo-tour small { display: block; }
+.demo-tour > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.demo-tour button { padding: 8px 12px; }

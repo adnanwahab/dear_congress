@@ -12,6 +12,7 @@ const SELECTION_KEY = 'civic_demo_selection_v1';
 function initialSelection() {
   const explicit = new URLSearchParams(window.location.search).get('proposal');
   if (explicit) return explicit;
+  if ((new URLSearchParams(window.location.search).get('demo') === '1')) return null;
   try { return sessionStorage.getItem(SELECTION_KEY); } catch { return null; }
 }
 const TRACKER_KEY = 'civic_demo_tracker_v1';
@@ -71,7 +72,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   useEffect(() => {
     if (!item) return;
     setSelected(item.id);
-    try { sessionStorage.setItem(SELECTION_KEY, item.id); } catch {}
+    if (!(new URLSearchParams(window.location.search).get('demo') === '1')) { try { sessionStorage.setItem(SELECTION_KEY, item.id); } catch {} }
     if (deepStage) {
       const url = new URL(window.location.href);
       url.searchParams.set('proposal', item.id);
