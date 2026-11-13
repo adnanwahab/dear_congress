@@ -1,3 +1,4 @@
+import { runViewTransition, motionDisabled, motionDuration } from "./motion";
 import { TopicChip } from './TopicChip';
 import { topicForProposal } from '../shared/topics';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -6,12 +7,9 @@ import './sponsor-board.css';
 
 export interface SponsorCard { id: string; title: string; office: string; stage: number; updatedAt: string; }
 export const SPONSOR_LANES = ['Drafted', 'Ready to send', 'Replied', 'Introduced or offered', 'Stalled'];
-export const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+export const reducedMotion = motionDisabled;
 export function moveWithMotion(update: () => void) {
-  if (!document.startViewTransition || reducedMotion()) { update(); return; }
-  const transition = document.startViewTransition(() => flushSync(update));
-  // A superseded snapshot must not prevent the saved update from completing.
-  void transition.ready.catch(() => {});
+  void runViewTransition(update, 'sponsor-move');
 }
 const transitionName = (id: string) => `sponsor-card-${Array.from(id).map(c => c.codePointAt(0)!.toString(16)).join('-')}`;
 
@@ -46,12 +44,12 @@ export function OutcomeTotal({ value }: { value: number }) {
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let frame = 0;
     const finish = () => { window.cancelAnimationFrame(frame); current.current = value; setDisplay(value); };
-    if (media?.matches) { finish(); return; }
+    if (motionDisabled()) { finish(); return; }
     const from = current.current;
     const start = performance.now();
-    const tick = (now: number) => { const progress = Math.min(1, (now - start) / 650); current.current = Math.round(from + (value - from) * progress); setDisplay(current.current); if (progress < 1) frame = window.requestAnimationFrame(tick); };
+    const tick = (now: number) => { const progress = Math.min(1, (now - start) / motionDuration(650)); current.current = Math.round(from + (value - from) * progress); setDisplay(current.current); if (progress < 1) frame = window.requestAnimationFrame(tick); };
     frame = window.requestAnimationFrame(tick);
-    const change = () => { if (media?.matches) finish(); };
+    const change = () => { if (motionDisabled()) finish(); };
     media?.addEventListener('change', change);
     return () => { window.cancelAnimationFrame(frame); media?.removeEventListener('change', change); };
   }, [value]);
