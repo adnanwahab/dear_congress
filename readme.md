@@ -578,3 +578,8 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+Production acceptance also requires the [release parity contract](docs/release-parity.md):
+HTTP trust/identity checks and rendered desktop/mobile smoke checks against the
+served origin. Failed or missing evidence is NO-GO; SHE-280 retains the human
+rollout and rollback decision.
