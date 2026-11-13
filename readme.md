@@ -19,7 +19,12 @@ bun install
 bun dev          # http://localhost:3000 (hot reload)
 bun test         # engine tests
 bun run typecheck
+bun run test:routes # isolated production-router smoke check
 ```
+
+Launch review, required main checks and tagged releases are documented in
+[docs/launch-merge-policy.md](docs/launch-merge-policy.md). Agents leave launch
+PRs for human review and merge; analysis-only PRs must leave Linear issues open.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 

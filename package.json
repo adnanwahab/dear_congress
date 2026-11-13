@@ -6,6 +6,7 @@
     "dev": "bun --hot server.ts",
     "start": "NODE_ENV=production bun server.ts",
     "test": "bun test",
+    "test:routes": "bun scripts/smoke-routes.ts",
     "test:proposals-ui": "bun scripts/verify-citizen-proposals-ui.tsx",
     "typecheck": "tsc --noEmit",
     "purge:world": "bun scripts/purge-world-journals.ts",
