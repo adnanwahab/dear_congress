@@ -1,3 +1,4 @@
+import { pageTitle, SITE_URL } from "../shared/page-metadata";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
@@ -158,6 +159,17 @@ function LegacyApp() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    const title = pageTitle(path);
+    document.title = title;
+    for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) {
+      document.querySelector(selector)?.setAttribute("content", title);
+    }
+    document.querySelector('meta[property="og:url"]')?.setAttribute("content", SITE_URL + path);
+    document.querySelector('link[rel="canonical"]')?.setAttribute("href", SITE_URL + path);
+  }, [tab]);
 
   const gotoTab = (next: Tab) => {
     setTab(next);

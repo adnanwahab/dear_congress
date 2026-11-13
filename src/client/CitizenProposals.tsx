@@ -91,7 +91,6 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
 
 export function CitizenProposalsApp() {
   const path = window.location.pathname.replace(/\/+$/, "");
-  useEffect(() => { document.title = "Citizen proposals · Civic Synthesis"; }, []);
   if (path === "/proposals/new") return <Shell current="new"><ProposalEditor /></Shell>;
   if (path.startsWith("/proposals/")) {
     let id: string;

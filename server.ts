@@ -1,4 +1,5 @@
-import index from "./index.html";
+import { renderPage, sitemap } from "./src/server/pages";
+import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
@@ -799,22 +800,22 @@ function parseWhatIfExtraEntries(input: unknown) {
   return { ok: true as const, entries };
 }
 
+// Build the browser entry once per server start; metadata is added per request below.
+const browserBuild = await Bun.build({
+  entrypoints: ["./index.html"], target: "browser", publicPath: "/",
+  naming: "[name]-[hash].[ext]", minify: process.env.NODE_ENV === "production",
+});
+if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
+const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
+
 export const server = Bun.serve({
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
-    "/": index,
-    "/journal": index,
-    "/needs": index,
-    "/vote": index,
-    "/votes": index,
-    "/feed": index,
-    "/proposals/new": index,
-    "/proposals/:id": index,
-    "/synth": index,
-
-    // Explicit embed route.
-    "/embed": index,
+    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
+    "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
+    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
 
     "/api/debug/request": {
       GET: (req) => {
@@ -1592,6 +1593,15 @@ export const server = Bun.serve({
         return Response.json({ ok: true });
       },
     },
+  },
+  fetch(req) {
+    const path = new URL(req.url).pathname;
+    const asset = browserAssets.get(path);
+    if (asset) return new Response(asset, { headers: { "Content-Type": asset.type } });
+    if (path.startsWith("/api/")) return Response.json({ error: "Not found" }, { status: 404 });
+    if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } });
+    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    return req.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
   },
   error(error) {
     const message = error instanceof Error ? error.message : String(error);

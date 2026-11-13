@@ -141,6 +141,37 @@ test("public proposals survive server restarts with independent browser votes an
   try {
     let server = await startServer(dbPath);
     servers.push(server);
+    // Launch routes use the same isolated database as this full HTTP journey.
+    for (const path of ["/", "/journal", "/needs", "/vote", "/votes", "/feed", "/proposals/new", "/synth", "/embed"]) {
+      const page = await fetch(new URL(path, server.url));
+      expect(page.status).toBe(200);
+      const html = await page.text();
+      expect(html).toContain('property="og:title"');
+      expect(html).toContain('name="twitter:image"');
+      for (const asset of html.matchAll(/(?:src|href)="(\/[^"?#]+\.(?:js|css))"/g)) {
+        const response = await fetch(new URL(asset[1]!, server.url));
+        expect(response.status).toBe(200);
+        expect(response.headers.get("content-type")).toMatch(/javascript|css/);
+      }
+    }
+    const robots = await fetch(new URL("/robots.txt", server.url));
+    expect(robots.status).toBe(200);
+    expect(await robots.text()).toContain("Sitemap: https://civic-synthesis.fly.dev/sitemap.xml");
+    const image = await fetch(new URL("/social-preview.png", server.url));
+    expect(image.headers.get("content-type")).toContain("image/png");
+    const png = new DataView(await image.arrayBuffer());
+    expect(png.getUint32(16)).toBe(1200);
+    expect(png.getUint32(20)).toBe(630);
+    for (const path of ["/missing-launch-page", "/proposals/missing"]) {
+      const missing = await fetch(new URL(path, server.url));
+      expect(missing.status).toBe(404);
+      const html = await missing.text();
+      expect(html).toContain('href="/feed"');
+      expect(html).toContain('href="/votes"');
+      const head = await fetch(new URL(path, server.url), { method: "HEAD" });
+      expect(head.status).toBe(404);
+      expect(await head.text()).toBe("");
+    }
     expect((await ok<{ proposals: CitizenProposalView[] }>(server, base)).proposals).toEqual([]);
     expect((await ok<{ entry: typeof source }>(server, `${base}/journal/${source.id}`)).entry).toEqual(source);
 
@@ -160,6 +191,15 @@ test("public proposals survive server restarts with independent browser votes an
 
     const published = (await ok<{ proposal: CitizenProposalView }>(server, base, { voter: author, body: input })).proposal;
     const detail = `${base}/${published.id}`;
+    const proposalPage = await fetch(new URL(`/proposals/${published.id}`, server.url));
+    expect(proposalPage.status).toBe(200);
+    const proposalHtml = await proposalPage.text();
+    expect(proposalHtml).toContain(`<title>${input.title} | Civic Synthesis</title>`);
+    expect(proposalHtml).toContain(`content="${input.problem}"`);
+    const sitemap = await fetch(new URL("/sitemap.xml", server.url));
+    expect(sitemap.status).toBe(200);
+    expect(sitemap.headers.get("content-type")).toContain("application/xml");
+    expect(await sitemap.text()).toContain(`https://civic-synthesis.fly.dev/proposals/${published.id}`);
     expect(published.status).toBe("published");
     expect(published.advisory).toBe(true);
     expect(published.sourceEntryId).toBe(source.id);

@@ -2,8 +2,8 @@
 // Remove journals that happybearlandia /world posted before the `synthetic` flag existed.
 //
 //   Live server (dry run, then apply):
-//     ADMIN_TOKEN=... bun run purge:world --url https://dear-congress.fly.dev
-//     ADMIN_TOKEN=... bun run purge:world --url https://dear-congress.fly.dev --apply
+//     ADMIN_TOKEN=... bun run purge:world --url https://civic-synthesis.fly.dev
+//     ADMIN_TOKEN=... bun run purge:world --url https://civic-synthesis.fly.dev --apply
 //     ... --mode flag      keep them, but mark synthetic instead of deleting
 //
 //   Offline, on a downloaded copy (never overwrites the input):
@@ -25,7 +25,7 @@ const { values: args } = parseArgs({
 });
 
 const usage = `Usage:
-  ADMIN_TOKEN=... bun run purge:world --url https://dear-congress.fly.dev [--apply] [--mode delete|flag]
+  ADMIN_TOKEN=... bun run purge:world --url https://civic-synthesis.fly.dev [--apply] [--mode delete|flag]
   bun run purge:world --file db.json [--apply --out db.cleaned.json] [--mode delete|flag]`;
 
 if (args.help || (!args.url && !args.file) || (args.url && args.file)) {
