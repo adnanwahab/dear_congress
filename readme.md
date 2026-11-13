@@ -578,3 +578,11 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+Embedded needs and jurisdiction maps are optional. Rankings and jurisdiction
+priorities remain available as text while map assets load or fail. Missing styles
+show a map-free notice; resource failures and a 10-second initial loading timeout
+remove the failed map and offer a manual retry. Retry affects only that map.
+Developer console diagnostics report initialization, resource or timeout failures
+without copying provider URLs or raw errors (which may contain credentials).
+Check provider configuration, connectivity and CSP when investigating those logs.
