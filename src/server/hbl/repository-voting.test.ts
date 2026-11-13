@@ -83,7 +83,9 @@ test('normal public router selects all six sources and preserves authenticated w
    const api='/api/hbl/repos/'+repo+'/'+(kind==='pr'?'pulls':'issues');
    const response=await handleHblGovernance(new Request(origin+api)),list=await response.json();expect(response.status).toBe(200);expect(list.repository).toBe(REPOSITORIES[repo].repository);expect(list.kind).toBe(kind);
    const store=new GovernanceStore(path,repo,kind);try{if(!store.member(1))store.setMembership(1,'Router fixture',true,1);const headers=session(store,1),version=list.pulls[0].version;
-    const vote=await handleHblGovernance(new Request(origin+api+'/7/ballot',{method:'PUT',headers,body:JSON.stringify({version,choice:'yes'})}));expect(vote.status).toBe(200);expect(store.tally(7,version).yes).toBe(1);
+    const observed:import('../launch-stats').VoteActivity[]=[];
+    const vote=await handleHblGovernance(new Request(origin+api+'/7/ballot',{method:'PUT',headers,body:JSON.stringify({version,choice:'yes'})}),activity=>observed.push(activity));expect(vote.status).toBe(200);expect(store.tally(7,version).yes).toBe(1);
+    expect(observed).toEqual([{identity:'github:1',scope:repo+'/'+kind+'/verified',target:JSON.stringify([7,version])}]);
    }finally{store.db.close();}
   }
  }finally{

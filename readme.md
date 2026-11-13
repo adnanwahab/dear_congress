@@ -361,3 +361,51 @@ only the entry ID, not private text, in a public removal request. Journal text i
 rendered through React text interpolation. Private browser drafts are never read
 or uploaded by the journal submission path. No identity verification, CAPTCHA,
 paid incentives, merge policy changes, or deployment is included.
+
+## Launch-day metrics (SHE-286)
+
+Open `/admin/stats` using username `admin` and the existing `ADMIN_TOKEN` as the
+password, or request it with `Authorization: Bearer <ADMIN_TOKEN>`. It returns 401
+when the token is absent or wrong. The page is server-rendered, uncacheable and
+script-free. It shows today's counts in **America/Chicago**; refresh to update.
+
+Metrics persist separately at `STATS_DB_PATH` (default `${DB_PATH}.stats.sqlite`)
+on the same durable single-writer volume. Back up this SQLite database with its
+WAL using SQLite's backup facilities. It is independent of demo reset and never
+rewrites journals, ballots, identities, source metadata or PR revisions.
+
+Collection starts when this version first runs. Historical activity is not
+backfilled: legacy civic votes have no reliable daily timestamps/provenance, and
+SHE-271 remains an analysis-only source-alignment finding. New accepted civic,
+citizen-advisory, repository-community and verified votes are shown separately by
+scope. A vote counts once per identity + target + revision + Chicago date; repeat
+saves and changed choices on the same target do not increase that day's count.
+Withdrawals retain earlier participation. Priority allocation counts as one budget
+ballot, goal votes and proposal stances each count per target. Unique/returning
+counts describe identities, not verified people; returning means voting yesterday
+and today. Different voting systems and cleared cookies can count the same person
+again. Automated public API submissions cannot be identified as humans.
+
+Only newly accepted journal publications are recorded, with real, sample and
+simulated counts kept apart using the server's persisted flags. Fixture seeds,
+simulated population opinions, what-if runs, previews, rejected requests, comments
+and draft saves do not enter real participation counts. Existing precollection
+records, including ambiguous QA activity, are preserved and excluded.
+
+First-party `/api/page-view` POSTs count browser loads, reloads and pathname changes
+(including SPA navigation and back/forward). They omit credentials and record only
+an allowlisted normalized route and daily count. Detail IDs collapse to route
+templates. No query strings, referrers, IPs, page-view visitor IDs, new cookies or
+third-party scripts are stored/added. Requests require same origin, have a 1 KiB
+body limit and a separate 120-per-IP/ten-minute default budget; they do not consume
+voting limits. Forwarding headers are trusted only in existing `TRUST_FLY_PROXY`
+mode. JavaScript blocking, failed delivery and rate limiting can undercount views;
+forged same-origin/API traffic can inflate them. These are launch signals, not an
+audited census.
+
+Vote/journal metric writes run after successful application saves. Failures leave
+the saved action's response intact and flag the stats page as incomplete. A crash
+between the application save and metric write can undercount; the stores are not
+one transaction. Retain the existing one-writer deployment. Live source alignment,
+listener-based acceptance checks and deployment are still operator work; see
+[the SHE-286 review](docs/reviews/SHE-286.md).
