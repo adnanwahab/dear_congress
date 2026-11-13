@@ -1,4 +1,5 @@
 import { TopicHubs, TopicReturn } from './TopicHubs';
+import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
 import { DemoTour } from './DemoTour';
@@ -1625,6 +1626,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           </div>
         </div>
         <ScoreInspector pkg={pkg} />
+        <PlanBudget key={JSON.stringify([side, pkg])} pkg={pkg} proposals={state.proposals} lane={side} />
         <Bar value={pkg.budget > 0 ? pkg.totalCost / pkg.budget : 0} tone="accent" />
         <div className="sim-link-row">
           {side === "real"
