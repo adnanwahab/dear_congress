@@ -1,4 +1,5 @@
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
+import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
@@ -278,21 +279,13 @@ function LegacyApp() {
     });
   };
 
-  if (!state) return <div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div>;
+  const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
+  if (!state) return <div className="legacy-shell">{header}<div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div></div>;
 
   return (
-    <div className="app engine-workspace">
-      <header className="top">
-        <div className="brand">
-          <span className="mark" aria-hidden>◎</span>
-          <div>
-            <h1>Civic Synthesis</h1>
-            <p>Journals → needs → open votes → the smallest coherent set of changes</p>
-          </div>
-        </div>
-
-      </header>
-
+    <div className="legacy-shell">
+      {header}
+      <div className="app engine-workspace">
       <main>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
@@ -304,6 +297,7 @@ function LegacyApp() {
         <a href="/privacy">Privacy &amp; removal</a> ·
         Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
+      </div>
     </div>
   );
 }
