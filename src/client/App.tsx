@@ -859,6 +859,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
               <li key={`${s.name}|${s.url}`}>
