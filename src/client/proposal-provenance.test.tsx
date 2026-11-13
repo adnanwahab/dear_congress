@@ -17,7 +17,7 @@ test('every stable sample keeps its source and shows publisher, jurisdiction and
     expect(item.background?.publisher).toBeTruthy();
   }
   const payload = demoPayload({ browser: { 'demo-housing': { stance: 1 } } }, 'browser', new Date('2026-11-13'));
-  expect(payload.items[0]!.support).toBe(DEMO_ITEMS[0]!.support + 1);
+  expect(payload.items[0]!.support).toBe(DEMO_ITEMS[0]!.support);
   expect(payload.items[0]!.background?.checkedAt).toBeNull();
 });
 

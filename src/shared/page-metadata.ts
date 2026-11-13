@@ -4,6 +4,7 @@ export const SITE_NAME = "Civic Synthesis";
 export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
 
 export const PAGE_TITLES: Record<string, string> = {
+  "/account": "Participation & privacy",
   "/map": "County map",
   "/documentation": "Documentation", "/docs": "Documentation",
   "/journals": "Journal", "/api-docs": "Journal API",
