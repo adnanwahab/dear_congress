@@ -3,6 +3,7 @@ import { NeedTopicChip } from './TopicChip';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
+import { QuickSwitcher } from './QuickSwitcher';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -148,7 +149,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div><DemoTour /></div>;
+  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div>;
 }
 
 function LegacyApp() {
@@ -744,7 +745,10 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const [measured, setMeasured] = useState<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>({ mode: state.outcomesMode ?? "shadow", outcomes: null });
   const demandBlended = state.demandBlended ?? state.demand;
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
-  const [sel, setSel] = useState(focusNeedId ?? sorted[0]!.id);
+  const [sel, setSel] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get('need');
+    return focusNeedId ?? (state.needs.some(n => n.id === requested) ? requested! : sorted[0]!.id);
+  });
   const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
   useEffect(() => {
