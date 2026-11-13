@@ -2,6 +2,7 @@ import { CivicHeader } from "./CivicHeader";
 import { Fragment } from 'react';
 import { DESIGN_DOCUMENT } from './design-document';
 import './documentation.css';
+import ThreeAppLoop from './ThreeAppLoop';
 
 /** Render the supplied document as text and semantic elements, never raw HTML. */
 function Inline({ text }: { text: string }) {
@@ -18,6 +19,7 @@ function DocumentBody() {
     if (block.startsWith('# ')) return <h2 className="document-title" key={index}>{block.slice(2)}</h2>;
     if (block.startsWith('### ')) return <h4 key={index} id={slug(block.slice(4))}>{block.slice(4)}</h4>;
     if (block.startsWith('## ')) return <h3 key={index} id={slug(block.slice(3))}>{block.slice(3)}</h3>;
+    if (block === '[embed: node/97649559-e448]') return <ThreeAppLoop key={index} />;
     if (block.startsWith('[embed: ')) return <aside className="document-embed" key={index}><strong>Diagram reference</strong><code>{block}</code><span>The pasted document includes this reference; its diagram was not included.</span></aside>;
     if (lines.every(line => line.startsWith('- '))) return <ul key={index}>{lines.map((line,i) => <li key={i}><Inline text={line.slice(2)} /></li>)}</ul>;
     if (lines[0]?.startsWith('|')) {
