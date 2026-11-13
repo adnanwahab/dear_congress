@@ -1,5 +1,6 @@
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { RuleSandbox } from "./RuleSandbox";
+import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
@@ -1633,6 +1634,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
 
   return (
     <div className="grid synth">
+      <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
         {synthError && <p role="alert">{synthError}</p>}
