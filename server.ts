@@ -1,3 +1,4 @@
+import { auditSampleResponse } from "./src/server/audit-samples";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -899,6 +900,12 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/audit-samples": {
+      GET: () => auditSampleResponse(),
+    },
+    "/api/audit-samples/:id": {
+      GET: (req) => auditSampleResponse(req.params.id!),
+    },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },

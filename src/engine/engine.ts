@@ -1,3 +1,4 @@
+import { scoreAggregate } from "./aggregate-score";
 import { isPublicEntry } from "../shared/moderation";
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import { applyVariant, chosenVariant } from "./variants";
@@ -689,7 +690,6 @@ function cheapestIncumbentsToFree(incumbents: RankedRow[], needed: number): Rank
 }
 
 export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
-  const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
   return ctx.proposals.map((p) => {
     const st = ctx.stats[p.id]!;
     const measuredImpact = Number(ctx.outcomes.items[p.id] ?? 0);
@@ -701,9 +701,7 @@ export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
       reversibility: p.reversibility,
       evidence: round(clamp(Math.max(p.evidence, measuredImpact))),
     };
-    const base = (Object.keys(w) as (keyof Weights)[]).reduce((s, k) => s + w[k] * parts[k], 0) / wsum;
-    const changeCost = round((lambda * p.changeLevel) / 6);
-    return { p, parts, changeCost, score: round(base - changeCost) };
+    return { p, parts, ...scoreAggregate(parts, w, lambda, p.changeLevel) };
   });
 }
 

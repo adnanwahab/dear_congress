@@ -513,3 +513,9 @@ shows a proposal chooser instead of silently opening a different proposal.
 Loading, retry and empty states explain how to continue. Browser storage is
 optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
+
+## Reproducible audit sample
+
+A fabricated tally and aggregate score can be replayed offline and downloaded
+through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
+for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.

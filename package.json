@@ -13,7 +13,8 @@
     "outcomes:fetch": "bun scripts/fetch-outcomes.ts",
     "symphony:mini": "bun --no-env-file .mini-symphony/runner.js --config .mini-symphony/config.json",
     "symphony:mini:check": "bun --no-env-file .mini-symphony/runner.js --config .mini-symphony/config.json --check",
-    "symphony:mini:sync": "bun --no-env-file .mini-symphony/import-linear.js --config .mini-symphony/config.json"
+    "symphony:mini:sync": "bun --no-env-file .mini-symphony/import-linear.js --config .mini-symphony/config.json",
+    "audit:replay": "bun scripts/audit-replay.ts"
   },
   "dependencies": {
     "@deck.gl/core": "9.2",
