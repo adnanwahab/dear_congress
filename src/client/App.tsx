@@ -476,7 +476,7 @@ function NeedsGeoMap({
   }, [features, simBoxes]);
 
   if (!styleUrl) return <p className="muted s">Map preview is currently unavailable. Shared needs are still listed below.</p>;
-  return <div ref={elRef} style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
 }
 
 function JurisdictionMap({
@@ -541,7 +541,7 @@ function JurisdictionMap({
   }, [jurisdiction, pushingCells]);
 
   if (!styleUrl) return null;
-  return <div ref={elRef} style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
 }
 
 /* -------------------------------- Journal -------------------------------- */
