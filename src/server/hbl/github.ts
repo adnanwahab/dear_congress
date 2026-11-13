@@ -1,3 +1,4 @@
+import { PR_AUTO_MERGE_ENABLED } from './pilot';
 import { REPOSITORIES, isRepoKey, type RepoKey, type ItemKind } from '../../shared/repository-voting';
 import { HBL_REPOSITORY, type Pull, type Evidence } from '../../shared/hbl-governance';
 
@@ -90,10 +91,12 @@ export class GitHubSource {
     return pull;
   }
   async merge(number:number,expectedSha:string):Promise<{merged:boolean;sha?:string}> {
+    if(!PR_AUTO_MERGE_ENABLED) throw new GitHubError('rejected');
     if(this.options.kind==='issue'||this.repository!==HBL_REPOSITORY)throw new GitHubError('rejected');
     if(!this.options.token) throw new GitHubError('credentials');
     if(!Number.isSafeInteger(number)||number<1||!expectedSha) throw new GitHubError('rejected');
     await this.pin();
+    if(!PR_AUTO_MERGE_ENABLED) throw new GitHubError('rejected');
     const result=await this.request(`/pulls/${number}/merge`,{method:'PUT',body:JSON.stringify({sha:expectedSha,merge_method:'merge'})});
     if(result.merged!==true || typeof result.sha!=='string' || !/^[a-f0-9]{40}$/i.test(result.sha)) throw new GitHubError('unknown');
     return {merged:true,sha:result.sha};

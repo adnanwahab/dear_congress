@@ -51,7 +51,7 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     await edit('Public display name (optional)', 'Public name');
     await confirm();
     await click('Share publicly');
-    expect(calls.filter(c => c.body)).toEqual([{ path: '/api/publish_draft', body: { kind: 'journal', text: 'Safe excerpt', author: 'Public name' } }]);
+    expect(calls.filter(c => c.body)).toEqual([{ path: '/api/publish_draft', body: { kind: 'journal', text: 'Safe excerpt', author: 'Public name', inference: 'none', labels: [] } }]);
     expect(document.body.textContent).toContain('Excerpt held for moderation review');
     expect((q().getByLabelText('Working draft (not uploaded)') as HTMLTextAreaElement).value).toContain('PRIVATE_SENTINEL');
     expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
