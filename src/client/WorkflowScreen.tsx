@@ -7,6 +7,8 @@ import { SponsorBoard, OutcomeTotal } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
 import { CivicHeader } from "./CivicHeader";
 import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSearch';
+import { advisoryMutation, type VoteRequest } from './advisory-mutation';
+import { MutationStatus, type MutationState } from './mutation-status';
 import { useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
@@ -17,7 +19,7 @@ import { ProposalProvenance, provenanceText } from './ProposalProvenance';
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute as route, type Stage } from '../shared/civic-stages';
-type Request = <T>(path: string, body?: unknown, method?: string) => Promise<T>;
+type Request = VoteRequest;
 interface Tracked { id: string; title: string; office: string; stage: number; updatedAt: string; }
 const SELECTION_KEY = 'civic_demo_selection_v1';
 function initialSelection() {
@@ -53,8 +55,12 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [mutationState, setMutationState] = useState<MutationState>({ phase: 'idle', message: '' });
+  const [mutation] = useState(() => advisoryMutation(request, { getItem: key => sessionStorage.getItem(key), setItem: (key, value) => sessionStorage.setItem(key, value) }, setMutationState));
+  const busy = mutationState.phase === 'submitting';
+  useEffect(() => { setMutationState(mutation.state); }, [mutation]);
   const [confirmation, setConfirmation] = useState(0);
+  const [startingRound, setStartingRound] = useState(false);
   const [office, setOffice] = useState('');
   const [tracker, setTracker] = useState<Tracked[]>(readTracker);
   const [outcomeFilter, setOutcomeFilter] = useState('All outcomes');
@@ -92,14 +98,16 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   }, [item?.id, stage]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
-  function choose(id: string) { if (busy || id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(null, '', route(stage,id)); }); }
+  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(null, '', route(stage,id)); }); }
   function saveTracker(next: Tracked[]) { try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; } catch { setError('Could not save the walkthrough in this browser. Enable local storage and try again.'); return false; } }
-  async function vote(stance: number) {
-    if (!item || busy) return;
-    setBusy(true); setError(''); setStatus('');
-    try { await request('/api/votes', { votes: [{ proposalId: item.id, stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] }); await load(); setConfirmation(n => n + 1); setStatus('Your advisory vote is saved. You can change it at any time.'); }
-    catch (e) { setError(e instanceof Error ? e.message : 'Could not save your vote. Please try again.'); }
-    finally { setBusy(false); }
+  async function submitVote(stance?: number) {
+    if (mutation.pending || (stance !== undefined && !item)) return;
+    const confirmed = await mutation.submit(stance === undefined ? undefined : { proposalId: item!.id, title: item!.title, stance });
+    if (confirmed) {
+      try { await load(); setError(''); }
+      catch { setError('Your advisory choice was confirmed by the server. Updated proposal counts could not be loaded.'); }
+      setConfirmation(n => n + 1);
+    }
   }
   function prepare() {
     if (!item) return;
@@ -113,7 +121,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); const a = document.createElement('a'); a.href = url; a.download = `${item.id}-draft.txt`; a.click(); window.setTimeout(() => URL.revokeObjectURL(url),1000); setStatus('Sample draft downloaded. Review it before contacting an office.');
   }
   const filterControls = <ProposalSearch items={items} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!loadError} />;
-  const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!items.length || busy}>{!item && <option value="">Choose a sample proposal</option>}{items.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
+  const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!items.length}>{!item && <option value="">Choose a sample proposal</option>}{items.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
   const draftDetail = item && <><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main className="civic-main workflow-main">
@@ -123,13 +131,14 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
       {loading ? <Skeleton /> : loadError ? <p>Proposal details are unavailable. Use Retry loading proposals above.</p> : !items.length ? <><h2>No sample proposals available</h2><p>When proposals are available, choose one here to review its draft, prepare a sponsor card and follow its simulated outcomes.</p><button onClick={() => setAttempt(n => n + 1)}>Check again</button><a className="workflow-reference" href="/feed">Explore the proposal feed →</a></> : <>{item && <TopicChip topic={item.topic} />}<h2>{item ? item.title : 'Choose a sample proposal'}</h2><p>{item ? 'Continue with this fictional sample, or choose another proposal below.' : 'This proposal link is unavailable. Select a sample below to enter this stage.'}</p>{stage === 'outcomes' || !item ? selectControl : null}{!item && <button onClick={() => choose(items[0]!.id)}>Open first sample proposal</button>}{item && <a className="workflow-reference" href={route('feed',item.id)}>Back to proposal →</a>}</>}
     </section>}
-    {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Try again</button></div>}
-    <p className="workflow-status" role="status" aria-live="polite">{busy ? 'Saving…' : status}</p>
+    {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
+    <p className="workflow-status" role="status" aria-live="polite">{status}</p>
     {loading && !data && <WorkflowSkeleton stage={stage} />}
     {['published', 'feed', 'outcomes'].includes(stage) && <OfficialBills request={request} />}
     {stage === 'published' && (!loading || !!data) && <section className="panel"><div className="panel-head"><h2>Source desk</h2></div>{filterControls}<div className="workflow-source-grid">{filtered.map(i => <article className="workflow-source" key={i.id} style={proposalCardStyle("workflow", i.id)}><div className="entry-source">{i.source}</div><TopicChip topic={i.topic} /><span className="workflow-topic">{i.jurisdiction}</span><h3>{i.title}</h3><p>{i.summary}</p><div className="workflow-source-note">Background reference only. This scenario is not an enacted or published rule.</div><div className="workflow-card-actions"><ProposalProvenance item={i} compact /><a href={route('feed',i.id)}>Read in feed →</a></div></article>)}</div></section>}
     {stage === 'feed' && (!loading || !!data) && <div className="workflow-feed-layout"><section className="panel"><div className="panel-head"><h2>Changes to explore</h2></div>{filterControls}<div className="workflow-feed-list">{filtered.map(i => <article className={`workflow-feed-item ${item?.id === i.id ? 'selected' : ''}`} key={i.id} style={proposalCardStyle("workflow", i.id)}><div className="entry-source"><TopicChip topic={i.topic} /> · {i.jurisdiction}</div><h3 style={{ viewTransitionName: item?.id === i.id ? proposalTitleName(i.id) : undefined }}>{i.title}</h3><p>{i.summary}</p><ProposalProvenance item={i} compact /><div className="workflow-feed-bottom"><span>{count(i).toLocaleString()} sample responses</span><button className="outline" onClick={() => choose(i.id)}>View proposal</button></div></article>)}</div></section><aside className="panel workflow-sticky" style={{ viewTransitionName: 'proposal-detail' }}>{item ? <><span className="pill info">Viewing proposal</span><h2 className="workflow-detail-title">{item.title}</h2><p>{item.summary}</p><ProposalProvenance item={item} /><div className="workflow-detail-meta"><TopicChip topic={item.topic} /><span>{item.jurisdiction}</span></div><a className="dashboard-button" href={route('votes',item.id)}>View voting options →</a><a className="workflow-reference" href={route('published',item.id)}>Explore background sources</a></> : <p>Choose an available proposal to continue.</p>}</aside></div>}
-    {stage === 'votes' && (!loading || !!data) && <div className="workflow-two"><section className="panel vote-panel" style={{ viewTransitionName: 'proposal-detail' }}><div className="panel-head"><h2>Cast advisory vote</h2><button disabled={busy || !item} onClick={async () => { setBusy(true); setError(''); try { const round = await request<{code:string}>('/api/live', {proposalId:item!.id}); window.location.assign('/votes?live='+round.code); } catch(e) { setError(String(e)); setBusy(false); } }}>Start live round</button><span className="pill info">Non-binding</span></div>{selectControl}{item && <><TopicChip topic={item.topic} /><h3 className="workflow-detail-title" style={{ viewTransitionName: item ? proposalTitleName(item.id) : undefined }}>Should we {item.title.charAt(0).toLowerCase()+item.title.slice(1)}?</h3><p className="vote-summary">{item.summary}</p><ProposalProvenance item={item} /><p>Viewing a proposal does not cast a vote. Choose Support, Oppose, or Not sure below to save a non-binding advisory vote.</p>{item && <AdvisoryVoteBars key={item.id} item={item} choice={choice} busy={busy} confirmation={confirmation} onVote={vote} />}<div className="vote-foot"><p>{count(item).toLocaleString()} illustrative responses<br/>Demo voting window ends {data ? date(data.closesAt) : '—'}</p><p>One browser account, one advisory vote per proposal. Sample counts are not verified residents or a representative public poll.</p></div><a className="workflow-reference" href={route('draft',item.id)}>Review the sample draft →</a></>}</section><section className="panel"><h2>Understand the change</h2>{draftDetail}</section></div>}
+    {stage === 'votes' && <MutationStatus state={mutationState} retry={() => { void submitVote(); }} disabled={busy} />}
+    {stage === 'votes' && (!loading || !!data) && <div className="workflow-two"><section className="panel vote-panel" style={{ viewTransitionName: 'proposal-detail' }}><div className="panel-head"><h2>Cast advisory vote</h2><button disabled={busy || startingRound || !item} onClick={async () => { setStartingRound(true); setError(''); try { const round = await request<{code:string}>('/api/live', {proposalId:item!.id}); window.location.assign('/votes?live='+round.code); } catch(e) { setError(String(e)); setStartingRound(false); } }}>Start live round</button><span className="pill info">Non-binding</span></div>{selectControl}{item && <><TopicChip topic={item.topic} /><h3 className="workflow-detail-title" style={{ viewTransitionName: item ? proposalTitleName(item.id) : undefined }}>Should we {item.title.charAt(0).toLowerCase()+item.title.slice(1)}?</h3><p className="vote-summary">{item.summary}</p><ProposalProvenance item={item} /><p>Viewing a proposal does not cast a vote. Choose Support, Oppose, or Not sure below to save a non-binding advisory vote.</p>{item && <AdvisoryVoteBars key={item.id} item={item} choice={choice} busy={busy} confirmation={confirmation} onVote={submitVote} />}<div className="vote-foot"><p>{count(item).toLocaleString()} illustrative responses<br/>Demo voting window ends {data ? date(data.closesAt) : '—'}</p><p>One browser account, one advisory vote per proposal. Sample counts are not verified residents or a representative public poll.</p></div><a className="workflow-reference" href={route('draft',item.id)}>Review the sample draft →</a></>}</section><section className="panel"><h2>Understand the change</h2>{draftDetail}</section></div>}
     {stage === 'draft' && !loadError && item && <div className="workflow-two"><section className="panel" style={{ viewTransitionName: 'proposal-detail' }}><div className="panel-head"><h2>This week’s patch</h2><span className="pill info">Sample draft</span></div>{selectControl}<h3 className="workflow-detail-title" style={{ viewTransitionName: proposalTitleName(item.id) }}>{item.title}</h3>{draftDetail}</section><aside className="panel workflow-sticky"><h2>Prepare for a sponsor</h2><p className="workflow-body-muted">Choose the kind of office that could review this proposal. These are sample office categories, not confirmed sponsors.</p><label className="workflow-select">Possible office<select value={selectedOffice} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><div className="workflow-action-stack"><button disabled={!item} onClick={prepare}>{tracker.some(t => t.id === item?.id) ? 'Already in sponsor tracker ✓' : 'Prepare sponsor draft'}</button><button className="outline" disabled={!item} onClick={download}>Download sample draft</button><a href={route('sponsors',item?.id)}>Open sponsor tracker →</a></div><div className="workflow-source-note">Nothing is sent. Downloaded language is illustrative and needs review before outreach.</div></aside></div>}
     {(stage === 'draft' || stage === 'votes') && item && <AmendmentEditor key={`sample:${item.id}`} source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText, jurisdiction: item.jurisdiction, origin: provenanceText(item) }} />}
     {stage === 'sponsors' && !loading && !loadError && item && <><section className="panel workflow-prepare"><div><h2>Prepare a sample outreach card</h2><p className="workflow-body-muted">Cards are saved in this browser and shared with the dashboard walkthrough.</p></div><div>{selectControl}<label className="workflow-select">Possible office<select value={selectedOffice} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><button disabled={!item} onClick={prepare}>Add to tracker</button></div></section><OutreachDraft key={JSON.stringify([item, selectedOffice])} item={item} office={selectedOffice} /><section className="panel workflow-tracker"><div className="panel-head"><h2>Sponsor tracker</h2><span>Local demo · no real outreach</span></div><SponsorBoard items={items} cards={tracker} save={saveTracker} className="workflow-board" /></section></>}

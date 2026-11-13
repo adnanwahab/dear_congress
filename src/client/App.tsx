@@ -11,6 +11,7 @@ import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName,
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
+import { MutationError } from './mutation-status';
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
@@ -99,7 +100,7 @@ async function api<T>(path: string, body?: unknown, method?: string, signal?: Ab
     const msg = (typeof payload === "object" && payload !== null && "error" in payload && typeof (payload as { error?: unknown }).error === "string")
       ? (payload as { error: string }).error
       : (typeof payload === "string" && payload.trim() ? payload : res.statusText);
-    throw new Error(msg || "Request failed");
+    throw new MutationError(msg || "Request failed", res.status, res.headers.get("Retry-After"));
   }
 
   if (resolvedMethod === "POST" && JOURNAL_CREATE_ENDPOINTS.some((p) => path.startsWith(p))) {

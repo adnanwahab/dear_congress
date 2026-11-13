@@ -12,7 +12,8 @@ export function applyTheme(preference: ThemePreference) {
 
 export function ThemeSwitch() {
   const [preference, setPreference] = useState<ThemePreference>(() => {
-    const value = document.documentElement.dataset.themePreference;
+    // Server/static renders have no document; the prepaint script sets the real value in the browser.
+    const value = typeof document === 'undefined' ? undefined : document.documentElement.dataset.themePreference;
     return value === 'light' || value === 'dark' ? value : 'system';
   });
   const [busy, setBusy] = useState(false);

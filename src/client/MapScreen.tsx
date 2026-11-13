@@ -50,7 +50,7 @@ function HeaderMetrics({ agreed, round }: { agreed: number; round: number }) {
 export default function MapScreen() {
   const [plan, setPlan] = useState([...INITIAL_PLAN]);
   const [round, setRound] = useState(1);
-  const [running, setRunning] = useState(() => { const tour = tourState(new URL(window.location.href)); return !!tour && !tour.paused; });
+  const [running, setRunning] = useState(() => { if (typeof window === 'undefined') return false; const tour = tourState(new URL(window.location.href)); return !!tour && !tour.paused; });
   useEffect(() => {
     const pause = (event: Event) => setRunning(!(event as CustomEvent<boolean>).detail);
     window.addEventListener('demo:paused', pause);
