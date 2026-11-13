@@ -69,7 +69,7 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
       <a className="cp-nav-propose" href="/proposals/new" aria-current={current === "new" ? "page" : undefined}>＋ Propose a law</a>
     </nav>
     <main id="proposal-main" tabIndex={-1}>{children}</main>
-    <footer className="cp-footer"><span>Civic Synthesis</span><p>Anonymous, non-binding advisory participation; one vote per browser ID, not one verified person. Publishing here does not enact a law or send anything to an official.</p></footer>
+    <footer className="cp-footer"><a href="/privacy">Privacy &amp; removal</a><span>Civic Synthesis</span><p>Anonymous, non-binding advisory participation; one vote per browser ID, not one verified person. Publishing here does not enact a law or send anything to an official.</p></footer>
   </div>;
 }
 

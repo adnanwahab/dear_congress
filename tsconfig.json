@@ -12,5 +12,5 @@
     "types": ["bun"],
     "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
-  "include": ["server.ts", "src", "*.d.ts"]
+  "include": ["server.ts", "src", "*.d.ts", "scripts/smoke-routes.ts"]
 }

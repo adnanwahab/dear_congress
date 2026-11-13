@@ -6,6 +6,7 @@ import type {
 } from "../engine/types";
 import { IDEA_STAGES } from "../engine/types";
 import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
+import { loadMapLibre } from "./maplibre";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -46,6 +47,7 @@ interface AppState {
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
+  ownEntryIds?: string[];
   population: { n: number; archetypes: { name: string; share: number }[]; realVoices?: number };
   user: { votes: Record<string, UserVote>; allocation: Record<string, number>; goalVotes: Record<string, boolean>; answers: { id: string; needId: string; text: string; proposalId: string }[] };
   defaultWeights: Weights;
@@ -127,7 +129,7 @@ export function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  if (isRepositoryVotingPath(pathname)) return <Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches /></Suspense>;
+  if (isRepositoryVotingPath(pathname)) return <><Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches /></Suspense><footer><a href="/privacy">Privacy &amp; removal</a></footer></>;
   return isCitizenProposalPath(pathname) ? <CitizenProposalsApp /> : <LegacyApp />;
 }
 
@@ -262,7 +264,7 @@ function LegacyApp() {
     });
   };
 
-  if (!state) return <div className="loading">Loading…</div>;
+  if (!state) return <><div className="loading">Loading…</div><footer><a href="/privacy">Privacy &amp; removal</a></footer></>;
 
   return (
     <div className="app">
@@ -304,6 +306,7 @@ function LegacyApp() {
       </main>
 
       <footer>
+        <a href="/privacy">Privacy &amp; removal</a> ·
         Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
     </div>
@@ -416,7 +419,7 @@ function NeedsGeoMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({
         container: elRef.current,
@@ -490,7 +493,7 @@ function JurisdictionMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
       map.on("load", async () => {
@@ -626,6 +629,16 @@ export function JournalView({
     } finally { setBusy(false); }
   }
 
+  async function removeEntry(id: string) {
+    if (!window.confirm("Delete this public journal entry? This cannot be undone.")) return;
+    setSubmitError("");
+    try {
+      await api(`/api/journal/${encodeURIComponent(id)}`, undefined, "DELETE");
+      if (entry?.id === id) { setEntry(null); setUndo(null); }
+      refresh();
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Could not delete. Please retry."); }
+  }
+
   async function undoPublish() {
     if (!undo) return;
     await api(`/api/forks/${undo.forkId}/undo`, {});
@@ -702,6 +715,7 @@ export function JournalView({
               <div className="feed-meta">
                 <span className="who">{e.author}</span>
                 <a href={`#entry-${encodeURIComponent(e.id)}`}>Entry link</a>
+                {state.ownEntryIds?.includes(e.id) && <button className="ghost small" onClick={() => removeEntry(e.id)}>Delete my entry</button>}
                 <ReportEntry entryId={e.id} />
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
@@ -896,6 +910,8 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
   const [answerMsg, setAnswerMsg] = useState("");
   const [votes, setVotes] = useState<Record<string, UserVote>>(() => ({ ...state.user.votes }));
   const [saved, setSaved] = useState("");
+  const [withdrawVotes, setWithdrawVotes] = useState<string[]>([]);
+  const [voteError, setVoteError] = useState("");
 
   const used = Object.values(alloc).reduce((s, v) => s + v, 0);
   const need = state.needs.find((n) => n.id === needId)!;
@@ -909,14 +925,32 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
 
   const vote = (pid: string, patch: Partial<UserVote>) => {
     const cur = votes[pid] ?? { proposalId: pid, stance: 0 as Stance, importance: 0.5, acceptCompromise: true, concern: "", changeMind: "" };
-    setVotes({ ...votes, [pid]: { ...cur, ...patch } });
+    if (patch.stance !== undefined && votes[pid]?.stance === patch.stance) {
+      const next = { ...votes }; delete next[pid]; setVotes(next);
+      setWithdrawVotes(ids => [...new Set([...ids, pid])]);
+    } else {
+      setVotes({ ...votes, [pid]: { ...cur, ...patch } });
+      setWithdrawVotes(ids => ids.filter(id => id !== pid));
+    }
   };
 
   async function saveAll(msg: string) {
-    await api("/api/votes", { votes: Object.values(votes), allocation: alloc });
-    setSaved(msg);
-    setTimeout(() => setSaved(""), 2500);
-    refresh();
+    setVoteError("");
+    try {
+      await api("/api/votes", { votes: Object.values(votes), allocation: alloc, withdrawVotes });
+      setWithdrawVotes([]);
+      setSaved(msg);
+      setTimeout(() => setSaved(""), 2500);
+      refresh();
+    } catch (error) { setVoteError(error instanceof Error ? error.message : "Could not save votes. Please retry."); }
+  }
+
+  async function setGoal(choice: boolean) {
+    setVoteError("");
+    try {
+      await api("/api/votes", { goalVotes: { [needId]: goalVote === choice ? null : choice } });
+      refresh();
+    } catch (error) { setVoteError(error instanceof Error ? error.message : "Could not save vote. Please retry."); }
   }
 
   async function submitAnswer() {
@@ -957,11 +991,13 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
             {state.needs.map((n) => <button key={n.id} className={`chip-btn ${n.id === needId ? "on" : ""}`} onClick={() => { setNeedId(n.id); setAnswerMsg(""); }}>{n.label}</button>)}
           </div>
 
+          {voteError && <p role="alert">{voteError}</p>}
+          <p className="muted">Click a selected choice again to withdraw. Use Save votes to save option changes.</p>
           <h3 className="q">Step 1 · Agree on the goal</h3>
           <p className="goal">Should we commit to this: <b>{need.goal}</b>?</p>
           <div className="row">
-            <button className={goalVote === true ? "" : "ghost"} onClick={async () => { await api("/api/votes", { goalVotes: { [needId]: true } }); refresh(); }}>Yes</button>
-            <button className={goalVote === false ? "" : "ghost"} onClick={async () => { await api("/api/votes", { goalVotes: { [needId]: false } }); refresh(); }}>No</button>
+            <button className={goalVote === true ? "" : "ghost"} aria-pressed={goalVote === true} onClick={() => setGoal(true)}>Yes</button>
+            <button className={goalVote === false ? "" : "ghost"} aria-pressed={goalVote === false} onClick={() => setGoal(false)}>No</button>
             <div className="goal-res"><Bar value={state.goalSupport[needId]!} tone="sup" /><span>{pct(state.goalSupport[needId]!)} say yes</span></div>
           </div>
 
@@ -998,7 +1034,7 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
                   {p.emergent && p.costEstimate !== "assessed" && <EstimateForm key={`${p.id}:${(p as IdeaProposal).myEstimate?.costB ?? ""}`} p={p as IdeaProposal} changeLevels={state.changeLevels} onSaved={refresh} />}
                   <div className="stances">
                     {STANCES.map((s) => (
-                      <button key={s.v} className={`st st${s.v} ${v?.stance === s.v ? "on" : ""}`} onClick={() => vote(p.id, { stance: s.v })}>{s.label}</button>
+                      <button key={s.v} aria-pressed={v?.stance === s.v} className={`st st${s.v} ${v?.stance === s.v ? "on" : ""}`} onClick={() => vote(p.id, { stance: s.v })}>{s.label}</button>
                     ))}
                   </div>
                   {v && (
