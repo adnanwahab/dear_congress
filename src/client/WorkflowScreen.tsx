@@ -3,7 +3,7 @@ import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import { ProposalProvenance, provenanceText } from './ProposalProvenance';
 
-type Stage = 'published' | 'feed' | 'votes' | 'draft' | 'sponsors' | 'outcomes';
+import { STAGES, stageRoute as route, type Stage } from '../shared/civic-stages';
 type Request = <T>(path: string, body?: unknown, method?: string) => Promise<T>;
 interface Tracked { id: string; title: string; office: string; stage: number; updatedAt: string; }
 const SELECTION_KEY = 'civic_demo_selection_v1';
@@ -14,14 +14,7 @@ function initialSelection() {
 }
 const TRACKER_KEY = 'civic_demo_tracker_v1';
 const LANES = ['Drafted', 'Ready to send', 'Replied', 'Introduced or offered', 'Stalled'];
-const STAGES: Record<Stage, { n: number; title: string; heading: string; description: string; time: string; next?: Stage }> = {
-  published: { n: 1, title: 'Published', heading: 'Start with the source.', description: 'Explore the official institutions behind each sample scenario. Reference links provide background; the sample proposals are fictional.', time: 'Clock starts', next: 'feed' },
-  feed: { n: 2, title: 'In the feed', heading: 'Make sense of what could change.', description: 'Find a proposal by topic, read its plain-English summary, and choose the change you want to explore.', time: 'Same day', next: 'votes' },
-  votes: { n: 3, title: 'Open for votes', heading: 'Add your voice to a proposal.', description: 'Read the change, make an advisory choice, and change your vote at any time. Sample tallies are illustrative, not a public poll.', time: 'Open 7 days', next: 'draft' },
-  draft: { n: 4, title: 'Weekly draft', heading: 'Turn a shared need into clear text.', description: 'Compare the illustrative current approach with a proposed clause, review the summary, and prepare a downloadable sample draft.', time: 'Every week', next: 'sponsors' },
-  sponsors: { n: 5, title: 'Sponsor contact', heading: 'Give every draft a next step.', description: 'Choose a possible office and walk a sample draft through preparation and follow-up. Nothing is sent to a public office.', time: 'Within a week', next: 'outcomes' },
-  outcomes: { n: 6, title: 'Outcome', heading: 'Keep the story moving.', description: 'Review simulated replies, committee introductions, and stalled items. Record a clear next step rather than letting a draft disappear.', time: 'Tracked weekly' },
-};
+
 function readTracker(): Tracked[] {
   try {
     const value = JSON.parse(localStorage.getItem(TRACKER_KEY) ?? 'null');
@@ -35,7 +28,7 @@ function readTracker(): Tracked[] {
 }
 const date = (value: string) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 const count = (item: DemoItem) => item.support + item.oppose + item.unsure;
-const route = (stage: Stage, id?: string) => `/${stage}${id ? `?proposal=${encodeURIComponent(id)}` : ''}`;
+
 
 export default function WorkflowScreen({ stage, request }: { stage: Stage; request: Request }) {
   const [data, setData] = useState<DemoPayload | null>(null);
@@ -110,7 +103,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const draftDetail = item && <><ProposalProvenance item={item} /><h3 className="patch-label">Current approach · illustrative</h3><div className="patch-code removed">− {item.currentText}</div><h3 className="patch-label">Proposed text</h3><div className="patch-code added">+ {item.proposedText}</div><h3 className="patch-label">Plain-English summary</h3><p>{item.summary}</p></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">{meta.title}</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header><main className="civic-main workflow-main">
-    <section className="workflow-heading"><div><p className="workflow-eyebrow">Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.heading}</h1>{stage === "votes" && <a href="/vote/happybearlandia">Game patches · HappyBearLandia →</a>}<p>{meta.description}</p></div>{meta.next && item && <a className="workflow-next" href={route(meta.next,item?.id)}>{STAGES[meta.next].title} →</a>}</section>
+    <section className="workflow-heading"><div><p className="workflow-eyebrow">Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.title}</h1><p><strong>{meta.heading}</strong></p>{stage === "votes" && <a href="/vote/happybearlandia">Game patches · HappyBearLandia →</a>}<p>{meta.description}</p></div>{meta.next && item && <a className="workflow-next" href={route(meta.next,item?.id)}>Next: {STAGES[meta.next].title} →</a>}</section>
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? 'Loading sample proposals…' : 'Sample proposals unavailable'}</span></div>
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>

@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { CIVIC_STAGES, stageRoute } from '../src/shared/civic-stages';
 
 // Run the real production router/build with disposable state and no service credentials.
 const directory = await mkdtemp(join(tmpdir(), 'dear-congress-routes-'));
@@ -46,6 +47,14 @@ try {
       assert.equal(bundled.status, 200, asset);
       assert.match(bundled.headers.get('content-type') ?? '', asset.endsWith('.js') ? /javascript/ : /css/, asset);
       assert.ok((await bundled.arrayBuffer()).byteLength > 0, asset);
+    }
+  }
+  for (const stage of CIVIC_STAGES) {
+    for (const path of [stage.route, stageRoute(stage.next, 'sample /?&雪')]) {
+      const response = await get(path);
+      assert.equal(response.status, 200, path);
+      const destination = CIVIC_STAGES.find(s => s.route === new URL(path, server!.url).pathname)!;
+      assert.ok((await response.text()).includes(`<title>${destination.title} | Civic Synthesis</title>`), path);
     }
   }
   const embed = await get('/embed');
