@@ -513,3 +513,5 @@ shows a proposal chooser instead of silently opening a different proposal.
 Loading, retry and empty states explain how to continue. Browser storage is
 optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
+
+Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
