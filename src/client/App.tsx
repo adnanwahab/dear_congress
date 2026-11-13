@@ -2,6 +2,7 @@ import { motionDuration } from "./motion";
 import { NeedTopicChip } from './TopicChip';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
+import { onPageActivation } from './page-activation';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -194,7 +195,7 @@ function LegacyApp() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => onPageActivation(() => {
     const es = new EventSource("/api/entries/events");
 
     es.onopen = () => {
@@ -216,7 +217,7 @@ function LegacyApp() {
     };
 
     return () => es.close();
-  }, []);
+  }), []);
 
   const onPublishStart = (forkId: string) => {
     setPublishFlow({
