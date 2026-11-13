@@ -7,11 +7,14 @@ const dom = new Window({ url: 'http://localhost/journal' });
 for (const key of ['window', 'document', 'navigator', 'localStorage', 'location']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 const writes: any[] = [];
+let outcome = 'published';
 const request = async <T,>(path: string, body?: any): Promise<T> => {
   if (path.includes('schema')) return { version: 2, needs: [{ id: 'housing', label: 'Housing' }] } as T;
   if (body) {
     writes.push(body);
-    return { entry: { id: 'manual', extraction: { needs: [] } } } as T;
+    if (outcome === 'pending') return { status: 'pending', message: 'Awaiting review' } as T;
+    if (outcome === 'failed') throw new Error('Offline');
+    return { entry: { id: `manual-${writes.length}`, text: body.text, createdAt: '2026-11-13T12:00:00Z', extraction: { needs: body.labels.map((id: string) => ({ id })) } } } as T;
   }
   return { entries: [], nextCursor: null } as T;
 };
@@ -37,6 +40,25 @@ assert.equal(writes[0].inference, 'none'); assert.equal(writes[0].kind, 'journal
 assert.match(container.querySelector('.dashboard-status')!.textContent!, /No inference was requested and no vote was cast/);
 assert.match(container.textContent!, /Published without need tags/);
 assert.equal((container.querySelector('textarea') as any).value, '');
+assert.equal(container.querySelectorAll('.journal-feed article').length, 1);
+assert.equal(container.querySelectorAll('.journal-feed a').length, 0);
+// A selected category enters with the acknowledged entry; a declined one did not.
+await act(async () => { [...container.querySelectorAll('button')].find(b => b.textContent === 'Use a sample experience')!.click(); category.click(); consent.click(); });
+await act(async () => { button().click(); });
+const first = container.querySelector('.journal-feed article')!;
+assert.equal(first.className, 'journal-story-new');
+assert.match(first.textContent!, /Housing/);
+assert.equal(first.querySelector('a')!.getAttribute('href'), '/needs?need=housing&entry=manual-2');
+assert.equal(container.querySelectorAll('.journal-feed article').length, 2);
+for (const mode of ['pending', 'failed']) {
+  outcome = mode;
+  await act(async () => { [...container.querySelectorAll('button')].find(b => b.textContent === 'Use a sample experience')!.click(); consent.click(); });
+  await act(async () => { button().click(); });
+  assert.equal(container.querySelectorAll('.journal-feed article').length, 2);
+  assert.notEqual((container.querySelector('textarea') as any).value, '');
+  // Failed/pending publication retains confirmation and draft.
+  if (mode === 'pending') await act(async () => { consent.click(); });
+}
 await act(async () => { root.unmount(); });
 await dom.happyDOM.close();
 console.log('PASS manual journal: select/remove, consent, publish without tags');

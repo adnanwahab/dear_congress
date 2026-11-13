@@ -162,7 +162,7 @@ export function App() {
 function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
-  const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
+  const [focusNeedId, setFocusNeedId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("need"));
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
   const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
   const [loadError, setLoadError] = useState("");
@@ -178,6 +178,7 @@ function LegacyApp() {
     const onPopState = () => {
       const next = tabFromPath(window.location.pathname);
       if (next) setTab(next);
+      setFocusNeedId(new URLSearchParams(window.location.search).get("need"));
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -752,10 +753,9 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const [measured, setMeasured] = useState<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>({ mode: state.outcomesMode ?? "shadow", outcomes: null });
   const demandBlended = state.demandBlended ?? state.demand;
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
-  const [sel, setSel] = useState(() => {
-    const requested = new URLSearchParams(window.location.search).get('need');
-    return focusNeedId ?? (state.needs.some(n => n.id === requested) ? requested! : sorted[0]!.id);
-  });
+  const validFocus = state.needs.some(n => n.id === focusNeedId) ? focusNeedId : null;
+  const [sel, setSel] = useState(validFocus ?? sorted[0]!.id);
+  useEffect(() => { if (validFocus) setSel(validFocus); }, [validFocus]);
   const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
   const [moves, setMoves] = useState(new Map<string, number>());
   const visibleDemand = geoMode === "real" ? demandReal : geoMode === "both" ? demandBlended : (state.demandSimulated ?? demandBlended);
@@ -769,9 +769,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
     });
   };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
-  useEffect(() => {
-    if (focusNeedId) setSel(focusNeedId);
-  }, [focusNeedId]);
+
   useEffect(() => {
     const run = async () => {
       try {
@@ -823,7 +821,9 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
         <ul className="needs">
           {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
             rank={i + 1} move={moves.get(n.id) ?? 0}
-            selected={sel === n.id} mode={geoMode} onSelect={() => setSel(n.id)} />)}
+            selected={sel === n.id} mode={geoMode} onSelect={() => setSel(n.id)}
+            arrival={validFocus === n.id}
+            mentionAdded={validFocus === n.id && state.entries.some(e => e.id === new URLSearchParams(window.location.search).get("entry") && e.extraction.needs.some(tag => tag.id === n.id))} />)}
         </ul>
       </section>
 
