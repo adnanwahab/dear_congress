@@ -938,3 +938,13 @@ html:active-view-transition-type(filter)::view-transition-new(.filter-control) {
 @media (hover: hover) and (pointer: fine) {
   :root a.cp-button:not(.cp-button-secondary):hover { background-color: #193d68; }
 }
+
+.needs .need-fill { width: 100%; transform-origin: left; transition: transform 700ms ease-in-out; }
+.need-movement { display: inline-block; font-weight: 700; animation: need-marker 700ms ease-out; }
+@keyframes need-marker { from { background: var(--accent-soft); transform: translateY(4px); } to { background: transparent; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .needs .need-fill { transition: none; }
+  .need-movement { animation: none; }
+}
+/* Snapshot bars at their final size; their named snapshots animate the scale. */
+html:active-view-transition .needs .need-fill { transition: none; }

@@ -1,10 +1,10 @@
 import { motionDuration } from "./motion";
-import { NeedTopicChip } from './TopicChip';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
 import { QuickSwitcher } from './QuickSwitcher';
 import { LiveRound } from './LiveRound';
+import { NeedRow, rankedNeeds, needMoves, type NeedMode } from "./need-motion";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -62,6 +62,7 @@ interface AppState {
   demand: Record<string, NeedDemand>;
   demandReal?: Record<string, NeedDemand>;
   demandBlended?: Record<string, NeedDemand>;
+  demandSimulated?: Record<string, NeedDemand>;
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
@@ -755,6 +756,17 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
     return focusNeedId ?? (state.needs.some(n => n.id === requested) ? requested! : sorted[0]!.id);
   });
   const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
+  const [moves, setMoves] = useState(new Map<string, number>());
+  const visibleDemand = geoMode === "real" ? demandReal : geoMode === "both" ? demandBlended : (state.demandSimulated ?? demandBlended);
+  const visibleNeeds = rankedNeeds(state.needs, visibleDemand);
+  const switchMode = (mode: NeedMode) => {
+    if (mode === geoMode) return;
+    const next = mode === "real" ? demandReal : mode === "both" ? demandBlended : (state.demandSimulated ?? demandBlended);
+    void updatePlan(() => {
+      setMoves(needMoves(visibleNeeds, rankedNeeds(state.needs, next)));
+      setGeoMode(mode);
+    });
+  };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
   useEffect(() => {
     if (focusNeedId) setSel(focusNeedId);
@@ -789,10 +801,6 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const measuredSources = new Map<string, { name: string; url: string; caveat?: string }>();
   for (const row of measured.outcomes?.series ?? []) measuredSources.set(`${row.source.name}|${row.source.url}`, row.source);
 
-  const rankReal = new Map(sorted.map((n, i) => [n.id, i + 1]));
-  const sortedBlend = [...state.needs].sort((a, b) => demandBlended[b.id]!.demand - demandBlended[a.id]!.demand);
-  const rankBlend = new Map(sortedBlend.map((n, i) => [n.id, i + 1]));
-
   const jurisdictions = ["Houston", "Harris County", "Texas", "United States"];
   const byJur = jurisdictions.map((j) => {
     const needIds = [...new Set(state.proposals.filter((p) => p.jurisdiction === j && !p.rightsIssue).map((p) => p.needId))];
@@ -806,28 +814,15 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
         <div className="row" style={{ marginBottom: 8 }}>
-          <button className={geoMode === "real" ? "" : "ghost"} onClick={() => setGeoMode("real")}>Real voices</button>
-          <button className={geoMode === "simulated" ? "" : "ghost"} onClick={() => setGeoMode("simulated")}>Simulated residents</button>
-          <button className={geoMode === "both" ? "" : "ghost"} onClick={() => setGeoMode("both")}>Both</button>
+          <button className={geoMode === "real" ? "" : "ghost"} aria-pressed={geoMode === "real"} onClick={() => switchMode("real")}>Real voices</button>
+          <button className={geoMode === "simulated" ? "" : "ghost"} aria-pressed={geoMode === "simulated"} onClick={() => switchMode("simulated")}>Simulated residents</button>
+          <button className={geoMode === "both" ? "" : "ghost"} aria-pressed={geoMode === "both"} onClick={() => switchMode("both")}>Both</button>
         </div>
         <NeedsGeoMap styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
-          {sorted.map((n) => {
-            const d = state.demand[n.id]!;
-            return (
-              <li key={n.id} className={sel === n.id ? "on" : ""}>
-                <button onClick={() => setSel(n.id)}>
-                  <div className="need-top"><b>{n.label}</b><NeedTopicChip label={n.label} /><span className="num-s">{Math.round(d.demand * 100)}</span></div>
-                  <Bar value={d.demand} />
-                  <small>
-                    rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
-                    {rankReal.get(n.id) !== rankBlend.get(n.id) ? ` (${rankReal.get(n.id)} → ${rankBlend.get(n.id)})` : ""}
-                    {" · "}{d.journalCount} journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts
-                  </small>
-                </button>
-              </li>
-            );
-          })}
+          {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
+            rank={i + 1} move={moves.get(n.id) ?? 0}
+            selected={sel === n.id} mode={geoMode} onSelect={() => setSel(n.id)} />)}
         </ul>
       </section>
 
