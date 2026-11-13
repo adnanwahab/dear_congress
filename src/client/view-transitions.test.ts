@@ -44,3 +44,26 @@ describe('stage navigation motion', () => {
     expect(types.size).toBe(0);
   });
 });
+
+test('journey morph names only ordinary navigation and clears on BFCache restore', async () => {
+  const { prepareStageMorph } = await import('./view-transitions');
+  const card = { style: { viewTransitionName: '' } };
+  let restore: (() => void) | undefined;
+  const link = {
+    closest: () => card,
+    ownerDocument: { defaultView: { addEventListener(name: string, callback: () => void) {
+      expect(name).toBe('pageshow'); restore = callback;
+    } } },
+  } as unknown as HTMLAnchorElement;
+  const event = { defaultPrevented: false, button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, currentTarget: link };
+  for (const modifier of ['metaKey', 'ctrlKey', 'shiftKey', 'altKey', 'defaultPrevented']) {
+    prepareStageMorph({ ...event, [modifier]: true }, 3);
+    expect(card.style.viewTransitionName).toBe('');
+  }
+  prepareStageMorph({ ...event, button: 1 }, 3);
+  expect(card.style.viewTransitionName).toBe('');
+  prepareStageMorph(event, 3);
+  expect(card.style.viewTransitionName).toBe('journey-stage-3');
+  restore!();
+  expect(card.style.viewTransitionName).toBe('');
+});

@@ -1,4 +1,6 @@
 import { handleRulePreview } from "./src/server/synthesis-rule-preview";
+import { createPolicyComparison, storePolicyComparison } from "./src/server/policy-comparison";
+import { auditSampleResponse } from "./src/server/audit-samples";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -900,6 +902,12 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/audit-samples": {
+      GET: () => auditSampleResponse(),
+    },
+    "/api/audit-samples/:id": {
+      GET: (req) => auditSampleResponse(req.params.id!),
+    },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },
@@ -1390,6 +1398,28 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
     // Freeze the current plan (optionally tied to one journal entry) for HappyBearLandia to
     // simulate in many paired futures. Returns the snapshot and a shareable HBL URL.
+    "/api/policy-comparisons": {
+      POST: async (req) => {
+        try {
+          let body: unknown;
+          try { body = await req.json(); } catch { throw new SnapshotError("body must be JSON"); }
+          const comparison = createPolicyComparison(db, body, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
+          storePolicyComparison(db, comparison);
+          await save();
+          return Response.json({ comparison }, { status: 201 });
+        } catch (err) {
+          if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
+          throw err;
+        }
+      },
+    },
+    "/api/policy-comparisons/:id": {
+      GET: (req) => {
+        const comparison = db.policyComparisons?.find(item => item.id === req.params.id);
+        return comparison ? Response.json({ comparison }) : Response.json({ error: "Comparison unavailable; no live replacement was generated" }, { status: 404 });
+      },
+    },
+
     "/api/simulation-snapshots": {
       POST: async (req) => {
         let body: { entryId?: string; package?: string; runs?: number; years?: number; seed?: number } = {};

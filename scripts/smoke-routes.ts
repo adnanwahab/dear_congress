@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { replaySnapshot } from '../src/server/audit-replay';
 import { CIVIC_STAGES, stageRoute } from '../src/shared/civic-stages';
 
 // Run the real production router/build with disposable state and no service credentials.
@@ -20,6 +21,17 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  const auditIndex = await get('/api/audit-samples');
+  assert.equal(auditIndex.status, 200);
+  const { samples } = await auditIndex.json();
+  assert.equal(samples.length, 1);
+  const audit = await get(samples[0].url);
+  assert.equal(audit.status, 200);
+  const auditBytes = await audit.text();
+  assert.equal(replaySnapshot(JSON.parse(auditBytes), samples[0].snapshotId).score, 0.599);
+  assert.equal(await (await get(samples[0].url)).text(), auditBytes);
+  assert.equal((await get('/api/audit-samples/' + '0'.repeat(64))).status, 404);
+  assert.equal((await fetch(new URL(samples[0].url, server!.url), { method: 'POST' })).status, 404);
   const versionResponse = await get('/version');
   assert.equal(versionResponse.status, 200);
   assert.equal(versionResponse.headers.get('cache-control'), 'no-store');
