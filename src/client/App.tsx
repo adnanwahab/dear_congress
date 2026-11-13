@@ -1,3 +1,4 @@
+import { motionDuration } from "./motion";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -1527,7 +1528,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   useEffect(() => { run(); }, []);
   useEffect(() => {
     if (!showPlanChanges || busy) return;
-    const timer = setTimeout(() => setShowPlanChanges(false), 4000);
+    const timer = setTimeout(() => setShowPlanChanges(false), motionDuration(4000));
     return () => clearTimeout(timer);
   }, [showPlanChanges, busy]);
 
