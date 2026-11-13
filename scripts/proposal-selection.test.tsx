@@ -4,7 +4,7 @@ import { DEMO_ITEMS, type DemoPayload } from '../src/engine/demo';
 
 test('browsing never votes; only acknowledged submissions confirm, with retry and URL restoration', async () => {
   const dom = new Window({ url: 'http://localhost/' });
-  for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage']) {
+  for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage', 'sessionStorage']) {
     Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
   }
   (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -28,7 +28,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
           await new Promise<void>(resolve => { settle = resolve; });
           if (fail) throw new Error('Vote could not be saved');
           payload = { ...payload, votes: { [body.votes[0].proposalId]: body.votes[0].stance } };
-          return {} as T;
+          return { ok: true } as T;
         }
         return payload as T;
       };
@@ -52,13 +52,13 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         expect(document.body.textContent).not.toContain('vote saved');
         fail = true;
         await act(async () => { settle!(); });
-        expect(q().getByRole('alert').textContent).toContain('Vote could not be saved');
+        expect(q().getByRole('alert').textContent).toContain(page === '/votes' ? 'could not confirm whether' : 'Vote could not be saved');
         expect(support().getAttribute('aria-pressed')).toBe('false');
         fail = false;
         await act(async () => { fireEvent.click(support()); });
         await act(async () => { settle!(); });
         expect(support().getAttribute('aria-pressed')).toBe('true');
-        expect(q().getByRole('status').textContent).toMatch(/vote (is )?saved/);
+        expect(q().getAllByRole('status').map(node => node.textContent).join(' ')).toMatch(page === '/votes' ? /Server confirmed advisory choice/ : /vote (is )?saved/);
       }
       await act(async () => { root.unmount(); });
       const restored = createRoot(document.getElementById('root')!);

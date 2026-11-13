@@ -1,3 +1,4 @@
+import { MutationError } from './mutation-status';
 const MapScreen = lazy(() => import("./MapScreen"));
 import { BottomNavigation } from "./Navigation";
 import { Dashboard } from "./Dashboard";
@@ -61,10 +62,11 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
-async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
+async function api<T>(path: string, body?: unknown, method?: string, signal?: AbortSignal): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
+    signal,
     headers: {
       "content-type": "application/json",
     },
@@ -82,7 +84,7 @@ async function api<T>(path: string, body?: unknown, method?: string): Promise<T>
     const msg = (typeof payload === "object" && payload !== null && "error" in payload && typeof (payload as { error?: unknown }).error === "string")
       ? (payload as { error: string }).error
       : (typeof payload === "string" && payload.trim() ? payload : res.statusText);
-    throw new Error(msg || "Request failed");
+    throw new MutationError(msg || "Request failed", res.status, res.headers.get("Retry-After"));
   }
 
   if (resolvedMethod === "POST" && JOURNAL_CREATE_ENDPOINTS.some((p) => path.startsWith(p))) {
