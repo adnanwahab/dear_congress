@@ -1,8 +1,10 @@
+import { installMotion } from "./motion";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { flushSync } from "react-dom";
 import { installViewTransitions } from "./view-transitions";
 
+installMotion(window);
 import { installScrollReveals } from "./scroll-motion";
 
 installViewTransitions(window);

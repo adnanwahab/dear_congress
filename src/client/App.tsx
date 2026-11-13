@@ -1,4 +1,10 @@
+import { motionDuration } from "./motion";
+import { NeedTopicChip } from './TopicChip';
+import { DemoTour } from './DemoTour';
+import { tourState } from './demo-tour';
+import { onPageActivation } from './page-activation';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
+import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
@@ -142,7 +148,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
+  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div><DemoTour /></div>;
 }
 
 function LegacyApp() {
@@ -189,7 +195,7 @@ function LegacyApp() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => onPageActivation(() => {
     const es = new EventSource("/api/entries/events");
 
     es.onopen = () => {
@@ -211,7 +217,7 @@ function LegacyApp() {
     };
 
     return () => es.close();
-  }, []);
+  }), []);
 
   const onPublishStart = (forkId: string) => {
     setPublishFlow({
@@ -278,21 +284,13 @@ function LegacyApp() {
     });
   };
 
-  if (!state) return <div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div>;
+  const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
+  if (!state) return <div className="legacy-shell">{header}<div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div></div>;
 
   return (
-    <div className="app engine-workspace">
-      <header className="top">
-        <div className="brand">
-          <span className="mark" aria-hidden>◎</span>
-          <div>
-            <h1>Civic Synthesis</h1>
-            <p>Journals → needs → open votes → the smallest coherent set of changes</p>
-          </div>
-        </div>
-
-      </header>
-
+    <div className="legacy-shell">
+      {header}
+      <div className="app engine-workspace">
       <main>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
@@ -304,6 +302,7 @@ function LegacyApp() {
         <a href="/privacy">Privacy &amp; removal</a> ·
         Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
+      </div>
     </div>
   );
 }
@@ -809,7 +808,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
             return (
               <li key={n.id} className={sel === n.id ? "on" : ""}>
                 <button onClick={() => setSel(n.id)}>
-                  <div className="need-top"><b>{n.label}</b><span className="num-s">{Math.round(d.demand * 100)}</span></div>
+                  <div className="need-top"><b>{n.label}</b><NeedTopicChip label={n.label} /><span className="num-s">{Math.round(d.demand * 100)}</span></div>
                   <Bar value={d.demand} />
                   <small>
                     rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
@@ -865,6 +864,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
               <li key={`${s.name}|${s.url}`}>
@@ -1532,7 +1532,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   useEffect(() => { run(); }, []);
   useEffect(() => {
     if (!showPlanChanges || busy) return;
-    const timer = setTimeout(() => setShowPlanChanges(false), 4000);
+    const timer = setTimeout(() => setShowPlanChanges(false), motionDuration(4000));
     return () => clearTimeout(timer);
   }, [showPlanChanges, busy]);
 
