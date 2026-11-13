@@ -249,7 +249,8 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--muted); text-align: c
 
 .sim-link-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 4px; }
 .sim-link { display: inline-block; padding: 6px 12px; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); font-weight: 600; text-decoration: none; }
-.sim-link:hover { background: var(--accent-soft, transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .sim-link:hover { background: var(--accent-soft, transparent); } }
 
 .sim-realities { margin-top: 14px; }
 .sim-realities.compact { margin-top: 0; }
@@ -391,7 +392,6 @@ table.versions .badge { margin-left: 6px; }
 .civic-shell button, .dashboard-button { background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 9px; padding: 8px 14px; font: 700 16px/1.4 Arial, sans-serif; cursor: pointer; }
 .civic-shell button.outline { color: var(--accent); background: #fff; }
 .civic-shell button:disabled { opacity: .6; cursor: default; }
-.civic-shell button:hover:not(:disabled), .dashboard-button:hover { filter: brightness(.94); }
 .civic-shell :focus-visible { outline: 3px solid #87addd; outline-offset: 4px; }
 .civic-shell .vote-panel { border: 2px solid var(--accent); padding: 23px; }
 .vote-question { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
@@ -432,7 +432,8 @@ table.versions .badge { margin-left: 6px; }
 
 .dashboard-nav { display: flex; gap: 22px; font-size: 14px; font-weight: 700; }
 .dashboard-nav a { text-decoration: none; }
-.dashboard-nav a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .dashboard-nav a:hover { text-decoration: underline; } }
 .demo-context { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; padding: 14px 18px; margin-bottom: 24px; background: #eeece5; border-radius: 9px; color: #56544e; font-size: 14px; }
 .demo-context > span:last-child { white-space: nowrap; }
 .feed-controls { display: grid; grid-template-columns: 1fr; gap: 9px; margin-bottom: 18px; }
@@ -497,13 +498,15 @@ table.versions .badge { margin-left: 6px; }
 .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; border-top: 1px solid #5b4b9a; background: #5b4b9a; box-shadow: 0 -4px 22px #24344708; padding: 6px max(18px, calc((100vw - 1200px) / 2)) max(7px, env(safe-area-inset-bottom)); }
 .bottom-destinations { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 6px; }
 .bottom-destinations a { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; padding: 8px 6px; text-decoration: none; font-size: 11px; font-weight: 700; color: #fff; border-radius: 9px; }
-.bottom-destinations a:hover { background: #493b80; }
+@media (hover: hover) and (pointer: fine) {
+  .bottom-destinations a:hover { background: #493b80; } }
 .bottom-destinations a[aria-current="page"] { background: #f0ebff; color: #493b80; box-shadow: inset 0 -3px 0 #493b80; }
 .bottom-utilities { display: flex; justify-content: center; align-items: center; gap: 22px; padding: 5px 0 0; }
 .bottom-utilities a, .bottom-utilities button { font: 12px/1.4 Arial, sans-serif; padding: 0; border: 0; background: none; color: #fff; text-decoration: none; cursor: pointer; }
 .product-shell :focus-visible { outline: 3px solid #87addd; outline-offset: 3px; }
 .product-shell .bottom-bar :focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.bottom-utilities a:hover, .bottom-utilities button:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .bottom-utilities a:hover, .bottom-utilities button:hover { text-decoration: underline; } }
 .engine-workspace { padding-top: 30px; }
 .engine-workspace h1, .engine-workspace h2, .engine-workspace h3, .engine-workspace .prompt { font-family: Arial, sans-serif; }
 .engine-workspace .top { padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 26px; }
@@ -512,7 +515,8 @@ table.versions .badge { margin-left: 6px; }
 :where(.engine-workspace) button { color: #fff; }
 .engine-workspace button.ghost { color: var(--accent); }
 .stage-card h2 a { color: inherit; text-decoration: none; }
-.stage-card h2 a:hover { color: var(--accent); text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .stage-card h2 a:hover { color: var(--accent); text-decoration: underline; } }
 .journal-main { max-width: 1380px; }
 .journal-heading h1 { font-size: clamp(30px,3vw,42px); margin: 8px 0 12px; letter-spacing: -.025em; }
 .journal-heading > p:last-child { color: var(--muted); font-size: 18px; max-width: 850px; }
@@ -596,7 +600,8 @@ table.versions .badge { margin-left: 6px; }
 .county-svg { display: block; width: 100%; height: auto; }
 .county-svg text { fill: #92a6be; font: 9px sans-serif; letter-spacing: 2px; }
 .county-shape { cursor: pointer; transition: fill 650ms, opacity 200ms; }
-.county-shape:hover { fill: #fff; }
+@media (hover: hover) and (pointer: fine) {
+  .county-shape:hover { fill: #fff; } }
 .county-legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 14px 16px 22px; }
 .civic-shell .county-legend button { display: flex; align-items: center; gap: 6px; padding: 5px 2px; background: transparent; font-size: 11px; color: #c5d0de; border: 0; border-radius: 0; }
 .civic-shell .county-legend button.selected { box-shadow: 0 2px #fff; }
@@ -700,4 +705,95 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
+}
+
+/* Tactile feedback. Shared tokens also let motion review modes adjust timing.
+   Cards retain native child controls; :has forwards their keyboard/press state. */
+:root :is(button, a) {
+  outline: 3px solid transparent;
+  outline-offset: 3px;
+  transition: transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    text-decoration-color var(--motion-fast) var(--ease-out),
+    outline-color var(--motion-fast) var(--ease-out);
+}
+:root a:not(.dashboard-button, .cp-button) {
+  text-underline-offset: .2em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+:is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft) {
+  transition: transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    outline-color var(--motion-fast) var(--ease-out);
+}
+/* A dark outer ring and white inner halo stay visible on light, dark and purple. */
+:root :is(button, a, input, select, textarea):focus-visible,
+:is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):has(:focus-visible) {
+  outline: 3px solid #245593;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px #fff;
+}
+:root .bottom-bar :is(a, button):focus-visible,
+:root .county-atlas :is(a, button):focus-visible {
+  outline-color: #fff;
+  box-shadow: 0 0 0 3px #202039;
+}
+:root :is(button, a):not(:disabled, [aria-disabled="true"]):active {
+  background-color: var(--accent-soft);
+  color: var(--accent);
+}
+:root .bottom-bar :is(a, button):active { background-color: #f0ebff; color: #493b80; }
+@media (hover: hover) and (pointer: fine) {
+  :root a:hover { text-decoration-color: currentColor; }
+  :root button:not(:disabled, [aria-disabled="true"]):hover { background-color: var(--accent-soft); color: var(--accent); }
+  :is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):hover {
+    background-color: var(--accent-soft);
+  }
+}
+/* Movement and elevation are opt-in; reduced motion keeps color feedback only.
+   Native map controls and drag handles retain their positioning/drag behavior. */
+@media (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) and (pointer: fine) {
+    :root :is(button, .dashboard-button, .cp-button, .sim-link, .bottom-destinations a, .bottom-utilities a, .bottom-app-links a):not(:disabled, [aria-disabled="true"], .sponsor-drag-handle, [class*="maplibregl-"]):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px #17243b26;
+    }
+    :is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 14px #17243b1f;
+    }
+  }
+  :root :is(button, .dashboard-button, .cp-button, .sim-link, .bottom-destinations a, .bottom-utilities a, .bottom-app-links a):not(:disabled, [aria-disabled="true"], .sponsor-drag-handle, [class*="maplibregl-"]):active,
+  :is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):has(:is(a, button, select):active) {
+    transform: translateY(1px) scale(.98);
+  }
+  /* Sponsor drag uses an inline transform; never transition it behind the pointer. */
+  .tracked-draft[style*="translate("] { transition: none; }
+}
+
+/* Keep the focus halo when pointer hover and keyboard focus overlap. */
+:root :is(button, a):focus-visible { box-shadow: 0 0 0 3px #fff; }
+:root .bottom-bar :is(a, button):focus-visible,
+:root .county-atlas :is(a, button):focus-visible { box-shadow: 0 0 0 3px #202039; }
+:is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):has(:focus-visible) { box-shadow: 0 0 0 3px #fff; }
+
+:root :is(.dashboard-nav a, .stage-card h2 a, .bottom-utilities a, .documentation-toc a, .cp-proposal-card h3 a, .cp-back) {
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  :root :is(.dashboard-nav a, .stage-card h2 a, .bottom-utilities a, .documentation-toc a, .cp-proposal-card h3 a, .cp-back):hover { text-decoration-color: currentColor; }
+}
+
+:is(.stage-card, .workflow-source, .workflow-feed-item, .cp-proposal-card, .tracked-draft):has(:is(a, button, select):active) {
+  background-color: var(--accent-soft);
+}
+
+/* Citizen primary actions keep their white label against a dark pressed color. */
+:root a.cp-button:not(.cp-button-secondary):active { background-color: #193d68; }
+@media (hover: hover) and (pointer: fine) {
+  :root a.cp-button:not(.cp-button-secondary):hover { background-color: #193d68; }
 }

@@ -7,7 +7,8 @@
 .documentation-toc h2 { font-size: 17px; margin-bottom: 18px; }
 .documentation-toc nav { display: grid; gap: 14px; }
 .documentation-toc a { font-size: 14px; text-decoration: none; line-height: 1.5; }
-.documentation-toc a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .documentation-toc a:hover { text-decoration: underline; } }
 .documentation-api-link { display: block; padding-top: 20px; border-top: 1px solid var(--line); margin-top: 24px; }
 .civic-shell .documentation-article { padding: 36px 40px; }
 .documentation-note { padding: 12px 16px; background: #f3f5f8; color: #586573; font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
