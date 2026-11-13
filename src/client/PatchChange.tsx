@@ -1,16 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { flushSync } from 'react-dom';
+import { runViewTransition, motionDisabled, motionDuration } from './motion';
 import type { DemoItem } from '../engine/demo';
 import './patch-change.css';
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-// Commit React's update inside the snapshot callback, rather than after it.
+const reducedMotion = motionDisabled;
 export function transitionProposal(update: () => void) {
-  if (reducedMotion() || !document.startViewTransition) { update(); return; }
-  const transition = document.startViewTransition(() => flushSync(update));
-  // A skipped/interrupted visual transition must not produce an unhandled rejection.
-  void transition.ready.catch(() => {});
+  void runViewTransition(update, 'proposal-change');
 }
 
 export function PatchChange({ item }: { item: Pick<DemoItem, 'id' | 'currentText' | 'proposedText' | 'summary'> }) {
@@ -21,7 +16,7 @@ export function PatchChange({ item }: { item: Pick<DemoItem, 'id' | 'currentText
     const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const stop = () => setPlaying(false);
     preference?.addEventListener('change', stop);
-    const timer = window.setTimeout(stop, 2600);
+    const timer = window.setTimeout(stop, motionDuration(2600));
     return () => { window.clearTimeout(timer); preference?.removeEventListener('change', stop); };
   }, [playing, run]);
   const phrases = item.proposedText.match(/\S+(?:\s+\S+){0,3}\s*/g) ?? [item.proposedText];

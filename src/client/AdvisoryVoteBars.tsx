@@ -1,3 +1,4 @@
+import { motionDisabled, motionDuration } from "./motion";
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { DemoItem } from '../engine/demo';
 import './advisory-vote-bars.css';
@@ -53,11 +54,11 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
     if (previousConfirmation.current === confirmation) return;
     previousConfirmation.current = confirmation;
     setHighlight(choice);
-    const timer = window.setTimeout(() => setHighlight(undefined), 1000);
+    const timer = window.setTimeout(() => setHighlight(undefined), motionDuration(1000));
     return () => window.clearTimeout(timer);
   }, [confirmation, choice]);
   useEffect(() => {
-    if (reduced || typeof requestAnimationFrame === 'undefined') {
+    if (motionDisabled() || reduced || typeof requestAnimationFrame === 'undefined') {
       current.current = values; setShown(values); return;
     }
     if (!visible) return;
@@ -66,7 +67,7 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
     let frame: number;
     const tick = (time: number) => {
       start ??= time;
-      const progress = Math.min((time - start) / 550, 1);
+      const progress = Math.min((time - start) / motionDuration(550), 1);
       const next = values.map((n, i) => Math.round(from[i]! + (n - from[i]!) * (1 - (1 - progress) ** 3)));
       current.current = next; setShown(next);
       if (progress < 1) frame = requestAnimationFrame(tick);
