@@ -67,6 +67,47 @@ This branch was prepared against GitHub `main` at `f53852e9d6537ae98e3e09fe792d0
 
 Before production rollout, bring the current deployed source into the repository and integrate these modules with its existing screens. On the newer UI, reuse the form/detail components and API, add the proposal CTA to the existing voting screen, include published citizen proposals alongside clearly labelled sample content, and add the journal conversion link. Preserve the deployed app's other routes and features. Verify the intended Fly app and persistent volume before deploying. This branch does not change `fly.toml`, trigger a production deployment, or claim the live app has already changed.
 
+## Private guided workspace (SHE-302 first slice)
+
+Journal, Needs and the sample workflow link to **Propose a change** at
+`/proposals/new?guided=1`. This bounded pilot is private drafting only. It never
+calls a network endpoint or transfers its content to the existing immediate
+publication form. That older form/API is unchanged; it does not provide the
+moderation lifecycle required for the flagship acceptance criteria.
+
+The four steps collect jurisdiction, experience/affected people/benefit,
+mechanism/possible authority/costs/objections, sources/proposed text, then review.
+Each city/county/state/federal template is a process checklist requiring human
+verification, not a legal assertion. Review assembles a summary from supplied
+words and a structured copy with explicit missing sections. It flags empty costs,
+jurisdiction and sources and unsafe/malformed URLs. An explicit unknown cost is
+retained and needs human review; source URLs are never fetched or verified.
+No baseline is supplied, so output is proposed new text rather than an invented
+legal redline. Use Back or the gap buttons to edit the corresponding fields.
+
+**Save privately** permits incomplete drafts and resumes the single workspace on
+return to the guided URL. Storage key `civic_synthesis_private_proposal_workspace_v1`
+has a validated versioned envelope and stable draft ID. It is separate from and
+does not migrate or overwrite existing `civic_synthesis_proposal_drafts_v1`
+drafts. This is unencrypted browser storage, visible to other people using the
+same profile, with no account recovery or cross-device backup. Saving again
+replaces the workspace. Storage errors retain text on screen; corrupt/unknown
+versions are not overwritten. Unsaved edits trigger the browser leave warning.
+
+Walkthrough: open Journal → Propose a change; enter a night-shift transit problem,
+select city, save; reload and check the experience remains; fill the remaining
+steps, retain costs as unknown if needed; inspect gaps and structured review,
+then Back to correct the text and save again. Repeat from Needs and `/draft`.
+No content becomes public and no votes are cast.
+
+`bun test src/client/proposal-workspace.test.ts` covers process fixtures,
+uncertainty, corrupt storage and source validation, plus a Happy DOM route-level
+walkthrough for actual editing, save/reload, gap reporting, escaped markup,
+storage denial and zero network requests. Associated labels, heading focus on
+step changes and live status/error roles are implemented. Native keyboard,
+screen-reader, narrow viewport and 200% zoom checks remain required; DOM tests
+are not native accessibility acceptance.
+
 ## Private amendment preparation (SHE-305 first slice)
 
 Citizen proposal details now offer **Suggest amendment**. The recovered sample

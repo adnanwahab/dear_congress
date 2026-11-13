@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import JournalScreen from '../src/client/JournalScreen';
+const dom = new Window({ url: 'http://localhost/journal' });
+for (const key of ['window', 'document', 'navigator', 'localStorage', 'location']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const writes: any[] = [];
+const request = async <T,>(path: string, body?: any): Promise<T> => {
+  if (path.includes('schema')) return { version: 2, needs: [{ id: 'housing', label: 'Housing' }] } as T;
+  if (body) {
+    writes.push(body);
+    return { entry: { id: 'manual', extraction: { needs: [] } } } as T;
+  }
+  return { entries: [], nextCursor: null } as T;
+};
+const container = dom.document.createElement('div'); dom.document.body.append(container);
+const root = createRoot(container as any);
+await act(async () => { root.render(<JournalScreen request={request} />); });
+const button = () => [...container.querySelectorAll('button')].find(b => b.textContent === 'Publish to shared journal')!;
+assert(button().disabled);
+await act(async () => { [...container.querySelectorAll('button')].find(b => b.textContent === 'Use a sample experience')!.click(); });
+assert.equal(writes.length, 0); assert(button().disabled);
+const category = container.querySelector('fieldset input') as any;
+await act(async () => { category.click(); });
+assert(category.checked);
+await act(async () => { category.click(); });
+assert(!category.checked);
+assert.match(container.querySelector('legend')!.textContent!, /optional/);
+const consent = [...container.querySelectorAll('input[type=checkbox]')].find(input => input.parentElement?.textContent?.includes('I want to publish'))!;
+await act(async () => { consent.click(); });
+assert(!button().disabled);
+await act(async () => { button().click(); });
+assert.equal(writes.length, 1);
+assert.equal(writes[0].inference, 'none'); assert.equal(writes[0].kind, 'journal'); assert.deepEqual(writes[0].labels, []);
+assert.match(container.querySelector('.dashboard-status')!.textContent!, /No inference was requested and no vote was cast/);
+assert.match(container.textContent!, /Published without need tags/);
+assert.equal((container.querySelector('textarea') as any).value, '');
+await act(async () => { root.unmount(); });
+await dom.happyDOM.close();
+console.log('PASS manual journal: select/remove, consent, publish without tags');

@@ -1,3 +1,4 @@
+import { handleRulePreview } from "./src/server/synthesis-rule-preview";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -8,7 +9,7 @@ import { boundedJson, PublicInputError } from "./src/server/public-security";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
-import { buildBrowser } from "./src/server/browser-build";
+import { buildBrowser, transitionShell } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
@@ -828,7 +829,7 @@ function parseWhatIfExtraEntries(input: unknown) {
 // Build the browser shell once; render per-request canonical and social metadata.
 const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
 if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
-const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
@@ -1425,6 +1426,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         outcomes: OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined,
       }), { headers: { "cache-control": "no-store" } })),
     },
+
+    "/api/synthesis-rule-preview": { POST: handleRulePreview },
 
     "/api/synthesize": {
       POST: async (req) => {
