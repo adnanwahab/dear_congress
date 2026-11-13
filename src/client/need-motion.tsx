@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { NeedDef, NeedDemand } from '../engine/types';
 import { usePlanRowMotion } from './plan-motion';
+import { NeedTopicChip } from './TopicChip';
 
 export type NeedMode = 'real' | 'simulated' | 'both';
 export const needTransitionName = (id: string) => `need-${Array.from(id, c => c.codePointAt(0)!.toString(16)).join('-')}`;
@@ -25,11 +26,11 @@ export function NeedRow({ need, demand, rank, move, selected, mode, onSelect }: 
   const name = needTransitionName(need.id);
   const movement = move ? `${move > 0 ? '↑' : '↓'}${Math.abs(move)}` : '';
   return <li ref={ref} className={selected ? 'on' : ''} style={{ viewTransitionName: name }}>
-    <style>{`::view-transition-group(${name}), ::view-transition-group(${name}-bar) { animation-duration: 700ms; animation-timing-function: ease-in-out; }
-      ::view-transition-old(${name}-bar) { animation: none; opacity: 0; }
-      ::view-transition-new(${name}-bar) { animation: none; height: 100%; }`}</style>
+    <style>{`html:active-view-transition-type(plan-rerank)::view-transition-group(${name}), html:active-view-transition-type(plan-rerank)::view-transition-group(${name}-bar) { animation-duration: calc(700ms * var(--motion-scale, 1)); animation-timing-function: ease-in-out; }
+      html:active-view-transition-type(plan-rerank)::view-transition-old(${name}-bar) { animation: none; opacity: 0; }
+      html:active-view-transition-type(plan-rerank)::view-transition-new(${name}-bar) { animation: none; height: 100%; }`}</style>
     <button onClick={onSelect} aria-pressed={selected}>
-      <div className="need-top"><b>#{rank} {need.label}</b><span className="num-s">{Math.round(demand.demand * 100)}</span></div>
+      <div className="need-top"><b>#{rank} {need.label}</b><NeedTopicChip label={need.label} /><span className="num-s">{Math.round(demand.demand * 100)}</span></div>
       <div className="bar"><div className="fill accent need-fill" style={{ transform: `scaleX(${scale(demand.demand)})`, viewTransitionName: `${name}-bar` }} /></div>
       <small>{movement && <span key={mode} className="need-movement" aria-label={`Moved ${move > 0 ? 'up' : 'down'} ${Math.abs(move)} places`}>{movement} · </span>}{demand.journalCount} journal mention{demand.journalCount === 1 ? '' : 's'} · {demand.avgPoints} avg priority pts</small>
     </button>

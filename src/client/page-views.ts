@@ -1,7 +1,8 @@
 /** First-party aggregate route counts. No cookies, identifiers, query strings or referrers. */
-export function startPageViews(browser: Pick<Window, "location" | "history" | "addEventListener"> = window, send: typeof fetch = fetch) {
+export function startPageViews(browser: Pick<Window, "location" | "history" | "addEventListener"> & { document?: Document } = window, send: typeof fetch = fetch) {
   let previous = "";
   const record = () => {
+    if ((browser.document as (Document & { prerendering?: boolean }) | undefined)?.prerendering) return;
     const path = browser.location.pathname;
     if (path === previous) return;
     previous = path;
@@ -15,5 +16,6 @@ export function startPageViews(browser: Pick<Window, "location" | "history" | "a
     browser.history[method] = (...args: Parameters<History[typeof method]>) => { original(args[0], args[1], args[2]); record(); };
   }
   browser.addEventListener("popstate", record);
+  browser.document?.addEventListener("prerenderingchange", record, { once: true });
   record();
 }
