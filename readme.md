@@ -33,6 +33,16 @@ checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+## Public guide
+
+`/documentation` (alias `/docs`) explains participation and trust limits in
+plain English. Copy lives in `src/client/public-guide.ts`; the November 12 design
+report remains unchanged in a collapsed historical appendix. When behavior changes,
+update the guide together with privacy/participation wording and the focused guide
+contract test. Spanish translation approval and critical-copy synchronization follow
+[the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
+translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
+
 ## Appearance
 
 The shared civic header cycles **System → Light → Dark**. System is the default;
@@ -578,6 +588,64 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+## Public journal discovery
+
+`/journal` defaults to public submissions, excluding entries flagged seeded or
+synthetic. This is provenance labeling, not verified-human participation; legacy
+unflagged records remain subject to SHE-271 review. Origin, need, inclusive UTC
+calendar dates and cursor are shareable query parameters. Browsing uses GET
+`/api/entries?discovery=1&origin=public&need=food&from=2026-11-01&to=2026-11-13`.
+The opt-in discovery mode filters before cursor pagination; existing API clients
+without it retain their original feed contract. Sort is most recent, with ID ties.
+A removed/invalid cursor asks the reader to clear filters rather than restarting
+silently. `/journal?entry=<id>` reads only that publicly available original,
+independent of browse filters; need links retain its ID. Hidden/private records
+remain excluded by the existing server projection. Live snapshots remove hidden
+items but never inject entries into a filtered page. Refresh for new entries.
+
+Dates include UTC and freshness is a rolling seven-day interval. Existing native
+simulated-story grouping preserves expandable originals within each page; runs
+can split across pages. Jurisdiction remains unavailable because no consented
+public broad-jurisdiction field exists. Coordinates, source text and authors are
+never used to infer locality. Draft and explicit publication flows are unchanged.
+
+## Topic hubs
+
+Open `/topics` to search the existing taxonomy, or share `/topics/transit`,
+`/topics/housing` and `/topics/childcare` directly. Topic chips on sample cards
+open hubs; filter controls also offer hub links. Hubs display stored sample
+extraction lineage and catalog policy alternatives separately from fictional
+workflow proposals and their background references. Topic association alone is
+never presented as source derivation. Workflow links retain `topic` and
+`proposal`; the return link and browser history preserve the topic context.
+
+`GET /api/topics/:id` is a read-only, uncached projection. It only includes public,
+non-synthetic repository-seeded stories with existing taxonomy labels, and omits
+location, ownership and moderation metadata. Human journals are excluded because
+legacy records lack explicit topic-curation consent. Held/hidden/deleted stories
+are excluded on the next read. No new classification or data migration occurs.
+Official legislative observations have no reviewed topic binding, so hubs show
+that stage as not yet available rather than matching bill titles by keyword.
+See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).
+
+### Plan budget ledger
+
+Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
+uses integer USD millions; the ledger reports any difference from the engine's
+hundredth-billion headline rounding separately. Unknown/negative/nonfinite costs,
+unsupported precision, duplicate items, mismatched totals and infeasible plans
+close the ledger with an error rather than publishing a valid summary.
+
+Current costs are illustrative assumptions. Estimate dates, independently sourced
+fiscal evidence, net incremental spending and calibrated uncertainty ranges are
+unavailable and labeled accordingly. No contingency reserve is modeled. Filtering
+changes visible rows, never totals. Budget-excluded options preview the existing
+engine's deterministic replacement IDs with item and dollar diffs; other exclusion
+gates cannot be overridden. Committing creates only a local ledger revision;
+original synthesis selections and stored plans remain unchanged. Downloadable
+`plan-budget-v1` JSON freezes that fiscal summary, not private scoring inputs or a
+replayable civic decision. See [SHE-360 validation and limits](docs/reviews/SHE-360.md).
 
 Embedded needs and jurisdiction maps are optional. Rankings and jurisdiction
 priorities remain available as text while map assets load or fail. Missing styles

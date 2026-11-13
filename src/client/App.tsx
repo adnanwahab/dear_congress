@@ -1,3 +1,5 @@
+import { TopicHubs, TopicReturn } from './TopicHubs';
+import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
 import { DemoTour } from './DemoTour';
@@ -156,13 +158,14 @@ export function App() {
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
+    : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
+  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {
@@ -1663,6 +1666,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           </div>
         </div>
         <ScoreInspector pkg={pkg} />
+        <PlanBudget key={JSON.stringify([side, pkg])} pkg={pkg} proposals={state.proposals} lane={side} />
         <Bar value={pkg.budget > 0 ? pkg.totalCost / pkg.budget : 0} tone="accent" />
         <div className="sim-link-row">
           {side === "real"
