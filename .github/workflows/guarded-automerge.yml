@@ -1,0 +1,143 @@
+name: Guarded PR auto-merge
+
+# A green PR can merge automatically; never execute untrusted PR code with a write token.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+  statuses: read
+
+concurrency:
+  group: guarded-auto-merge-main
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Merge eligible changes
+    if: github.repository == 'adnanwahab/dear_congress'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check and merge one eligible PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_PR: ${{ github.event.pull_request.number || '' }}
+        run: |
+          # No checkout: pull_request_target has a write token; never execute code from PRs here.
+          node <<'NODE'
+          const { execFileSync } = require('node:child_process');
+
+          const repo = process.env.GH_REPO;
+          const expectedChecks = ['bun test', 'bun run typecheck', 'route smoke test'];
+          const run = (args) => execFileSync('gh', args, {
+            encoding: 'utf8',
+            timeout: 25000,
+            maxBuffer: 12 * 1024 * 1024,
+          }).trim();
+          const api = (path) => JSON.parse(run(['api', path]));
+          const skip = (number, reason) => console.log('#' + number + ': skip - ' + reason);
+
+          const incoming = process.env.EVENT_PR;
+          const numbers = incoming && /^\d+$/.test(incoming)
+            ? [Number(incoming)]
+            : run(['api', '--paginate', 'repos/' + repo + '/pulls?state=open&per_page=100',
+                   '--jq', '.[].number']).split(/\s+/).filter(Boolean).map(Number);
+          let errors = 0;
+
+          for (const number of numbers) {
+            try {
+              const pr = api('repos/' + repo + '/pulls/' + number);
+              if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main') {
+                skip(number, 'closed, draft, or not targeting main');
+                continue;
+              }
+              if (pr.head.repo?.full_name !== repo) {
+                skip(number, 'fork changes require manual merge');
+                continue;
+              }
+              if ((pr.labels || []).some((label) => ['do-not-merge', 'hold', 'wip'].includes(label.name.toLowerCase()))) {
+                skip(number, 'explicit hold label');
+                continue;
+              }
+              if (pr.mergeable !== true || pr.mergeable_state !== 'clean') {
+                skip(number, 'conflict, branch restriction, or mergeability not yet ready');
+                continue;
+              }
+
+              const review = JSON.parse(run(['pr', 'view', String(number), '--repo', repo,
+                                             '--json', 'reviewDecision']));
+              if (['CHANGES_REQUESTED', 'REVIEW_REQUIRED'].includes(review.reviewDecision)) {
+                skip(number, 'needs review or has changes requested');
+                continue;
+              }
+
+              const fileOutput = run(['api', '--paginate',
+                'repos/' + repo + '/pulls/' + number + '/files?per_page=100',
+                '--jq', '.[].filename']);
+              const files = fileOutput.split('\n').filter(Boolean);
+              if (!files.length || files.every((path) =>
+                path.startsWith('docs/reviews/') || path.startsWith('docs/analysis/'))) {
+                skip(number, 'empty or analysis-only PR');
+                continue;
+              }
+              const sensitive = files.filter((path) =>
+                path.startsWith('.github/') ||
+                path === 'fly.toml' || path === 'Dockerfile' ||
+                path === 'package.json' || path === 'bun.lock' ||
+                path.startsWith('.env') ||
+                path === 'src/server/public-security.ts' ||
+                path.startsWith('src/server/auth/') ||
+                path.startsWith('src/server/identity/'));
+              if (sensitive.length) {
+                skip(number, 'requires manual review for sensitive paths: ' + sensitive.join(', '));
+                continue;
+              }
+
+              // Only trust checks attached to this exact head SHA (not earlier commits).
+              const sha = pr.head.sha;
+              const checks = api('repos/' + repo + '/commits/' + sha + '/check-runs?per_page=100');
+              const runs = checks.check_runs || [];
+              if (checks.total_count !== runs.length) {
+                skip(number, 'check list incomplete');
+                continue;
+              }
+              if (!expectedChecks.every((name) => runs.some((r) =>
+                  r.name === name && r.app?.slug === 'github-actions' &&
+                  r.status === 'completed' && r.conclusion === 'success'))) {
+                skip(number, 'required tests missing, pending, or failing');
+                continue;
+              }
+              if (runs.some((r) => r.status !== 'completed' ||
+                  !['success', 'neutral', 'skipped'].includes(r.conclusion))) {
+                skip(number, 'another CI check is pending or failing');
+                continue;
+              }
+              const statuses = api('repos/' + repo + '/commits/' + sha + '/status');
+              if ((statuses.statuses || []).length && statuses.state !== 'success') {
+                skip(number, 'legacy commit status not green');
+                continue;
+              }
+
+              // GitHub enforces branch rules again; sha precondition prevents a stale-head merge.
+              const outcome = JSON.parse(run(['api', '-X', 'PUT',
+                'repos/' + repo + '/pulls/' + number + '/merge',
+                '-f', 'merge_method=squash', '-f', 'sha=' + sha]));
+              if (!outcome.merged) throw new Error('GitHub did not confirm merge');
+              console.log('#' + number + ' merged at ' + outcome.sha);
+              // Merge only one PR per run: let GitHub recompute the rest against new main.
+              break;
+            } catch (error) {
+              errors += 1;
+              console.error('#' + number + ': error: ' + error.message);
+            }
+          }
+          if (errors) process.exitCode = 1;
+          NODE

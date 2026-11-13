@@ -41,11 +41,13 @@ for (const stage of ['published', 'feed', 'votes'] as const) {
     assert.equal(selector.children.length, 2);
     assert([...selector.children].every(o => ['demo-insurance', 'demo-mental-health'].includes(o.getAttribute('value')!)));
     await act(async () => { (container.querySelector('.vote-options button') as any).click(); });
-    assert.match(container.textContent!, /Vote rejected/);
+    // #53: failures are reported without echoing the server's error text.
+    assert.match(container.textContent!, /could not confirm whether your advisory choice/);
     assert.equal(writes[0].votes[0].proposalId, 'demo-mental-health');
   }
   if (stage !== 'votes') {
-    const search = container.querySelector('.workflow-filters select')! as any;
+    // Topic filter now lives in the shared ProposalSearch control.
+    const search = container.querySelector('.proposal-search select')! as any;
     await act(async () => { search.value = 'Childcare'; search.dispatchEvent(new dom.Event('change', { bubbles: true })); });
     assert.match(container.textContent!, /0 applicable proposals/);
     assert.equal(container.querySelector('a.dashboard-button'), null);
