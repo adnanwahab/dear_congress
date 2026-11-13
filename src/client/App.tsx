@@ -1,4 +1,5 @@
 import { motionDuration } from "./motion";
+import { PageSkeleton } from "./LoadingSkeleton";
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
@@ -155,7 +156,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div>;
+  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div>;
 }
 
 function LegacyApp() {
@@ -292,7 +293,7 @@ function LegacyApp() {
   };
 
   const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
-  if (!state) return <div className="legacy-shell">{header}<div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div></div>;
+  if (!state) return <div className="legacy-shell">{header}{loadError ? <div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div> : <PageSkeleton path={window.location.pathname} />}</div>;
 
   return (
     <div className="legacy-shell">
