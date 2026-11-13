@@ -30,6 +30,7 @@ export function metadata(title: string, description: string, path: string) {
 }
 
 export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[]) {
+  path = path.replace(/\/+$/, "") || "/";
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
   const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);

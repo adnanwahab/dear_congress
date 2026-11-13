@@ -47,7 +47,7 @@ const post = (server: { url: URL }, body: unknown) => fetch(new URL("/api/simula
 describe("/api/simulation-snapshots", () => {
   test("freezes a plan from a journal entry without the journal text, and serves it back", async () => {
     const { server, dbPath } = await startServer();
-    const res = await post(server, { entryId: "seed-0", package: "Balanced", runs: 5000, years: 3 });
+    const res = await post(server, { entryId: "seed-0", package: "Balanced", runs: 5000, years: 3, seed: 0 });
     expect(res.status).toBe(201);
     const { snapshot, simulationUrl } = await res.json() as { snapshot: SimulationSnapshot; simulationUrl: string };
 
@@ -67,7 +67,7 @@ describe("/api/simulation-snapshots", () => {
     expect(url.searchParams.get("runs")).toBe("1000");
     expect(url.searchParams.get("years")).toBe("3");
     expect(url.searchParams.get("autorun")).toBe("1");
-    expect(Number(url.searchParams.get("seed"))).toBeGreaterThanOrEqual(0);
+    expect(url.searchParams.get("seed")).toBe("0");
 
     const got = await fetch(new URL(`/api/simulation-snapshots/${snapshot.id}`, server.url));
     expect(got.status).toBe(200);
@@ -92,4 +92,29 @@ describe("/api/simulation-snapshots", () => {
     expect((await post(server, { package: "Imaginary" })).status).toBe(400);
     expect((await fetch(new URL("/api/simulation-snapshots/sim_missing", server.url))).status).toBe(404);
   });
+
+  test("rejects invalid simulation settings before storing any snapshot", async () => {
+    const { server, dbPath } = await startServer();
+    for (const settings of [
+      { runs: 0 }, { runs: -2 }, { runs: 1.5 }, { runs: "12" },
+      { years: null }, { years: 1.5 }, { seed: -1 }, { seed: 1.5 },
+      { seed: 4294967296 }, { seed: "42" }, [],
+    ]) {
+      expect((await post(server, settings)).status).toBe(400);
+    }
+    const saved = await Bun.file(dbPath).json() as DB;
+    expect(saved.simulationSnapshots ?? []).toHaveLength(0);
+  });
+
+  test("preserves maximum seed and caps supported workloads", async () => {
+    const { server } = await startServer();
+    const response = await post(server, { runs: 1001, years: 11, seed: 4294967295 });
+    expect(response.status).toBe(201);
+    const { simulationUrl } = await response.json();
+    const url = new URL(simulationUrl);
+    expect(url.searchParams.get("runs")).toBe("1000");
+    expect(url.searchParams.get("years")).toBe("10");
+    expect(url.searchParams.get("seed")).toBe("4294967295");
+  });
+
 });

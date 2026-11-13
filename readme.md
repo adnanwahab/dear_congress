@@ -475,3 +475,7 @@ conservative heuristic with false positives and misses, not complete PII detecti
 Existing entries are retained without a retroactive scan; the admin can hide any
 of them. Independently published proposals and existing external copies require
 separate review. This uses the existing durable single-writer JSON store.
+
+## Recovered application shell
+
+Dashboard, map, workflow and documentation source recovered from the local application in SHE-281. See docs/source-recovery.md.

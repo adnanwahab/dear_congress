@@ -32,6 +32,7 @@ async function startServer(dbPath: string): Promise<RunningServer> {
       PORT: "0",
       NODE_ENV: "production",
       ANON_COOKIE_SECRET: "integration-only-cookie-secret-at-least-32-chars",
+      ADMIN_TOKEN: "integration-reset-admin",
       DEBUG_REQUEST_LOGS: "0",
       OPENAI_API_KEY: "",
       GEMINI_API_KEY: "",
@@ -258,7 +259,8 @@ test("public proposals survive server restarts with independent browser votes an
     const list = (await ok<{ proposals: CitizenProposalView[] }>(server, base, { voter: otherVoter })).proposals;
     expect(list).toEqual([restarted]);
 
-    await ok(server, "/api/reset", { body: {} });
+    const reset = await fetch(new URL("/api/reset", server.url), { method: "POST", headers: { authorization: "Bearer integration-reset-admin" } });
+    expect(reset.status).toBe(200);
     expect((await ok<{ proposal: CitizenProposalView }>(server, detail, { voter: otherVoter })).proposal).toEqual(restarted);
     expect((await ok<{ entry: typeof source }>(server, `${base}/journal/${source.id}`)).entry).toEqual(source);
 

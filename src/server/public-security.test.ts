@@ -90,9 +90,9 @@ describe("public write security", () => {
       expect(result.proposal.ownVote).toBe(choice);
     }
   });
-  test("CSP matches Fly HTML policy and permits configured map/worker/error reporting sources", async () => {
+  test("CSP is server-owned for embed exceptions and permits configured map/worker/error reporting sources", async () => {
     const fly = readFileSync(new URL("../../fly.toml", import.meta.url), "utf8");
-    expect(fly).toContain(`Content-Security-Policy = "${CSP}"`);
+    expect(fly).not.toContain("Content-Security-Policy =");
     expect(CSP).toContain("worker-src 'self' blob:");
     expect(CSP).toContain("https://basemaps.cartocdn.com");
     expect(CSP).toContain("https://*.bugsnag.com");

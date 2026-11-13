@@ -1,0 +1,27 @@
+.documentation-main { max-width: 1410px; }
+.documentation-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+.documentation-heading h1 { font-size: clamp(30px, 4vw, 46px); letter-spacing: -.03em; margin: 8px 0 12px; }
+.documentation-heading p:last-child { color: var(--muted); font-size: 18px; }
+.documentation-layout { display: grid; grid-template-columns: 235px minmax(0,1fr); gap: 26px; align-items: start; }
+.documentation-toc { position: sticky; top: 24px; }
+.documentation-toc h2 { font-size: 17px; margin-bottom: 18px; }
+.documentation-toc nav { display: grid; gap: 14px; }
+.documentation-toc a { font-size: 14px; text-decoration: none; line-height: 1.5; }
+.documentation-toc a:hover { text-decoration: underline; }
+.documentation-api-link { display: block; padding-top: 20px; border-top: 1px solid var(--line); margin-top: 24px; }
+.civic-shell .documentation-article { padding: 36px 40px; }
+.documentation-note { padding: 12px 16px; background: #f3f5f8; color: #586573; font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
+.documentation-article .document-title { font-size: 29px; line-height: 1.25; margin-bottom: 12px; }
+.documentation-article > p { font-size: 16px; line-height: 1.8; margin: 14px 0; white-space: pre-line; overflow-wrap: anywhere; }
+.documentation-article h3 { font-size: 25px; margin: 38px 0 14px; padding-top: 22px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
+.documentation-article h4 { font: 700 19px/1.4 Arial,sans-serif; margin: 26px 0 10px; color: var(--ink); text-transform: none; letter-spacing: 0; scroll-margin-top: 24px; }
+.documentation-article ul { padding-left: 23px; margin: 16px 0; }
+.documentation-article li { padding-left: 4px; margin: 10px 0; line-height: 1.75; }
+.document-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; margin: 22px 0; }
+.document-table table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 580px; }
+.document-table th { text-align: left; background: #f7f5ef; padding: 13px 15px; font-size: 12px; }
+.document-table td { padding: 14px 15px; line-height: 1.6; border-top: 1px solid var(--line); vertical-align: top; }
+.document-embed { padding: 16px 20px; border-left: 3px solid #9db3ce; border-radius: 0 8px 8px 0; background: #f6f8fb; display: grid; gap: 6px; margin: 24px 0; font-size: 13px; color: var(--muted); }
+.document-embed code { font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .documentation-layout { grid-template-columns: 1fr; } .documentation-toc { position: static; } .documentation-toc nav { display: flex; flex-wrap: wrap; gap: 10px 20px; } }
+@media (max-width: 600px) { .documentation-heading { align-items: start; flex-direction: column; } .documentation-heading p:last-child { font-size: 16px; } .civic-shell .documentation-article { padding: 24px 20px; } .documentation-article .document-title { font-size: 24px; } .documentation-article > p, .documentation-article li { font-size: 15px; } }

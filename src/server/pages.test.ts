@@ -29,7 +29,7 @@ test("proposal-specific previews escape public text", async () => {
 });
 
 test("unknown routes and missing proposals are useful HTTP 404s without mounting React", async () => {
-  for (const path of ['/unknown', '/proposals/missing', '/documentation', '/<script>']) {
+  for (const path of ['/unknown', '/proposals/missing', '/<script>']) {
     const response = renderPage(shell, path, []);
     expect(response.status).toBe(404);
     const html = await response.text();
@@ -45,7 +45,7 @@ test("sitemap includes public proposal addresses and omits internal/form routes"
   expect(xml).toContain(`${SITE_URL}/proposals/citizen_1`);
   expect(xml).not.toContain('/embed');
   expect(xml).not.toContain('/proposals/new');
-  expect(xml).not.toContain('/documentation');
+  expect(xml).toContain('/documentation');
 });
 
 test("production HTML build retains executable assets and the social PNG has its advertised dimensions", async () => {
@@ -60,4 +60,10 @@ test("production HTML build retains executable assets and the social PNG has its
   expect(png.getUint32(0)).toBe(0x89504e47);
   expect(png.getUint32(16)).toBe(1200);
   expect(png.getUint32(20)).toBe(630);
+});
+
+test("recovered product routes resolve, including trailing slash, while privacy remains static", async () => {
+  for (const path of ["/map", "/published", "/draft", "/sponsors", "/outcomes", "/documentation", "/map/"]) {
+    expect(renderPage(shell, path, []).status).toBe(200);
+  }
 });

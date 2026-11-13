@@ -19,7 +19,7 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
-  for (const path of ['/', '/journal', '/needs', '/vote', '/votes', '/feed', '/proposals/new', '/synth', '/embed']) {
+  for (const path of ['/', '/journal', '/needs', '/vote', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/, path);
@@ -35,6 +35,9 @@ try {
       assert.ok((await bundled.arrayBuffer()).byteLength > 0, asset);
     }
   }
+  const embed = await get('/embed');
+  assert.equal(embed.headers.get('content-security-policy'), "frame-ancestors 'self'");
+  assert.match((await get('/map')).headers.get('content-security-policy') ?? '', /default-src 'self'/);
   const proposals = await get('/api/citizen-proposals');
   assert.equal(proposals.status, 200);
   assert.match(proposals.headers.get('content-type') ?? '', /application\/json/);

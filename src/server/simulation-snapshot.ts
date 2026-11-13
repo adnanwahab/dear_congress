@@ -16,6 +16,23 @@ export class SnapshotError extends Error {
   }
 }
 
+/** Match the existing /world workload limits; reject malformed settings before storing. */
+export function validateSimulationOptions(opts: { runs?: unknown; years?: unknown; seed?: unknown }) {
+  const integer = (value: unknown, fallback: number, max: number, name: string) => {
+    if (value === undefined) return fallback;
+    if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 1) {
+      throw new SnapshotError(`${name} must be a positive whole number`);
+    }
+    return Math.min(max, value);
+  };
+  const runs = integer(opts.runs, DEFAULT_RUNS, 1000, "runs");
+  const years = integer(opts.years, DEFAULT_YEARS, 10, "years");
+  if (opts.seed !== undefined && (typeof opts.seed !== "number" || !Number.isInteger(opts.seed) || opts.seed < 0 || opts.seed > 4294967295)) {
+    throw new SnapshotError("seed must be a whole number from 0 to 4294967295");
+  }
+  return { runs, years, seed: opts.seed as number | undefined };
+}
+
 export function findPackage(packages: PackageResult[], name: string): PackageResult | null {
   const needle = name.trim().toLowerCase();
   return packages.find((p) => p.id.toLowerCase() === needle || p.name.toLowerCase() === needle)
@@ -80,6 +97,7 @@ export function simulationUrl(
   snapshot: SimulationSnapshot,
   opts: { runs?: number; years?: number; seed?: number } = {},
 ): string {
+  opts = validateSimulationOptions(opts);
   const seed = opts.seed ?? crypto.getRandomValues(new Uint32Array(1))[0]!;
   const q = new URLSearchParams({
     simulation: snapshot.id,

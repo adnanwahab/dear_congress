@@ -10,6 +10,7 @@ import { renderPage, sitemap } from "./src/server/pages";
 import { buildBrowser } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
+import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
@@ -26,7 +27,8 @@ import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-
 import { assessIdea } from "./src/server/assess-idea";
 import { recordEstimate, voterKey } from "./src/server/estimate-idea";
 import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
-import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
+import { SnapshotError, validateSimulationOptions, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
+import { createPublicPlan } from "./src/server/public-plan";
 import { timingSafeEqual } from "node:crypto";
 import { mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
@@ -363,10 +365,12 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 
 let db = await load();
 let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
+let demoCache: { day: string; payload: DemoPayload } | null = null;
 // Serialize snapshots so an older concurrent write cannot replace a newer vote.
 // Atomic rename also keeps a process interruption from leaving a partial JSON DB.
 let saveQueue: Promise<unknown> = Promise.resolve();
 const save = () => {
+  demoCache = null;
   const snapshot = JSON.stringify(db, null, 2);
   const write = saveQueue.then(async () => {
     await mkdir(dirname(DB_PATH), { recursive: true });
@@ -378,6 +382,12 @@ const save = () => {
   return write;
 };
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
+function dashboardState(voterId: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!demoCache || demoCache.day !== day) demoCache = { day, payload: demoPayload(db.votesByVoter, "") };
+  const votes = Object.fromEntries(Object.entries(db.votesByVoter[voterId] ?? {}).filter(([id]) => DEMO_ITEMS.some(item => item.id === id)).map(([id, vote]) => [id, vote.stance]));
+  return { ...demoCache.payload, votes };
+}
 await save();
 
 function state(voterId = "anon") {
@@ -866,6 +876,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
+    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs")),
+    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs")),
 
     "/api/hbl/*": (req) => handleHblGovernance(req, observeRepositoryVote),
     "/api/internal/hbl/batch": (req) => handleHblGovernance(req),
@@ -882,6 +894,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/demo": {
+      GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
+    },
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
@@ -1076,13 +1091,13 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           },
         });
 
-        return new Response(stream, {
+        return withReadCors(req, new Response(stream, {
           headers: {
             "content-type": "text/event-stream",
             "cache-control": "no-cache, no-transform",
             connection: "keep-alive",
           },
-        });
+        }));
       },
 
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
@@ -1091,8 +1106,16 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/entries": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => {
-        const entries = entriesNewestFirst();
-        return withReadCors(req, Response.json({ entries }));
+        const url = new URL(req.url);
+        const limit = Number(url.searchParams.get("limit") ?? 50);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100) return withReadCors(req, bad("limit must be an integer between 1 and 100"));
+        const all = entriesNewestFirst();
+        const cursor = url.searchParams.get("cursor");
+        const index = cursor ? all.findIndex(entry => entry.id === cursor) : -1;
+        if (cursor && index === -1) return withReadCors(req, bad("unknown cursor"));
+        const start = index + 1;
+        const entries = all.slice(start, start + limit);
+        return withReadCors(req, Response.json({ entries, total: all.length, nextCursor: start + limit < all.length ? entries.at(-1)?.id ?? null : null }, { headers: { "cache-control": "no-store" } }));
       },
       POST: async (req) => {
         const body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[]; location?: { lat?: number; lng?: number } };
@@ -1283,10 +1306,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
 
     "/api/journal-client/schema": {
-      GET: () => Response.json(journalClientSchema({
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json(journalClientSchema({
         defaultKind: PUBLISH_DRAFT_DEFAULT_KIND,
         needs: currentNeeds().map((n) => ({ id: n.id, label: n.label })),
-      })),
+      }))),
     },
 
     // For external journal UIs: publish a draft entry into Civic Synthesis.
@@ -1359,20 +1383,20 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     // simulate in many paired futures. Returns the snapshot and a shareable HBL URL.
     "/api/simulation-snapshots": {
       POST: async (req) => {
-        let body: { entryId?: string; package?: string; runs?: number; years?: number } = {};
+        let body: { entryId?: string; package?: string; runs?: number; years?: number; seed?: number } = {};
         try {
           body = (await req.json()) ?? {};
         } catch {
           return bad("body must be JSON");
         }
         try {
+          if (!body || typeof body !== "object" || Array.isArray(body)) throw new SnapshotError("body must be an object");
+          const options = validateSimulationOptions(body);
           const outcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
           const snapshot = createSimulationSnapshot(db, { entryId: body.entryId, packageName: body.package, needs: currentNeeds(), outcomes });
           storeSnapshot(db, snapshot);
           await save();
-          const runs = Math.min(1000, Math.max(1, Math.floor(Number(body.runs) || DEFAULT_RUNS)));
-          const years = Math.min(10, Math.max(1, Math.floor(Number(body.years) || DEFAULT_YEARS)));
-          return Response.json({ snapshot: { ...snapshot, location: null }, simulationUrl: simulationUrl(HBL_URL, snapshot, { runs, years }) }, { status: 201 });
+          return Response.json({ snapshot: { ...snapshot, location: null }, simulationUrl: simulationUrl(HBL_URL, snapshot, options) }, { status: 201 });
         } catch (err) {
           if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
           throw err;
@@ -1387,6 +1411,14 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
         return withReadCors(req, Response.json({ snapshot: { ...snapshot, location: null } }));
       },
+    },
+
+    "/api/plan": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json(createPublicPlan(db, {
+        sourceUrl: new URL("/api/plan", req.url).href,
+        outcomes: OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined,
+      }), { headers: { "cache-control": "no-store" } })),
     },
 
     "/api/synthesize": {
@@ -1603,7 +1635,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
 
     "/api/reset": {
-      POST: async () => {
+      POST: async (req) => {
+        if (!isAdmin(req)) return new Response("Not found", { status: 404 });
         // Resetting sample synthesis data must not erase public proposals or their votes.
         const citizenProposals = db.citizenProposals;
         const journalOwners = db.journalOwners;
@@ -1675,7 +1708,7 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
           statsHealthy = false;
           console.error("[STATS_ERROR] Metrics observation failed");
         });
-      }, body => validateVotes(body, buildContext(db).proposals.map(p => p.id), currentNeeds().map(n => n.id)));
+      }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
   }
 }
