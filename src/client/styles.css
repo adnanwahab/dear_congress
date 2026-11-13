@@ -1,4 +1,7 @@
 :root {
+  --motion-fast: 150ms;
+  --motion-base: 260ms;
+  --ease-out: cubic-bezier(.2,.8,.2,1);
   --bg: #f6f3ee;
   --card: #fffdf9;
   --ink: #1d1b18;
@@ -641,3 +644,32 @@ table.versions .badge { margin-left: 6px; }
 .proposal-search label { min-width: 0; display: grid; gap: 5px; }
 .proposal-search input, .proposal-search select { width: 100%; min-width: 0; box-sizing: border-box; }
 .proposal-search p { overflow-wrap: anywhere; }
+
+/* Cross-document navigation: the root holds content; chrome gets stationary snapshots. */
+@view-transition { navigation: auto; }
+.civic-header { view-transition-name: site-header; }
+.bottom-bar { view-transition-name: bottom-navigation; }
+.bottom-destinations a[aria-current="page"] { view-transition-name: active-tab; }
+::view-transition-group(*) { animation-duration: var(--motion-base); animation-timing-function: var(--ease-out); }
+::view-transition-old(root) { animation: var(--motion-fast) var(--ease-out) both page-fade-out; }
+::view-transition-new(root) { animation: var(--motion-fast) var(--ease-out) both page-fade-in; }
+::view-transition-old(site-header), ::view-transition-old(bottom-navigation) { animation: none; opacity: 0; }
+::view-transition-new(site-header), ::view-transition-new(bottom-navigation) { animation: none; }
+::view-transition-group(site-header), ::view-transition-group(bottom-navigation) { animation: none; z-index: 1; }
+::view-transition-group(active-tab) { z-index: 2; }
+::view-transition-old(active-tab), ::view-transition-new(active-tab) { height: 100%; mix-blend-mode: normal; }
+html:active-view-transition-type(forward) { --page-exit: -48px; --page-enter: 48px; }
+html:active-view-transition-type(backward) { --page-exit: 48px; --page-enter: -48px; }
+html:active-view-transition-type(forward)::view-transition-old(root),
+html:active-view-transition-type(backward)::view-transition-old(root) { animation: var(--motion-base) var(--ease-out) both page-slide-out; }
+html:active-view-transition-type(forward)::view-transition-new(root),
+html:active-view-transition-type(backward)::view-transition-new(root) { animation: var(--motion-base) var(--ease-out) both page-slide-in; }
+@keyframes page-fade-out { to { opacity: 0; } }
+@keyframes page-fade-in { from { opacity: 0; } }
+@keyframes page-slide-out { to { transform: translateX(var(--page-exit)); opacity: 0; } }
+@keyframes page-slide-in { from { transform: translateX(var(--page-enter)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  ::view-transition-old(*) { opacity: 0; }
+}
