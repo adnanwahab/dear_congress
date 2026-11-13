@@ -1,6 +1,7 @@
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
+import { buildBrowser } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
@@ -803,10 +804,7 @@ function parseWhatIfExtraEntries(input: unknown) {
 }
 
 // Build the browser shell once; render per-request canonical and social metadata.
-const browserBuild = await Bun.build({
-  entrypoints: ["./index.html"], target: "browser", publicPath: "/",
-  naming: "[name]-[hash].[ext]", minify: process.env.NODE_ENV === "production",
-});
+const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
 if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
 const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
@@ -816,6 +814,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),

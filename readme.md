@@ -21,6 +21,11 @@ bun test         # engine tests
 bun run typecheck
 ```
 
+`bun start` builds the browser shell with production minification and code splitting.
+MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
+Synthesize), not on `/` or `/votes`. `bun test src/server/browser-build.test.ts`
+checks the production shell's 250 KB gzip JS budget and deferred map assets.
+
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
 ## Measured outcomes (Harris County / Houston)
