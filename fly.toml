@@ -10,7 +10,8 @@ primary_region = 'iad'
 [env]
   DB_PATH = '/data/db.json'
   NODE_ENV = 'production'
-  FRAME_ANCESTORS = "*"
+  FRAME_ANCESTORS = "'self'"
+  TRUST_FLY_PROXY = "1"
 
 [[mounts]]
   source = 'civic_data'
@@ -28,3 +29,10 @@ primary_region = 'iad'
   memory = '1gb'
   cpus = 1
   memory_mb = 1024
+
+# Apply to HTML/bundled assets as well as API responses.
+[http_service.http_options.response.headers]
+  Strict-Transport-Security = "max-age=31536000"
+  X-Content-Type-Options = "nosniff"
+  Referrer-Policy = "no-referrer"
+  Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; connect-src 'self' https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.bugsnag.com; worker-src 'self' blob:; font-src 'self' data: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"

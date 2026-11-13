@@ -30,13 +30,19 @@ async function startServer() {
   const mod = await import(`./server.ts?test=${crypto.randomUUID()}`);
   const server = mod.server as { url: URL; stop: (closeConnections?: boolean) => void };
   started.push(server);
-  const post = (path: string, body: unknown, voter = "voter-a") => fetch(new URL(path, server.url), { method: "POST", headers: { "content-type": "application/json", "x-voter-id": voter }, body: JSON.stringify(body) });
-  return { server, post, path };
+  const cookies = new Map<string, string>();
+  const post = async (path: string, body: unknown, voter = "voter-a") => {
+    const res = await fetch(new URL(path, server.url), { method: "POST", headers: { "content-type": "application/json", ...(cookies.has(voter) ? { cookie: cookies.get(voter)! } : {}) }, body: JSON.stringify(body) });
+    const issued = res.headers.get("set-cookie")?.split(";")[0];
+    if (issued) cookies.set(voter, issued);
+    return res;
+  };
+  return { server, post, path, cookies };
 }
 
 describe("Make this possible endpoints", () => {
   test("design → choose a version → the plan takes it; votes stay private", async () => {
-    const { server, post, path } = await startServer();
+    const { server, post, path, cookies } = await startServer();
 
     const synth = async () => ((await (await post("/api/synthesize", { compare: true, budget: 42 })).json()) as { real: PackageResult[]; blended: PackageResult[] });
     const ideaIn = (pkgs: PackageResult[]) => pkgs[0]!.ideas!.find((r) => r.id === "emergent_1") as IdeaReport;
@@ -66,7 +72,7 @@ describe("Make this possible endpoints", () => {
     expect(after.real[0]!.items.map((i) => i.proposal.id)).toContain("emergent_1");
     expect(ideaIn(after.real).status).toBe("in_plan");
 
-    const state = await (await fetch(new URL("/api/state", server.url), { headers: { "x-voter-id": "voter-a" } })).json() as { proposals: Array<Record<string, unknown>> };
+    const state = await (await fetch(new URL("/api/state", server.url), { headers: { cookie: cookies.get("voter-a")! } })).json() as { proposals: Array<Record<string, unknown>> };
     const p = state.proposals.find((x) => x.id === "emergent_1")!;
     expect(p.myVariant).toBe(rec!.id);
     expect((p.variantCounts as Record<string, number>)[rec!.id]).toBe(1);

@@ -15,7 +15,7 @@ Journal entries also offer **Turn this into a proposal**. This opens `/proposals
 
 ## Meaning of a response
 
-Responses are advisory and tracked by the application's existing browser voter ID. They are not authenticated resident identities, verified turnout, a representative poll, or a legislative decision. Creating a proposal does not cast a response for its author. Citizen proposal responses never include simulated residents or the existing synthesis engine's illustrative support scores.
+Responses are advisory and tracked by a server-issued anonymous browser cookie. They are not authenticated resident identities, verified turnout, a representative poll, or a legislative decision. Creating a proposal does not cast a response for its author. Citizen proposal responses never include simulated residents or the existing synthesis engine's illustrative support scores.
 
 ## Routes and integration
 
@@ -32,7 +32,7 @@ The API uses the shared contract in `src/shared/citizen-proposals.ts`:
 | POST | `/api/citizen-proposals/:id/comments` | Post a public discussion comment |
 | GET | `/api/citizen-proposals/journal/:id` | Read a public journal entry for draft prefill |
 
-Writes require the existing `x-voter-id` browser identifier. Read responses do not disclose voter identifiers, ownership hashes, or idempotency keys. Responses use `Cache-Control: no-store` because `ownVote` is browser-specific.
+HTTP requests use a server-issued signed anonymous cookie; client-supplied `x-voter-id` is ignored. Non-browser clients must retain a cookie jar. See the public-write security section in `readme.md` for limits, deployment configuration, and legacy-ID behavior. Read responses do not disclose voter identifiers, ownership hashes, or idempotency keys. Responses use `Cache-Control: no-store` because `ownVote` is browser-specific.
 
 Publishing requires `title`, `problem`, `proposedChange`, `jurisdiction`, a stable UUID `idempotencyKey`, and `confirmedPublic: true`. Optional fields are `jurisdictionName`, `supportingInfo`, and `sourceEntryId`. Jurisdictions are `city`, `county`, `state`, `federal`, and `unsure`. Vote bodies are `{ "choice": "support" }`, `oppose`, `unsure`, or `null` to remove the response. Comment bodies contain `text`, an optional `displayName`, and their own stable UUID `idempotencyKey`.
 

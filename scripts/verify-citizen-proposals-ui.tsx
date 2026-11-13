@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const testDirectory = await mkdtemp(join(tmpdir(), 'civic-proposals-ui-'));
 const child = Bun.spawn([process.execPath, 'server.ts'], {
   cwd: fileURLToPath(new URL('..', import.meta.url)),
-  env: { PATH: process.env.PATH ?? '', PORT: '0', DB_PATH: join(testDirectory, 'db.json'), NODE_ENV: 'production', DEBUG_REQUEST_LOGS: '0', OPENAI_API_KEY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' },
+  env: { PATH: process.env.PATH ?? '', PORT: '0', DB_PATH: join(testDirectory, 'db.json'), NODE_ENV: 'production', ANON_COOKIE_SECRET: 'isolated-ui-cookie-secret-at-least-32-characters', DEBUG_REQUEST_LOGS: '0', OPENAI_API_KEY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' },
   stdin: 'ignore', stdout: 'pipe', stderr: 'pipe',
 });
 let startup = '';
@@ -35,9 +35,14 @@ for (const key of ['window','document','navigator','HTMLElement','HTMLInputEleme
 Object.defineProperty(globalThis, 'getComputedStyle', { configurable: true, value: dom.getComputedStyle.bind(dom) });
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 let dropNextPublishResponse = false;
+let browserCookie = "";
 globalThis.fetch = (async (input: any, init?: any) => {
   const url = new URL(typeof input === 'string' ? input : input.url ?? String(input), dom.location.href);
-  const response = await nativeFetch(url, init);
+  const headers = new Headers(init?.headers);
+  if (browserCookie) headers.set('cookie', browserCookie);
+  const response = await nativeFetch(url, { ...init, headers });
+  const issued = response.headers.get('set-cookie')?.split(';')[0];
+  if (issued) browserCookie = issued;
   if (dropNextPublishResponse && url.pathname === '/api/citizen-proposals' && init?.method === 'POST') {
     dropNextPublishResponse = false;
     throw new TypeError('Simulated lost publication response');
@@ -116,13 +121,13 @@ try {
   await until(() => !!query().queryByText('Your response was removed.'), 'remove');
   assert.equal((await api('/api/citizen-proposals/' + id)).proposal.countTotal, 0);
   check('Rendered vote buttons support replacement and removal without double counting');
-  const firstVoter = localStorage.getItem('civic_synthesis_voter_id');
-  localStorage.setItem('civic_synthesis_voter_id', crypto.randomUUID());
+  const firstCookie = browserCookie;
+  browserCookie = ''; // Simulate a separate browser cookie jar.
   await render(detailPath);
   await until(() => !!query().queryByRole('button', { name: /^Support 0$/ }), 'second browser');
   await click(/^Support 0$/);
   await until(() => !!query().queryByText('Your advisory response is saved: Support.'), 'second support');
-  localStorage.setItem('civic_synthesis_voter_id', firstVoter!);
+  browserCookie = firstCookie;
   await render(detailPath);
   await until(() => !!query().queryByRole('button', { name: /^Support 1$/ }), 'first browser shared counts');
   assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'false');
