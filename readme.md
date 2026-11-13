@@ -251,6 +251,8 @@ See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 ### `POST /api/synthesize` notes
 
+- `preview: true` returns the same plan calculation without changing `lastPlan`, challenger streaks or the database file. Synthesis sliders request previews after a 180 ms pause; Synthesize commits the plan. Preview results use the existing re-rank motion and reduced-motion preference.
+
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
 - If `previous` is omitted, the server uses persisted `db.lastPlan` (from the prior synthesis run). If none exists yet, it behaves like a fresh run.
 - Response now includes, per package:
@@ -554,3 +556,25 @@ Private offline needs clustering: [pilot command and safeguards](docs/need-clust
 synthetic content and the existing local journal extractor. This local-only
 microbenchmark establishes no daily capacity or production-readiness claim.
 See [scope, tests, report units and limitations](docs/ingestion-spike.md).
+
+## Reproducible audit sample
+
+A fabricated tally and aggregate score can be replayed offline and downloaded
+through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
+for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.
+
+## Guided demo
+
+Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only
+sample tour visits Published, Feed, Votes, Draft, Sponsors, Outcomes and Map in
+about 60 seconds plus page loading time. Space pauses/resumes, ←/→ step, and Esc
+exits. Clicking the page pauses; exit the tour to interact with voting or saved
+work. Map runs only its local illustrative simulation. No votes or drafts are saved
+by the tour. See [SHE-331 review notes](docs/reviews/SHE-331.md) for validation limits.
+
+## Official legislative metadata (opt-in first slice)
+
+A single-bill Congress.gov metadata importer and separate read-only lane are
+available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
+See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
+Metadata check times do not verify full bill text or current legal status.

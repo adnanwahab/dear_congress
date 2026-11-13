@@ -45,7 +45,7 @@ test('dropdown and pointer moves share saved stages; cancelled drags and reduced
     await act(async () => { pointer('pointerup'); });
     expect(saved).toEqual([2, 3]);
     let snapshots = 0;
-    document.startViewTransition = ((update: () => void) => { snapshots++; update(); return { ready: Promise.resolve() }; }) as any;
+    document.startViewTransition = ((options: { update: () => void; types: string[] }) => { expect(options.types).toEqual(['sponsor-move']); snapshots++; options.update(); return { ready: Promise.resolve() }; }) as any;
     let updates = 0;
     moveWithMotion(() => updates++);
     expect(snapshots).toBe(1);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { runViewTransition } from './motion';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export const nextTheme = (current: ThemePreference): ThemePreference => current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system';
@@ -37,19 +37,17 @@ export function ThemeSwitch() {
       committed = true;
       try { localStorage.setItem('civic-theme', next); } catch { /* Optional storage. */ }
       applyTheme(next);
-      flushSync(() => setPreference(next));
+      setPreference(next);
     };
-    if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { update(); return; }
+    // The circular reveal is CSS (theme-reveal in styles.css); hand it the switch's position.
     const rect = button.getBoundingClientRect();
     const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
     const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    const root = document.documentElement.style;
+    root.setProperty('--theme-x', `${x}px`); root.setProperty('--theme-y', `${y}px`); root.setProperty('--theme-r', `${radius}px`);
     setBusy(true);
-    try {
-      const transition = document.startViewTransition({ update, types: ['theme'] });
-      await transition.ready;
-      await document.documentElement.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] }, { duration: 400, easing: 'ease-out', pseudoElement: '::view-transition-new(root)' }).finished;
-      await transition.finished;
-    } catch { if (!committed) update(); }
+    try { await runViewTransition(update, 'theme'); }
+    catch { if (!committed) update(); }
     finally { setBusy(false); }
   }
   const label = preference[0]!.toUpperCase() + preference.slice(1);

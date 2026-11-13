@@ -18,14 +18,15 @@
 .cp-advisory span { font-size: 8px; vertical-align: 1px; margin-right: 4px; }
 .cp-nav { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 10px 0; margin-bottom: 36px; }
 .cp-nav a { display: block; text-decoration: none; color: var(--muted); padding: 8px 15px; font-size: 14px; border-radius: 7px; }
-.cp-nav a:hover, .cp-nav a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+.cp-nav a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+@media (hover: hover) and (pointer: fine) {
+  .cp-nav a:hover { color: var(--accent); background: var(--accent-soft); } }
 .cp-nav .cp-nav-propose { margin-left: auto; font-weight: 650; color: var(--accent); border: 1px solid var(--line); }
 .cp-hero { display: grid; grid-template-columns: minmax(0, 1fr) 265px; gap: 65px; padding: 26px 0 58px; align-items: center; }
 .cp-eyebrow { font: 650 11px/1.6 var(--sans); letter-spacing: .14em; color: var(--accent); margin-bottom: 13px; }
 .cp-lede { font-size: 17px; color: var(--muted); max-width: 640px; margin: 18px 0 24px; }
 .cp-actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; transition: filter .15s; }
-.cp-button:hover { filter: brightness(.94); }
+.cp-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--on-accent) !important; text-decoration: none; padding: 12px 19px; border: 1px solid var(--accent); border-radius: 8px; font: 600 14px/1.5 var(--sans); text-align: center; min-height: 46px; }
 .cp-button-secondary { background: transparent; color: var(--accent) !important; border-color: var(--line); }
 .cp-text-link { display: inline-block; font-weight: 600; font-size: 13px; }
 .cp-hero-note { border-left: 1px solid var(--line); padding-left: 28px; }
@@ -53,13 +54,15 @@
 .cp-tag { color: var(--accent); font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .055em; overflow-wrap: anywhere; }
 .cp-proposal-card h3 { margin: 19px 0 11px; overflow-wrap: anywhere; }
 .cp-proposal-card h3 a { color: var(--ink); text-decoration: none; }
-.cp-proposal-card h3 a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .cp-proposal-card h3 a:hover { text-decoration: underline; } }
 .cp-card-excerpt { color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; margin-bottom: 22px; }
 .cp-card-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; padding-top: 15px; border-top: 1px solid var(--line); }
 .cp-card-bottom > span { font-size: 11px; color: var(--muted); }
 .cp-your-choice { margin: 9px 0 0; color: var(--accent); font-size: 12px; }
 .cp-back { display: inline-block; margin: -5px 0 25px; font-size: 13px; text-decoration: none; }
-.cp-back:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .cp-back:hover { text-decoration: underline; } }
 .cp-editor-heading { margin-bottom: 35px; }
 .cp-editor-heading h1 { font-size: clamp(32px, 4vw, 46px); }
 .cp-editor-heading .cp-lede { margin-bottom: 0; }

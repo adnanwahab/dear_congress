@@ -40,11 +40,10 @@ test('theme initializes before rendering, cycles, persists, follows system, and 
     await act(async () => root.render(<ThemeSwitch />));
     await click(); expect(document.documentElement.dataset.theme).toBe('light'); expect(localStorage.getItem('civic-theme')).toBe('light');
     initialize(); expect(document.documentElement.dataset.theme).toBe('light');
-    let starts = 0, animation: any;
+    let starts = 0;
     host.querySelector('button')!.getBoundingClientRect = () => ({ left: 100, top: 40, width: 44, height: 44 }) as DOMRect;
     Object.defineProperty(document, 'startViewTransition', { configurable: true, value: ({ update, types }: any) => { starts++; expect(types).toEqual(['theme']); update(); return { ready: Promise.resolve(), finished: Promise.resolve() }; } });
-    Object.defineProperty(document.documentElement, 'animate', { configurable: true, value: (frames: any, options: any) => { animation = { frames, options }; return { finished: Promise.resolve() }; } });
-    await click(); expect(document.documentElement.dataset.theme).toBe('dark'); expect(starts).toBe(1); expect(animation.options.duration).toBe(400); expect(animation.options.pseudoElement).toBe('::view-transition-new(root)'); expect(animation.frames.clipPath).toEqual(['circle(0px at 122px 62px)', `circle(${Math.hypot(1280 - 122, 800 - 62)}px at 122px 62px)`]);
+    await click(); expect(document.documentElement.dataset.theme).toBe('dark'); expect(starts).toBe(1); const reveal = document.documentElement.style; expect(reveal.getPropertyValue('--theme-x')).toBe('122px'); expect(reveal.getPropertyValue('--theme-y')).toBe('62px'); expect(reveal.getPropertyValue('--theme-r')).toBe(`${Math.hypot(1280 - 122, 800 - 62)}px`);
     reduced = true; await click(); expect(starts).toBe(1); expect(document.documentElement.dataset.themePreference).toBe('system');
     dark = false; await act(async () => { systemListeners.forEach(cb => cb()); }); expect(document.documentElement.dataset.theme).toBe('light');
     reduced = false;
