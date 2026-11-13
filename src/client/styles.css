@@ -564,7 +564,7 @@ table.versions .badge { margin-left: 6px; }
 .method { display: inline-block; background: #e3eef8; color: #245593; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; }
 .method.post { background: #e6f0e8; color: #2f6941; }
 @media (max-width: 900px) { .journal-grid { grid-template-columns: 1fr; } .api-layout { grid-template-columns: 1fr; } .api-toc { position: static; grid-template-columns: 1fr 1fr; } }
-@media (max-width: 600px) { .bottom-destinations { gap: 2px; grid-template-columns: repeat(4,minmax(0,1fr)); } .bottom-destinations a { padding: 5px; font-size: 10px; gap: 2px; } .bottom-destinations svg { width: 18px; height: 18px; } .bottom-utilities { gap: 14px; flex-wrap: wrap; } .bottom-utilities a, .bottom-utilities button { font-size: 10px; } .product-shell { padding-bottom: 155px; } .journal-tabs button { font-size: 13px !important; padding: 8px !important; white-space: normal; } .journal-heading > p:last-child { font-size: 16px; } .journal-publish { flex-direction: column; } .journal-form-meta { flex-wrap: wrap; } }
+@media (max-width: 600px) { .bottom-destinations { gap: 2px; grid-template-columns: repeat(6,minmax(0,1fr)); } .bottom-destinations a { padding: 5px; font-size: 10px; gap: 2px; } .bottom-destinations svg { width: 18px; height: 18px; } .bottom-utilities { gap: 14px; flex-wrap: wrap; } .bottom-utilities a, .bottom-utilities button { font-size: 10px; } .product-shell { padding-bottom: calc(64px + env(safe-area-inset-bottom)); } .journal-tabs button { font-size: 13px !important; padding: 8px !important; white-space: normal; } .journal-heading > p:last-child { font-size: 16px; } .journal-publish { flex-direction: column; } .journal-form-meta { flex-wrap: wrap; } }
 /* Preserve MapLibre's icon controls inside the shared shell. */
 
 /* Nationwide county deliberation sandbox */
@@ -700,4 +700,36 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .plan-added, .plan-removed { animation: none; }
   .synthesis-package .fill, .synthesis-package .split > * { transition: none; }
+}
+
+.bottom-more { display: none; }
+.more-sheet { width: min(100%, 600px); max-height: 80dvh; margin: auto auto 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); border: 1px solid var(--line); border-radius: 18px 18px 0 0; background: #5b4b9a; color: white; overflow: auto; }
+.more-sheet::backdrop { background: #0008; }
+.more-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.more-heading button { background: #493b80; color: white; }
+.more-destinations { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 16px 0; }
+.more-destinations a { color: white; padding: 12px 4px; display: grid; justify-items: center; gap: 6px; }
+.more-destinations a[aria-current] { background: #f0ebff; color: #493b80; border-radius: 9px; }
+.more-sheet .bottom-utilities { flex-wrap: wrap; gap: 20px; }
+.more-sheet .bottom-app-links { flex-wrap: wrap; margin-left: 0; white-space: normal; }
+@media (max-width: 600px) {
+  .bottom-bar { padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
+  .bottom-destinations .secondary-destination, .desktop-utilities { display: none; }
+  .bottom-destinations a, .bottom-destinations .bottom-more { min-width: 0; height: 52px; font: 700 10px/1.2 var(--sans); padding: 4px 1px; gap: 3px; }
+  .bottom-destinations .bottom-more { display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; background: transparent; border: 0; }
+  .workflow-shell .civic-header { position: sticky; top: 0; z-index: 50; padding: 8px 12px; gap: 4px; background: var(--bg); }
+  .workflow-shell .header-brand { width: 100%; justify-content: space-between; }
+  .workflow-shell .header-brand > a { font-size: 18px; }
+  .workflow-shell .header-meta { display: none; }
+  .workflow-main { touch-action: pan-y pinch-zoom; }
+  .workflow-main:has(table, .household-table, .api-table-wrap, .county-map-scroll, [data-no-stage-swipe]) { touch-action: auto; }
+  .workflow-main :is(table, .household-table, .api-table-wrap, .county-map-scroll, [data-no-stage-swipe]) { touch-action: auto; }
+  .product-shell :is(main, section, article, aside, .panel, .row, .header-brand) { min-width: 0; overflow-wrap: anywhere; }
+  .product-shell :is(input,select,textarea,img,video,canvas,svg) { max-width: 100%; }
+  .product-shell pre { max-width: 100%; overflow: auto; }
+}
+
+@media (max-width: 600px) {
+  .product-shell button { white-space: normal; }
+  .product-shell table { display: block; max-width: 100%; overflow-x: auto; touch-action: auto; }
 }
