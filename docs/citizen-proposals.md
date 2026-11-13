@@ -202,3 +202,13 @@ or changes proposal text. Use the native summary control to open/close it, or
 Escape within help to close and return focus. No preference is stored. This
 first slice does not provide Spanish localization or reviewed legal summaries;
 see `docs/reviews/SHE-318.md` for remaining acceptance and verification limits.
+
+## Optional discussion reading guide (SHE-308 first slice)
+
+Open a published proposal from `/votes` and enable **Show optional reading guide**
+in Public discussion. This local template repeats all loaded public comments
+with source links and offers clarifying questions. It defaults off and uses no
+AI provider, storage, journal content or votes. It does not summarize positions
+or infer consensus. Ordinary commenting works with the guide off. Formal
+summary corrections, appeals and comment reporting are pending; see
+[the SHE-308 follow-up and acceptance gaps](reviews/SHE-308.md).
