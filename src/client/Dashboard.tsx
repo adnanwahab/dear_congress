@@ -8,6 +8,7 @@ import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
 import { CivicHeader } from "./CivicHeader";
 import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSearch';
+import { DailyQuestion } from './DailyQuestion';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
@@ -62,7 +63,7 @@ export function Dashboard({ request }: { request: Request }) {
     setBusy(true); setError(''); setNotice('');
     try {
       await request('/api/votes', { votes: [{ proposalId: item.id, stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] });
-      await load(); setConfirmation(n => n + 1); setNotice('Advisory vote saved. You can change it at any time.');
+      await load(); window.dispatchEvent(new Event('advisory-vote:saved')); setConfirmation(n => n + 1); setNotice('Advisory vote saved. You can change it at any time.');
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save your vote. Please try again.'); }
     finally { setBusy(false); }
   }
@@ -80,7 +81,7 @@ export function Dashboard({ request }: { request: Request }) {
   return <div className="civic-shell">
     <CivicHeader stage="Live demo" />
     <main className="civic-main">
-      <section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2>{title}</h2><p>{description}</p></a></li>)}</ol></section>
+      <p>Civic Synthesis is an independent public beta for exploring policy proposals and expressing non-binding advisory preferences; it is not an official government ballot.</p><DailyQuestion request={request} /><section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2>{title}</h2><p>{description}</p></a></li>)}</ol></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : <Skeleton kind="line" />}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <div className="triple-grid">

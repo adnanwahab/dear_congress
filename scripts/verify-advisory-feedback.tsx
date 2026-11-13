@@ -11,12 +11,14 @@ const { demoPayload } = await import('../src/engine/demo');
 const payload = demoPayload({}, 'test');
 const q = () => within(document.body);
 let root: ReturnType<typeof createRoot>;
-let posts = 0; let reads = 0; const bodies: any[] = [];
+let posts = 0; let refreshFails = false; const bodies: any[] = [];
 let resolve!: (v: any) => void; let reject!: (e: any) => void;
 let pending = new Promise<any>((a, b) => { resolve = a; reject = b; });
 const request: any = async (path: string, body: any) => {
-  if (path === '/api/demo') { if (++reads > 1) throw new Error('refresh failed'); return payload; }
-  posts++; bodies.push(body); return pending;
+  // Reads succeed until a vote is sent; refreshes after a vote fail (other panels such as
+  // today's question may also read /api/demo, so count by phase rather than by call).
+  if (path === '/api/demo') { if (refreshFails) throw new Error('refresh failed'); return payload; }
+  posts++; bodies.push(body); refreshFails = true; return pending;
 };
 async function mount() {
   document.body.innerHTML = '<div id="root"></div>';
@@ -34,7 +36,7 @@ assert.ok(!document.body.textContent!.includes('Server confirmed'));
 await act(async () => reject(new TypeError('offline')));
 assert.ok(q().getByRole('alert').textContent!.includes('could not confirm whether'));
 await act(async () => root.unmount());
-reads = 0;
+refreshFails = false;
 await mount();
 assert.equal(posts, 1);
 assert.ok(q().getByRole('button', { name: 'Retry exact advisory choice' }));
@@ -47,7 +49,7 @@ assert.ok(document.body.textContent!.includes('Server confirmed advisory choice 
 assert.ok(q().getByRole('alert').textContent!.includes('Updated proposal counts could not be loaded'));
 assert.equal(q().queryByRole('button', { name: 'Retry exact advisory choice' }), null);
 await act(async () => root.unmount());
-reads = 0;
+refreshFails = false;
 await mount();
 assert.equal(posts, 2);
 assert.ok(document.body.textContent!.includes('Previous server acknowledgement'));
