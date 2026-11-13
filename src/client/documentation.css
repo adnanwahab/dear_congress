@@ -25,3 +25,28 @@
 .document-embed code { font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .documentation-layout { grid-template-columns: 1fr; } .documentation-toc { position: static; } .documentation-toc nav { display: flex; flex-wrap: wrap; gap: 10px 20px; } }
 @media (max-width: 600px) { .documentation-heading { align-items: start; flex-direction: column; } .documentation-heading p:last-child { font-size: 16px; } .civic-shell .documentation-article { padding: 24px 20px; } .documentation-article .document-title { font-size: 24px; } .documentation-article > p, .documentation-article li { font-size: 15px; } }
+
+.three-app-loop { margin: 24px 0; background: #f6f8fb; border: 1px solid #ccd5df; border-radius: 16px; }
+.three-app-loop svg { display: block; width: 100%; height: auto; }
+.three-app-loop text { fill: #263b50; font: 18px Arial, sans-serif; }
+.three-app-loop .three-app-loop-name { font-size: 21px; font-weight: 700; }
+.three-app-loop .three-app-loop-new-tab { font-size: 14px; }
+.three-app-loop a rect { fill: #fff; stroke: #899fb6; stroke-width: 2; }
+.three-app-loop a:hover rect, .three-app-loop a:focus rect { fill: #e5f3f0; stroke: #096b64; stroke-width: 4; }
+.three-app-loop-pulse { animation: three-app-loop-travel 6s linear infinite; pointer-events: none; }
+@keyframes three-app-loop-travel { to { stroke-dashoffset: -100; } }
+@media (prefers-reduced-motion: reduce) { .three-app-loop-pulse { animation: none; display: none; } }
+.documentation-toc a[aria-current="location"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.documentation-progress { position: sticky; top: 0; z-index: 20; height: 3px; margin-bottom: -3px; pointer-events: none; }
+.documentation-progress > div { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+@keyframes document-progress { to { transform: scaleX(1); } }
+@supports (animation-timeline: scroll(root)) {
+  .documentation-progress > div {
+    animation: document-progress auto linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Position feedback follows scrolling directly; no eased motion or reveal. */
+  .documentation-progress > div { animation-duration: auto !important; }
+}

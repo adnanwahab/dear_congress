@@ -1,5 +1,7 @@
+import { getTopic } from '../shared/topics';
+import { TopicChip } from './TopicChip';
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { flushSync } from 'react-dom';
+import { runViewTransition } from './motion';
 import type { DemoItem } from '../engine/demo';
 
 /** Separate from proposal-title / plan-item identities; encode every code point. */
@@ -33,11 +35,9 @@ export function ProposalSearch({ items, query, topic, setQuery, setTopic, loaded
     clearTimeout(timer.current);
     const current = ++revision.current;
     active.current?.skipTransition();
-    const commit = () => { if (current === revision.current) flushSync(() => { setQuery(nextQuery); setTopic(nextTopic); }); };
-    if (reducedMotion() || typeof document.startViewTransition !== 'function') { commit(); return; }
-    const transition = document.startViewTransition({ update: commit, types: ['filter'] });
-    active.current = transition;
-    void transition.ready.catch(() => {});
+    const commit = () => { if (current === revision.current) { setQuery(nextQuery); setTopic(nextTopic); } };
+    // The shared helper flushes the update and falls back to an instant change when motion is off.
+    void runViewTransition(commit, 'filter', transition => { active.current = transition; });
   }
   function search(value: string) {
     setText(value);
@@ -57,6 +57,7 @@ export function ProposalSearch({ items, query, topic, setQuery, setTopic, loaded
       <label>Filter by topic<select style={{ viewTransitionClass: 'filter-control', viewTransitionName: `proposal-topic-${identity}` }} value={topic} onChange={e => update(text, e.target.value)}>{topics.map(t => <option key={t}>{t}</option>)}</select></label>
       <button type="button" className="outline" disabled={!text && !query && topic === 'All topics'} onClick={reset}>Clear all filters</button>
     </form>
+    <div className="topic-filters" role="group" aria-label="Topic chips">{topics.map(t => <button type="button" key={t} aria-label={t} aria-pressed={topic === t} onClick={() => setTopic(t)}>{!getTopic(t) ? t : <TopicChip topic={t} />}</button>)}</div>
     <p>Search titles, summaries, sources and jurisdictions in this sample list.</p>
     <p style={{ viewTransitionName: `proposal-count-${identity}` }} role="status" aria-live="polite">{loaded ? `Showing ${filtered.length} of ${items.length} proposals · Sample data` : failed ? 'Sample proposals unavailable. Use the retry control above.' : 'Loading sample proposals…'}</p>
     {loaded && !filtered.length && <div className="empty-feed"><p>{items.length ? 'No proposals match your search and topic. Try a broader term or reset filters.' : 'No sample proposals are available in the loaded list.'}</p><button type="button" className="outline" onClick={reset}>Reset filters</button></div>}

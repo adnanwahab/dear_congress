@@ -1,5 +1,10 @@
+import { LiveRounds } from './src/server/live-rounds';
+import { liveQR } from './src/server/live-qr';
+const liveRounds = new LiveRounds();
 import { handleRulePreview } from "./src/server/synthesis-rule-preview";
 import { createPolicyComparison, storePolicyComparison } from "./src/server/policy-comparison";
+import { auditSampleResponse } from "./src/server/audit-samples";
+import { readBills } from './src/server/legislation/import';
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -901,6 +906,19 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/audit-samples": {
+      GET: () => auditSampleResponse(),
+    },
+    "/api/audit-samples/:id": {
+      GET: (req) => auditSampleResponse(req.params.id!),
+    },
+    "/api/legislation": {
+      GET: async () => {
+        const headers = { "cache-control": "no-store" };
+        try { return Response.json({ bills: await readBills(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
+        catch { return Response.json({ error: "Official metadata unavailable" }, { status: 503, headers }); }
+      },
+    },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },
@@ -1026,6 +1044,15 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/live": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.start(body.proposalId, resolveVoterId(req))); } },
+    "/api/live/:code": { GET: req => Response.json(liveRounds.snapshot(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/vote": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.vote(req.params.code!, resolveVoterId(req), body.stance)); } },
+    "/api/live/:code/end": { POST: req => Response.json(liveRounds.end(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/events": { GET: req => liveRounds.events(req.params.code!, resolveVoterId(req), req.signal) },
+    "/api/live/:code/qr": { GET: req => {
+      liveRounds.snapshot(req.params.code!, resolveVoterId(req));
+      return new Response(liveQR(publicSecurity.origin(req) + '/live/' + req.params.code!), { headers: { 'content-type': 'image/svg+xml' } });
+    } },
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
@@ -1457,7 +1484,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare, preview } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
@@ -1468,6 +1495,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           now?: string | number;
           outcomes?: SynthesisOutcomes;
           compare?: boolean;
+          preview?: boolean;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
@@ -1521,7 +1549,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
           // In compare mode, persist only the REAL side exactly like a normal real-only run.
           // what-if requests (extraEntries) remain read-only.
-          if (!hasWhatIfEntries) {
+          if (!hasWhatIfEntries && preview !== true) {
             db.lastPlan = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
             db.challengerStreak = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.challengerStreak]));
             await save();
@@ -1554,7 +1582,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         // What-if requests must be read-only: include request-scoped extra entries
         // in synthesis without mutating or persisting server state.
         const isRealOnly = includeSynthetic !== true;
-        if (!hasWhatIfEntries && isRealOnly) {
+        if (!hasWhatIfEntries && isRealOnly && preview !== true) {
           db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
           db.challengerStreak = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.challengerStreak]));
           await save();

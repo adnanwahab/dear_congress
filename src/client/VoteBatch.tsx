@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { closeDialog } from './dialog-motion';
 
 type Vote = {participant:string;number:number;version:string;choice:'yes'|'no';updatedAt:number};
 type Schedule = {enabled:boolean;nextBatch:string;timezone:string};
@@ -9,7 +10,7 @@ export default function VoteBatch({schedule}:{schedule?:Schedule}) {
  useEffect(()=>{if(schedule?.nextBatch)setTarget(schedule.nextBatch);},[schedule?.nextBatch]);
  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
  useEffect(()=>{if(!target||Date.parse(target)>now)return;const controller=new AbortController();void fetch('/api/hbl/community-votes',{signal:controller.signal}).then(r=>r.ok?r.json():null).then(data=>{if(data?.schedule?.nextBatch)setTarget(data.schedule.nextBatch);}).catch(()=>{});return()=>controller.abort();},[target,Math.floor(now/60000)]);
- useEffect(()=>{if(open){dialog.current?.showModal();closeButton.current?.focus();}else if(dialog.current?.open){dialog.current.close();trigger.current?.focus();}},[open]);
+ useEffect(()=>{if(open){dialog.current?.showModal();closeButton.current?.focus();}else if(dialog.current?.open){return closeDialog(dialog.current,()=>trigger.current?.focus());}},[open]);
  async function load(offset=0){setBusy(true);setError('');try{const r=await fetch(`/api/hbl/community-votes?offset=${offset}`,{credentials:'same-origin'});if(!r.ok)throw Error();const data=await r.json() as Report;setReport(previous=>offset&&previous?{...data,votes:[...previous.votes,...data.votes]}:data);}catch{setError('Votes could not be loaded. Please try again.');}finally{setBusy(false);}}
  const seconds=Math.max(0,Math.floor((Date.parse(target)-now)/1000)),clock=Number.isFinite(seconds)?`${String(Math.floor(seconds/3600)).padStart(2,'0')}:${String(Math.floor(seconds%3600/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'--:--:--';
  return <><button className="gp-batch-widget" ref={trigger} onClick={()=>{setOpen(true);void load();}} aria-haspopup="dialog"><span>Next GitHub totals · every 5 minutes</span><strong>{clock}</strong><span>View everyone’s community votes →</span></button><p className="gp-meta">Votes stay in the local database. One totals comment per PR per five-minute batch. {schedule?.enabled?'Five-minute publishing configured.':'GitHub publishing is not configured; votes remain saved locally.'}</p>

@@ -34,3 +34,19 @@ export function installViewTransitions(target: Window) {
   target.addEventListener('pageswap', apply);
   target.addEventListener('pagereveal', apply);
 }
+
+/** Ordinary same-tab anchors retain native navigation and modified-click behavior. */
+export function prepareStageMorph(event: {
+  defaultPrevented: boolean; button: number; metaKey: boolean; ctrlKey: boolean;
+  shiftKey: boolean; altKey: boolean; currentTarget: HTMLAnchorElement;
+}, stage: number) {
+  if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const link = event.currentTarget;
+  const card = link.closest<HTMLElement>('.stage-card');
+  if (!card) return;
+  card.style.viewTransitionName = `journey-stage-${stage}`;
+  // BFCache restores the source DOM, so discard the outgoing snapshot identity.
+  link.ownerDocument.defaultView?.addEventListener('pageshow', () => {
+    card.style.viewTransitionName = '';
+  }, { once: true });
+}
