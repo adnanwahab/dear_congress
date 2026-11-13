@@ -1,12 +1,43 @@
 # Repository voting — SHE-251
 
+## SHE-279 launch advisory lock
+
+The direct `/vote/happybearlandia` list and detail routes remain available to
+testers as **Developer preview / not a binding vote**. Developer PR links are
+removed from the main civic voting journey. Community policy proposals express
+civic priorities; developer PR responses do not approve or merge code. A verified
+maintainer must explicitly decide whether to merge in GitHub.
+
+`src/server/hbl/pilot.ts` fixes `PR_AUTO_MERGE_ENABLED=false` in code. This is a
+launch capability lock, not a new runtime opt-in. Environment values (including
+`PR_AUTO_MERGE_ENABLED=true`) cannot override it. The signed batch endpoint checks
+the lock through the worker kill switch, and `GitHubSource.merge` rejects direct
+calls before any network request and rechecks immediately before mutation.
+Existing `HBL_MERGE_ENABLED`, dry-run and kill-switch configuration is preserved
+but cannot unlock this pilot. There is no GitHub approval mutation endpoint.
+
+Public responses retain actual eligibility reasons and configured requirements,
+while returning no PR merge schedule (`nextBatch:null`, omitted `earliestBatch`).
+Blocked PRs say **Blocked**, with the base-branch reason. Five-minute community
+summary publication is a separate, explicitly configured advisory-comment path;
+it is not a merge schedule and its configuration is unchanged. No ballots,
+receipts, roster, identities, revisions or stored records are migrated or reset.
+
+Future binding operation requires a reviewed code change and explicit decisions
+on named electorate, identity verification, quorum, allowed bases, human override
+and explicit maintainer decision, and durable audit logs. Current defaults remain
+quorum 10, 24-hour exposure, at least one current-head approval, strict yes
+majority, empty base/check allowlists, protected-base evidence and all existing
+checks. No one-vote rule is authorized. Broader SHE-249/SHE-251 work is deferred
+beyond this launch gating slice.
+
 This extends the existing SHE-249 voting implementation. The prerequisite voting UI/backend was previously uncommitted; the implementation PR includes it with operator approval. The independent local dashboard/map redesign and simulation edits are excluded. Original checkout and production are unchanged.
 
 ## Routes and API
 
 Exact allowlist: Dear Congress (`adnanwahab/dear_congress`), HappyBearLandia (`adnanwahab/happybearlandia`), Digital Pensieve (`adnanwahab/digital_pensieve`). Repository keys are their exact trailing names.
 
-- `/vote` preserves the existing civic voting screen and links to repository voting. `/vote/:repoKey?view=prs|issues` selects a list.
+- `/vote` preserves the existing civic voting screen; repository voting is available through direct tester links. `/vote/:repoKey?view=prs|issues` selects a list.
 - `/vote/:repoKey/pr/:number` and `/vote/:repoKey/issue/:number` select details. Existing HBL PR links are preserved.
 - `/api/hbl/repos/:repoKey/pulls` and `/api/hbl/repos/:repoKey/issues`, optionally followed by `/:number`, serve the selected source. Lists retain the additive `hbl-governance.v1` `pulls` array field for compatibility; `kind` identifies the actual item type. Issues are never PR merge candidates.
 - `/:number/ballot` (PUT) and `/:number/feedback` (POST) use the existing authenticated approved-roster, origin, CSRF, input bounds and idempotency protections. Ballots bind PR head SHA and base. Issue priorities bind stable repository ID + issue number and survive description updates.
