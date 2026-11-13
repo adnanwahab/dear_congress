@@ -33,6 +33,16 @@ checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+## Appearance
+
+The shared civic header cycles **System → Light → Dark**. System is the default;
+explicit choices override the OS and persist in this browser across routes and
+reloads. Storage-blocked browsers retain a choice only for the current page.
+A pre-paint script sets `html[data-theme]`; its exact CSP hash is verified against
+both browser builds. Update that hash if editing the inline initializer.
+Supported browsers reveal theme changes from the button in 400 ms. Reduced
+motion and browsers without View Transitions swap immediately.
+
 ## Measured outcomes (Harris County / Houston)
 
 The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.
@@ -55,6 +65,12 @@ Notes:
 
 - Request-provided `outcomes` in `/api/synthesize` still override measured values for what-if runs.
 - Census fetch works without an API key at low volume; set `CENSUS_API_KEY` to raise reliability.
+
+The `/outcomes` page separates simulated outreach activity from policy measurements.
+Its expandable measurement prototype uses explicitly synthetic transit metrics,
+including mixed results, pinned baseline/source history and missing or stale data.
+No verified implemented policy is registered. These fixtures never feed synthesis.
+See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 
 ## What's in it
 
@@ -234,6 +250,8 @@ simulated residents. It does not use live resident inputs or approve/activate ru
 See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 ### `POST /api/synthesize` notes
+
+- `preview: true` returns the same plan calculation without changing `lastPlan`, challenger streaks or the database file. Synthesis sliders request previews after a 180 ms pause; Synthesize commits the plan. Preview results use the existing re-rank motion and reduced-motion preference.
 
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
 - If `previous` is omitted, the server uses persisted `db.lastPlan` (from the prior synthesis run). If none exists yet, it behaves like a fresh run.
@@ -531,3 +549,32 @@ optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
 
 Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
+
+## Synthetic ingestion experiment
+
+`bun run benchmark:ingestion 1000` exercises a disposable durable queue with
+synthetic content and the existing local journal extractor. This local-only
+microbenchmark establishes no daily capacity or production-readiness claim.
+See [scope, tests, report units and limitations](docs/ingestion-spike.md).
+
+## Reproducible audit sample
+
+A fabricated tally and aggregate score can be replayed offline and downloaded
+through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
+for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.
+
+## Guided demo
+
+Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only
+sample tour visits Published, Feed, Votes, Draft, Sponsors, Outcomes and Map in
+about 60 seconds plus page loading time. Space pauses/resumes, ←/→ step, and Esc
+exits. Clicking the page pauses; exit the tour to interact with voting or saved
+work. Map runs only its local illustrative simulation. No votes or drafts are saved
+by the tour. See [SHE-331 review notes](docs/reviews/SHE-331.md) for validation limits.
+
+## Official legislative metadata (opt-in first slice)
+
+A single-bill Congress.gov metadata importer and separate read-only lane are
+available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
+See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
+Metadata check times do not verify full bill text or current legal status.

@@ -1,5 +1,13 @@
-import { needTransitionName, NeedMentionCount } from "./journal-motion";
+import { motionDuration } from "./motion";
+import { PageSkeleton } from "./LoadingSkeleton";
+import { DemoTour } from './DemoTour';
+import { tourState } from './demo-tour';
+import { onPageActivation } from './page-activation';
+import { QuickSwitcher } from './QuickSwitcher';
+import { LiveRound } from './LiveRound';
+import { NeedRow, rankedNeeds, needMoves, type NeedMode } from "./need-motion";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
+import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
@@ -55,6 +63,7 @@ interface AppState {
   demand: Record<string, NeedDemand>;
   demandReal?: Record<string, NeedDemand>;
   demandBlended?: Record<string, NeedDemand>;
+  demandSimulated?: Record<string, NeedDemand>;
   mechanismShare: Record<string, number>;
   goalSupport: Record<string, number>;
   entries: JournalEntry[];
@@ -67,10 +76,11 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
-async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
+async function api<T>(path: string, body?: unknown, method?: string, signal?: AbortSignal): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
+    signal,
     headers: {
       "content-type": "application/json",
     },
@@ -135,6 +145,9 @@ import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
+  if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
+
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
@@ -143,7 +156,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
+  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div>;
 }
 
 function LegacyApp() {
@@ -191,7 +204,7 @@ function LegacyApp() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => onPageActivation(() => {
     const es = new EventSource("/api/entries/events");
 
     es.onopen = () => {
@@ -213,7 +226,7 @@ function LegacyApp() {
     };
 
     return () => es.close();
-  }, []);
+  }), []);
 
   const onPublishStart = (forkId: string) => {
     setPublishFlow({
@@ -280,21 +293,13 @@ function LegacyApp() {
     });
   };
 
-  if (!state) return <div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div>;
+  const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
+  if (!state) return <div className="legacy-shell">{header}{loadError ? <div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div> : <PageSkeleton path={window.location.pathname} />}</div>;
 
   return (
-    <div className="app engine-workspace">
-      <header className="top">
-        <div className="brand">
-          <span className="mark" aria-hidden>◎</span>
-          <div>
-            <h1>Civic Synthesis</h1>
-            <p>Journals → needs → open votes → the smallest coherent set of changes</p>
-          </div>
-        </div>
-
-      </header>
-
+    <div className="legacy-shell">
+      {header}
+      <div className="app engine-workspace">
       <main>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
@@ -306,6 +311,7 @@ function LegacyApp() {
         <a href="/privacy">Privacy &amp; removal</a> ·
         Prototype. Signals blend {state.population.realVoices ?? 0} real voices with {state.population.n} simulated residents ({state.population.archetypes.map((a) => a.name).join(", ")}). Costs and support figures are illustrative.
       </footer>
+      </div>
     </div>
   );
 }
@@ -471,7 +477,7 @@ function NeedsGeoMap({
   }, [features, simBoxes]);
 
   if (!styleUrl) return <p className="muted s">Map preview is currently unavailable. Shared needs are still listed below.</p>;
-  return <div ref={elRef} style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
 }
 
 function JurisdictionMap({
@@ -536,7 +542,7 @@ function JurisdictionMap({
   }, [jurisdiction, pushingCells]);
 
   if (!styleUrl) return null;
-  return <div ref={elRef} style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
 }
 
 /* -------------------------------- Journal -------------------------------- */
@@ -749,13 +755,19 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const sorted = useMemo(() => [...state.needs].sort((a, b) => demandReal[b.id]!.demand - demandReal[a.id]!.demand), [state, demandReal]);
   const validFocus = state.needs.some(n => n.id === focusNeedId) ? focusNeedId : null;
   const [sel, setSel] = useState(validFocus ?? sorted[0]!.id);
-  const focusedRow = useRef<HTMLLIElement>(null);
-  useEffect(() => {
-    if (!validFocus) return;
-    setSel(validFocus);
-    focusedRow.current?.scrollIntoView?.({ block: "center", behavior: "instant" });
-  }, [validFocus]);
+  useEffect(() => { if (validFocus) setSel(validFocus); }, [validFocus]);
   const [geoMode, setGeoMode] = useState<"real" | "simulated" | "both">(state.entries.some((e) => e.synthetic) ? "both" : "real");
+  const [moves, setMoves] = useState(new Map<string, number>());
+  const visibleDemand = geoMode === "real" ? demandReal : geoMode === "both" ? demandBlended : (state.demandSimulated ?? demandBlended);
+  const visibleNeeds = rankedNeeds(state.needs, visibleDemand);
+  const switchMode = (mode: NeedMode) => {
+    if (mode === geoMode) return;
+    const next = mode === "real" ? demandReal : mode === "both" ? demandBlended : (state.demandSimulated ?? demandBlended);
+    void updatePlan(() => {
+      setMoves(needMoves(visibleNeeds, rankedNeeds(state.needs, next)));
+      setGeoMode(mode);
+    });
+  };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
 
   useEffect(() => {
@@ -788,10 +800,6 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   const measuredSources = new Map<string, { name: string; url: string; caveat?: string }>();
   for (const row of measured.outcomes?.series ?? []) measuredSources.set(`${row.source.name}|${row.source.url}`, row.source);
 
-  const rankReal = new Map(sorted.map((n, i) => [n.id, i + 1]));
-  const sortedBlend = [...state.needs].sort((a, b) => demandBlended[b.id]!.demand - demandBlended[a.id]!.demand);
-  const rankBlend = new Map(sortedBlend.map((n, i) => [n.id, i + 1]));
-
   const jurisdictions = ["Houston", "Harris County", "Texas", "United States"];
   const byJur = jurisdictions.map((j) => {
     const needIds = [...new Set(state.proposals.filter((p) => p.jurisdiction === j && !p.rightsIssue).map((p) => p.needId))];
@@ -805,28 +813,17 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
         <div className="row" style={{ marginBottom: 8 }}>
-          <button className={geoMode === "real" ? "" : "ghost"} onClick={() => setGeoMode("real")}>Real voices</button>
-          <button className={geoMode === "simulated" ? "" : "ghost"} onClick={() => setGeoMode("simulated")}>Simulated residents</button>
-          <button className={geoMode === "both" ? "" : "ghost"} onClick={() => setGeoMode("both")}>Both</button>
+          <button className={geoMode === "real" ? "" : "ghost"} aria-pressed={geoMode === "real"} onClick={() => switchMode("real")}>Real voices</button>
+          <button className={geoMode === "simulated" ? "" : "ghost"} aria-pressed={geoMode === "simulated"} onClick={() => switchMode("simulated")}>Simulated residents</button>
+          <button className={geoMode === "both" ? "" : "ghost"} aria-pressed={geoMode === "both"} onClick={() => switchMode("both")}>Both</button>
         </div>
         <NeedsGeoMap styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
-          {sorted.map((n) => {
-            const d = state.demand[n.id]!;
-            return (
-              <li key={n.id} ref={validFocus === n.id ? focusedRow : undefined} style={{ viewTransitionName: needTransitionName(n.id) }} className={`${sel === n.id ? "on" : ""} ${validFocus === n.id ? "need-arrival" : ""}`}>
-                <button onClick={() => setSel(n.id)}>
-                  <div className="need-top"><b>{n.label}</b><span className="num-s">{Math.round(d.demand * 100)}</span></div>
-                  <Bar value={d.demand} />
-                  <small>
-                    rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
-                    {rankReal.get(n.id) !== rankBlend.get(n.id) ? ` (${rankReal.get(n.id)} → ${rankBlend.get(n.id)})` : ""}
-                    {" · "}<NeedMentionCount count={d.journalCount} added={validFocus === n.id && state.entries.some(e => e.id === new URLSearchParams(window.location.search).get("entry") && e.extraction.needs.some(tag => tag.id === n.id))} /> journal mention{d.journalCount === 1 ? "" : "s"} · {d.avgPoints} avg priority pts
-                  </small>
-                </button>
-              </li>
-            );
-          })}
+          {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
+            rank={i + 1} move={moves.get(n.id) ?? 0}
+            selected={sel === n.id} mode={geoMode} onSelect={() => setSel(n.id)}
+            arrival={validFocus === n.id}
+            mentionAdded={validFocus === n.id && state.entries.some(e => e.id === new URLSearchParams(window.location.search).get("entry") && e.extraction.needs.some(tag => tag.id === n.id))} />)}
         </ul>
       </section>
 
@@ -872,6 +869,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
               <li key={`${s.name}|${s.url}`}>
@@ -1501,7 +1499,7 @@ type ComparePayload = {
   outcomesMode?: OutcomesMode;
 };
 
-function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise<void> }) {
+export function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise<void> }) {
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
   const [lambda, setLambda] = useState(0.25);
   const [budget, setBudget] = useState(40);
@@ -1519,27 +1517,66 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   const [outcomesMode, setOutcomesMode] = useState<OutcomesMode>(state.outcomesMode ?? "shadow");
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
-  async function run(over: { budget?: number } = {}) {
-    setBusy(true);
+  const [livePreview, setLivePreview] = useState(false);
+  const [settingsRevision, setSettingsRevision] = useState(0);
+  const requestVersion = useRef(0);
+  const requestController = useRef<AbortController | null>(null);
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visiblePlans = useRef<{ real: PackageResult[]; blended: PackageResult[] }>({ real: [], blended: [] });
+
+  function invalidateRequest() {
+    requestVersion.current++;
+    requestController.current?.abort();
+    if (previewTimer.current !== null) clearTimeout(previewTimer.current);
+  }
+  function changeSettings(change: () => void) {
+    invalidateRequest();
+    setBusy(false);
+    setLivePreview(true);
+    change();
+    setSettingsRevision(revision => revision + 1);
+  }
+  async function run(over: { budget?: number } = {}, preview = false) {
+    invalidateRequest();
+    const version = requestVersion.current;
+    const controller = new AbortController();
+    requestController.current = controller;
+    setBusy(!preview);
     setSynthError(null);
     try {
-      const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true });
+      const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true, preview }, undefined, controller.signal);
+      if (version !== requestVersion.current) return;
       await updatePlan(() => {
-        setPreviousPlans({ real: realPkgs ?? [], blended: blendedPkgs ?? [] });
+        // View Transition callbacks can run after a newer setting/request.
+        if (version !== requestVersion.current) return;
+        setPreviousPlans(visiblePlans.current);
+        visiblePlans.current = { real: payload.real ?? [], blended: payload.blended ?? [] };
         setShowPlanChanges(true);
         setRealPkgs(payload.real ?? []);
         setBlendedPkgs(payload.blended ?? []);
         setDiff(payload.diff ?? {});
         setMeasuredPreview(payload.measuredPreview ?? {});
         setOutcomesMode(payload.outcomesMode ?? state.outcomesMode ?? "shadow");
+        setLivePreview(preview);
       });
-    } catch (error) { setSynthError(error instanceof Error ? error.message : String(error)); }
-    finally { setBusy(false); }
+    } catch (error) {
+      if (version === requestVersion.current && !controller.signal.aborted)
+        setSynthError(error instanceof Error ? error.message : String(error));
+    } finally { if (version === requestVersion.current) setBusy(false); }
   }
-  useEffect(() => { run(); }, []);
+  useEffect(() => {
+    // Opening the screen must not advance the saved stability baseline either.
+    void run({}, true);
+    return invalidateRequest;
+  }, []);
+  useEffect(() => {
+    if (settingsRevision === 0) return;
+    previewTimer.current = setTimeout(() => { void run({}, true); }, 180);
+    return () => { if (previewTimer.current !== null) clearTimeout(previewTimer.current); };
+  }, [settingsRevision]);
   useEffect(() => {
     if (!showPlanChanges || busy) return;
-    const timer = setTimeout(() => setShowPlanChanges(false), 4000);
+    const timer = setTimeout(() => setShowPlanChanges(false), motionDuration(4000));
     return () => clearTimeout(timer);
   }, [showPlanChanges, busy]);
 
@@ -1644,24 +1681,25 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
       <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
+        {livePreview && <p className="note" role="status">Live preview · not saved</p>}
         {synthError && <p role="alert">{synthError}</p>}
         <p className="muted">Experimental settings, not an approved community governance rule.</p>
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
           <label key={k} className="slider">
             <span>{WEIGHT_LABELS[k]}</span>
-            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => setWeights({ ...weights, [k]: Number(e.target.value) })} />
+            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setWeights({ ...weights, [k]: value })); }} />
             <b className="num-s">{weights[k].toFixed(2)}</b>
           </label>
         ))}
         <hr />
         <label className="slider">
           <span>Institutional-change penalty</span>
-          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => setLambda(Number(e.target.value))} />
+          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setLambda(value)); }} />
           <b className="num-s">{lambda.toFixed(2)}</b>
         </label>
         <label className="slider">
           <span>Annual budget</span>
-          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => setBudget(Number(e.target.value))} />
+          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
           <b className="num-s">${budget}B</b>
         </label>
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>

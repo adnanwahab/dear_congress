@@ -1,4 +1,5 @@
-export const needTransitionName = (id: string) => `journal-need-${Array.from(id, c => c.codePointAt(0)!.toString(16)).join('-')}`;
+// Same name as NeedRow (need-motion.tsx) so a journal chip morphs into its Needs row across pages.
+export { needTransitionName } from './need-motion';
 export const needUrl = (id: string, entry?: string) => `/needs?${new URLSearchParams(entry ? { need: id, entry } : { need: id })}`;
 
 /** Replay only the one contribution confirmed in the loaded public state. The

@@ -10,7 +10,8 @@ test('need links round-trip identities and transition names cannot collide', () 
     expect(url.pathname).toBe('/needs');
     expect(url.searchParams.get('need')).toBe(id);
     expect(url.searchParams.get('entry')).toBe('entry&1');
-    expect(needTransitionName(id)).toMatch(/^journal-need-[a-f0-9-]+$/);
+    // Shared with NeedRow so the journal chip and the Needs row morph as one element.
+    expect(needTransitionName(id)).toMatch(/^need-[a-f0-9-]+$/);
   }
 });
 test('count replay exposes the actual aggregate; ordinary and empty counts never decrement', () => {

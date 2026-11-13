@@ -35,6 +35,53 @@ function seededBalancedPlanIds(db: DB, budget = 40): string[] {
 }
 
 describe("/api/synthesize what-if", () => {
+  test.each(["HTTP", "in-process"])("%s previews write nothing and never advance saved stability", async (transport) => {
+    const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
+    const initialDb = seededDb();
+    initialDb.challengerStreak = { A: { f_buyouts: 1 } };
+    tempDbPaths.push(dbPath);
+    await Bun.write(dbPath, JSON.stringify(initialDb, null, 2));
+    process.env.DB_PATH = dbPath;
+    process.env.PORT = "0";
+    process.env.DEBUG_REQUEST_LOGS = "0";
+    let captured: any;
+    const serve = Bun.serve;
+    let mod: typeof import("./server");
+    try {
+      if (transport === "in-process") Bun.serve = ((options: unknown) => {
+        captured = options;
+        return { url: new URL("http://localhost"), stop() {}, requestIP() { return { address: "127.0.0.1" }; } };
+      }) as typeof Bun.serve;
+      mod = await import(`./server.ts?test=${crypto.randomUUID()}`);
+    } finally { Bun.serve = serve; }
+    const server = mod.server as { url: URL; stop: (closeConnections?: boolean) => void };
+    startedServers.push(server);
+    const before = await Bun.file(dbPath).text();
+    const request = async (body: object) => {
+      const req = new Request(new URL("/api/synthesize", server.url), {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+      });
+      const res: Response = captured
+        ? await captured.routes["/api/synthesize"].POST(req, server)
+        : await fetch(req);
+      expect(res.status).toBe(200);
+      return res.json();
+    };
+    const options = { budget: 20, now: 1700000000000 };
+    for (const compare of [false, true]) {
+      const first = await request({ ...options, compare, preview: true });
+      await request({ budget: 150, lambda: 1, compare, preview: true });
+      const repeated = await request({ ...options, compare, preview: true });
+      expect(repeated).toEqual(first); // Also catches in-memory stability mutation.
+      expect(await Bun.file(dbPath).text()).toBe(before);
+    }
+    const committed = await request({ ...options, compare: true }) as { real: PackageResult[] };
+    const persisted = await Bun.file(dbPath).json() as DB;
+    expect(persisted.lastPlan).toEqual(Object.fromEntries(committed.real.map(pkg => [pkg.id, pkg.items.map(item => item.proposal.id)])));
+    expect(persisted.challengerStreak).toEqual(Object.fromEntries(committed.real.map(pkg => [pkg.id, pkg.challengerStreak])));
+    expect(await Bun.file(dbPath).text()).not.toBe(before);
+  });
+
   test("extraEntries affect synthesis request without persisting to DB", async () => {
     const dbPath = `data/test-db-${crypto.randomUUID()}.json`;
     const initialDb = seededDb();
