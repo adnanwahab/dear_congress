@@ -56,6 +56,12 @@ Notes:
 - Request-provided `outcomes` in `/api/synthesize` still override measured values for what-if runs.
 - Census fetch works without an API key at low volume; set `CENSUS_API_KEY` to raise reliability.
 
+The `/outcomes` page separates simulated outreach activity from policy measurements.
+Its expandable measurement prototype uses explicitly synthetic transit metrics,
+including mixed results, pinned baseline/source history and missing or stale data.
+No verified implemented policy is registered. These fixtures never feed synthesis.
+See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+
 ## What's in it
 
 | Step | What it does |
