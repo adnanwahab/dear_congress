@@ -51,3 +51,9 @@
   /* Position feedback follows scrolling directly; no eased motion or reveal. */
   .documentation-progress > div { animation-duration: auto !important; }
 }
+
+.documentation-article details { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px; }
+.documentation-article summary { cursor: pointer; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
+.documentation-article details p { line-height: 1.8; overflow-wrap: anywhere; }
+.documentation-shell :is(a, button, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.documentation-layout > * { min-width: 0; }
