@@ -463,7 +463,7 @@ function NeedsGeoMap({
     simSrc?.setData?.({ type: "FeatureCollection", features: simBoxes });
   }, [features, simBoxes]);
 
-  if (!styleUrl) return <p className="muted s">Set `MAP_STYLE_URL` on the server to enable map tiles.</p>;
+  if (!styleUrl) return <p className="muted s">Map preview is currently unavailable. Shared needs are still listed below.</p>;
   return <div ref={elRef} style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
 }
 
@@ -862,7 +862,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
               <li key={`${s.name}|${s.url}`}>
-                <b><a href={s.url} target="_blank" rel="noreferrer">{s.name}</a></b>
+                <b><a href={s.url} target="_blank" rel="noreferrer">{s.name}</a></b>{" "}
                 <small className="muted">{s.caveat || "Interpret with context; source methodology may change over time."}</small>
               </li>
             ))}
