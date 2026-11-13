@@ -1464,7 +1464,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare, preview } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
@@ -1475,6 +1475,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           now?: string | number;
           outcomes?: SynthesisOutcomes;
           compare?: boolean;
+          preview?: boolean;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
@@ -1528,7 +1529,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
           // In compare mode, persist only the REAL side exactly like a normal real-only run.
           // what-if requests (extraEntries) remain read-only.
-          if (!hasWhatIfEntries) {
+          if (!hasWhatIfEntries && preview !== true) {
             db.lastPlan = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
             db.challengerStreak = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.challengerStreak]));
             await save();
@@ -1561,7 +1562,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         // What-if requests must be read-only: include request-scoped extra entries
         // in synthesis without mutating or persisting server state.
         const isRealOnly = includeSynthetic !== true;
-        if (!hasWhatIfEntries && isRealOnly) {
+        if (!hasWhatIfEntries && isRealOnly && preview !== true) {
           db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
           db.challengerStreak = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.challengerStreak]));
           await save();
