@@ -1,0 +1,85 @@
+import { expect, test } from 'bun:test';
+import { Window } from 'happy-dom';
+
+test('actual journal route isolates the draft and requires fresh exact-payload consent', async () => {
+  const dom = new Window({ url: 'https://civic.test/journal' });
+  const keys = ['window', 'document', 'navigator', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'Element', 'Node', 'Event', 'MouseEvent', 'location', 'localStorage'];
+  const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const previousAct = (globalThis as any).IS_REACT_ACT_ENVIRONMENT;
+  for (const key of keys) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const { act } = await import('react');
+  const { createRoot } = await import('react-dom/client');
+  const { fireEvent, within } = await import('@testing-library/dom');
+  const { default: JournalScreen } = await import('./JournalScreen');
+  const root = createRoot(document.body.appendChild(document.createElement('div')));
+  const calls: { path: string; body?: unknown }[] = [];
+  let outcome = 'pending';
+  const request = async <T,>(path: string, body?: unknown): Promise<T> => {
+    calls.push({ path, body });
+    if (path.startsWith('/api/entries')) return { entries: [], nextCursor: null } as T;
+    if (path.includes('schema')) return { version: 2, needs: [] } as T;
+    if (outcome === 'failure') throw Error('sensitive server error must not be reflected');
+    if (outcome === 'pending') return { status: 'pending', entryId: 'held' } as T;
+    return { entry: { id: 'public', text: 'Safe excerpt', author: 'Public name', extraction: { needs: [] } } } as T;
+  };
+  const q = () => within(document.body);
+  const click = async (name: string) => { await act(async () => { fireEvent.click(q().getByRole('button', { name })); }); };
+  const edit = async (label: string, value: string) => { await act(async () => { fireEvent.change(q().getByLabelText(label), { target: { value } }); }); };
+  const confirm = async () => { await click('Review public excerpt'); await act(async () => { fireEvent.click(q().getByRole('checkbox', { name: 'I want to share this exact excerpt publicly.' })); }); };
+  try {
+    await act(async () => { root.render(<JournalScreen request={request} />); });
+    const baseline = calls.length;
+    await edit('Working draft (not uploaded)', 'PRIVATE_SENTINEL unshared family details');
+    await edit('Public excerpt', '  Safe excerpt  ');
+    await edit('Public display name (optional)', 'Public name');
+    expect(calls.length).toBe(baseline);
+    await click('Review public excerpt');
+    expect((q().getByRole('button', { name: 'Share publicly' }) as HTMLButtonElement).disabled).toBe(true);
+    await click('Cancel sharing');
+    expect(calls.length).toBe(baseline);
+    await confirm();
+    await edit('Working draft (not uploaded)', 'PRIVATE_SENTINEL revised unshared details');
+    expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
+    await confirm();
+    await edit('Public display name (optional)', 'New name');
+    expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
+    await confirm();
+    await edit('Public excerpt', 'Safe excerpt changed');
+    expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
+    await edit('Public excerpt', 'Safe excerpt');
+    await edit('Public display name (optional)', 'Public name');
+    await confirm();
+    await click('Share publicly');
+    expect(calls.filter(c => c.body)).toEqual([{ path: '/api/publish_draft', body: { kind: 'journal', text: 'Safe excerpt', author: 'Public name' } }]);
+    expect(document.body.textContent).toContain('Excerpt held for moderation review');
+    expect((q().getByLabelText('Working draft (not uploaded)') as HTMLTextAreaElement).value).toContain('PRIVATE_SENTINEL');
+    expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
+    outcome = 'failure';
+    await confirm(); await click('Share publicly');
+    expect(document.body.textContent).toContain('retrying may duplicate');
+    expect(document.body.textContent).not.toContain('sensitive server error');
+    const count = calls.length;
+    Object.defineProperty(dom.navigator, 'onLine', { configurable: true, value: false });
+    await confirm(); await click('Share publicly');
+    expect(calls.length).toBe(count);
+    expect(document.body.textContent).toContain('Nothing was queued');
+    Object.defineProperty(dom.navigator, 'onLine', { configurable: true, value: true });
+    expect(calls.length).toBe(count);
+    outcome = 'published';
+    await confirm();
+    const share = q().getByRole('button', { name: 'Share publicly' });
+    const beforePublish = calls.filter(c => c.body).length;
+    await act(async () => { fireEvent.click(share); fireEvent.click(share); });
+    expect(calls.filter(c => c.body).length).toBe(beforePublish + 1);
+    expect(document.body.textContent).toContain('Excerpt published. Your working draft remains here.');
+    expect(document.body.textContent).toContain('Entry ID: public');
+    expect(JSON.stringify(calls)).not.toContain('PRIVATE_SENTINEL');
+    expect(dom.localStorage.length).toBe(0);
+  } finally {
+    await act(async () => { root.unmount(); });
+    for (const key of keys) { const descriptor = previous.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = previousAct;
+    await dom.happyDOM.close();
+  }
+});
