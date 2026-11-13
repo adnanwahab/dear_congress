@@ -1,6 +1,6 @@
 import { flushSync } from 'react-dom';
 
-export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change';
+export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter';
 export type MotionMode = 'normal' | 'slow' | 'off';
 
 /** Apply before rendering/capturing the incoming page. Storage may be unavailable. */
@@ -28,7 +28,8 @@ export function motionDuration(ms: number) {
 
 const fallbackOwners = new WeakMap<HTMLElement, symbol>();
 
-export async function runViewTransition(update: () => void, type: MotionType) {
+/** `onStart` receives the live transition so callers can skip it when newer input arrives. */
+export async function runViewTransition(update: () => void, type: MotionType, onStart?: (transition: ViewTransition) => void) {
   if (typeof document === 'undefined' || !document.startViewTransition || motionDisabled()) {
     flushSync(update); return;
   }
@@ -51,6 +52,7 @@ export async function runViewTransition(update: () => void, type: MotionType) {
       throw error;
     }
   }
+  onStart?.(transition);
   void transition.ready?.catch(() => {});
   const finished = transition.finished?.catch(() => {});
   try {
