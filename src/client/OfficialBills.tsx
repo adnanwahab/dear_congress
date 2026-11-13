@@ -23,7 +23,7 @@ export function OfficialBills({ request }: { request: <T>(path: string) => Promi
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     let active = true;
-    const load = () => request<{ bills: BillObservation[] }>('/api/legislation').then(data => { if (active) { setBills(data.bills); setError(false); setLoaded(true); } }).catch(() => { if (active) { setError(true); setLoaded(true); } });
+    const load = () => request<{ bills: BillObservation[] }>('/api/legislation').then(data => { if (active) { setBills(Array.isArray(data?.bills) ? data.bills : []); setError(false); setLoaded(true); } }).catch(() => { if (active) { setError(true); setLoaded(true); } });
     void load();
     const timer = setInterval(() => { setNow(Date.now()); void load(); }, 60000);
     return () => { active = false; clearInterval(timer); };
