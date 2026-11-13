@@ -15,6 +15,7 @@ test("healthz is uncached process liveness and leaves persisted data unchanged",
     process.env.DB_PATH = dbPath;
     process.env.PORT = "0";
     server = (await import(`./server.ts?healthz=${crypto.randomUUID()}`)).server;
+    const afterStartup = await Bun.file(dbPath).text();
     const response = await fetch(new URL("/healthz", server!.url));
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("application/json");
@@ -25,7 +26,8 @@ test("healthz is uncached process liveness and leaves persisted data unchanged",
     expect(head.status).toBe(200);
     expect(await head.text()).toBe("");
     expect((await fetch(new URL("/healthz", server!.url), { method: "POST" })).status).toBe(405);
-    expect(await Bun.file(dbPath).text()).toBe(before);
+    expect(JSON.parse(afterStartup)).toEqual(JSON.parse(before));
+    expect(await Bun.file(dbPath).text()).toBe(afterStartup);
   } finally {
     server?.stop(true);
     for (const [key, value] of Object.entries(previous)) {

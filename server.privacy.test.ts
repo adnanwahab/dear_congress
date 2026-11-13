@@ -1,13 +1,14 @@
 import { expect, spyOn, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { emptyDB, extract } from "./src/engine/engine";
 import { claimJournal, deleteJournal } from "./src/server/journal-privacy";
 
 // Exercise the actual wrapped route handlers and on-disk reload without requiring
 // a listening socket (the restricted runner rejects Bun.serve with EADDRINUSE).
 test("journal privacy, ownership, vote withdrawal and disk reload through real route handlers", async () => {
-  const dir = await mkdtemp("/private/tmp/she-284-");
+  const dir = await mkdtemp(join(tmpdir(), "she-284-"));
   const path = join(dir, "db.json");
   const env = { ...process.env };
   let routes: any;

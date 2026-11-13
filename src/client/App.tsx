@@ -6,6 +6,7 @@ import type {
 } from "../engine/types";
 import { IDEA_STAGES } from "../engine/types";
 import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
+import { loadMapLibre } from "./maplibre";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -418,7 +419,7 @@ function NeedsGeoMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({
         container: elRef.current,
@@ -492,7 +493,7 @@ function JurisdictionMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     (async () => {
-      const maplibre = await import("maplibre-gl");
+      const maplibre = await loadMapLibre();
       if (disposed || !elRef.current) return;
       const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
       map.on("load", async () => {
