@@ -6,6 +6,7 @@ import {
 } from "../shared/citizen-proposals";
 
 interface PublicJournalSource {
+  moderation?: { status: "pending" | "hidden" | "published" };
   id: string;
   text: string;
   author: string;
@@ -127,7 +128,7 @@ export function publishCitizenProposal(store: CitizenProposalStore, voterId: str
     }
     return { record: existing, created: false };
   }
-  if (proposal.sourceEntryId && !store.entries.some((entry) => entry.id === proposal.sourceEntryId)) {
+  if (proposal.sourceEntryId && !store.entries.some((entry) => entry.id === proposal.sourceEntryId && (!entry.moderation || entry.moderation.status === "published"))) {
     throw new CitizenProposalError("The source journal entry was not found. Choose an existing entry or remove the source link.");
   }
   const now = new Date().toISOString();
@@ -263,7 +264,7 @@ export function createCitizenProposalHandlers(deps: {
       proposal: citizenProposalView(findCitizenProposal(deps.getStore(), id), requestVoter(req, false)),
     })),
     journal: (_req: Request, id: string) => handle(() => {
-      const source = deps.getStore().entries.find((entry) => entry.id === id);
+      const source = deps.getStore().entries.find((entry) => entry.id === id && (!entry.moderation || entry.moderation.status === "published"));
       if (!source) throw new CitizenProposalError("Journal entry not found.", 404);
       return { entry: { id: source.id, text: source.text, author: source.author, createdAt: source.createdAt } };
     }),

@@ -361,3 +361,32 @@ only the entry ID, not private text, in a public removal request. Journal text i
 rendered through React text interpolation. Private browser drafts are never read
 or uploaded by the journal submission path. No identity verification, CAPTCHA,
 paid incentives, merge policy changes, or deployment is included.
+
+## Journal moderation
+
+Each journal entry has a **Report** button. Reports are saved privately and share
+public write limits; reporting does not automatically hide an entry.
+
+Set a strong random server-only `ADMIN_TOKEN` and visit `/admin/moderation` over
+HTTPS. Use any username and the token as the password in the browser's sign-in
+prompt. Without the token, the view and decision API fail closed. Never put the
+token in a URL, client bundle, or repository. Browsers cache this authentication;
+use a private window and close it after moderation on shared computers.
+
+The admin view shows reports and held entries. **Hide entry** requires a reason,
+retains the original record and source ID, and removes it from public journal
+reads, live feed updates, map aggregation and future needs/synthesis calculations.
+Decisions and reasons persist privately. Admin JSON decisions use
+`POST /api/admin/moderation` with Bearer authentication, same-origin `Origin`, and
+`{ entryId, action: "hide" | "approve", reason }`.
+
+All journal publication aliases check text and author for common email, phone and
+street-address formats before external extraction or answer creation. Matches
+return HTTP 202 `{ status: "pending", entryId, message }` and are held privately;
+clients must not treat this as live publication. Admin approval publishes a held
+submission as a journal only, including submissions originally using answer mode.
+No automatic ballot option is created from a held submission. Detection is a
+conservative heuristic with false positives and misses, not complete PII detection.
+Existing entries are retained without a retroactive scan; the admin can hide any
+of them. Independently published proposals and existing external copies require
+separate review. This uses the existing durable single-writer JSON store.

@@ -1,3 +1,4 @@
+import { isPublicEntry } from "../shared/moderation";
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import { applyVariant, chosenVariant } from "./variants";
 import type {
@@ -262,7 +263,7 @@ export interface ContextOptions {
 
 /** The journal entries that should count toward needs, demand and quotes. */
 export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[] {
-  const base = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const base = db.entries.filter((e) => isPublicEntry(e) && (opts.includeSynthetic || !e.synthetic));
   if (!opts.extraEntries?.length) return base;
   return [...base, ...opts.extraEntries];
 }
@@ -430,7 +431,7 @@ export function proposalStats(db: DB, voters: Voter[], p: Proposal): ProposalSta
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
-  const baseEntries = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const baseEntries = db.entries.filter((e) => isPublicEntry(e) && (opts.includeSynthetic || !e.synthetic));
   const whatIfEntries = opts.extraEntries ?? [];
   const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
