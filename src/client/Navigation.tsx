@@ -1,11 +1,7 @@
+import { CIVIC_STAGES } from '../shared/civic-stages';
 import { useEffect, useState } from 'react';
 const DESTINATIONS = [
-  { href: '/published', label: 'Published', icon: 'overview' },
-  { href: '/feed', label: 'Feed', icon: 'needs' },
-  { href: '/votes', label: 'Votes', icon: 'vote' },
-  { href: '/draft', label: 'Draft', icon: 'draft' },
-  { href: '/sponsors', label: 'Sponsors', icon: 'needs' },
-  { href: '/outcomes', label: 'Outcomes', icon: 'vote' },
+  ...CIVIC_STAGES.map(s => ({ href: s.route, label: s.title, icon: s.n === 3 ? 'vote' : s.n === 4 ? 'draft' : 'overview' })),
   { href: '/map', label: 'Map', icon: 'map' },
   { href: '/journal', label: 'Journal', icon: 'journal' },
 ];
@@ -24,5 +20,5 @@ export function BottomNavigation() {
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
   const current = path.replace(/\/+$/, '') || '/';
-  return <div className="bottom-bar"><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(d => <a href={d.href} key={d.href} aria-current={(current === d.href || (d.href === '/votes' && (current === '/vote' || current.startsWith('/vote/happybearlandia'))) || (d.href === '/journal' && current === '/api-docs')) ? 'page' : undefined}><Icon name={d.icon} /><span>{d.label}</span></a>)}</nav><nav className="bottom-utilities" aria-label="Page actions"><button onClick={() => { if (window.history.length > 1) window.history.back(); else window.location.assign('/'); }}>← Back</button><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button><a href="/">Overview</a><a href="/needs">Needs</a><a href="/synth">Synthesis</a><a href="/documentation" aria-current={current === "/documentation" || current === "/docs" ? "page" : undefined}>Documentation</a><a href="/journal?tab=api">API docs ↗</a><span className="bottom-app-links"><a href="https://happybearlandia.fly.dev/world" target="_blank" rel="noopener noreferrer" aria-label="HBL — HappyBearLandia (opens in a new tab)">HBL ↗</a><a href="https://digital-pensieve.fly.dev/" target="_blank" rel="noopener noreferrer" aria-label="Digital Pensieve (opens in a new tab)">digital-pensieve ↗</a></span></nav></div>;
+  return <div className="bottom-bar"><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(d => <a href={`${d.href}${CIVIC_STAGES.some(s => s.route === d.href) && new URLSearchParams(window.location.search).get('proposal') ? `?proposal=${encodeURIComponent(new URLSearchParams(window.location.search).get('proposal')!)}` : ''}`} key={d.href} aria-current={(current === d.href || (d.href === '/votes' && (current === '/vote' || current.startsWith('/vote/happybearlandia'))) || (d.href === '/journal' && current === '/api-docs')) ? 'page' : undefined}><Icon name={d.icon} /><span>{d.label}</span></a>)}</nav><nav className="bottom-utilities" aria-label="Page actions"><button onClick={() => { if (window.history.length > 1) window.history.back(); else window.location.assign('/'); }}>← Back</button><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button><a href="/">Overview</a><a href="/needs">Needs</a><a href="/synth">Synthesis</a><a href="/documentation" aria-current={current === "/documentation" || current === "/docs" ? "page" : undefined}>Documentation</a><a href="/journal?tab=api">API docs ↗</a><span className="bottom-app-links"><a href="https://happybearlandia.fly.dev/world" target="_blank" rel="noopener noreferrer" aria-label="HBL — HappyBearLandia (opens in a new tab)">HBL ↗</a><a href="https://digital-pensieve.fly.dev/" target="_blank" rel="noopener noreferrer" aria-label="Digital Pensieve (opens in a new tab)">digital-pensieve ↗</a></span></nav></div>;
 }

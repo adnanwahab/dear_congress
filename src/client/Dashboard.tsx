@@ -1,15 +1,8 @@
+import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 
 type Request = <T>(path: string, body?: unknown, method?: string) => Promise<T>;
-const PIPELINE = [
-  ['Published', 'Clock starts', 'Official sources provide the context for each proposal.'],
-  ['In the feed', 'Same day', 'Find a topic and read the change in plain English.'],
-  ['Open for votes', 'Open 7 days', 'One browser account, one non-binding advisory vote.'],
-  ['Weekly draft', 'Every week', 'Proposed text, a clear summary, and sponsor candidates.'],
-  ['Sponsor contact', 'Within a week', 'Prepare a draft for the relevant public office.'],
-  ['Outcome', 'Tracked weekly', 'Track replies, introductions, and the next step.'],
-];
 const LANES = ['Drafted', 'Ready to send', 'Replied', 'Introduced or offered', 'Stalled'];
 interface Tracked { id: string; title: string; office: string; stage: number; updatedAt: string; }
 const TRACKER_KEY = 'civic_demo_tracker_v1';
@@ -77,7 +70,7 @@ export function Dashboard({ request }: { request: Request }) {
   return <div className="civic-shell">
     <header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">Live demo</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header>
     <main className="civic-main">
-      <section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><ol className="stage-grid">{PIPELINE.map(([title,time,description],i) => <li className="stage-card" key={title}><div className="stage-top"><span>{i+1}</span><small>{time}</small></div><h2><a href={["/published","/feed","/votes","/draft","/sponsors","/outcomes"][i]}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
+      <section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2><a href={`${route}${item ? `?proposal=${encodeURIComponent(item.id)}` : ''}`}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : 'Loading sample scenarios…'}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <div className="triple-grid">
