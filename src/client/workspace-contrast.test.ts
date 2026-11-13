@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 
-const css = await Bun.file(new URL('./styles.css', import.meta.url)).text();
+const css = await Bun.file(new URL('./styles.css', import.meta.url)).text() + '\n' + await Bun.file(new URL('./vision-board.css', import.meta.url)).text();
 
 function luminance(color: string): number {
   const hex = color.replace('#', '');
@@ -27,7 +27,10 @@ for (const theme of ['light', 'dark']) {
         expect(window.matchMedia('(prefers-color-scheme: dark)').matches).toBe(theme === 'dark');
         window.document.head.innerHTML = `<style>${css}</style>`;
         window.document.body.innerHTML = `
-          <div class="product-shell"><main class="app engine-workspace"><section class="card">
+          <div class="product-shell"><div class="civic-shell">
+            <header class="civic-header"><div class="header-brand"><a href="/">Civic Synthesis</a><span class="pill">Journal</span></div><div class="header-meta"><span class="pill warn">SAMPLE DATA</span><span class="pill info">Advisory · not binding</span></div></header>
+            <section class="vision-board"><div class="vb-heading"><h2>Your vision</h2></div><span class="vb-hint">Private on this device</span><button data-action>Add vision</button><button class="vb-quiet">Cancel</button><article class="vb-card vb-sky"><h3>A shared future</h3><span class="vb-stage">Planning</span></article></section>
+          </div><main class="app engine-workspace"><section class="card">
             <ul class="needs">
               <li><button><div class="need-top"><b>Housing</b><span>84</span></div><small>rank real #1 / blended #2</small></button></li>
               <li class="on"><button><div class="need-top"><b>Transport</b><span>73</span></div><small>rank real #2 / blended #1</small></button></li>
@@ -43,7 +46,7 @@ for (const theme of ['light', 'dark']) {
             </ul>
             <button data-action>Recompute</button><button class="ghost">Preview</button>
           </section></main></div>`;
-        for (const element of window.document.querySelectorAll('b, span, small, button[data-action], button.ghost')) {
+        for (const element of window.document.querySelectorAll('b, span, small, h2, h3, .header-brand a, button[data-action], button.ghost, button.vb-quiet')) {
           const foreground = window.getComputedStyle(element).color;
           let ancestor: typeof element | null = element;
           let background = '';

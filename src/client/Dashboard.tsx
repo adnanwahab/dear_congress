@@ -1,6 +1,7 @@
 import { AdvisoryVoteBars } from './AdvisoryVoteBars';
 import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
+import { CivicHeader } from "./CivicHeader";
 import { filterProposals, ProposalSearch } from './ProposalSearch';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
@@ -72,7 +73,7 @@ export function Dashboard({ request }: { request: Request }) {
     if (persist([...tracker, { id: item.id, title: item.title, office: office || item.sponsors[0]!, stage: 0, updatedAt: `Prepared ${dateLabel(new Date().toISOString())}` }])) setNotice('Draft added to your local demo tracker. No message was sent.');
   }
   return <div className="civic-shell">
-    <header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">Live demo</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header>
+    <CivicHeader stage="Live demo" />
     <main className="civic-main">
       <section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2><a href={`${route}${item ? `?proposal=${encodeURIComponent(item.id)}` : ''}`}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : 'Loading sample scenarios…'}</span></div>
