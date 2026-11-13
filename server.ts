@@ -1,3 +1,4 @@
+import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
 import { liveQR } from './src/server/live-qr';
 const liveRounds = new LiveRounds();
@@ -17,7 +18,7 @@ import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
 import { buildBrowser, transitionShell } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
-import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
+import { NEEDS, PROPOSALS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
@@ -854,6 +855,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/api/topics/:id": { GET: (req) => {
+      const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
+      return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });
+    } },
     // Process liveness only: no database writes or upstream calls.
     "/version": {
       GET: () => securityHeaders(Response.json(buildIdentity, { headers: { "Cache-Control": "no-store" } })),

@@ -578,3 +578,22 @@ A single-bill Congress.gov metadata importer and separate read-only lane are
 available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
 See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
 Metadata check times do not verify full bill text or current legal status.
+
+## Topic hubs
+
+Open `/topics` to search the existing taxonomy, or share `/topics/transit`,
+`/topics/housing` and `/topics/childcare` directly. Topic chips on sample cards
+open hubs; filter controls also offer hub links. Hubs display stored sample
+extraction lineage and catalog policy alternatives separately from fictional
+workflow proposals and their background references. Topic association alone is
+never presented as source derivation. Workflow links retain `topic` and
+`proposal`; the return link and browser history preserve the topic context.
+
+`GET /api/topics/:id` is a read-only, uncached projection. It only includes public,
+non-synthetic repository-seeded stories with existing taxonomy labels, and omits
+location, ownership and moderation metadata. Human journals are excluded because
+legacy records lack explicit topic-curation consent. Held/hidden/deleted stories
+are excluded on the next read. No new classification or data migration occurs.
+Official legislative observations have no reviewed topic binding, so hubs show
+that stage as not yet available rather than matching bill titles by keyword.
+See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).

@@ -1,9 +1,12 @@
+import { TOPICS } from './topics';
 import { CIVIC_STAGES } from './civic-stages';
 export const SITE_URL = "https://civic-synthesis.fly.dev";
 export const SITE_NAME = "Civic Synthesis";
 export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
 
 export const PAGE_TITLES: Record<string, string> = {
+  "/topics": "Topic hubs",
+  ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),
   "/account": "Participation & privacy",
   "/map": "County map",
   "/documentation": "Documentation", "/docs": "Documentation",
