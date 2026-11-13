@@ -53,7 +53,7 @@ describe("/api/simulation-snapshots", () => {
 
     expect(snapshot.id).toMatch(/^sim_[0-9a-f]{16}$/);
     expect(snapshot.entryId).toBe("seed-0");
-    expect(snapshot.location).toEqual({ lat: 29.72, lng: -95.47 });
+    expect(snapshot.location).toBeNull();
     expect(snapshot.plan.label).toBe("Balanced");
     expect(snapshot.plan.proposalIds.length).toBeGreaterThan(0);
     expect(snapshot.plan.items[0]!.title.length).toBeGreaterThan(0);

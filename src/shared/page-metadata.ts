@@ -3,6 +3,7 @@ export const SITE_NAME = "Civic Synthesis";
 export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
 
 export const PAGE_TITLES: Record<string, string> = {
+  "/privacy": "Privacy & removal",
   "/": "Journal", "/journal": "Journal", "/needs": "Shared needs",
   "/vote": "Vote on goals and ideas", "/votes": "Citizen proposals & votes",
   "/feed": "Proposal feed", "/proposals/new": "Propose a law",
