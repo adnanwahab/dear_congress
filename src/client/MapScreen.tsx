@@ -1,3 +1,4 @@
+import { CivicHeader } from "./CivicHeader";
 import { useEffect, useMemo, useState } from 'react';
 import counties from './data/counties.json';
 import { CountyCountMethodology, modeledCountyPercent } from './CountyCountMethodology';
@@ -30,7 +31,7 @@ export default function MapScreen() {
   useEffect(() => { if (complete) setRunning(false); }, [complete]);
   function reset() { setRunning(false); setPlan([...INITIAL_PLAN]); setRound(1); }
   return <div className="civic-shell map-shell county-shell">
-    <header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">National sandbox</span></div><a href="/votes">Explore proposals →</a></header>
+    <CivicHeader stage="National sandbox" />
     <main className="civic-main map-main">
       <section className="map-heading"><div><p className="map-eyebrow">Illustrative county sandbox</p><h1>Explore a modeled county plan.</h1><p>County shapes show synthetic requirements, not constituent votes. Improve the sample plan to explore modeled support.</p></div><div className="county-live"><span className={running ? 'pulse' : ''} />{complete ? 'Model requirements met' : running ? 'Simulation running' : 'Simulation ready'}</div></section>
       <div className="county-metrics"><div><strong>{counties.length.toLocaleString()}</strong><span>county shapes modeled · 100% of bundled shapes</span><span>{counties.length.toLocaleString()} / {counties.length.toLocaleString()} bundled county models</span></div><div><strong>{agreed.toLocaleString()} <small>/ {counties.length.toLocaleString()}</small></strong><span>modeled counties supporting plan</span></div><div><strong>{modeledCountyPercent(agreed, counties.length)}</strong><span>modeled support on this revision</span><span>{agreed.toLocaleString()} / {counties.length.toLocaleString()} bundled county models</span></div><div><strong>{round.toString().padStart(2, '0')}</strong><span>plan revision</span></div></div>

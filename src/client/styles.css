@@ -1,29 +1,12 @@
 :root {
-  --bg: #f6f3ee;
-  --card: #fffdf9;
-  --ink: #1d1b18;
-  --muted: #6b655c;
-  --line: #e5ded3;
-  --accent: #2f5d50;
-  --accent-soft: #dce8e3;
-  --sup: #3f7d5c;
-  --neu: #c9c1b4;
-  --opp: #b5523b;
-  --warn-bg: #fbf1dc;
-  --warn-line: #e5c98a;
-  --bad-bg: #f8e6e1;
-  --bad-line: #e2b1a4;
-  --new: #5b4b9a;
-  --radius: 12px;
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161513; --card: #1f1e1b; --ink: #ece7df; --muted: #a39b8f; --line: #34312c;
-    --accent: #7fb8a4; --accent-soft: #263a33; --sup: #6fb48d; --neu: #4a463f; --opp: #db7c63;
-    --warn-bg: #2e2717; --warn-line: #6b5a2c; --bad-bg: #321e19; --bad-line: #6e3a2e; --new: #a796e6;
-  }
+  --bg: #f7f5ef; --card: #fff; --ink: #242421; --muted: #56544e;
+  --line: #e1ddd3; --accent: #245593; --accent-soft: #e5edf8;
+  --sup: #3f7d5c; --neu: #c9c1b4; --opp: #a34430;
+  --warn-bg: #fbf1dc; --warn-line: #e5c98a;
+  --bad-bg: #f8e6e1; --bad-line: #e2b1a4; --new: #5b4b9a;
+  --radius: 13px;
+  --sans: Arial, Helvetica, sans-serif;
+  --serif: var(--sans);
 }
 
 * { box-sizing: border-box; }
@@ -73,7 +56,7 @@ button:disabled { opacity: .5; cursor: default; }
 button.ghost { background: transparent; color: var(--accent); }
 button.small { padding: 5px 10px; font-size: 13px; }
 button.big { width: 100%; padding: 12px; font-size: 16px; margin-top: 8px; }
-@media (prefers-color-scheme: dark) { button { color: #10201b; } button.ghost { color: var(--accent); } }
+
 
 input, textarea, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
 textarea { resize: vertical; margin: 6px 0 10px; }
@@ -355,11 +338,11 @@ table.versions .badge { margin-left: 6px; }
 @media (max-width: 480px) { .sim-realities.ready .row { flex-wrap: wrap; } }
 
 /* Civic dashboard — publication-to-sponsor overview. */
-.civic-shell { --bg: #f7f5ef; --card: #fff; --ink: #242421; --muted: #56544e; --line: #e1ddd3; --accent: #245593; --accent-soft: #e5edf8; background: var(--bg); color: var(--ink); min-height: 100vh; font: 16px/1.45 Arial, Helvetica, sans-serif; }
+.civic-shell { background: var(--bg); color: var(--ink); min-height: 100vh; font: 16px/1.45 Arial, Helvetica, sans-serif; }
 .civic-shell h1, .civic-shell h2, .civic-shell h3 { font-family: inherit; color: var(--ink); text-transform: none; letter-spacing: normal; font-weight: 700; }
 .civic-shell p { margin: 0; }
 .civic-shell a { color: var(--accent); }
-.civic-header { min-height: 75px; padding: 20px max(28px, 3.33vw); display: flex; justify-content: space-between; align-items: center; gap: 20px; background: #fff; border-bottom: 1px solid var(--line); }
+.civic-header { view-transition-name: civic-header; font: 16px/1.45 var(--sans); min-height: 75px; padding: 20px max(28px, 3.33vw); display: flex; justify-content: space-between; align-items: center; gap: 20px; background: #fff; border-bottom: 1px solid var(--line); }
 .header-brand, .header-meta { display: flex; align-items: center; gap: 16px; }
 .header-brand > a { color: var(--ink); font-size: 24px; font-weight: 700; text-decoration: none; }
 .civic-shell .pill { display: inline-flex; align-items: center; border: 1px solid #d3cfc5; border-radius: 20px; padding: 2px 12px; white-space: nowrap; font-size: 16px; line-height: 1.4; }
@@ -490,7 +473,7 @@ table.versions .badge { margin-left: 6px; }
 @media (max-width: 680px) { .map-layout { display: flex; flex-direction: column-reverse; } .map-stage { min-height: 620px; } .map-detail { left: 12px; right: 12px; padding: 16px; } .map-detail h2 { font-size: 20px; } .map-detail-foot { flex-wrap: wrap; } .map-proposal-list { max-height: 320px; } .map-overlay-top { left: 12px; } }
 
 /* Shared navigation and journal workspace. */
-.product-shell { --bg: #f7f5ef; --card: #fff; --ink: #242421; --muted: #56544e; --line: #e1ddd3; --accent: #245593; --accent-soft: #e5edf8; min-height: 100vh; padding-bottom: 118px; background: var(--bg); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+.product-shell { min-height: 100vh; padding-bottom: 118px; background: var(--bg); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; border-top: 1px solid #deded5; background: #fffffffa; backdrop-filter: blur(16px); box-shadow: 0 -4px 22px #24344708; padding: 6px max(18px, calc((100vw - 1200px) / 2)) max(7px, env(safe-area-inset-bottom)); }
 .bottom-destinations { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 6px; }
 .bottom-destinations a { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; padding: 8px 6px; text-decoration: none; font-size: 11px; font-weight: 700; color: #6c706e; border-radius: 9px; }
@@ -501,7 +484,7 @@ table.versions .badge { margin-left: 6px; }
 .product-shell :focus-visible { outline: 3px solid #87addd; outline-offset: 3px; }
 .engine-workspace { padding-top: 30px; }
 .engine-workspace h1, .engine-workspace h2, .engine-workspace h3, .engine-workspace .prompt { font-family: Arial, sans-serif; }
-.engine-workspace .top { padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 26px; }
+
 /* Keep the action default below row/card selectors in specificity.
    The product shell uses a light palette in either system color scheme. */
 :where(.engine-workspace) button { color: #fff; }
@@ -641,3 +624,6 @@ table.versions .badge { margin-left: 6px; }
 .proposal-search label { min-width: 0; display: grid; gap: 5px; }
 .proposal-search input, .proposal-search select { width: 100%; min-width: 0; box-sizing: border-box; }
 .proposal-search p { overflow-wrap: anywhere; }
+
+/* Header identity is independent of each page’s content container. */
+.civic-header.civic-shell { min-height: 75px; background: var(--card); }

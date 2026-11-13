@@ -1,3 +1,4 @@
+import { CivicHeader } from "./CivicHeader";
 import { filterProposals, ProposalSearch } from './ProposalSearch';
 import { useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
@@ -102,7 +103,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!items.length || busy}>{!item && <option value="">Choose a sample proposal</option>}{items.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
   const draftDetail = item && <><ProposalProvenance item={item} /><h3 className="patch-label">Current approach · illustrative</h3><div className="patch-code removed">− {item.currentText}</div><h3 className="patch-label">Proposed text</h3><div className="patch-code added">+ {item.proposedText}</div><h3 className="patch-label">Plain-English summary</h3><p>{item.summary}</p></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
-  return <div className="civic-shell workflow-shell"><header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">{meta.title}</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header><main className="civic-main workflow-main">
+  return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main className="civic-main workflow-main">
     <section className="workflow-heading"><div><p className="workflow-eyebrow">Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.title}</h1><p><strong>{meta.heading}</strong></p><p>{meta.description}</p></div>{meta.next && <a className="workflow-next" href={route(meta.next,item?.id ?? selected)}>Next: {STAGES[meta.next].title} →</a>}</section>
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? 'Loading sample proposals…' : 'Sample proposals unavailable'}</span></div>
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
