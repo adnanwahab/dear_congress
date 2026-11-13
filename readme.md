@@ -291,6 +291,8 @@ A citizen idea runs through a pipeline instead of a yes/no:
 
 Repository voting: see [setup, contracts and verification](docs/repository-voting.md).
 
+Launch monitoring: see [health checks, alert setup and on-call evidence](docs/launch-alerts.md).
+
 ## Public-write security
 
 Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
