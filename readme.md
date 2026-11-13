@@ -225,6 +225,14 @@ src/client/styles.css
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
+### Scoring rule sandbox
+
+`/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`
+with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
+changes across all three packages using public sample journals and deterministic
+simulated residents. It does not use live resident inputs or approve/activate rules.
+See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
+
 ### `POST /api/synthesize` notes
 
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
