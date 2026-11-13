@@ -144,6 +144,7 @@ const EMPTY_FLOW: PublishFlow = {
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
+const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
@@ -154,6 +155,7 @@ export function App() {
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
+    : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
