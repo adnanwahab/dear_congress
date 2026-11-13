@@ -1,3 +1,4 @@
+import { RuleSandbox } from "./RuleSandbox";
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
@@ -1607,7 +1608,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
     <div className="grid synth">
       <section className="card controls">
         <h2>Synthesis settings</h2>
-        <p className="muted">In a real deployment these weights would themselves be set democratically.</p>
+        <p className="muted">Experimental settings, not an approved community governance rule.</p>
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
           <label key={k} className="slider">
             <span>{WEIGHT_LABELS[k]}</span>
@@ -1626,10 +1627,11 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => setBudget(Number(e.target.value))} />
           <b className="num-s">${budget}B</b>
         </label>
-        <button className="big" onClick={() => run()} disabled={busy}>{busy ? "Synthesizing…" : "Synthesize"}</button>
+        <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
       <section className="stack">
+        <div className="card"><RuleSandbox weights={weights} lambda={lambda} budget={budget} request={api} /></div>
         {basePkgs && (
           <div className="pkg-tabs">
             {basePkgs.map((p) => (

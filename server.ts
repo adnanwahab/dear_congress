@@ -1,3 +1,4 @@
+import { handleRulePreview } from "./src/server/synthesis-rule-preview";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -1425,6 +1426,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         outcomes: OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined,
       }), { headers: { "cache-control": "no-store" } })),
     },
+
+    "/api/synthesis-rule-preview": { POST: handleRulePreview },
 
     "/api/synthesize": {
       POST: async (req) => {
