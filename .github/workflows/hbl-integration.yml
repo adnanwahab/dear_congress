@@ -1,0 +1,38 @@
+name: HappyBearLandia daily integration
+on:
+  schedule:
+    - cron: '0 9 * * *'
+      timezone: America/Chicago
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: hbl-integration
+  cancel-in-progress: false
+jobs:
+  wake-single-writer:
+    if: vars.HBL_INTEGRATION_ENABLED == 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Trusted inline code only: never check out or execute pull-request code with credentials.
+      - name: Wake Dear Congress worker
+        env:
+          HBL_WORKER_URL: ${{ secrets.HBL_WORKER_URL }}
+          HBL_WORKER_SECRET: ${{ secrets.HBL_WORKER_SECRET }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHmac } from 'node:crypto';
+          const { HBL_WORKER_URL: endpoint, HBL_WORKER_SECRET: secret } = process.env;
+          if (!endpoint || !secret) throw new Error('Worker credentials missing');
+          let url;
+          try { url = new URL(endpoint); } catch { throw new Error('Invalid worker endpoint'); }
+          if (url.protocol !== 'https:' || url.search || url.hash || url.username || url.password) throw new Error('Invalid worker endpoint');
+          const body = '{"dryRun":false}';
+          const timestamp = String(Math.floor(Date.now()/1000));
+          const signature = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+          try {
+            const response = await fetch(url, { method: 'POST', redirect: 'error', headers: { 'content-type': 'application/json', 'x-hbl-timestamp': timestamp, 'x-hbl-signature': signature }, body, signal: AbortSignal.timeout(300000) });
+            if (!response.ok) throw new Error('Worker request rejected');
+            console.log('Worker batch accepted');
+          } catch { throw new Error('Worker request failed; inspect durable receipts'); }
+          NODE

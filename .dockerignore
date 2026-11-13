@@ -2,3 +2,24 @@
 **/node_modules
 **/data/db.json
 fly.toml
+
+.git
+.env
+.env.*
+.DS_Store
+**/data/test-db*
+**/*.pending
+**/*.dbf
+**/*.shp
+**/*.shx
+**/*.zip
+
+# Runtime databases and private local tooling must never enter deployment images.
+**/*.sqlite
+**/*.sqlite-*
+**/*.db
+**/*.db-*
+**/*.log
+.agents
+.codex
+.aws

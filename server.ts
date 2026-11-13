@@ -1,5 +1,8 @@
+import { handleHblGovernance } from "./src/server/hbl/api";
 import index from "./index.html";
-import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
+import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
+import { rename } from "node:fs/promises";
+import { NEEDS, PROPOSALS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
@@ -16,7 +19,8 @@ import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-
 import { assessIdea } from "./src/server/assess-idea";
 import { recordEstimate, voterKey } from "./src/server/estimate-idea";
 import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
-import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
+import { SnapshotError, validateSimulationOptions, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
+import { createPublicPlan } from "./src/server/public-plan";
 import { timingSafeEqual } from "node:crypto";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
@@ -350,7 +354,26 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 
 let db = await load();
 let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
-const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
+let demoCache: { day: string; payload: DemoPayload } | null = null;
+let saveQueue: Promise<unknown> = Promise.resolve();
+// Serialize snapshots and rename atomically so overlapping writes cannot truncate the file.
+const save = () => {
+  demoCache = null;
+  const snapshot = JSON.stringify(db, null, 2);
+  const write = saveQueue.catch(() => {}).then(async () => {
+    const temporary = `${DB_PATH}.pending`;
+    await Bun.write(temporary, snapshot);
+    await rename(temporary, DB_PATH);
+  });
+  saveQueue = write;
+  return write;
+};
+function dashboardState(voterId: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!demoCache || demoCache.day !== day) demoCache = { day, payload: demoPayload(db.votesByVoter, "") };
+  const votes = Object.fromEntries(Object.entries(db.votesByVoter[voterId] ?? {}).filter(([id]) => DEMO_ITEMS.some(item => item.id === id)).map(([id, vote]) => [id, vote.stance]));
+  return { ...demoCache.payload, votes };
+}
 await save();
 
 function state(voterId = "anon") {
@@ -787,10 +810,45 @@ export const server = Bun.serve({
   development: process.env.NODE_ENV !== "production",
   routes: {
     "/": index,
+    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs"), { headers: { "content-type": "text/javascript", "cache-control": "public, max-age=3600" } }),
+    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs"), { headers: { "content-type": "text/javascript", "cache-control": "public, max-age=3600" } }),
+    "/documentation": index,
+    "/documentation/": index,
+    "/docs": index,
+    "/docs/": index,
+    "/map": index,
+    "/map/": index,
+    "/published": index,
+    "/published/": index,
+    "/feed": index,
+    "/feed/": index,
+    "/votes": index,
+    "/votes/": index,
+    "/draft": index,
+    "/draft/": index,
+    "/sponsors": index,
+    "/sponsors/": index,
+    "/outcomes": index,
+    "/outcomes/": index,
+    "/journals": index,
+    "/journals/": index,
+    "/api-docs": index,
+    "/api-docs/": index,
     "/journal": index,
+    "/journal/": index,
     "/needs": index,
+    "/needs/": index,
     "/vote": index,
+    "/vote/": index,
+    "/vote/happybearlandia": index,
+    "/vote/happybearlandia/": index,
+    "/vote/happybearlandia/pr/:number": index,
+    "/vote/happybearlandia/pr/:number/": index,
+    "/api/hbl/*": handleHblGovernance,
+    "/api/internal/hbl/batch": handleHblGovernance,
+    "/api/webhooks/github": handleHblGovernance,
     "/synth": index,
+    "/synth/": index,
 
     // Explicit embed route.
     "/embed": index,
@@ -806,6 +864,10 @@ export const server = Bun.serve({
       },
     },
 
+    "/healthz": { GET: () => Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }) },
+    "/api/demo": {
+      GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
+    },
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
@@ -903,21 +965,29 @@ export const server = Bun.serve({
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const body = (await req.json()) as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean> };
+        let raw: unknown;
+        try { raw = await req.json(); } catch { return bad("invalid JSON"); }
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return bad("request body must be an object");
+        const body = raw as { votes?: UserVote[]; allocation?: Record<string, number>; goalVotes?: Record<string, boolean> };
 
-        const existingVotes = db.votesByVoter[voterId] ?? {};
-        for (const v of body.votes ?? []) existingVotes[v.proposalId] = v;
-        db.votesByVoter[voterId] = existingVotes;
-
+        // Validate the entire request before modifying persistent state.
+        if (body.votes !== undefined && (!Array.isArray(body.votes) || body.votes.length > 500)) return bad("votes must be an array of at most 500 items");
+        const knownIds = new Set([...PROPOSALS.map(p => p.id), ...db.emergent.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)]);
+        for (const v of body.votes ?? []) {
+          if (!v || !knownIds.has(v.proposalId) || ![-2,-1,0,1,2].includes(v.stance)
+            || !Number.isFinite(v.importance) || v.importance < 0 || v.importance > 1
+            || typeof v.acceptCompromise !== "boolean" || typeof v.concern !== "string" || typeof v.changeMind !== "string"
+            || v.concern.length > 4000 || v.changeMind.length > 4000) return bad("invalid vote");
+        }
         if (body.allocation) {
-          const total = Object.values(body.allocation).reduce((s, v) => s + v, 0);
-          if (total > 100) return bad("allocation exceeds 100 points");
-          db.allocationByVoter[voterId] = body.allocation;
+          if (typeof body.allocation !== "object" || Array.isArray(body.allocation)) return bad("invalid allocation");
+          const values = Object.values(body.allocation);
+          if (values.some(v => !Number.isFinite(v) || v < 0) || values.reduce((sum,v) => sum + v, 0) > 100) return bad("allocation must contain non-negative values totaling at most 100 points");
         }
-
-        if (body.goalVotes) {
-          db.goalVotesByVoter[voterId] = { ...(db.goalVotesByVoter[voterId] ?? {}), ...body.goalVotes };
-        }
+        if (body.goalVotes && (typeof body.goalVotes !== "object" || Array.isArray(body.goalVotes) || Object.values(body.goalVotes).some(v => typeof v !== "boolean"))) return bad("invalid goal votes");
+        db.votesByVoter[voterId] = { ...(db.votesByVoter[voterId] ?? {}), ...Object.fromEntries((body.votes ?? []).map(v => [v.proposalId, v])) };
+        if (body.allocation) db.allocationByVoter[voterId] = body.allocation;
+        if (body.goalVotes) db.goalVotesByVoter[voterId] = { ...(db.goalVotesByVoter[voterId] ?? {}), ...body.goalVotes };
 
         await save();
         return Response.json({ ok: true, voterId });
@@ -970,13 +1040,13 @@ export const server = Bun.serve({
           },
         });
 
-        return new Response(stream, {
+        return withReadCors(req, new Response(stream, {
           headers: {
             "content-type": "text/event-stream",
             "cache-control": "no-cache, no-transform",
             connection: "keep-alive",
           },
-        });
+        }));
       },
 
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
@@ -985,8 +1055,16 @@ export const server = Bun.serve({
     "/api/entries": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => {
-        const entries = entriesNewestFirst();
-        return withReadCors(req, Response.json({ entries }));
+        const url = new URL(req.url);
+        const limit = Number(url.searchParams.get("limit") ?? 50);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100) return withReadCors(req, bad("limit must be an integer between 1 and 100"));
+        const all = entriesNewestFirst();
+        const cursor = url.searchParams.get("cursor");
+        const index = cursor ? all.findIndex(entry => entry.id === cursor) : -1;
+        if (cursor && index === -1) return withReadCors(req, bad("unknown cursor"));
+        const start = index + 1;
+        const entries = all.slice(start, start + limit);
+        return withReadCors(req, Response.json({ entries, total: all.length, nextCursor: start + limit < all.length ? entries.at(-1)?.id ?? null : null }, { headers: { "cache-control": "no-store" } }));
       },
       POST: async (req) => {
         const body = (await req.json()) as { text?: string; author?: string; labels?: string[]; needs?: string[]; location?: { lat?: number; lng?: number } };
@@ -1177,10 +1255,11 @@ export const server = Bun.serve({
     },
 
     "/api/journal-client/schema": {
-      GET: () => Response.json(journalClientSchema({
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json(journalClientSchema({
         defaultKind: PUBLISH_DRAFT_DEFAULT_KIND,
         needs: currentNeeds().map((n) => ({ id: n.id, label: n.label })),
-      })),
+      }))),
     },
 
     // For external journal UIs: publish a draft entry into Civic Synthesis.
@@ -1297,20 +1376,20 @@ export const server = Bun.serve({
     // simulate in many paired futures. Returns the snapshot and a shareable HBL URL.
     "/api/simulation-snapshots": {
       POST: async (req) => {
-        let body: { entryId?: string; package?: string; runs?: number; years?: number } = {};
+        let body: { entryId?: string; package?: string; runs?: number; years?: number; seed?: number } = {};
         try {
           body = (await req.json()) ?? {};
         } catch {
           return bad("body must be JSON");
         }
         try {
+          if (!body || typeof body !== "object" || Array.isArray(body)) throw new SnapshotError("body must be an object");
+          const options = validateSimulationOptions(body);
           const outcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
           const snapshot = createSimulationSnapshot(db, { entryId: body.entryId, packageName: body.package, needs: currentNeeds(), outcomes });
           storeSnapshot(db, snapshot);
           await save();
-          const runs = Math.min(1000, Math.max(1, Math.floor(Number(body.runs) || DEFAULT_RUNS)));
-          const years = Math.min(10, Math.max(1, Math.floor(Number(body.years) || DEFAULT_YEARS)));
-          return Response.json({ snapshot, simulationUrl: simulationUrl(HBL_URL, snapshot, { runs, years }) }, { status: 201 });
+          return Response.json({ snapshot, simulationUrl: simulationUrl(HBL_URL, snapshot, options) }, { status: 201 });
         } catch (err) {
           if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
           throw err;
@@ -1325,6 +1404,14 @@ export const server = Bun.serve({
         if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
         return withReadCors(req, Response.json({ snapshot }));
       },
+    },
+
+    "/api/plan": {
+      OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
+      GET: (req) => withReadCors(req, Response.json(createPublicPlan(db, {
+        sourceUrl: new URL("/api/plan", req.url).href,
+        outcomes: OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined,
+      }), { headers: { "cache-control": "no-store" } })),
     },
 
     "/api/synthesize": {
@@ -1541,7 +1628,8 @@ export const server = Bun.serve({
     },
 
     "/api/reset": {
-      POST: async () => {
+      POST: async (req) => {
+        if (!isAdmin(req)) return new Response("Not found", { status: 404 });
         db = seed();
         await save();
         return Response.json({ ok: true });

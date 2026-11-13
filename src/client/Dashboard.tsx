@@ -1,0 +1,95 @@
+import { useEffect, useRef, useState } from 'react';
+import type { DemoItem, DemoPayload } from '../engine/demo';
+
+type Request = <T>(path: string, body?: unknown, method?: string) => Promise<T>;
+const PIPELINE = [
+  ['Published', 'Clock starts', 'Official sources provide the context for each proposal.'],
+  ['In the feed', 'Same day', 'Find a topic and read the change in plain English.'],
+  ['Open for votes', 'Open 7 days', 'One browser account, one non-binding advisory vote.'],
+  ['Weekly draft', 'Every week', 'Proposed text, a clear summary, and sponsor candidates.'],
+  ['Sponsor contact', 'Within a week', 'Prepare a draft for the relevant public office.'],
+  ['Outcome', 'Tracked weekly', 'Track replies, introductions, and the next step.'],
+];
+const LANES = ['Drafted', 'Ready to send', 'Replied', 'Introduced or offered', 'Stalled'];
+interface Tracked { id: string; title: string; office: string; stage: number; updatedAt: string; }
+const TRACKER_KEY = 'civic_demo_tracker_v1';
+function initialTracker(): Tracked[] {
+  try { const value = JSON.parse(localStorage.getItem(TRACKER_KEY) ?? 'null'); if (Array.isArray(value) && value.every(v => v && typeof v.id === 'string' && typeof v.title === 'string' && typeof v.office === 'string' && Number.isInteger(v.stage) && v.stage >= 0 && v.stage < 5 && typeof v.updatedAt === 'string')) return value; } catch {}
+  return [
+    { id: 'sample-drainage', title: 'Neighborhood drainage priorities', office: 'County infrastructure office', stage: 2, updatedAt: 'Sample reply received' },
+    { id: 'sample-crossings', title: 'Safer school crossings', office: 'City transportation committee', stage: 3, updatedAt: 'Sample committee referral' },
+    { id: 'sample-food', title: 'Weekly mobile grocery stops', office: 'County community services', stage: 4, updatedAt: 'Next: revise the pilot budget' },
+  ];
+}
+const dateLabel = (value: string) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+export function Dashboard({ request }: { request: Request }) {
+  const [data, setData] = useState<DemoPayload | null>(null);
+  const [selected, setSelected] = useState<string | null>(() => new URLSearchParams(window.location.search).get('proposal'));
+  const [topic, setTopic] = useState('All topics');
+  const [query, setQuery] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [tracker, setTracker] = useState<Tracked[]>(initialTracker);
+  const [office, setOffice] = useState('');
+  const voteRef = useRef<HTMLElement>(null);
+  const load = async () => { const next = await request<DemoPayload>('/api/demo'); setData(next); };
+  useEffect(() => {
+    let active = true;
+    const refresh = () => request<DemoPayload>('/api/demo').then(next => { if (active) { setData(next); setError(''); } }).catch(() => { if (active) setError('We could not refresh the demo. Your last loaded proposals are still available.'); });
+    refresh();
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 60_000);
+    return () => { active = false; clearInterval(timer); };
+  }, []);
+  const items = data?.items ?? [];
+  const item = items.find(i => i.id === selected) ?? items[0];
+  const topics = ['All topics', ...new Set(items.map(i => i.topic))];
+  const filtered = items.filter(i => (topic === 'All topics' || i.topic === topic) && `${i.title} ${i.summary} ${i.jurisdiction}`.toLowerCase().includes(query.toLowerCase()));
+  const total = item ? item.support + item.oppose + item.unsure : 0;
+  const chosen = item ? data?.votes[item.id] : undefined;
+  const tracked = item ? tracker.some(t => t.id === item.id) : false;
+  function persist(next: Tracked[]) {
+    try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; }
+    catch { setError('Browser storage is unavailable. Enable local storage to save the sponsor walkthrough.'); return false; }
+  }
+  function select(next: DemoItem) { setSelected(next.id); setOffice(''); setNotice(''); voteRef.current?.focus({ preventScroll: true }); }
+  async function vote(stance: number) {
+    if (!item) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await request('/api/votes', { votes: [{ proposalId: item.id, stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] });
+      await load(); setNotice('Advisory vote saved. You can change it at any time.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not save your vote. Please try again.'); }
+    finally { setBusy(false); }
+  }
+  function download() {
+    if (!item) return;
+    const text = `CIVIC SYNTHESIS — SAMPLE DRAFT\nFictional demo. Not submitted to a public office. Not legal advice.\n\n${item.title}\n\nContext (not a quotation)\n${item.currentText}\n\nProposed text\n${item.proposedText}\n\nPlain-English summary\n${item.summary}\n\nReference for background only\n${item.sourceUrl}\n\nPossible office\n${office || item.sponsors[0]}\n\nIllustrative responses: ${total}\n`;
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `${item.id}-draft.txt`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setNotice('Sample draft downloaded. Review it before contacting any office.');
+  }
+  function prepare() {
+    if (!item || tracked) return;
+    if (persist([...tracker, { id: item.id, title: item.title, office: office || item.sponsors[0]!, stage: 0, updatedAt: `Prepared ${dateLabel(new Date().toISOString())}` }])) setNotice('Draft added to your local demo tracker. No message was sent.');
+  }
+  return <div className="civic-shell">
+    <header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">Live demo</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header>
+    <main className="civic-main">
+      <section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><ol className="stage-grid">{PIPELINE.map(([title,time,description],i) => <li className="stage-card" key={title}><div className="stage-top"><span>{i+1}</span><small>{time}</small></div><h2><a href={["/published","/feed","/votes","/draft","/sponsors","/outcomes"][i]}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
+      <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : 'Loading sample scenarios…'}</span></div>
+      {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
+      <div className="triple-grid">
+        <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2><span>{data ? `${filtered.length} ${filtered.length === 1 ? "item" : "items"}` : 'Loading…'}</span></div><div className="feed-controls"><label><span className="sr">Search proposals</span><input type="search" placeholder="Search proposals…" value={query} onChange={e => setQuery(e.target.value)} /></label><label><span className="sr">Filter by topic</span><select value={topic} onChange={e => setTopic(e.target.value)}>{topics.map(t => <option key={t}>{t}</option>)}</select></label></div>
+          <div className="entry-list">{filtered.map(i => <article className={`entry-item ${item?.id === i.id ? 'entry-selected' : ''}`} key={i.id}><div className="entry-source">{i.source} <span>· {i.topic}</span></div><h3>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className={item?.id === i.id ? '' : 'outline'} onClick={() => select(i)} aria-pressed={item?.id === i.id}>{item?.id === i.id ? 'Selected for voting' : 'Read & vote'}</button></article>)}{!data && <div className="dashboard-skeleton" aria-label="Loading proposals" />}{data && !filtered.length && <div className="empty-feed"><p>No proposals match your search.</p><button className="outline" onClick={() => { setQuery(''); setTopic('All topics'); }}>Clear filters</button></div>}</div>
+        </section>
+        <section className="panel vote-panel" ref={voteRef} tabIndex={-1} aria-labelledby="vote-title"><div className="panel-head"><h2 id="vote-title">Open for vote</h2><span className="pill info">Non-binding</span></div><h3 className="vote-question">{item ? `Should we ${item.title.charAt(0).toLowerCase() + item.title.slice(1)}?` : 'Loading proposal…'}</h3><p className="vote-summary">{item?.summary}</p><div className="vote-options">{([['Support',1,item?.support],['Oppose',-1,item?.oppose],['Not sure',0,item?.unsure]] as const).map(([label,stance,count]) => <button key={label} aria-pressed={chosen === stance} disabled={!item || busy} onClick={() => vote(stance)}><span>{label}{chosen === stance ? ' ✓' : ''}</span><span>{count?.toLocaleString() ?? '—'}</span></button>)}</div><div className="vote-foot"><p>{total.toLocaleString()} illustrative responses<br/>Demo voting window ends {data ? dateLabel(data.closesAt) : '—'}</p><p>One browser account, one advisory vote per proposal. Sample counts are not verified residents or a representative public poll.</p>{item && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Official background reference ↗</a>}</div></section>
+        <section className="panel patch-panel"><div className="panel-head"><h2>This week’s patch</h2><span>Sample draft</span></div><h3 className="patch-label">Current approach · illustrative</h3><div className="patch-code removed">− {item?.currentText ?? 'Loading context…'}</div><h3 className="patch-label">Proposed text</h3><div className="patch-code added">+ {item?.proposedText ?? 'Loading draft…'}</div><h3 className="patch-label">Plain-English summary</h3><p>{item?.summary}</p><h3 className="patch-label">Possible sponsor offices</h3><label className="sponsor-picker"><span className="sr">Choose a sponsor office</span><select value={office || item?.sponsors[0] || ''} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><div className="draft-actions"><button disabled={!item || tracked} onClick={prepare}>{tracked ? 'Added to tracker ✓' : 'Prepare sponsor draft'}</button><button className="outline" disabled={!item} onClick={download}>Download draft</button></div><p className="draft-caption">Demo preparation only. Nothing is sent to a public office.</p></section>
+      </div>
+      <p className="dashboard-status" role="status" aria-live="polite">{busy ? 'Saving your vote…' : notice}</p>
+      <section className="panel tracker"><div className="panel-head"><h2>Sponsor tracker</h2><span>Demo walkthrough · saved in this browser</span></div><div className="tracker-grid">{LANES.map((title,stage) => <section className="tracker-lane" key={title}><h3>{stage+1} · {title}</h3>{tracker.filter(t => t.stage === stage).map(t => <article className="tracked-draft" key={t.id}><strong>{t.title}</strong><span>{t.office}</span><small>{t.updatedAt}</small><label><span className="sr">Demo stage for {t.title}</span><select value={t.stage} onChange={e => persist(tracker.map(v => v.id === t.id ? { ...v, stage: Number(e.target.value), updatedAt: `Demo updated ${dateLabel(new Date().toISOString())}` } : v))}>{LANES.map((l,i) => <option key={l} value={i}>{l}</option>)}</select></label></article>)}{!tracker.some(t => t.stage === stage) && <p className="empty-lane">{stage === 0 ? 'Prepare a draft above to start.' : 'Move a demo card here to explore the journey.'}</p>}</section>)}</div><p>Simulated outcomes demonstrate the workflow. A stalled item needs a revised next step before outreach.</p></section>
+      <footer className="civic-footer"><div><h2>What this is</h2><p>A working demo of advisory votes, draft preparation, and sponsor follow-through.</p><a href="/journal">Share a need →</a></div><div><h2>What this is not</h2><p>Not an official ballot, a public poll, or legal advice. No sponsor has been contacted.</p></div><div><h2>Where facts come from</h2><p>Official links provide background. Sample clauses are fictional and are not quoted law.</p><a href="/synth">Explore the synthesis engine →</a></div></footer>
+    </main>
+  </div>;
+}

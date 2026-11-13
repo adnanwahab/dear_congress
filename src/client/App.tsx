@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import MapScreen from "./MapScreen";
+import { BottomNavigation } from "./Navigation";
+import { Dashboard } from "./Dashboard";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
   VariantFit, VariantId, Weights, WorldsResult,
 } from "../engine/types";
 import { IDEA_STAGES } from "../engine/types";
+import { livingCityUrl } from "./living-city-link";
+import { constitutionCityUrl } from "./constitution-city-link";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -124,13 +129,31 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const Documentation = lazy(() => import("./Documentation"));
+const GamePatches = lazy(() => import("./GamePatches"));
+const JournalScreen = lazy(() => import("./JournalScreen"));
+const WorkflowScreen = lazy(() => import("./WorkflowScreen"));
+
 export function App() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
+  const screen = /^\/vote\/happybearlandia(?:\/pr\/\d+)?$/.test(path) ? <GamePatches />
+    : ["/documentation", "/docs"].includes(path) ? <Documentation />
+    : path === "/map" ? <MapScreen />
+    : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
+    : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
+    : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
+  return <div className="product-shell"><Suspense fallback={<div className="loading">Loading your workspace…</div>}>{screen}</Suspense><BottomNavigation /></div>;
+}
+
+function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(null);
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
   const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
-  const refresh = () => api<AppState>("/api/state").then(setState);
+  const [loadError, setLoadError] = useState("");
+  const refresh = () => api<AppState>("/api/state").then(next => { setState(next); setLoadError(""); }).catch(() => setLoadError("Could not load this workspace. Please try again."));
   useEffect(() => { refresh(); }, []);
   useEffect(() => {
     const onJournalCreated = () => { refresh(); };
@@ -152,6 +175,7 @@ export function App() {
     const nextPath = TAB_PATHS[next];
     if (window.location.pathname !== nextPath) {
       window.history.pushState(null, "", `${nextPath}${window.location.search}${window.location.hash}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
   };
 
@@ -244,10 +268,10 @@ export function App() {
     });
   };
 
-  if (!state) return <div className="loading">Loading…</div>;
+  if (!state) return <div className="loading">{loadError || "Loading…"}{loadError && <button onClick={refresh}>Try again</button>}</div>;
 
   return (
-    <div className="app">
+    <div className="app engine-workspace">
       <header className="top">
         <div className="brand">
           <span className="mark" aria-hidden>◎</span>
@@ -256,23 +280,8 @@ export function App() {
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>
-        <button className="ghost small" onClick={async () => { if (confirm("Reset all your entries and votes?")) { await api("/api/reset", {}); refresh(); } }}>Reset demo</button>
-      </header>
 
-      <nav className="loop" aria-label="Steps">
-        {TABS.map((t, i) => {
-          const stage = STAGE_BY_TAB[t.id];
-          const status = publishFlow.stages[stage];
-          const note = publishFlow.notes[stage] ?? t.hint;
-          return (
-            <button key={t.id} className={`step ${tab === t.id ? "on" : ""} ${status !== "idle" ? `step-${status}` : ""}`} onClick={() => gotoTab(t.id)}>
-              <span className="num">{status === "done" ? "✓" : status === "running" ? "…" : status === "error" ? "!" : t.n}</span>
-              <span><b>{t.label}</b><small>{note}</small></span>
-              {i < TABS.length - 1 && <span className="arrow" aria-hidden>→</span>}
-            </button>
-          );
-        })}
-      </nav>
+      </header>
 
       <main>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
@@ -1315,12 +1324,30 @@ function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, comp
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ snapshot: SimulationSnapshot; simulationUrl: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [settings, setSettings] = useState({ runs: String(runs), years: "10", seed: "42" });
+  const options = { runs: Number(settings.runs), years: Number(settings.years), seed: Number(settings.seed) };
+  const valid = settings.runs !== "" && Number.isInteger(options.runs) && options.runs >= 1 && options.runs <= 1000
+    && settings.years !== "" && Number.isInteger(options.years) && options.years >= 1 && options.years <= 10
+    && settings.seed !== "" && Number.isInteger(options.seed) && options.seed >= 0 && options.seed <= 4294967295;
+  let futuresUrl = result?.simulationUrl ?? "";
+  if (result && valid) {
+    const url = new URL(result.simulationUrl);
+    for (const [key, value] of Object.entries(options)) url.searchParams.set(key, String(value));
+    futuresUrl = url.href;
+  }
+
+  const liveLabUrl = result && valid ? (() => {
+    const url = new URL(futuresUrl);
+    url.pathname = url.pathname.replace(/\/world\/?$/, "/world/experiment-lab.html");
+    return url.href;
+  })() : null;
 
   async function create() {
+    if (!valid) return;
     setBusy(true);
     setError(null);
     try {
-      setResult(await api<{ snapshot: SimulationSnapshot; simulationUrl: string }>("/api/simulation-snapshots", { entryId, package: packageName, runs }));
+      setResult(await api<{ snapshot: SimulationSnapshot; simulationUrl: string }>("/api/simulation-snapshots", { entryId, package: packageName, ...options }));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -1329,36 +1356,52 @@ function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, comp
   }
 
   async function copy() {
-    if (!result) return;
+    if (!result || !valid) return;
     try {
-      await navigator.clipboard.writeText(result.simulationUrl);
+      await navigator.clipboard.writeText(futuresUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      setCopied(false);
+      setError("Could not copy the link. Select and copy it from the field.");
     }
   }
 
-  if (!result) {
-    return (
-      <div className={`sim-realities${compact ? " compact" : ""}`}>
-        <button className={compact ? "ghost small" : "big"} onClick={create} disabled={busy}>
-          {busy ? "Freezing the plan…" : `✦ Simulate ${runs} realities`}
-        </button>
-        {!compact && <p className="muted s">Freezes the {packageName} plan and runs it in {runs} possible futures, each paired with the same future without it.</p>}
-        {error && <p className="note warn">{error}</p>}
-      </div>
-    );
-  }
-
   return (
-    <div className="sim-realities ready">
-      <p className="s"><b>Simulation created.</b> {result.snapshot.plan.label} plan, {result.snapshot.plan.proposalIds.length} changes. The link has no journal text in it, only a snapshot id.</p>
-      <div className="row">
-        <input readOnly value={result.simulationUrl} onFocus={(e) => e.currentTarget.select()} aria-label="Simulation link" />
-        <button className="ghost small" onClick={copy}>{copied ? "Copied" : "Copy link"}</button>
-      </div>
-      <a className="sim-link" href={result.simulationUrl} target="_blank" rel="noopener">Enter futures →</a>
+    <div className={`sim-realities${compact ? " compact" : ""}${result ? " ready" : ""}`}>
+      <fieldset className="sim-settings" disabled={busy}>
+        <legend>Simulation settings</legend>
+        {([ ["runs", "Futures", 1, 1000], ["years", "Years", 1, 10], ["seed", "Seed", 0, 4294967295] ] as const).map(([key, label, min, max]) => (
+          <label key={key}>{label}
+            <input type="number" min={min} max={max} step="1" required value={settings[key]}
+              onChange={(e) => { setSettings((old) => ({ ...old, [key]: e.target.value })); setCopied(false); }} />
+          </label>
+        ))}
+      </fieldset>
+      {!valid && <p className="note warn" role="alert">Use whole numbers: 1–1,000 futures, 1–10 years, and a seed from 0–4,294,967,295.</p>}
+      {result ? <>
+        <p className="s"><b>Simulation created.</b> {result.snapshot.plan.label} plan, {result.snapshot.plan.proposalIds.length} changes. This frozen-plan link contains only a snapshot ID and simulation settings, with no journal text.</p>
+        <p className="muted s">Edit the settings to rerun this same frozen plan. Reuse the seed for paired comparisons.</p>
+        <div className="row">
+          <input readOnly value={valid ? futuresUrl : "Enter valid settings to generate the link"} onFocus={(e) => e.currentTarget.select()} aria-label="Simulation link" />
+          <button className="ghost small" onClick={copy} disabled={!valid}>{copied ? "Copied" : "Copy link"}</button>
+        </div>
+        {valid && <a className="sim-link" href={futuresUrl} target="_blank" rel="noopener">Enter paired futures →</a>}
+      </> : <>
+        <button className={compact ? "ghost small" : "big"} onClick={create} disabled={busy || !valid}>
+          {busy ? "Freezing the plan…" : `✦ Simulate ${valid ? options.runs : ""} realities`}
+        </button>
+        {!compact && <p className="muted s">Freezes the {packageName} plan and follows possible futures over time, each paired with the same future without it. Illustrative model, not a forecast.</p>}
+      </>}
+      {liveLabUrl && <div className="sim-lab-handoff">
+        <a className="sim-link" href={liveLabUrl} target="_blank" rel="noopener">Edit this plan in the live simulation lab →</a>
+        <p className="muted s">Opens this same frozen plan in HappyBearLandia’s civic experiment lab. Change assumptions and compare timelines over {options.years} years using seed {options.seed}.</p>
+      </div>}
+      {result && valid && <div className="sim-lab-handoff">
+        <a className="sim-link" href={constitutionCityUrl(HBL_URL, { snapshot: result.snapshot, sourceOrigin: window.location.origin })} target="_blank" rel="noopener">⭐ Constitution → World Diff · this source snapshot</a>
+        <a className="sim-link" href={livingCityUrl(HBL_URL, result.snapshot, options.seed)} target="_blank" rel="noopener">Explore a synthetic living city →</a>
+        <p className="muted s">Starts a separate population experiment with seed {options.seed}{result.snapshot.location ? " at this location" : " at the default district"}. Edit rent, jobs and transit to inspect household responses. Population assumptions are synthetic; the frozen civic plan is retained as a reference and is not applied to this model.</p>
+      </div>}
+      {error && <p className="note warn" role="alert">{error}</p>}
     </div>
   );
 }
@@ -1457,6 +1500,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
           {side === "real"
             ? <SimulateRealities key={pkg.id} packageName={pkg.id} compact />
             : null}
+          {side === "real" && <a className="sim-link" href={constitutionCityUrl(HBL_URL, { packageId: pkg.id, sourceOrigin: window.location.origin })} target="_blank" rel="noopener">⭐ Constitution → World Diff · package {pkg.id}</a>}
           <a className="muted s" href={simulatePlanUrl(pkg, side)} target="_blank" rel="noopener">Quick 8-future summary →</a>
         </div>
         <ol className="plan">
