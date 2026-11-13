@@ -184,6 +184,16 @@ try {
   assert.equal(document.querySelectorAll('img').length, 0);
   assert.equal((document.getElementById('comment-text') as HTMLTextAreaElement).value, '');
   check('Public discussion posts, clears on success, and renders submitted markup as plain text');
+  assert.equal(document.querySelector('blockquote'), null);
+  const beforeGuide = await api('/api/citizen-proposals/' + id);
+  await act(async () => { fireEvent.click(query().getByRole('checkbox', { name: 'Show optional reading guide' })); });
+  const excerpt = document.querySelector('blockquote')!;
+  assert.equal(excerpt.textContent, beforeGuide.proposal.comments[0].text);
+  const citation = query().getByRole('link', { name: 'Read original comment 1 in context' });
+  assert.equal(document.getElementById(citation.getAttribute('href')!.slice(1))!.textContent!.includes(excerpt.textContent!), true);
+  assert.deepEqual(await api('/api/citizen-proposals/' + id), beforeGuide);
+  check('Opt-in guide cites original discussion and leaves persisted comments and votes unchanged');
+
   await render('/feed');
   await until(() => !!query().queryByRole('heading', { name: 'Publish one clear permit checklist' }), 'feed');
   await act(async () => { fireEvent.change(query().getByRole('searchbox'), { target: { value: 'no-match-value' } }); });
