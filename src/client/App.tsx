@@ -1,3 +1,4 @@
+import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
 import { BottomNavigation } from "./Navigation";
 import { Dashboard } from "./Dashboard";
@@ -1602,6 +1603,7 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
 
   return (
     <div className="grid synth">
+      <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
         <p className="muted">In a real deployment these weights would themselves be set democratically.</p>
