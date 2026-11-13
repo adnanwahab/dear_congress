@@ -12,7 +12,7 @@ test('home, navigation and stage headings use the same six labels before API loa
   try {
     const home = renderToStaticMarkup(<Dashboard request={request} />);
     const nav = renderToStaticMarkup(<BottomNavigation />);
-    expect(home).toContain('Read a proposal &amp; vote');
+    expect(home).toContain('Explore a proposal &amp; advisory vote');
     expect(nav).toContain('href="/draft?proposal=sample%26one" aria-current="page"');
     for (const s of CIVIC_STAGES) {
       expect(home).toContain(`>${s.title}</a>`);
