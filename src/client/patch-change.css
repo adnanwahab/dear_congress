@@ -1,0 +1,25 @@
+.patch-play { margin: 10px 0; }
+.patch-sequence .patch-code { position: relative; }
+/* The complete selectable/accessibility text stays mounted throughout playback.
+   Only the decorative overlay is clipped; exports continue using the source item. */
+.is-playing .patch-final { opacity: 0; }
+.patch-visual { position: absolute; inset: 0; padding: inherit; pointer-events: none; user-select: none; }
+.patch-strike { background: linear-gradient(currentColor, currentColor) left 55% / 0% 2px no-repeat; box-decoration-break: clone; -webkit-box-decoration-break: clone; animation: patch-strike 600ms ease-out forwards; }
+.patch-phrase { display: inline-block; max-width: 100%; white-space: pre-wrap; animation: patch-reveal 180ms ease-out both; animation-delay: var(--phrase-delay); }
+.is-playing .patch-summary { animation: patch-summary 400ms 2200ms both; }
+@keyframes patch-strike { to { background-size: 100% 2px; } }
+@keyframes patch-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes patch-summary { from { opacity: 0; } to { opacity: 1; } }
+::view-transition-old(proposal-patch) { animation: patch-out 180ms ease-in both; }
+::view-transition-new(proposal-patch) { animation: patch-in 220ms 100ms ease-out both; }
+@keyframes patch-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes patch-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) {
+  .patch-change *, ::view-transition-old(proposal-patch), ::view-transition-new(proposal-patch) { animation: none !important; }
+  .is-playing .patch-final { opacity: 1; }
+  .patch-visual { display: none; }
+}
+@media print {
+  .patch-play, .patch-visual { display: none; }
+  .is-playing .patch-final, .is-playing .patch-summary { opacity: 1; animation: none; }
+}
