@@ -8,7 +8,7 @@ type Props = { entries: JournalEntry[]; needs: { id: string; label: string }[]; 
 export function SharedJournalFeed({ entries, needs, loading, publishedId }: Props) {
   function story(e: JournalEntry) {
     const isNew = publishedId === e.id;
-    return <article key={e.id} data-entry-id={e.id} className={isNew ? 'journal-story-new' : undefined}>
+    return <article key={e.id} id={`story-${e.id}`} tabIndex={-1} data-entry-id={e.id} className={isNew ? 'journal-story-new' : undefined}>
       <div className="journal-entry-meta"><strong>{e.author || 'Participant'}</strong><time dateTime={e.createdAt}>{new Date(e.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time></div>
       <p>{e.text}</p>
       <div className="journal-need-tags">{e.extraction.needs.map((n, index) => <a key={n.id} href={needUrl(n.id, isNew ? e.id : undefined)} style={isNew ? { animationDelay: `${motionDuration(260 + index * 160)}ms`, viewTransitionName: needTransitionName(n.id) } : undefined}>{needs.find(v => v.id === n.id)?.label ?? n.id}<span className="journal-need-link"> · See it in Needs →</span></a>)}{(e.synthetic || e.seeded) && <span className="sample-tag">Sample</span>}</div>

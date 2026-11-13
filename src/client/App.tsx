@@ -6,6 +6,7 @@ import { onPageActivation } from './page-activation';
 import { QuickSwitcher } from './QuickSwitcher';
 import { LiveRound } from './LiveRound';
 import { NeedRow, rankedNeeds, needMoves, type NeedMode } from "./need-motion";
+import { JournalLiveProvider, useJournalLive } from "./JournalLive";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -156,7 +157,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div>;
+  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {
@@ -164,7 +165,7 @@ function LegacyApp() {
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
   const [focusNeedId, setFocusNeedId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("need"));
   const [publishFlow, setPublishFlow] = useState<PublishFlow>(EMPTY_FLOW);
-  const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
+  const { snapshot, status: liveStatus } = useJournalLive();
   const [loadError, setLoadError] = useState("");
   const refresh = () => api<AppState>("/api/state").then(next => { setState(next); setLoadError(""); }).catch(() => setLoadError("Could not load this workspace. Please try again."));
   useEffect(() => { refresh(); }, []);
@@ -205,28 +206,8 @@ function LegacyApp() {
   };
 
   useEffect(() => onPageActivation(() => {
-    const es = new EventSource("/api/entries/events");
-
-    es.onopen = () => {
-      setLiveStatus("live");
-    };
-
-    es.onerror = () => {
-      setLiveStatus("reconnecting");
-    };
-
-    es.onmessage = (m) => {
-      try {
-        const payload = JSON.parse(m.data) as { entries?: JournalEntry[] };
-        setState((prev) => prev ? { ...prev, entries: payload.entries ?? prev.entries } : prev);
-        setLiveStatus("live");
-      } catch {
-        // ignore malformed SSE payloads
-      }
-    };
-
-    return () => es.close();
-  }), []);
+    if (snapshot) setState(prev => prev ? { ...prev, entries: snapshot.entries } : prev);
+  }), [snapshot]);
 
   const onPublishStart = (forkId: string) => {
     setPublishFlow({
