@@ -6,3 +6,8 @@ export function buildBrowser(production: boolean) {
     define: { "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development") },
   });
 }
+
+/** Bun rewrites HTML module tags and drops blocking; restore it in the served shell. */
+export function transitionShell(html: string): string {
+  return html.replace(/<script\b(?=[^>]*type="module")/g, '<script blocking="render"');
+}

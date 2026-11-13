@@ -1,0 +1,17 @@
+.civic-shell .advisory-bars button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.advisory-value { font-variant-numeric: tabular-nums; }
+.advisory-track { grid-column: 1 / -1; height: 9px; border-radius: 5px; overflow: hidden; background: #d1ccbf; }
+.advisory-track > span { display: block; height: 100%; background: var(--accent, #244f8b); transform-origin: left; transform: scaleX(var(--vote-share)); transition: transform calc(550ms * var(--motion-scale, 1)) ease-out; }
+.civic-shell .advisory-bars .vote-confirmed { animation: advisory-confirm calc(1s * var(--motion-scale, 1)) ease-out; }
+@keyframes advisory-confirm { from { box-shadow: 0 0 0 3px var(--accent, #244f8b); } to { box-shadow: 0 0 0 0 transparent; } }
+@media (max-width: 420px) { .civic-shell .advisory-bars button { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .advisory-track > span { transition: none; }
+  .civic-shell .advisory-bars .vote-confirmed { animation: none; }
+}
+.live-join { text-align: center; overflow-wrap: anywhere; }
+.live-join img { width: min(70vw, 360px); height: auto; }
+.civic-shell .advisory-bars button { position: relative; }
+.live-pulse-marker { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.live-pulse { animation: advisory-confirm 90ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .live-pulse { animation: none; } }
