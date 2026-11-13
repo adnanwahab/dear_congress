@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { CIVIC_STAGES, stageRoute } from '../src/shared/civic-stages';
 
 // Run the real production router/build with disposable state and no service credentials.
 const directory = await mkdtemp(join(tmpdir(), 'dear-congress-routes-'));
@@ -19,12 +20,25 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  const versionResponse = await get('/version');
+  assert.equal(versionResponse.status, 200);
+  assert.equal(versionResponse.headers.get('cache-control'), 'no-store');
+  assert.equal(versionResponse.headers.get('set-cookie'), null);
+  const version = await versionResponse.json();
+  assert.equal(version.repository, 'https://github.com/adnanwahab/dear_congress');
+  assert.equal(version.mode, 'demo');
+  assert.equal(version.environment, 'production');
+  assert.equal((await fetch(new URL('/version', server!.url), { method: 'POST' })).status, 405);
+  const headVersion = await fetch(new URL('/version', server!.url), { method: 'HEAD' });
+  assert.equal(headVersion.status, 200);
+  assert.equal(await headVersion.text(), '');
   for (const path of ['/', '/journal', '/needs', '/vote', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/, path);
     const html = await response.text();
     assert.match(html, /id="root"/, path);
+    assert.ok(html.includes(`data-build-commit="${version.commit ?? "unknown"}"`), `${path}: build matches endpoint`);
     const assets = [...html.matchAll(/(?:src|href)="(\/[^"?#]+\.(?:js|css))"/g)];
     assert.ok(assets.length >= 2, `${path}: bundled JS and CSS`);
     for (const [, asset] of assets) {
@@ -33,6 +47,14 @@ try {
       assert.equal(bundled.status, 200, asset);
       assert.match(bundled.headers.get('content-type') ?? '', asset.endsWith('.js') ? /javascript/ : /css/, asset);
       assert.ok((await bundled.arrayBuffer()).byteLength > 0, asset);
+    }
+  }
+  for (const stage of CIVIC_STAGES) {
+    for (const path of [stage.route, stageRoute(stage.next, 'sample /?&雪')]) {
+      const response = await get(path);
+      assert.equal(response.status, 200, path);
+      const destination = CIVIC_STAGES.find(s => s.route === new URL(path, server!.url).pathname)!;
+      assert.ok((await response.text()).includes(`<title>${destination.title} | Civic Synthesis</title>`), path);
     }
   }
   const embed = await get('/embed');

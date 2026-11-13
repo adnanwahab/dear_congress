@@ -479,3 +479,37 @@ separate review. This uses the existing durable single-writer JSON store.
 ## Recovered application shell
 
 Dashboard, map, workflow and documentation source recovered from the local application in SHE-281. See docs/source-recovery.md.
+
+## Public build diagnostics
+
+`GET /version` returns only the image's full commit SHA, UTC build date,
+repository URL, demo mode, allowlisted runtime environment and optional Fly
+release version. `/healthz` remains process liveness. Every server-rendered page
+includes a small Build link using that same identity outside the React root.
+Source checkouts without a manifest explicitly show unknown build identity.
+
+Docker builds require `--build-arg BUILD_COMMIT=<full lowercase git SHA>`.
+The image generates `build-identity.json`; runtime environment variables cannot
+override its SHA/date. Do not use a newly generated date as an old image's date.
+The existing human-published tagged-release workflow supplies its validated SHA
+and runs `bun scripts/verify-release.ts https://civic-synthesis.fly.dev <SHA>`
+after deployment. Mismatches fail the workflow; they do not trigger a rollback.
+Keep the existing production release gate disabled until the recovery/go-no-go
+owners authorize it. No release is authorized by these diagnostics.
+
+For an operator-authorized rollback, restore the previous immutable image and run
+the same verifier with that image's original SHA. Refresh the page and follow its
+Build link. Verify all machines during a rolling release; a single request cannot
+prove fleet convergence. A missing Fly release version is represented as null.
+These fields provide deployment traceability, not artifact signatures or official
+civic authority. See [build diagnostics review](docs/reviews/SHE-300.md).
+
+## Standalone sample stages
+
+`/draft`, `/sponsors` and `/outcomes` open the first available fictional sample
+on a fresh visit. A selected sample is retained for the tab session and included
+in stage links; an explicit `?proposal=...` takes precedence. An unavailable ID
+shows a proposal chooser instead of silently opening a different proposal.
+Loading, retry and empty states explain how to continue. Browser storage is
+optional; query links still work when storage is blocked. Sponsor progress stays
+browser-local and simulated. No outreach or official action occurs.

@@ -34,3 +34,16 @@ test('production deploy requires a published release, passing validation and ope
   expect(workflow.jobs.deploy.steps[0].with.ref).toBe('${{ needs.validate.outputs.commit }}');
   expect(JSON.stringify(workflow.jobs.validate)).not.toContain('secrets.');
 });
+
+
+test('release image and smoke verification bind to the validated full SHA', async () => {
+  const workflow = await read('fly-deploy');
+  const steps = workflow.jobs.deploy.steps;
+  const deploy = steps.find((step: any) => step.run?.startsWith('flyctl deploy'));
+  expect(deploy.run).toContain('--build-arg BUILD_COMMIT="$RELEASE_COMMIT"');
+  expect(deploy.env.RELEASE_COMMIT).toBe('${{ needs.validate.outputs.commit }}');
+  const smoke = steps.find((step: any) => step.name === 'Verify deployed release identity');
+  expect(smoke.run).toContain('scripts/verify-release.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT"');
+  expect(smoke.env.RELEASE_COMMIT).toBe('${{ needs.validate.outputs.commit }}');
+  expect(steps.indexOf(smoke)).toBeGreaterThan(steps.indexOf(deploy));
+});

@@ -12,3 +12,6 @@ data/test-db*
 .mini-symphony/
 
 .env.*
+
+# Generated release identity must be built inside the image.
+build-identity.json

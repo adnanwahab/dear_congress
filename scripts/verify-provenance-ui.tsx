@@ -1,0 +1,44 @@
+/** DOM integration with fixture API failures; no production writes or native visual QA. */
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import WorkflowScreen from '../src/client/WorkflowScreen';
+import { demoPayload } from '../src/engine/demo';
+const dom = new Window({ url: 'http://localhost/feed?proposal=demo-food' });
+for (const key of ['window', 'document', 'navigator', 'localStorage']) {
+  Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+}
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
+  dom.happyDOM.setURL(`http://localhost/${stage}?proposal=demo-food`);
+  const container = dom.document.createElement('div');
+  dom.document.body.append(container);
+  const root = createRoot(container as any);
+  let unavailable = true;
+  const request = async <T,>(): Promise<T> => {
+    if (unavailable) throw new Error('Offline');
+    return demoPayload({}, 'test') as T;
+  };
+  await act(async () => { root.render(<WorkflowScreen stage={stage} request={request} />); });
+  assert.match(container.textContent!, /Could not load sample proposals/);
+  unavailable = false;
+  await act(async () => { (container.querySelector('[role=alert] button') as any).click(); });
+  const sections = [...container.querySelectorAll('[aria-label="Scenario and background source"]')];
+  assert(sections.length > 0, stage);
+  for (const section of sections) {
+    assert.match(section.textContent!, /Sample scenario \/ not introduced bill/);
+    assert.match(section.textContent!, /Source not available \/ not checked/);
+    const link = section.querySelector('a')!;
+    assert.equal(link.getAttribute('rel'), 'noopener noreferrer');
+    assert.match(link.textContent!, /—/);
+  }
+  const food = sections.find(section => section.textContent!.includes('Food Access Research Atlas'))!;
+  assert(food, stage);
+  assert.match(food.textContent!, /Scenario jurisdiction: County/);
+  assert.match(food.textContent!, /Federal food access data background; not evidence of a county pilot/);
+  await act(async () => { root.unmount(); });
+  container.remove();
+  console.log(`PASS ${stage}: provenance and API failure recovery`);
+}
+await dom.happyDOM.close();
