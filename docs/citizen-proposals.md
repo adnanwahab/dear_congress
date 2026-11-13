@@ -192,3 +192,13 @@ Controls have native labels, fieldsets, public consent, status/error announcemen
 and error focus recovery. Native keyboard, screen-reader, mobile/zoom and visual QA
 remain manual acceptance work. The existing HTTP/restart journey also includes
 objection creation and proposer response; it requires a working local server bind.
+
+### Reading assistance
+
+Loaded proposal detail pages include **Help with civic terms**, an English
+explanation of citizen proposal, advisory response and browser identity. Each
+entry links to its original visible notice; opening help never submits a choice
+or changes proposal text. Use the native summary control to open/close it, or
+Escape within help to close and return focus. No preference is stored. This
+first slice does not provide Spanish localization or reviewed legal summaries;
+see `docs/reviews/SHE-318.md` for remaining acceptance and verification limits.
