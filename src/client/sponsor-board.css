@@ -3,8 +3,3 @@
 .tracked-draft { position: relative; }
 .sponsor-drop-target { outline: 2px solid var(--accent, #286c59); outline-offset: -2px; }
 .sponsor-instructions { font-size: 13px; }
-::view-transition-group(*) { animation-duration: 480ms; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
-}
-::view-transition-old(root), ::view-transition-new(root) { animation: none; }
