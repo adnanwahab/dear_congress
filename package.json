@@ -6,6 +6,7 @@
     "dev": "bun --hot server.ts",
     "start": "NODE_ENV=production bun server.ts",
     "test": "bun test",
+    "benchmark:ingestion": "bun src/ingestion/benchmark.ts",
     "test:routes": "bun scripts/smoke-routes.ts",
     "test:proposals-ui": "bun scripts/verify-citizen-proposals-ui.tsx",
     "typecheck": "tsc --noEmit",
@@ -13,7 +14,8 @@
     "outcomes:fetch": "bun scripts/fetch-outcomes.ts",
     "symphony:mini": "bun --no-env-file .mini-symphony/runner.js --config .mini-symphony/config.json",
     "symphony:mini:check": "bun --no-env-file .mini-symphony/runner.js --config .mini-symphony/config.json --check",
-    "symphony:mini:sync": "bun --no-env-file .mini-symphony/import-linear.js --config .mini-symphony/config.json"
+    "symphony:mini:sync": "bun --no-env-file .mini-symphony/import-linear.js --config .mini-symphony/config.json",
+    "clusters:pilot": "bun src/server/need-clusters/run.ts"
   },
   "dependencies": {
     "@deck.gl/core": "9.2",

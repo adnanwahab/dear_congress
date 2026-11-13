@@ -2,6 +2,8 @@ import { resolvePublishDraftKind, type PublishDraftKind } from "./publish-draft"
 import type { Extraction, JournalEntry, NeedDef, Proposal } from "../engine/types";
 
 export interface PublishDraftBody {
+  /** Explicit no-inference publication; never invokes providers or keyword extraction. */
+  inference?: "none";
   text?: string;
   author?: string;
   labels?: string[];
@@ -97,6 +99,10 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
     defaultKind: deps.defaultKind,
   });
 
+  if (body.inference !== undefined && body.inference !== "none") throw new PublishDraftInputError("inference must be none when supplied");
+  if (body.inference === "none" && mode !== "journal") throw new PublishDraftInputError("no-inference publication requires kind journal");
+  if (body.inference === "none" && [body.labels, body.needs].some(v => v !== undefined && (!Array.isArray(v) || v.some(id => typeof id !== "string")))) throw new PublishDraftInputError("labels and needs must be string arrays");
+
   const synthetic = isSynthetic(body.synthetic);
   const source = typeof body.source === "string" ? body.source.trim().slice(0, 64) || undefined : undefined;
   const meta = (body.metadata && typeof body.metadata === "object") ? body.metadata as Record<string, unknown> : undefined;
@@ -138,27 +144,29 @@ export async function handlePublishDraftPost(body: PublishDraftBody, deps: Publi
     };
   }
 
-  const ctx = deps.buildContext();
-  const llm = await deps.extractWithLLM(text, ctx.proposals, ctx.needs);
-  let extraction = llm.extraction;
   const labels = deps.normalizeNeedIds(body.labels ?? body.needs);
-
-  if (labels.valid.length > 0) {
-    extraction = {
-      ...extraction,
-      needs: labels.valid.map((id) => extraction.needs.find((n) => n.id === id) ?? { id, confidence: 1 }),
-    };
+  let extraction: Extraction;
+  if (body.inference === "none") {
+    // Author-selected categories only. Neutral importance is the engine default,
+    // not a judgment inferred from the author's words.
+    extraction = { needs: labels.valid.map(id => ({ id, confidence: 1 })), importance: 0.5, concerns: [], constraints: [], proposalIds: [] };
   } else {
-    extraction = deps.ensureNeedCoverage(text, extraction, llm.proposedNeed);
+    const ctx = deps.buildContext();
+    const llm = await deps.extractWithLLM(text, ctx.proposals, ctx.needs);
+    extraction = llm.extraction;
+    if (labels.valid.length > 0) {
+      extraction = { ...extraction, needs: labels.valid.map(id => extraction.needs.find(n => n.id === id) ?? { id, confidence: 1 }) };
+    } else {
+      extraction = deps.ensureNeedCoverage(text, extraction, llm.proposedNeed);
+    }
+    deps.onExtract?.({ provider: llm.provider, matchedNeedIds: extraction.needs.map(n => n.id), mode: "journal" });
   }
-
-  deps.onExtract?.({ provider: llm.provider, matchedNeedIds: extraction.needs.map((n) => n.id), mode: "journal" });
 
   const entry = deps.createJournalEntry({
     text,
     author: body.author,
     extraction,
-    corrected: labels.valid.length > 0,
+    corrected: body.inference === "none" || labels.valid.length > 0,
     synthetic,
     source,
     location,

@@ -39,6 +39,7 @@ export function journalClientSchema(params: {
     },
     publishDraft: {
       defaultKind: normalizedDefault,
+      noInference: { field: "inference", value: "none", kind: "journal", omittedLabels: "empty" },
       kinds: ["journal", "answer"] as PublishDraftKind[],
       answerRequiresNeedOrDetectableNeed: true,
     },
