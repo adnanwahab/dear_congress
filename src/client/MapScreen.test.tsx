@@ -5,24 +5,24 @@ import { CountyCountMethodology, modeledCountyPercent } from './CountyCountMetho
 
 test('map separates modeled coverage and support from unavailable verified participation', () => {
   const html = renderToStaticMarkup(<MapScreen />);
-  expect(html).toContain('county shapes modeled · 100% of bundled shapes');
+  expect(html).toContain('counties in geographic dataset');
   expect(html).toContain('Real verified county participation: unavailable');
   expect(html).toContain('Real county support and its measured denominator are also unavailable');
-  expect(html).toContain('Initial support is 0/3,144; no resident ballots are counted');
-  expect(html).toContain('Illustrative model status legend');
+  expect(html).toContain('Before evaluation, zero agreements means no scenarios have been evaluated, not dissent.');
+  expect(html).toContain('Synthetic scenario status legend');
   expect(html).toContain('Data origin');
   expect(html).toContain('not representative or legally binding');
   expect(html).not.toContain('counties participating');
   expect(html).not.toContain('Every county votes');
   const titles = [...html.matchAll(/<title>(.*?)<\/title>/g)].map(match => match[1]!);
   expect(titles).toHaveLength(3144);
-  expect(titles.every(title => title.includes('Model requests changes') && title.includes('no resident ballots'))).toBe(true);
+  expect(titles.every(title => title.includes('Not evaluated') && title.includes('no resident ballots'))).toBe(true);
   expect(html).not.toContain('Real data</button>');
 });
 
 test('map methodology defines its population and never invents survey or real participation estimates', () => {
   const html = renderToStaticMarkup(<MapScreen />);
-  expect(html).toContain('<summary>How these counts were obtained</summary>');
+  expect(html).toContain('<summary>How is agreement calculated?</summary>');
   expect(html).toContain('Revision 1: 0 / 3,144 county models');
   expect(html).toContain('3,144 / 3,144 bundled shapes');
   expect(html).toContain('territories are excluded');

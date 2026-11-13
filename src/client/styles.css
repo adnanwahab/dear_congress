@@ -1054,6 +1054,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .home-how .stage-card h3 a { color: inherit; }
 @media (max-width: 680px) { .home-start-choices { grid-template-columns: 1fr; } }
 
+.budget-ledger { margin-block: 1.25rem; }
+.budget-ledger label { display: block; margin-block: .75rem; }
+.budget-table-scroll { overflow-x: auto; }
+.budget-ledger table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.budget-ledger th, .budget-ledger td { padding: .65rem; text-align: left; border-bottom: 1px solid var(--border, #888); vertical-align: top; }
+.budget-ledger caption { text-align: left; margin-block: .5rem; }
+.budget-track { display: block; width: 8rem; background: var(--border, #ddd); height: .8rem; }
+.budget-track > span { display: block; height: 100%; background: var(--accent, #7350c2); }
+
 /* Shared keyboard navigation stays above sticky headers and phone navigation. */
 .skip-navigation { position: fixed; top: 8px; left: 8px; z-index: 10000; padding: 12px 18px; background: var(--bg, white); color: var(--ink, black); border: 2px solid currentColor; transform: translateY(-200%); }
 .skip-navigation:focus { transform: none; }

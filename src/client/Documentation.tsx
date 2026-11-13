@@ -1,20 +1,21 @@
 import { CivicHeader } from "./CivicHeader";
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { DESIGN_DOCUMENT } from './design-document';
+import { PUBLIC_GUIDE } from './public-guide';
 import './documentation.css';
 import ThreeAppLoop from './ThreeAppLoop';
 import { trackDocumentSections } from './scroll-motion';
 
 /** Render the supplied document as text and semantic elements, never raw HTML. */
 function Inline({ text }: { text: string }) {
-  return <>{text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part,i) => {
-    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
-    return link ? <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer">{link[1]}</a> : <Fragment key={i}>{part.replace(/\\#/g,'#')}</Fragment>;
+  return <>{text.split(/(\[[^\]]+\]\((?:https?:\/\/|\/)[^\s)]+\))/g).map((part,i) => {
+    const link = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)$/);
+    return link ? <a key={i} href={link[2]} >{link[1]}</a> : <Fragment key={i}>{part.replace(/\\#/g,'#')}</Fragment>;
   })}</>;
 }
 const slug = (heading: string) => heading.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-function DocumentBody() {
-  const blocks = DESIGN_DOCUMENT.trim().split(/\n\s*\n/);
+export function DocumentBody({ text = DESIGN_DOCUMENT }: { text?: string }) {
+  const blocks = text.trim().split(/\n\s*\n/);
   return <>{blocks.map((block,index) => {
     const lines = block.split('\n');
     if (block.startsWith('# ')) return <h2 className="document-title" key={index}>{block.slice(2)}</h2>;
@@ -31,13 +32,13 @@ function DocumentBody() {
   })}</>;
 }
 export default function Documentation() {
-  const sections = DESIGN_DOCUMENT.split('\n').filter(line => line.startsWith('## ')).map(line => line.slice(3));
+  const sections = PUBLIC_GUIDE.split('\n').filter(line => line.startsWith('## ')).map(line => line.slice(3));
   const article = useRef<HTMLElement>(null);
   const [active, setActive] = useState('');
   useEffect(() => article.current ? trackDocumentSections(article.current, setActive) : undefined, []);
   function download() {
-    const url = URL.createObjectURL(new Blob([DESIGN_DOCUMENT], {type:'text/markdown;charset=utf-8'}));
-    const anchor = document.createElement('a'); anchor.href=url; anchor.download='civic-synthesis-design-document.md'; anchor.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
+    const url = URL.createObjectURL(new Blob([PUBLIC_GUIDE], {type:'text/markdown;charset=utf-8'}));
+    const anchor = document.createElement('a'); anchor.href=url; anchor.download='civic-synthesis-guide.md'; anchor.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   }
-  return <div className="civic-shell documentation-shell"><CivicHeader stage="Design & direction" /><div className="documentation-progress" aria-hidden="true"><div /></div><main id="main-content" tabIndex={-1} className="civic-main documentation-main"><section className="documentation-heading"><div><p className="map-eyebrow">The thinking behind the work</p><h1>DOCUMENTATION</h1><p>One loop across three apps: ideas, decisions, and checks.</p></div><button className="outline" onClick={download}>Download document ↓</button></section><div className="documentation-layout"><aside className="panel documentation-toc"><h2>In this document</h2><nav aria-label="Document sections">{sections.map(section => <a key={section} href={`#${slug(section)}`} aria-current={active === slug(section) ? "location" : undefined}>{section}</a>)}</nav><a className="documentation-api-link" href="/journal?tab=api">Journal API documentation ↗</a></aside><article ref={article} className="panel documentation-article"><div className="documentation-note">The supplied design document is reproduced below, with its tables restored for readability. Status statements and recommendations reflect the document’s November 12 snapshot.</div><DocumentBody /></article></div></main></div>;
+  return <div className="civic-shell documentation-shell"><CivicHeader stage="How it works" /><div className="documentation-progress" aria-hidden="true"><div /></div><main id="main-content" tabIndex={-1} className="civic-main documentation-main"><section className="documentation-heading"><div><p className="map-eyebrow">Public guide · updated November 13, 2026</p><h1>How Civic Synthesis works</h1><p>Read, respond, or journal. Understand the limits before sharing.</p></div><button className="outline" onClick={download}>Download guide ↓</button></section><div className="documentation-layout"><aside className="panel documentation-toc"><h2>In this guide</h2><nav aria-label="Guide sections">{sections.map(section => <a key={section} href={`#${slug(section)}`} aria-current={active === slug(section) ? "location" : undefined}>{section}</a>)}<a href="#historical-appendix">Historical appendix</a></nav></aside><article ref={article} className="panel documentation-article"><DocumentBody text={PUBLIC_GUIDE} /><details id="historical-appendix"><summary>Historical appendix — archived design report, November 12, 2026</summary><div className="documentation-note">Historical internal planning, preserved for context. Dates, countdowns, operational claims and recommendations below are archived, not current instructions or commitments. Other apps' plans do not define Civic Synthesis requirements.</div><DocumentBody /></details></article></div></main></div>;
 }

@@ -1,3 +1,5 @@
+import { TopicHubs, TopicReturn } from './TopicHubs';
+import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
 import { DemoTour } from './DemoTour';
@@ -28,6 +30,7 @@ import { livingCityUrl } from "./living-city-link";
 import { constitutionCityUrl } from "./constitution-city-link";
 import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
 import { loadMapLibre } from "./maplibre";
+import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
@@ -155,13 +158,14 @@ export function App() {
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
+    : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
+  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {
@@ -351,14 +355,16 @@ function topNeedForCell(cell: GeoCell, mode: "real" | "simulated" | "both") {
   return arr[0]?.[0] ?? null;
 }
 
-function NeedsGeoMap({
+export function NeedsGeoMap({
   styleUrl,
+  loadMap = loadMapLibre,
   cells,
   mode,
   needFilter,
   needs,
 }: {
   styleUrl?: string;
+  loadMap?: typeof loadMapLibre;
   cells: GeoCell[];
   mode: "real" | "simulated" | "both";
   needFilter: string | "all";
@@ -366,6 +372,7 @@ function NeedsGeoMap({
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
+  const availability = useMapAvailability(styleUrl);
   const colorByNeed = useMemo(() => Object.fromEntries(needs.map((n, i) => [n.id, NEED_COLORS[i % NEED_COLORS.length]])), [needs]);
 
   const features = useMemo(() => cells
@@ -407,51 +414,65 @@ function NeedsGeoMap({
   useEffect(() => {
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
+    availability.setStatus('loading');
+    const attempt = mapAttempt(status => {
+      if (status === 'unavailable') {
+        mapRef.current?.remove?.();
+        mapRef.current = null;
+      }
+      availability.setStatus(status);
+    });
     (async () => {
-      const maplibre = await loadMapLibre();
-      if (disposed || !elRef.current) return;
+      const maplibre = await loadMap();
+      if (disposed || !attempt.active || !elRef.current) return;
       const map = new maplibre.Map({
         container: elRef.current,
         style: styleUrl,
         center: [-95.37, 29.76],
         zoom: 8,
       });
-      map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), "top-right");
-      map.on("load", () => {
-        map.addSource("cells", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addSource("sim-boxes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({
-          id: "sim-boxes-line",
-          type: "line",
-          source: "sim-boxes",
-          paint: {
-            "line-color": "#1d1b18",
-            "line-width": 1.5,
-            "line-dasharray": [2, 2],
-            "line-opacity": 0.6,
-          },
-        });
-        map.addLayer({
-          id: "cells-circle",
-          type: "circle",
-          source: "cells",
-          paint: {
-            "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 5, 5, 12, 20, 22],
-            "circle-color": ["get", "color"],
-            "circle-opacity": 0.55,
-            "circle-stroke-width": ["case", ["==", ["get", "hasSim"], 1], 2, 0],
-            "circle-stroke-color": "#1d1b18",
-          },
-        });
-      });
       mapRef.current = map;
-    })();
+      map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), "top-right");
+      map.on("error", () => attempt.fail('resource'));
+      map.on("idle", () => attempt.ready());
+      map.on("load", () => {
+        if (!attempt.active) return;
+        try {
+          map.addSource("cells", { type: "geojson", data: { type: "FeatureCollection", features } });
+          map.addSource("sim-boxes", { type: "geojson", data: { type: "FeatureCollection", features: simBoxes } });
+          map.addLayer({
+            id: "sim-boxes-line",
+            type: "line",
+            source: "sim-boxes",
+            paint: {
+              "line-color": "#1d1b18",
+              "line-width": 1.5,
+              "line-dasharray": [2, 2],
+              "line-opacity": 0.6,
+            },
+          });
+          map.addLayer({
+            id: "cells-circle",
+            type: "circle",
+            source: "cells",
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 5, 5, 12, 20, 22],
+              "circle-color": ["get", "color"],
+              "circle-opacity": 0.55,
+              "circle-stroke-width": ["case", ["==", ["get", "hasSim"], 1], 2, 0],
+              "circle-stroke-color": "#1d1b18",
+            },
+          });
+        } catch { attempt.fail('initialization'); }
+      });
+    })().catch(() => attempt.fail('initialization'));
     return () => {
       disposed = true;
+      attempt.dispose();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
-  }, [styleUrl]);
+  }, [styleUrl, availability.attempt]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -460,45 +481,64 @@ function NeedsGeoMap({
     src.setData({ type: "FeatureCollection", features });
     const simSrc = map.getSource?.("sim-boxes");
     simSrc?.setData?.({ type: "FeatureCollection", features: simBoxes });
-  }, [features, simBoxes]);
+  }, [features, simBoxes, availability.status]);
 
-  if (!styleUrl) return <p className="muted s">Map preview is currently unavailable. Shared needs are still listed below.</p>;
-  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <>
+    <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
+    <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+  </>;
 }
 
-function JurisdictionMap({
+export function JurisdictionMap({
   styleUrl,
+  loadMap = loadMapLibre,
   jurisdiction,
   pushingCells,
 }: {
   styleUrl?: string;
+  loadMap?: typeof loadMapLibre;
   jurisdiction?: string;
   pushingCells: GeoCell[];
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
+  const availability = useMapAvailability(styleUrl);
 
   useEffect(() => {
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
+    availability.setStatus('loading');
+    const attempt = mapAttempt(status => {
+      if (status === 'unavailable') {
+        mapRef.current?.remove?.();
+        mapRef.current = null;
+      }
+      availability.setStatus(status);
+    });
     (async () => {
-      const maplibre = await loadMapLibre();
-      if (disposed || !elRef.current) return;
+      const maplibre = await loadMap();
+      if (disposed || !attempt.active || !elRef.current) return;
       const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
-      map.on("load", async () => {
-        map.addSource("jur", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({ id: "jur-line", type: "line", source: "jur", paint: { "line-color": "#2f5d50", "line-width": 3 } });
-        map.addSource("push", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({ id: "push-circle", type: "circle", source: "push", paint: { "circle-color": "#b5523b", "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
-      });
       mapRef.current = map;
-    })();
+      map.on("error", () => attempt.fail('resource'));
+      map.on("idle", () => attempt.ready());
+      map.on("load", () => {
+        if (!attempt.active) return;
+        try {
+          map.addSource("jur", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+          map.addLayer({ id: "jur-line", type: "line", source: "jur", paint: { "line-color": "#2f5d50", "line-width": 3 } });
+          map.addSource("push", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+          map.addLayer({ id: "push-circle", type: "circle", source: "push", paint: { "circle-color": "#b5523b", "circle-radius": 6, "circle-stroke-color": "#fff", "circle-stroke-width": 1.5 } });
+        } catch { attempt.fail('initialization'); }
+      });
+    })().catch(() => attempt.fail('initialization'));
     return () => {
       disposed = true;
+      attempt.dispose();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
-  }, [styleUrl]);
+  }, [styleUrl, availability.attempt]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -511,9 +551,9 @@ function JurisdictionMap({
         } else {
           try {
             const gj = await api<any>(`/api/geo/${slug}`);
-            map.getSource("jur").setData(gj);
+            if (mapRef.current === map) map.getSource("jur").setData(gj);
           } catch {
-            map.getSource("jur").setData({ type: "FeatureCollection", features: [] });
+            if (mapRef.current === map) map.getSource("jur").setData({ type: "FeatureCollection", features: [] });
           }
         }
       }
@@ -525,10 +565,12 @@ function JurisdictionMap({
       }
     };
     void update();
-  }, [jurisdiction, pushingCells]);
+  }, [jurisdiction, pushingCells, availability.status]);
 
-  if (!styleUrl) return null;
-  return <div ref={elRef} data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />;
+  return <>
+    <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
+    <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional jurisdiction map" data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+  </>;
 }
 
 /* -------------------------------- Journal -------------------------------- */
@@ -873,12 +915,13 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
 
         <div className="card">
           <h2>Constituent priorities by jurisdiction</h2>
-          <p className="muted">What each level of government would see this week, limited to needs it has tools for.</p>
+          <p className="muted">Real voices: what each level of government would see this week, limited to needs it has tools for.</p>
           <div className="jur">
             {byJur.map(({ j, ranked }) => (
               <div key={j}>
                 <h4>{j}</h4>
-                <ol>{ranked.map((r) => <li key={r.id}><span>{needLabel(state, r.id)}</span><b>{Math.round(r.d * 100)}</b></li>)}</ol>
+                <ol>{ranked.map((r) => <li key={r.id}><span>{needLabel(state, r.id)}</span><b aria-label={`Priority score ${Math.round(r.d * 100)}`}>{Math.round(r.d * 100)}</b></li>)}</ol>
+                {!ranked.length && <p className="muted s">No ranked needs for this jurisdiction yet.</p>}
               </div>
             ))}
           </div>
@@ -1624,6 +1667,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           </div>
         </div>
         <ScoreInspector pkg={pkg} />
+        <PlanBudget key={JSON.stringify([side, pkg])} pkg={pkg} proposals={state.proposals} lane={side} />
         <Bar value={pkg.budget > 0 ? pkg.totalCost / pkg.budget : 0} tone="accent" />
         <div className="sim-link-row">
           {side === "real"

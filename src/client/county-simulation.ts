@@ -4,7 +4,8 @@ export function requirements(id: string): number[] {
   let seed = Number(id) + 17;
   return PRIORITIES.map(() => { seed = (seed * 1664525 + 1013904223) >>> 0; return 40 + seed % 56; });
 }
-export function countyVote(id: string, plan: number[]) {
+export function countyVote(id: string, plan: number[], evaluated = true) {
+  if (!evaluated || !/^\d{5}$/.test(id) || plan.length !== 4 || plan.some(value => !Number.isFinite(value))) return { status: 'unevaluated', priority: 0, gap: 0 } as const;
   const needs = requirements(id);
   const gaps = needs.map((need, i) => Math.max(0, need - (plan[i] ?? 0)));
   const gap = Math.max(...gaps);
