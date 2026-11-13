@@ -3,12 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5ef" />
+    <meta name="color-scheme" content="light dark" />
+    <script>(function(){var p='system';try{var s=localStorage.getItem('civic-theme');if(s==='light'||s==='dark')p=s}catch(e){}var t=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;document.documentElement.dataset.theme=t;document.documentElement.dataset.themePreference=p;document.querySelector('meta[name="theme-color"]').content=t==='dark'?'#141a23':'#f7f5ef'})();</script>
+    <script type="module" blocking="render" src="./src/client/main.tsx"></script>
     <title>Civic Synthesis</title>
     <link rel="icon" type="image/png" href="./src/client/assets/favicon.png" />
     <link rel="stylesheet" href="./src/client/styles.css" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./src/client/main.tsx"></script>
   </body>
 </html>
