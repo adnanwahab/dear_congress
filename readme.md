@@ -531,3 +531,10 @@ optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
 
 Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
+
+## Synthetic ingestion experiment
+
+`bun run benchmark:ingestion 1000` exercises a disposable durable queue with
+synthetic content and the existing local journal extractor. This local-only
+microbenchmark establishes no daily capacity or production-readiness claim.
+See [scope, tests, report units and limitations](docs/ingestion-spike.md).
