@@ -35,3 +35,7 @@ live release (do not call an undeployed recovery commit the current live build).
 SHE-270/271/278/279 must remain open for acceptance against the recovered source.
 Only then complete SHE-281; Mini Symphony's normal refresh releases its source
 prerequisite holds. Production deployment stays separately held by SHE-280.
+
+Validation: 224 local tests pass (99,104 assertions), typecheck and production
+route smoke pass. Hosted CI caught a macOS-only temporary path in the recovered
+public-plan test; it now uses node:os tmpdir for Linux runners as well.
