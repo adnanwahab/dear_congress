@@ -39,6 +39,8 @@ export interface CitizenProposalView extends CitizenProposalInput {
   countTotal: number;
   ownVote: AdvisoryChoice | null;
   comments: CitizenProposalComment[];
+  canRespondToObjections: boolean;
+  objections: ProposalObjection[];
 }
 
 export interface CitizenProposalComment {
@@ -63,4 +65,19 @@ export interface CitizenProposalRecord extends CitizenProposalInput {
   bodyHash: string;
   votesByVoterHash: Record<string, AdvisoryChoice>;
   comments: CitizenProposalCommentRecord[];
+  objections?: ProposalObjectionRecord[];
+}
+
+/** Bound to the existing immutable published proposal; constituency is self-described. */
+export interface ProposalObjection {
+  id: string;
+  text: string;
+  severity: "concern" | "major" | "blocking";
+  constituency: string;
+  createdAt: string;
+  responses: { status: "declined" | "unresolved"; reason: string; createdAt: string; actor: "proposer" }[];
+}
+export interface ProposalObjectionRecord extends ProposalObjection {
+  submitKeyHash: string;
+  bodyHash: string;
 }
