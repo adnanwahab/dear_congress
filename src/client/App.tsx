@@ -1,9 +1,11 @@
+import { pageTitle, SITE_URL } from "../shared/page-metadata";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
   IdeaReport, IdeaStage, JournalEntry, NeedDef, SimulationSnapshot, NeedDemand, PackageDiffMap, PackageResult, PlanItem, Proposal, ProposalStats, Stance, UserVote,
   VariantFit, VariantId, Weights, WorldsResult,
 } from "../engine/types";
 import { IDEA_STAGES } from "../engine/types";
+import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -52,23 +54,12 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
-const VOTER_ID_KEY = "civic_synthesis_voter_id";
-
-function getVoterId() {
-  const existing = localStorage.getItem(VOTER_ID_KEY);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  localStorage.setItem(VOTER_ID_KEY, id);
-  return id;
-}
-
 async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
     headers: {
       "content-type": "application/json",
-      "x-voter-id": getVoterId(),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -124,13 +115,22 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
-const GamePatches=lazy(()=>import('./GamePatches'));
-export function App(){
- const [path,setPath]=useState(window.location.pathname);
- useEffect(()=>{const update=()=>setPath(window.location.pathname);window.addEventListener('popstate',update);return()=>window.removeEventListener('popstate',update);},[]);
- if(/^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/\d+)?\/?$/.test(path))return <Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches/></Suspense>;
- return <LegacyApp/>;
+const GamePatches = lazy(() => import("./GamePatches"));
+const isRepositoryVotingPath = (path: string) =>
+  /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
+
+export function App() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
+  useEffect(() => {
+    const onPopState = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  if (isRepositoryVotingPath(pathname)) return <Suspense fallback={<p role="status">Loading repository voting…</p>}><GamePatches /></Suspense>;
+  return isCitizenProposalPath(pathname) ? <CitizenProposalsApp /> : <LegacyApp />;
 }
+
 function LegacyApp() {
   const [state, setState] = useState<AppState | null>(null);
   const [tab, setTab] = useState<Tab>(() => tabFromPath(window.location.pathname) ?? "journal");
@@ -153,6 +153,17 @@ function LegacyApp() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    const title = pageTitle(path);
+    document.title = title;
+    for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) {
+      document.querySelector(selector)?.setAttribute("content", title);
+    }
+    document.querySelector('meta[property="og:url"]')?.setAttribute("content", SITE_URL + path);
+    document.querySelector('link[rel="canonical"]')?.setAttribute("href", SITE_URL + path);
+  }, [tab]);
 
   const gotoTab = (next: Tab) => {
     setTab(next);
@@ -263,7 +274,11 @@ function LegacyApp() {
             <p>Journals → needs → open votes → the smallest coherent set of changes</p>
           </div>
         </div>
-        <button className="ghost small" onClick={async () => { if (confirm("Reset all your entries and votes?")) { await api("/api/reset", {}); refresh(); } }}>Reset demo</button>
+        <div className="row">
+          <a className="proposal-entry-link" href="/votes">Proposals &amp; votes</a>
+          <a className="proposal-entry-link" href="/proposals/new">＋ Propose a law</a>
+          <button className="ghost small" onClick={async () => { if (confirm("Reset unlinked demo entries and simulation votes? Published citizen proposals, their source entries, and their advisory responses will remain.")) { await api("/api/reset", {}); refresh(); } }}>Reset demo</button>
+        </div>
       </header>
 
       <nav className="loop" aria-label="Steps">
@@ -526,7 +541,7 @@ function JurisdictionMap({
 
 /* -------------------------------- Journal -------------------------------- */
 
-function JournalView({
+export function JournalView({
   state,
   refresh,
   liveStatus,
@@ -548,6 +563,8 @@ function JournalView({
   const [preview, setPreview] = useState<{ labels: string[]; matched: { need_id: string; name: string; voices: number }[]; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] } | null>(null);
   const [undo, setUndo] = useState<{ forkId: string; expiresAt: number; needId: string | null } | null>(null);
   const [undoLeft, setUndoLeft] = useState(0);
+  const [confirmedPublic, setConfirmedPublic] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (!text.trim()) {
@@ -574,8 +591,10 @@ function JournalView({
   }, [undo]);
 
   async function submit() {
-    if (!text.trim()) return;
+    if (!text.trim() || !confirmedPublic || busy) return;
     setBusy(true);
+    setSubmitError("");
+    try {
     const published = await api<{ entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
       text,
       author,
@@ -600,6 +619,10 @@ function JournalView({
       if (ev.status === "error") es.close();
     };
     es.onerror = () => es.close();
+    setConfirmedPublic(false);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Could not publish. Please try again.");
+    } finally { setBusy(false); }
   }
 
   async function undoPublish() {
@@ -624,15 +647,19 @@ function JournalView({
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. Rent went up again and the bus to my job takes over an hour…"
           rows={6}
+          maxLength={10000}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(); }}
         />
         {text.trim() && <p className="note faint">{previewNeedsLine}</p>}
         {preview?.labels?.length ? (
           <div className="chips">{preview.labels.map((id) => <span key={id} className="chip s">{needLabel(state, id)}</span>)}</div>
         ) : null}
+        <p>This entry is public if submitted. Do not include addresses, contact details, or other private information. To request removal, <a href="https://github.com/adnanwahab/dear_congress/issues/new?title=Public%20journal%20removal%20request">open a removal request</a> with the entry link or ID only; do not repeat private text.</p>
+        <label><input type="checkbox" checked={confirmedPublic} onChange={e => setConfirmedPublic(e.target.checked)} /> I want to publish this entry publicly.</label>
+        {submitError && <p role="alert">{submitError}</p>}
         <div className="row">
-          <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
-          <button onClick={submit} disabled={busy || !text.trim()}>{busy ? "Publishing…" : "Publish"}</button>
+          <input maxLength={120} value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
+          <button onClick={submit} disabled={busy || !text.trim() || !confirmedPublic}>{busy ? "Publishing…" : "Publish publicly"}</button>
         </div>
 
         {entry && (
@@ -647,6 +674,7 @@ function JournalView({
               {entry.extraction.needs.map((n) => <span key={n.id} className="chip">{needLabel(state, n.id)}</span>)}
             </div>
             <SimulateRealities key={entry.id} entryId={entry.id} />
+            <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(entry.id)}`}>Turn this into a proposal</a>
           </div>
         )}
 
@@ -668,14 +696,16 @@ function JournalView({
         <p className="muted">Every interpretation stays attached to the original words.</p>
         <ul className="feed">
           {state.entries.map((e) => (
-            <li key={e.id}>
+            <li key={e.id} id={`entry-${e.id}`}>
               <p>{e.text}</p>
               <div className="feed-meta">
                 <span className="who">{e.author}</span>
+                <a href={`#entry-${encodeURIComponent(e.id)}`}>Entry link</a>
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
                 {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
               </div>
+              <a className="proposal-entry-link" href={`/proposals/new?fromJournal=${encodeURIComponent(e.id)}`}>Turn this into a proposal</a>
             </li>
           ))}
         </ul>

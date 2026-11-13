@@ -263,6 +263,8 @@ export interface DB {
   challengerStreak: Record<string, Record<string, number>>;
   /** Frozen plans sent to HappyBearLandia ("Simulate realities"). Newest last. */
   simulationSnapshots?: SimulationSnapshot[];
+  /** Published citizen proposals and advisory browser votes, separate from simulated scores. */
+  citizenProposals?: import("../shared/citizen-proposals").CitizenProposalRecord[];
 }
 
 export interface Weights {

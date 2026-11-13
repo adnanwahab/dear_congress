@@ -1,5 +1,7 @@
+import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
-import index from "./index.html";
+import { renderPage, sitemap } from "./src/server/pages";
+import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
@@ -19,6 +21,9 @@ import { recordEstimate, voterKey } from "./src/server/estimate-idea";
 import { findNeedByLabel, mergeDuplicateNeeds } from "./src/server/need-dedupe";
 import { DEFAULT_RUNS, DEFAULT_YEARS, SnapshotError, createSimulationSnapshot, simulationUrl, storeSnapshot } from "./src/server/simulation-snapshot";
 import { timingSafeEqual } from "node:crypto";
+import { mkdir, rename } from "node:fs/promises";
+import { dirname } from "node:path";
+import { createCitizenProposalHandlers } from "./src/server/citizen-proposals";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
   loadOutcomesFile,
@@ -30,9 +35,9 @@ import {
 } from "./src/server/outcomes";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
-const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self' *").trim() || "'self' *";
+const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self'").trim() || "'self'";
 const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
-const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "1") !== "0";
+const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
 const PUBLISH_DRAFT_DEFAULT_KIND = (process.env.PUBLISH_DRAFT_DEFAULT_KIND ?? "journal").trim().toLowerCase();
@@ -351,7 +356,21 @@ function recordAnswer(needId: string, text: string, voterId?: string) {
 
 let db = await load();
 let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
-const save = () => Bun.write(DB_PATH, JSON.stringify(db, null, 2));
+// Serialize snapshots so an older concurrent write cannot replace a newer vote.
+// Atomic rename also keeps a process interruption from leaving a partial JSON DB.
+let saveQueue: Promise<unknown> = Promise.resolve();
+const save = () => {
+  const snapshot = JSON.stringify(db, null, 2);
+  const write = saveQueue.then(async () => {
+    await mkdir(dirname(DB_PATH), { recursive: true });
+    const temporaryPath = `${DB_PATH}.${process.pid}.tmp`;
+    await Bun.write(temporaryPath, snapshot);
+    await rename(temporaryPath, DB_PATH);
+  });
+  saveQueue = write.catch(() => {});
+  return write;
+};
+const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 await save();
 
 function state(voterId = "anon") {
@@ -783,33 +802,32 @@ function parseWhatIfExtraEntries(input: unknown) {
   return { ok: true as const, entries };
 }
 
-export const server = Bun.serve({
+// Build the browser shell once; render per-request canonical and social metadata.
+const browserBuild = await Bun.build({
+  entrypoints: ["./index.html"], target: "browser", publicPath: "/",
+  naming: "[name]-[hash].[ext]", minify: process.env.NODE_ENV === "production",
+});
+if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
+const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
+
+const publicSecurity = createPublicSecurity();
+const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
-    "/": index,
-    "/journal": index,
-    "/needs": index,
-    "/vote": index,
-    "/vote/": index,
-    "/vote/:repoKey": index,
-    "/vote/:repoKey/": index,
-    "/vote/:repoKey/pr/:number": index,
-    "/vote/:repoKey/pr/:number/": index,
-    "/vote/:repoKey/issue/:number": index,
-    "/vote/:repoKey/issue/:number/": index,
+    "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
+    "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
+    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
+
     "/api/hbl/*": handleHblGovernance,
     "/api/internal/hbl/batch": handleHblGovernance,
     "/api/webhooks/github": handleHblGovernance,
-    "/synth": index,
-
-    // Explicit embed route.
-    "/embed": index,
 
     "/api/debug/request": {
       GET: (req) => {
         logRequest(req, "/api/debug/request");
-        const headers = Object.fromEntries(req.headers.entries());
+        const headers = { "content-type": req.headers.get("content-type") };
         const payload = { ok: true, url: req.url, method: req.method, headers, frameAncestors: FRAME_ANCESTORS, embedCsp: EMBED_CSP };
         const res = Response.json(payload);
         logResponse("/api/debug/request", res);
@@ -820,6 +838,23 @@ export const server = Bun.serve({
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
+    },
+
+    "/api/citizen-proposals": {
+      GET: (req) => citizenProposalHandlers.list(req),
+      POST: (req) => citizenProposalHandlers.publish(req),
+    },
+    "/api/citizen-proposals/journal/:id": {
+      GET: (req) => citizenProposalHandlers.journal(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id": {
+      GET: (req) => citizenProposalHandlers.detail(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/vote": {
+      POST: (req) => citizenProposalHandlers.vote(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/comments": {
+      POST: (req) => citizenProposalHandlers.comment(req, req.params.id!),
     },
 
     "/api/outcomes": {
@@ -846,7 +881,7 @@ export const server = Bun.serve({
 
     "/api/geo/:id": {
       GET: async (req) => {
-        const id = req.params.id;
+        const id = req.params.id!;
         const map: Record<string, string> = {
           houston: "data/geo/houston-city-limits.geojson",
           "harris-county": "data/geo/harris-county.geojson",
@@ -871,7 +906,7 @@ export const server = Bun.serve({
         logPublishEvent("EXTRACT_PROVIDER", {
           route: "/api/journal",
           provider: llm.provider,
-          matchedNeedIds: extraction.needs.map((n) => n.id),
+          matchedNeedCount: extraction.needs.length,
         });
 
         let roundedLoc: { lat: number; lng: number } | undefined;
@@ -900,7 +935,7 @@ export const server = Bun.serve({
     // "No, that's not what I meant" — the person corrects the interpretation
     "/api/journal/:id": {
       PATCH: async (req) => {
-        const entry = db.entries.find((e) => e.id === req.params.id);
+        const entry = db.entries.find((e) => e.id === req.params.id!);
         if (!entry) return bad("entry not found");
         const { needs } = (await req.json()) as { needs: string[] };
         const valid = needs.filter((id) => currentNeeds().some((n) => n.id === id));
@@ -931,7 +966,7 @@ export const server = Bun.serve({
         }
 
         await save();
-        return Response.json({ ok: true, voterId });
+        return Response.json({ ok: true });
       },
     },
 
@@ -1016,7 +1051,7 @@ export const server = Bun.serve({
         logPublishEvent("EXTRACT_PROVIDER", {
           route: "/api/entries",
           provider: llm.provider,
-          matchedNeedIds: extraction.needs.map((n) => n.id),
+          matchedNeedCount: extraction.needs.length,
         });
 
         let roundedLoc: { lat: number; lng: number } | undefined;
@@ -1064,7 +1099,7 @@ export const server = Bun.serve({
 
     "/api/forks/:id/events": {
       GET: async (req) => {
-        const fork = forks.get(req.params.id);
+        const fork = forks.get(req.params.id!);
         if (!fork) return new Response("fork not found", { status: 404 });
 
         let listener: ((ev: StageEvent) => void) | null = null;
@@ -1105,7 +1140,7 @@ export const server = Bun.serve({
 
     "/api/forks/:id/undo": {
       POST: async (req) => {
-        const fork = forks.get(req.params.id);
+        const fork = forks.get(req.params.id!);
         if (!fork) return bad("fork not found");
         if (fork.undone) return bad("fork already undone");
         if (!fork.undoUntil || Date.now() > fork.undoUntil) return bad("undo window expired");
@@ -1197,45 +1232,14 @@ export const server = Bun.serve({
     // For external journal UIs: publish a draft entry into Civic Synthesis.
     "/api/publish_draft": {
       OPTIONS: (req) => {
-        logPublishEvent("PUBLISH_DRAFT_PREFLIGHT", {
-          method: req.method,
-          origin: req.headers.get("origin"),
-          referer: req.headers.get("referer"),
-          requestMethod: req.headers.get("access-control-request-method"),
-          requestHeaders: req.headers.get("access-control-request-headers"),
-        });
         return new Response(null, { status: 204, headers: publishCorsHeaders(req) });
       },
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const origin = req.headers.get("origin");
-        const referer = req.headers.get("referer");
-        const remote = req.headers.get("fly-client-ip") ?? req.headers.get("x-forwarded-for") ?? null;
-        const contentType = req.headers.get("content-type");
-        const secFetchMode = req.headers.get("sec-fetch-mode");
-
-        logPublishEvent("PUBLISH_DRAFT_HIT", {
-          method: req.method,
-          origin,
-          referer,
-          remote,
-          contentType,
-          secFetchMode,
-        });
-
         let body: PublishDraftBody;
         try {
           body = (await req.json()) as PublishDraftBody;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-            reason: "invalid json body",
-            message,
-            origin,
-            referer,
-            remote,
-            contentType,
-          });
+        } catch {
           return publishBad(req, "invalid json body");
         }
 
@@ -1255,7 +1259,7 @@ export const server = Bun.serve({
               logPublishEvent("EXTRACT_PROVIDER", {
                 route: "/api/publish_draft",
                 provider: meta.provider,
-                matchedNeedIds: meta.matchedNeedIds,
+                matchedNeedCount: meta.matchedNeedIds.length,
                 mode: meta.mode,
               });
             },
@@ -1263,27 +1267,10 @@ export const server = Bun.serve({
 
           if (result.mode === "journal") emitEntriesUpdate();
 
-          logPublishEvent("PUBLISH_DRAFT_OK", {
-            ...result,
-            textLength: body.text?.trim().length ?? 0,
-            textPreview: body.text?.trim().slice(0, 120) ?? "",
-            origin,
-            referer,
-            remote,
-          });
-
           return withPublishCors(req, Response.json(result));
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           const reason = error instanceof PublishDraftInputError ? message : "publish draft failed";
-          logPublishEvent("PUBLISH_DRAFT_REJECTED", {
-            reason,
-            message,
-            origin,
-            referer,
-            remote,
-            contentType,
-          });
           return publishBad(req, reason);
         }
       },
@@ -1332,7 +1319,7 @@ export const server = Bun.serve({
     "/api/simulation-snapshots/:id": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => {
-        const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id);
+        const snapshot = (db.simulationSnapshots ?? []).find((s) => s.id === req.params.id!);
         if (!snapshot) return withReadCors(req, Response.json({ error: "simulation snapshot not found" }, { status: 404 }));
         return withReadCors(req, Response.json({ snapshot }));
       },
@@ -1471,7 +1458,7 @@ export const server = Bun.serve({
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
       POST: async (req) => {
         const voterId = resolveVoterId(req);
-        const idea = db.emergent.find((p) => p.id === req.params.id);
+        const idea = db.emergent.find((p) => p.id === req.params.id!);
         if (!idea) return bad("unknown citizen idea", 404);
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
@@ -1504,7 +1491,7 @@ export const server = Bun.serve({
     // Two route styles (id in the path, or { ideaId } in the body), like /api/emergent/estimate.
     "/api/emergent/:id/design": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
-      POST: (req) => designIdea(req.params.id),
+      POST: (req) => designIdea(req.params.id!),
     },
     "/api/emergent/design": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: publishCorsHeaders(req) }),
@@ -1523,7 +1510,7 @@ export const server = Bun.serve({
       POST: async (req) => {
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
-        return chooseVariant(req.params.id, resolveVoterId(req), body);
+        return chooseVariant(req.params.id!, resolveVoterId(req), body);
       },
     },
     "/api/emergent/variant": {
@@ -1540,7 +1527,7 @@ export const server = Bun.serve({
     "/api/admin/emergent/:id/assess": {
       POST: async (req) => {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
-        const idea = db.emergent.find((p) => p.id === req.params.id);
+        const idea = db.emergent.find((p) => p.id === req.params.id!);
         if (!idea) return bad("unknown emergent idea");
         const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
         if (!body) return bad("JSON body required");
@@ -1553,23 +1540,49 @@ export const server = Bun.serve({
 
     "/api/reset": {
       POST: async () => {
+        // Resetting sample synthesis data must not erase public proposals or their votes.
+        const citizenProposals = db.citizenProposals;
+        const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
+        const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
+        db.citizenProposals = citizenProposals;
+        const seededIds = new Set(db.entries.map((entry) => entry.id));
+        db.entries.push(...citedEntries.filter((entry) => !seededIds.has(entry.id)));
         await save();
         return Response.json({ ok: true });
       },
     },
   },
-  error(error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const stack = error instanceof Error ? error.stack : undefined;
+  fetch(req) {
+    const path = new URL(req.url).pathname;
+    const asset = browserAssets.get(path);
+    if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
+    if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
+    if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
+    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const secured = securityHeaders(response);
+    if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
+    return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
+  },
+  error(error: Error) {
     console.error("[SERVER_ERROR]", JSON.stringify({
       ts: new Date().toISOString(),
-      message,
-      stack,
+      name: error.name,
     }));
-    return new Response("Internal Server Error", { status: 500 });
+    return securityHeaders(new Response("Internal Server Error", { status: 500 }));
   },
-});
+};
+// Wrap every API handler so aliases share identity, limits and response headers.
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (!path.startsWith("/api/") || !route || typeof route !== "object") continue;
+  for (const [method, handler] of Object.entries(route)) {
+    if (typeof handler !== "function") continue;
+    (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
+      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", () => (handler as Function)(req, bunServer), body => validateVotes(body, buildContext(db).proposals.map(p => p.id), currentNeeds().map(n => n.id)));
+    };
+  }
+}
+export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);
 console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | publishDraftDefaultKind=${PUBLISH_DRAFT_DEFAULT_KIND} | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);
