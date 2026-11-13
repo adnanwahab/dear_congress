@@ -231,6 +231,14 @@ src/client/styles.css
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
+### Scoring rule sandbox
+
+`/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`
+with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
+changes across all three packages using public sample journals and deterministic
+simulated residents. It does not use live resident inputs or approve/activate rules.
+See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
+
 ### `POST /api/synthesize` notes
 
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
@@ -260,6 +268,14 @@ Creates a journal entry only (feeds Needs tab), and does **not** force-create a 
 ```
 
 You can omit `kind` and it defaults to `"journal"` (or `PUBLISH_DRAFT_DEFAULT_KIND` if set). If `needId` is present and `kind` is omitted, the server treats it as `"answer"` for backward compatibility.
+
+To publish without AI or keyword inference, send `kind: "journal", inference: "none"`.
+Optional `labels` (or `needs`) select catalog categories manually; omitted labels
+or `[]` publish with no tags. Unknown IDs are returned in `ignoredNeedIds`.
+This mode never creates needs, proposals or votes. `/journal` uses this mode.
+Legacy requests omitting `inference`, and the other journal POST aliases, still
+use automatic extraction; they are not the consent-first pilot. Draft text in
+`/journal` stays in page memory until public submission and is lost on reload.
 
 #### 2) Answer mode with explicit need
 Treats text as an open-ended policy answer and routes through the same path as `/api/answers`.
@@ -519,3 +535,12 @@ shows a proposal chooser instead of silently opening a different proposal.
 Loading, retry and empty states explain how to continue. Browser storage is
 optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
+
+Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
+
+## Synthetic ingestion experiment
+
+`bun run benchmark:ingestion 1000` exercises a disposable durable queue with
+synthetic content and the existing local journal extractor. This local-only
+microbenchmark establishes no daily capacity or production-readiness claim.
+See [scope, tests, report units and limitations](docs/ingestion-spike.md).

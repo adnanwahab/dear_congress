@@ -199,3 +199,8 @@
   .cp-button-secondary { color: var(--accent) !important; }
 }
 @media (prefers-reduced-motion: reduce) { .cp-button { transition: none; } }
+
+.cp-reading-help { margin: 0 0 24px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; overflow-wrap: anywhere; }
+.cp-reading-help summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.cp-reading-help dt { font-weight: 700; margin-top: 16px; }
+.cp-reading-help dd { margin: 6px 0 0; line-height: 1.6; }

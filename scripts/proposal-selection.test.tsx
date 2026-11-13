@@ -49,6 +49,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         expect(writes).toHaveLength(1);
         expect(writes[0].votes[0].proposalId).toBe(DEMO_ITEMS[1]!.id);
         expect(support().getAttribute('aria-pressed')).toBe('false');
+        expect(support().classList.contains('vote-confirmed')).toBe(false);
         expect(document.body.textContent).not.toContain('vote saved');
         fail = true;
         await act(async () => { settle!(); });
@@ -58,7 +59,11 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         await act(async () => { fireEvent.click(support()); });
         await act(async () => { settle!(); });
         expect(support().getAttribute('aria-pressed')).toBe('true');
-        expect(q().getByRole('status').textContent).toMatch(/vote (is )?saved/);
+        expect(support().classList.contains('vote-confirmed')).toBe(true);
+        expect(support().getAttribute('aria-label')).toMatch(/responses, [0-9.]+%/);
+        expect(document.querySelectorAll('.advisory-track')).toHaveLength(3);
+        expect(document.body.textContent).toContain('Illustrative responses, not a representative poll.');
+        expect(q().getAllByRole('status').some(node => /vote (is )?saved/.test(node.textContent ?? ''))).toBe(true);
       }
       await act(async () => { root.unmount(); });
       const restored = createRoot(document.getElementById('root')!);
