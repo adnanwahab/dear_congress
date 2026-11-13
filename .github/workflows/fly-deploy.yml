@@ -2,22 +2,57 @@
 
 name: Fly Deploy
 on:
-  push:
-    branches:
-      - main
-      - master
+  release:
+    types: [published]
+permissions:
+  contents: read
 jobs:
+  validate:
+    if: github.event.release.prerelease == false && startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      commit: ${{ steps.revision.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require the tagged commit to be on main
+        id: revision
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck
+      - run: bun run test:routes
   deploy:
+    needs: validate
+    # Stay paused until SHE-281 recovers the live source and verifies the Fly target.
+    if: vars.PRODUCTION_RELEASES_ENABLED == 'true'
     name: Deploy app
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
+        with:
+          ref: ${{ needs.validate.outputs.commit }}
+          persist-credentials: false
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: flyctl deploy --remote-only --build-arg BUILD_COMMIT="$RELEASE_COMMIT"
         env:
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Verify deployed release identity
+        run: bun scripts/verify-release.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT"
+        env:
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}

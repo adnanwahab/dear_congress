@@ -60,3 +60,7 @@
 @media (max-width: 1100px) { .workflow-source-grid, .workflow-outcome-list { grid-template-columns: repeat(2,minmax(0,1fr)); } .workflow-board { grid-template-columns: repeat(3,minmax(0,1fr)); } .workflow-prepare { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .workflow-heading { align-items: start; flex-direction: column; } .workflow-heading > div > p:last-child { font-size: 16px; } .workflow-feed-layout, .workflow-two { grid-template-columns: 1fr; } .workflow-sticky { position: static; } .workflow-feed-layout .workflow-sticky { order: -1; } .workflow-progress { gap: 6px; } .workflow-progress a { font-size: 11px; padding: 7px 9px; } .workflow-filters { grid-template-columns: 1fr; } .workflow-source-grid, .workflow-outcome-list { grid-template-columns: 1fr; } .workflow-board { grid-template-columns: repeat(2,minmax(0,1fr)); } .workflow-outcome-stats { gap: 9px; } .workflow-outcome-stats .panel { padding: 15px; } .workflow-outcome-stats span { font-size: 14px; } .workflow-outcome-stats strong { font-size: 30px; } .workflow-feed-bottom { flex-wrap: wrap; } .workflow-prepare > div:last-child { grid-template-columns: 1fr; } }
 @media (max-width: 460px) { .workflow-board { grid-template-columns: 1fr; } }
+
+.workflow-provenance { margin: 12px 0; padding: 12px; border: 1px solid var(--border, #d5dbe1); border-radius: 8px; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.workflow-provenance strong { display: block; }
+.workflow-provenance p { margin: 6px 0 0; }

@@ -1,4 +1,6 @@
 import {expect,test} from 'bun:test';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {emptyDB,buildContext,synthesize,DEFAULT_WEIGHTS,extract} from '../engine/engine';
 import {SEED_JOURNALS} from '../engine/catalog';
 import {createPublicPlan} from './public-plan';
@@ -17,7 +19,7 @@ test('public plan matches existing real-only synthesis without changing live sta
 
 test('GET /api/plan is public, read-only and leaves stored plan/streak/snapshots untouched',async()=>{
  const db=emptyDB();db.schemaVersion=2;db.lastPlan={A:['h_lots']};db.challengerStreak={A:{h_vouchers:2}};db.simulationSnapshots=[];
- const path=`/private/tmp/dc-public-plan-${crypto.randomUUID()}.json`;await Bun.write(path,JSON.stringify(db));
+ const path=join(tmpdir(),`dc-public-plan-${crypto.randomUUID()}.json`);await Bun.write(path,JSON.stringify(db));
  const saved={DB_PATH:process.env.DB_PATH,PORT:process.env.PORT,DEBUG_REQUEST_LOGS:process.env.DEBUG_REQUEST_LOGS};let server:{url:URL;stop:(force?:boolean)=>void}|undefined;
  try{
   process.env.DB_PATH=path;process.env.PORT='0';process.env.DEBUG_REQUEST_LOGS='0';

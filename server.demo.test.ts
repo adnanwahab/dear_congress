@@ -14,15 +14,25 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
   const path = `/tmp/civic-demo-test-${crypto.randomUUID()}.json`;
   const db = emptyDB(); db.schemaVersion = 2;
   await Bun.write(path, JSON.stringify(db));
-  const previous = { DB_PATH: process.env.DB_PATH, PORT: process.env.PORT, DEBUG_REQUEST_LOGS: process.env.DEBUG_REQUEST_LOGS, OPENAI_API_KEY: process.env.OPENAI_API_KEY, GEMINI_API_KEY: process.env.GEMINI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
+  const previous = { ANON_COOKIE_SECRET: process.env.ANON_COOKIE_SECRET, DB_PATH: process.env.DB_PATH, PORT: process.env.PORT, DEBUG_REQUEST_LOGS: process.env.DEBUG_REQUEST_LOGS, OPENAI_API_KEY: process.env.OPENAI_API_KEY, GEMINI_API_KEY: process.env.GEMINI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
   process.env.OPENAI_API_KEY = ''; process.env.GEMINI_API_KEY = ''; process.env.ANTHROPIC_API_KEY = '';
+  process.env.ANON_COOKIE_SECRET = 'demo-integration-only-stable-secret-32-characters';
   process.env.DB_PATH = path; process.env.PORT = '0'; process.env.DEBUG_REQUEST_LOGS = '0';
   let server: { url: URL; stop(force?: boolean): void } | undefined;
   try {
     server = (await import(`./server.ts?demo-test=${crypto.randomUUID()}`)).server;
     const origin = server!.url;
-    const get = (voter: string) => fetch(new URL('/api/demo', origin), { headers: { 'x-voter-id': voter } });
-    const post = (voter: string, body: unknown) => fetch(new URL('/api/votes', origin), { method: 'POST', headers: { 'content-type': 'application/json', 'x-voter-id': voter }, body: JSON.stringify(body) });
+    const cookies = new Map<string, string>();
+    const request = async (voter: string, route: string, body?: unknown) => {
+      const headers = new Headers({ 'content-type': 'application/json' });
+      if (cookies.has(voter)) headers.set('cookie', cookies.get(voter)!);
+      const response = await fetch(new URL(route, server!.url), { method: body === undefined ? 'GET' : 'POST', headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+      const issued = response.headers.get('set-cookie')?.split(';')[0];
+      if (issued) cookies.set(voter, issued);
+      return response;
+    };
+    const get = (voter: string) => request(voter, '/api/demo');
+    const post = (voter: string, body: unknown) => request(voter, '/api/votes', body);
     const vote = { proposalId: 'demo-housing', stance: 1, importance: .5, acceptCompromise: true, concern: '', changeMind: '' };
     expect((await fetch(new URL('/healthz', origin))).status).toBe(200);
     for (const route of ['/published','/feed','/votes','/draft','/sponsors','/outcomes','/journal','/api-docs','/map']) {
@@ -76,7 +86,7 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     expect(Object.keys((await Bun.file(path).json()).votesByVoter).length).toBe(13);
     server!.stop(true);
     server = (await import(`./server.ts?demo-restart=${crypto.randomUUID()}`)).server;
-    changed = await (await fetch(new URL('/api/demo', server!.url), { headers: { 'x-voter-id': 'alice' } })).json() as DemoPayload;
+    changed = await (await get('alice')).json() as DemoPayload;
     expect(changed.votes['demo-housing']).toBe(-1);
     expect(changed.items[0]!.support).toBe(DEMO_ITEMS[0]!.support + 12);
   } finally {

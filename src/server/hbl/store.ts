@@ -1,3 +1,4 @@
+import { REPOSITORIES, isRepoKey, type RepoKey, type ItemKind } from '../../shared/repository-voting';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
 import type { Choice, Feedback, Pull, Tally } from '../../shared/hbl-governance';
@@ -8,8 +9,19 @@ export class GovernanceError extends Error {
 export type Member = { id:number; alias:string; approved:boolean; updatedAt:number };
 export class GovernanceStore {
   public db:Database;
-  constructor(path:string) {
-    this.db = new Database(path, { create:true });
+  constructor(path:string, public repoKey:RepoKey='happybearlandia', public kind:ItemKind='pr') {
+    if(!isRepoKey(repoKey)||!['pr','issue'].includes(kind)) throw new GovernanceError(404,'repository_not_allowed');
+    const raw = new Database(path, { create:true });
+    // One shared identity/100-member roster, isolated per-repository/item data and jobs.
+    // Legacy HBL PR tables stay in place, so no destructive migration is necessary.
+    const prefix=repoKey==='happybearlandia'&&kind==='pr'?'':`repo_${repoKey}_${kind}_`;
+    const scoped=new Set(['pulls','pull_versions','pull_revisions','vote_revisions','votes_lookup','freezes','frozen_pulls','frozen_votes','feedback','outbox','receipts','merge_runs','hbl_sync','hbl_service_nonces','hbl_limits','hbl_batch_runs','hbl_community_votes','hbl_community_vote_revisions','community_revision_lookup','hbl_vote_summaries']);
+    const sql=(text:string)=>prefix?text.replace(/'(?:''|[^'])*'|\b[A-Za-z_][A-Za-z_0-9]*\b/g,word=>scoped.has(word)?prefix+word:word):text;
+    this.db=new Proxy(raw,{get(target,key){
+      if(['query','exec','prepare','run'].includes(String(key))) return (text:string,...args:any[])=>(target as any)[key](sql(text),...args);
+      const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
+    }});
+
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON;
       CREATE TABLE IF NOT EXISTS pulls(number INTEGER PRIMARY KEY,version TEXT NOT NULL,first_seen_at INTEGER NOT NULL,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS pull_versions(number INTEGER NOT NULL,version TEXT NOT NULL,data TEXT NOT NULL,first_seen_at INTEGER NOT NULL,PRIMARY KEY(number,version));
@@ -96,7 +108,7 @@ export class GovernanceStore {
       return this.mapFeedback(this.db.query('SELECT * FROM feedback WHERE id=?').get(feedbackId));
     });
   }
-  private mapFeedback(r:any):Feedback { return {id:r.id,number:r.number,version:r.version,alias:r.alias,text:r.text,choice:r.choice,createdAt:r.created_at,commentStatus:r.comment_status,commentUrl:r.comment_url,intakeStatus:r.intake_status,taskUrl:r.task_url,...(r.error?{error:r.error}:{})}; }
+  private mapFeedback(r:any):Feedback { return {id:r.id,number:r.number,version:r.version,alias:r.alias,text:r.text,choice:r.choice,createdAt:r.created_at,commentStatus:r.comment_status,commentUrl:r.comment_url,intakeStatus:r.intake_status==='pending'&&(this.repoKey!=='happybearlandia'||this.kind==='issue')?'not-configured':r.intake_status,taskUrl:r.task_url,...(r.error?{error:r.error}:{})}; }
   feedback(number:number,providerId?:number):Feedback[] { return (providerId===undefined?this.db.query('SELECT * FROM feedback WHERE number=? ORDER BY created_at,id').all(number):this.db.query('SELECT * FROM feedback WHERE number=? AND provider_id=? ORDER BY created_at,id').all(number,providerId)).map(r=>this.mapFeedback(r)); }
 }
 export { GovernanceStore as Store };

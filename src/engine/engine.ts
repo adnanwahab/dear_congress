@@ -1,3 +1,4 @@
+import { isPublicEntry } from "../shared/moderation";
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import { applyVariant, chosenVariant } from "./variants";
 import type {
@@ -262,7 +263,7 @@ export interface ContextOptions {
 
 /** The journal entries that should count toward needs, demand and quotes. */
 export function countedEntries(db: DB, opts: ContextOptions = {}): JournalEntry[] {
-  const base = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const base = db.entries.filter((e) => isPublicEntry(e) && (opts.includeSynthetic || !e.synthetic));
   if (!opts.extraEntries?.length) return base;
   return [...base, ...opts.extraEntries];
 }
@@ -430,7 +431,7 @@ export function proposalStats(db: DB, voters: Voter[], p: Proposal): ProposalSta
 }
 
 export function buildContext(db: DB, voters: Voter[] = POPULATION, opts: ContextOptions = {}): Context {
-  const baseEntries = opts.includeSynthetic ? db.entries : db.entries.filter((e) => !e.synthetic);
+  const baseEntries = db.entries.filter((e) => isPublicEntry(e) && (opts.includeSynthetic || !e.synthetic));
   const whatIfEntries = opts.extraEntries ?? [];
   const entries = whatIfEntries.length ? [...baseEntries, ...whatIfEntries] : baseEntries;
   const needs = [...NEEDS, ...db.emergentNeeds];
@@ -661,11 +662,13 @@ function scoreExplanation(row: Row, weights: Weights, stabilityBonus: number) {
 
   const target = row.score + row.changeCost;
   const correction = target - sumContrib;
-  parts.evidence.contribution += correction;
+
   const total = row.score + stabilityBonus;
 
   return {
     parts,
+    roundingAdjustment: correction,
+    weightDivisor: wsum,
     changePenalty: row.changeCost,
     stabilityBonus,
     total,
@@ -1216,6 +1219,29 @@ export function synthesizePackage(
   const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
   return {
     id: opts.id, name: opts.name, description: opts.description,
+    scoreAudit: {
+      version: "score-arithmetic-v1",
+      proposals: rows.map((r) => {
+        const selected = items.find((i) => i.proposal.id === r.p.id);
+        const pending = waiting.find((w) => w.id === r.p.id);
+        const rejected = deferred.find((d) => d.id === r.p.id);
+        return {
+          id: r.p.id, title: r.p.title, costB: r.p.costB,
+          status: selected ? "selected" as const : "excluded" as const,
+          reason: selected ? "Included in final package"
+            : r.p.rightsIssue ? `Rights exclusion: ${r.p.rightsIssue}`
+            : r.p.costB === null ? "Cost unavailable; cannot select an uncosted proposal"
+            : pending?.reasonDetail ?? rejected?.reason ?? "Not selected after stability, persistence and churn rules",
+          base: scoreExplanation(r, opts.weights, 0),
+          selectedRank: selected?.explanation.total ?? null,
+          selectedStabilityBonus: selected?.explanation.stabilityBonus ?? null,
+          evidenceInputs: {
+            catalog: r.p.evidence,
+            measuredImpact: ctx.outcomes.items[r.p.id] ?? null,
+          },
+        };
+      }),
+    },
     items, totalCost, budget,
     avgSupport: round(items.reduce((s, i) => s + i.stats.support, 0) / Math.max(1, items.length)),
     avgChange: round(items.reduce((s, i) => s + i.proposal.changeLevel, 0) / Math.max(1, items.length), 2),

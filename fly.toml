@@ -39,3 +39,9 @@ primary_region = 'iad'
   method = "GET"
   timeout = "5s"
   path = "/healthz"
+
+# CSP is applied by the server so /embed can use its explicit frame policy.
+[http_service.http_options.response.headers]
+  Strict-Transport-Security = "max-age=31536000"
+  X-Content-Type-Options = "nosniff"
+  Referrer-Policy = "no-referrer"

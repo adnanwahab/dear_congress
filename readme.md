@@ -1,7 +1,5 @@
 # Civic Synthesis (prototype)
 
-- https://www.usa.gov/find-active-challenge
-
 A Bun + React prototype of the civic synthesis loop:
 
 everyday is a list of journal entries from everyone
@@ -21,7 +19,17 @@ bun install
 bun dev          # http://localhost:3000 (hot reload)
 bun test         # engine tests
 bun run typecheck
+bun run test:routes # isolated production-router smoke check
 ```
+
+Launch review, required main checks and tagged releases are documented in
+[docs/launch-merge-policy.md](docs/launch-merge-policy.md). Agents leave launch
+PRs for human review and merge; analysis-only PRs must leave Linear issues open.
+
+`bun start` builds the browser shell with production minification and code splitting.
+MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
+Synthesize), not on `/` or `/votes`. `bun test src/server/browser-build.test.ts`
+checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
@@ -217,6 +225,14 @@ src/client/styles.css
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
+### Scoring rule sandbox
+
+`/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`
+with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
+changes across all three packages using public sample journals and deterministic
+simulated residents. It does not use live resident inputs or approve/activate rules.
+See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
+
 ### `POST /api/synthesize` notes
 
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
@@ -232,7 +248,7 @@ src/client/styles.css
 For browser clients on another origin, send:
 
 - `Content-Type: application/json`
-- `x-voter-id: <stable-client-id>` (recommended; enables per-voter aggregation)
+- Preserve the server-issued anonymous cookie in a cookie jar; `x-voter-id` is ignored at the HTTP boundary. See the public-write security configuration below.
 
 #### 1) Journal mode (default)
 Creates a journal entry only (feeds Needs tab), and does **not** force-create a ballot option.
@@ -246,6 +262,14 @@ Creates a journal entry only (feeds Needs tab), and does **not** force-create a 
 ```
 
 You can omit `kind` and it defaults to `"journal"` (or `PUBLISH_DRAFT_DEFAULT_KIND` if set). If `needId` is present and `kind` is omitted, the server treats it as `"answer"` for backward compatibility.
+
+To publish without AI or keyword inference, send `kind: "journal", inference: "none"`.
+Optional `labels` (or `needs`) select catalog categories manually; omitted labels
+or `[]` publish with no tags. Unknown IDs are returned in `ignoredNeedIds`.
+This mode never creates needs, proposals or votes. `/journal` uses this mode.
+Legacy requests omitting `inference`, and the other journal POST aliases, still
+use automatic extraction; they are not the consent-first pilot. Draft text in
+`/journal` stays in page memory until public submission and is lost on reload.
 
 #### 2) Answer mode with explicit need
 Treats text as an open-ended policy answer and routes through the same path as `/api/answers`.
@@ -286,26 +310,224 @@ A citizen idea runs through a pipeline instead of a yes/no:
 - **Storage is a JSON file.** The Postgres schema in the design doc (journals, needs, proposals, votes, plans, experiments, outcomes) is the natural next step.
 - Not yet built: user accounts, outcome measurement / policy experiments feeding back into journals, district-level views.
 
-## Daily demo screens
+Repository voting: see [setup, contracts and verification](docs/repository-voting.md).
 
-The public demo is deployed as `civic-synthesis` at https://civic-synthesis.fly.dev.
+Launch monitoring: see [health checks, alert setup and on-call evidence](docs/launch-alerts.md).
 
-| Route | Screen |
-| --- | --- |
-| `/` | Full workflow overview |
-| `/published` | Official background reference desk |
-| `/feed` | Searchable sample proposal feed |
-| `/votes` (or `/vote`) | Advisory voting |
-| `/draft` | Clause comparison and draft download |
-| `/sponsors` | Browser-local sponsor walkthrough |
-| `/outcomes` | Simulated outcome tracking |
-| `/map` | deck.gl proposal map and 3D columns |
-| `/journal` | Shared journal and publishing form |
-| `/journal?tab=api` (or `/api-docs`) | Journal API connection docs |
-| `/needs`, `/synth` | Original needs and synthesis engine tools |
+## Public-write security
 
-Every screen shares bottom navigation with Back, Top, and API docs actions. Sample proposal content is separate from stored journal experiences. Sponsor stages and map coordinates are illustrative. No real sponsor messages are sent.
+Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
+of at least 32 characters (for example, generated with `openssl rand -hex 32`).
+Production fails closed without it. The server issues an anonymous signed
+`HttpOnly; Secure; SameSite=Lax; Path=/` cookie on API responses; browser requests
+use this cookie automatically. This is not verified identity. Clearing cookies
+creates a new ID, so both IP and ID limits are necessary. Existing data is retained;
+legacy client-selected IDs are not automatically adopted because that would allow
+impersonation. Existing clients may initially see no previous choice. Plan any
+legacy tally reconciliation with SHE-271 without deleting ballots or changing
+proposal/revision bindings.
 
-Journal integrations can discover `/api/journal-client/schema`, publish to `/api/publish_draft` with `kind: "journal"`, and read `/api/entries?limit=12`. Feed responses include `entries`, `total`, and `nextCursor`; pass the last cursor as `cursor=…` to get the next page. The API docs show JavaScript and cURL examples. This is a public demo API with unverified client IDs; it is not an authenticated private journal service.
+Non-browser clients must retain `Set-Cookie` and send `Cookie` on subsequent HTTPS
+requests, e.g. `curl -c cookies.txt -b cookies.txt ...`. A stable cookie jar replaces
+`x-voter-id`. Requests without cookies receive a new ID but still share their IP
+limit. Cross-origin browser writes are rejected; external journal UIs should link
+to the same-origin journal page for publication. Secure cookies require HTTPS;
+local development browsers should use localhost. Development secrets are ephemeral.
 
-See [January 1 launch readiness](docs/launch-readiness.md) for the million-user architecture gates and daily demo checklist. The current single-writer JSON store is not certified for that scale.
+Public write limits are per process, in memory, with a ten-minute fixed window:
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `PUBLIC_RATE_WINDOW_SECONDS` | `600` | Window duration |
+| `PUBLIC_IP_LIMIT` | `60` | Combined protected write attempts per IP |
+| `PUBLIC_ID_LIMIT` | `30` | Combined protected write attempts per signed ID |
+| `PUBLIC_JOURNAL_LIMIT` | `3` | Journal attempts per signed ID across all aliases |
+| `PUBLIC_SUBMISSIONS_ENABLED` | `1` | Set `0` and restart to pause journal publication |
+| `TRUST_FLY_PROXY` | unset | Set `1` only behind Fly HTTP proxy; configured in fly.toml |
+
+All limits must be positive integers. Invalid attempts consume the same budget.
+429 responses include seconds in `Retry-After` and a readable retry message.
+Journal aliases are `/api/journal`, `/api/entries`, and `/api/publish_draft` (including
+answer mode). `/api/votes`, `/api/answers`, citizen proposal publication/votes/comments, and label
+edits share the combined limits. Journal input is capped at 10,000 characters,
+request JSON at 64 KiB, and author at 120 characters. A three-attempt journal window
+provides the minimal cooldown; the optional `website` honeypot must remain empty.
+`/api/publish_labels` and `PATCH /api/journal/:id` are disabled with 403 until
+ownership authorization is available. UI label correction is consequently unavailable.
+
+The Fly HTTP proxy supplies `Fly-Client-IP`; no `X-Forwarded-For`, `X-Real-IP`, or
+other client-selected header is used. Outside trusted Fly mode, the socket peer
+is used and every forwarding header is ignored. Bind only IPv4 (`0.0.0.0`) to avoid
+bypassing the proxy over Fly's private IPv6 network. Do not expose this listener
+through another untrusted direct path with trusted Fly mode enabled. See
+[Fly's public service documentation](https://fly.io/docs/networking/services/) and
+[Fly support's proxy trust guidance](https://community.fly.io/t/security-guidance-verifying-fly-proxy-socket-peers-and-forwarded-headers/28891).
+IP keys are HMACs retained only during the window; journal content and author are
+not written to publication logs. Debug request logging defaults off.
+
+This JSON-file application requires **one writer process on one Fly machine**.
+The limiter resets on restart. Before running multiple machines/processes, replace
+it with shared storage-backed atomic counters (for example Redis increment + expiry
+in one transaction/script, keyed by HMAC(IP) and signed ID) and a shared transactional
+application database. Independent machine-local counters or files are insufficient.
+Verify machine count before rollout; this change does not inspect or alter production.
+
+API responses include HSTS, nosniff, no-referrer and CSP. Fly's response header
+configuration applies the same policy to HTML and bundled assets. Direct local Bun
+HTML responses do not get the Fly headers. CSP permits same-origin scripts,
+MapLibre blob workers, CARTO tile/style/font requests and Bugsnag reporting. It
+blocks plugins, other framing origins, script evaluation and external scripts.
+Arbitrary `MAP_STYLE_URL` hosts need explicit policy review. Inline styles remain
+allowed for React/MapLibre. Frame embedding is limited to the same origin; the old
+wildcard `FRAME_ANCESTORS` setting no longer grants embedding permission. CSP
+configuration tests pass; actual browser tile/worker/reporting verification remains
+required in an environment that permits a local server.
+
+Journal publishing requires a visible public-content confirmation. The submit
+area warns against addresses/contact details and links to removal requests; use
+only the entry ID, not private text, in a public removal request. Journal text is
+rendered through React text interpolation. Private browser drafts are never read
+or uploaded by the journal submission path. No identity verification, CAPTCHA,
+paid incentives, merge policy changes, or deployment is included.
+
+## Privacy and removal
+
+`/privacy` is a static notice linked from the civic and proposal footers. Public
+journal responses (including aliases, state, creation responses and SSE) omit
+coordinates and tile IDs. Aggregate `/api/needs/geo` cells retain the existing
+0.01° grid and minimum-three-real-entry rule. Stored source identities and
+coordinates are preserved; simulation snapshot responses omit location too.
+
+New journals published through all three aliases get a private ownership hash in
+`journalOwners`. `GET /api/state` includes only the current browser's
+`ownEntryIds`; `DELETE /api/journal/:id` checks the signed anonymous cookie,
+same-origin rule and rate limit. Legacy records are not claimed automatically.
+The Journal feed offers **Delete my entry** after publication and reload.
+Deletion does not rewrite independently published proposals or their source IDs.
+Lost-cookie and legacy removal requests use the public GitHub link in the notice;
+no private contact mailbox or guaranteed backup expiry is currently configured.
+
+`POST /api/votes` accepts `withdrawVotes: [proposalId]` and
+`goalVotes: { [needId]: null }`. Other browsers' choices remain unchanged.
+Click a selected civic choice again to withdraw; option changes require
+**Save votes**. Citizen-proposal response removal continues to use its existing
+`choice: null` contract. Repository PR/issue ballots and revision audit history
+are separate and unchanged. See [SHE-284 review](docs/reviews/SHE-284.md) for
+source alignment and verification limitations.
+
+## Launch-day metrics (SHE-286)
+
+Open `/admin/stats` using username `admin` and the existing `ADMIN_TOKEN` as the
+password, or request it with `Authorization: Bearer <ADMIN_TOKEN>`. It returns 401
+when the token is absent or wrong. The page is server-rendered, uncacheable and
+script-free. It shows today's counts in **America/Chicago**; refresh to update.
+
+Metrics persist separately at `STATS_DB_PATH` (default `${DB_PATH}.stats.sqlite`)
+on the same durable single-writer volume. Back up this SQLite database with its
+WAL using SQLite's backup facilities. It is independent of demo reset and never
+rewrites journals, ballots, identities, source metadata or PR revisions.
+
+Collection starts when this version first runs. Historical activity is not
+backfilled: legacy civic votes have no reliable daily timestamps/provenance, and
+SHE-271 remains an analysis-only source-alignment finding. New accepted civic,
+citizen-advisory, repository-community and verified votes are shown separately by
+scope. A vote counts once per identity + target + revision + Chicago date; repeat
+saves and changed choices on the same target do not increase that day's count.
+Withdrawals retain earlier participation. Priority allocation counts as one budget
+ballot, goal votes and proposal stances each count per target. Unique/returning
+counts describe identities, not verified people; returning means voting yesterday
+and today. Different voting systems and cleared cookies can count the same person
+again. Automated public API submissions cannot be identified as humans.
+
+Only newly accepted journal publications are recorded, with real, sample and
+simulated counts kept apart using the server's persisted flags. Fixture seeds,
+simulated population opinions, what-if runs, previews, rejected requests, comments
+and draft saves do not enter real participation counts. Existing precollection
+records, including ambiguous QA activity, are preserved and excluded.
+
+First-party `/api/page-view` POSTs count browser loads, reloads and pathname changes
+(including SPA navigation and back/forward). They omit credentials and record only
+an allowlisted normalized route and daily count. Detail IDs collapse to route
+templates. No query strings, referrers, IPs, page-view visitor IDs, new cookies or
+third-party scripts are stored/added. Requests require same origin, have a 1 KiB
+body limit and a separate 120-per-IP/ten-minute default budget; they do not consume
+voting limits. Forwarding headers are trusted only in existing `TRUST_FLY_PROXY`
+mode. JavaScript blocking, failed delivery and rate limiting can undercount views;
+forged same-origin/API traffic can inflate them. These are launch signals, not an
+audited census.
+
+Vote/journal metric writes run after successful application saves. Failures leave
+the saved action's response intact and flag the stats page as incomplete. A crash
+between the application save and metric write can undercount; the stores are not
+one transaction. Retain the existing one-writer deployment. Live source alignment,
+listener-based acceptance checks and deployment are still operator work; see
+[the SHE-286 review](docs/reviews/SHE-286.md).
+
+## Journal moderation
+
+Each journal entry has a **Report** button. Reports are saved privately and share
+public write limits; reporting does not automatically hide an entry.
+
+Set a strong random server-only `ADMIN_TOKEN` and visit `/admin/moderation` over
+HTTPS. Use any username and the token as the password in the browser's sign-in
+prompt. Without the token, the view and decision API fail closed. Never put the
+token in a URL, client bundle, or repository. Browsers cache this authentication;
+use a private window and close it after moderation on shared computers.
+
+The admin view shows reports and held entries. **Hide entry** requires a reason,
+retains the original record and source ID, and removes it from public journal
+reads, live feed updates, map aggregation and future needs/synthesis calculations.
+Decisions and reasons persist privately. Admin JSON decisions use
+`POST /api/admin/moderation` with Bearer authentication, same-origin `Origin`, and
+`{ entryId, action: "hide" | "approve", reason }`.
+
+All journal publication aliases check text and author for common email, phone and
+street-address formats before external extraction or answer creation. Matches
+return HTTP 202 `{ status: "pending", entryId, message }` and are held privately;
+clients must not treat this as live publication. Admin approval publishes a held
+submission as a journal only, including submissions originally using answer mode.
+No automatic ballot option is created from a held submission. Detection is a
+conservative heuristic with false positives and misses, not complete PII detection.
+Existing entries are retained without a retroactive scan; the admin can hide any
+of them. Independently published proposals and existing external copies require
+separate review. This uses the existing durable single-writer JSON store.
+
+## Recovered application shell
+
+Dashboard, map, workflow and documentation source recovered from the local application in SHE-281. See docs/source-recovery.md.
+
+## Public build diagnostics
+
+`GET /version` returns only the image's full commit SHA, UTC build date,
+repository URL, demo mode, allowlisted runtime environment and optional Fly
+release version. `/healthz` remains process liveness. Every server-rendered page
+includes a small Build link using that same identity outside the React root.
+Source checkouts without a manifest explicitly show unknown build identity.
+
+Docker builds require `--build-arg BUILD_COMMIT=<full lowercase git SHA>`.
+The image generates `build-identity.json`; runtime environment variables cannot
+override its SHA/date. Do not use a newly generated date as an old image's date.
+The existing human-published tagged-release workflow supplies its validated SHA
+and runs `bun scripts/verify-release.ts https://civic-synthesis.fly.dev <SHA>`
+after deployment. Mismatches fail the workflow; they do not trigger a rollback.
+Keep the existing production release gate disabled until the recovery/go-no-go
+owners authorize it. No release is authorized by these diagnostics.
+
+For an operator-authorized rollback, restore the previous immutable image and run
+the same verifier with that image's original SHA. Refresh the page and follow its
+Build link. Verify all machines during a rolling release; a single request cannot
+prove fleet convergence. A missing Fly release version is represented as null.
+These fields provide deployment traceability, not artifact signatures or official
+civic authority. See [build diagnostics review](docs/reviews/SHE-300.md).
+
+## Standalone sample stages
+
+`/draft`, `/sponsors` and `/outcomes` open the first available fictional sample
+on a fresh visit. A selected sample is retained for the tab session and included
+in stage links; an explicit `?proposal=...` takes precedence. An unavailable ID
+shows a proposal chooser instead of silently opening a different proposal.
+Loading, retry and empty states explain how to continue. Browser storage is
+optional; query links still work when storage is blocked. Sponsor progress stays
+browser-local and simulated. No outreach or official action occurs.
+
+Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).

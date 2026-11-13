@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import counties from './data/counties.json';
 import { countyVote, improvePlan, INITIAL_PLAN, requirements } from './county-simulation';
-test('every county participates, with unique FIPS and drawable geography', () => {
+test('every modeled county has unique FIPS and drawable geography', () => {
   expect(counties).toHaveLength(3144);
   expect(new Set(counties.map(c => c.id)).size).toBe(counties.length);
   expect(counties.every(c => c.path.startsWith('M'))).toBe(true);
