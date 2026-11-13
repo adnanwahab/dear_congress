@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client';
 import WorkflowScreen from '../src/client/WorkflowScreen';
 import { demoPayload } from '../src/engine/demo';
 const dom = new Window({ url: 'http://localhost/feed?proposal=demo-food' });
-for (const key of ['window', 'document', 'navigator', 'localStorage']) {
+for (const key of ['window', 'document', 'navigator', 'localStorage', 'sessionStorage']) {
   Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
 }
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -54,6 +54,26 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   assert(food, stage);
   assert.match(food.textContent!, /Scenario jurisdiction: County/);
   assert.match(food.textContent!, /Federal food access data background; not evidence of a county pilot/);
+  if (stage === 'published' || stage === 'votes') {
+    if (stage === 'votes') {
+      const select = container.querySelector('.workflow-select select')!;
+      await act(async () => { select.value = 'demo-transit'; select.dispatchEvent(new dom.Event('change', { bubbles: true })); });
+    }
+    const map = [...container.querySelectorAll('[aria-label="Compare arguments"]')].find(node => node.textContent!.includes('More frequent evening'))!;
+    assert(map, 'integrated transit argument map');
+    assert.equal(map.querySelectorAll('h4').length, 2);
+    assert.equal(map.querySelectorAll('.argument-map-sides > section').length, 2);
+    assert.equal((map.textContent!.match(/unverified assertion/g) ?? []).length, 4);
+    assert.match(map.textContent!, /Evidence strength: unassessed/);
+    const clauseLink = map.querySelector('a')!;
+    await act(async () => { (clauseLink as any).click(); });
+    assert(map.querySelector('details')!.open, 'clause link opens its target');
+    if (stage === 'votes') {
+      const buttons = [...container.querySelectorAll('.vote-options button')];
+      assert.equal(buttons.length, 3);
+      assert(map.compareDocumentPosition(buttons[0]!) & 4, 'arguments precede voting');
+    }
+  }
   await act(async () => { root.unmount(); });
   container.remove();
   console.log(`PASS ${stage}: provenance and API failure recovery`);
