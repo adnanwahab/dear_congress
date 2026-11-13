@@ -56,6 +56,12 @@ Notes:
 - Request-provided `outcomes` in `/api/synthesize` still override measured values for what-if runs.
 - Census fetch works without an API key at low volume; set `CENSUS_API_KEY` to raise reliability.
 
+The `/outcomes` page separates simulated outreach activity from policy measurements.
+Its expandable measurement prototype uses explicitly synthetic transit metrics,
+including mixed results, pinned baseline/source history and missing or stale data.
+No verified implemented policy is registered. These fixtures never feed synthesis.
+See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+
 ## What's in it
 
 | Step | What it does |
@@ -531,3 +537,10 @@ optional; query links still work when storage is blocked. Sponsor progress stays
 browser-local and simulated. No outreach or official action occurs.
 
 Private offline needs clustering: [pilot command and safeguards](docs/need-cluster-pilot.md).
+
+## Synthetic ingestion experiment
+
+`bun run benchmark:ingestion 1000` exercises a disposable durable queue with
+synthetic content and the existing local journal extractor. This local-only
+microbenchmark establishes no daily capacity or production-readiness claim.
+See [scope, tests, report units and limitations](docs/ingestion-spike.md).

@@ -1,5 +1,7 @@
+import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
+import { PolicyComparisonPanel } from "./PolicyComparison";
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
@@ -129,7 +131,7 @@ const EMPTY_FLOW: PublishFlow = {
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
-const WorkflowScreen = lazy(() => import("./WorkflowScreen"));
+import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -857,6 +859,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
               <li key={`${s.name}|${s.url}`}>
@@ -1492,6 +1495,9 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   const [budget, setBudget] = useState(40);
   const [realPkgs, setRealPkgs] = useState<PackageResult[] | null>(null);
   const [blendedPkgs, setBlendedPkgs] = useState<PackageResult[] | null>(null);
+  const [previousPlans, setPreviousPlans] = useState<{ real: PackageResult[]; blended: PackageResult[] }>({ real: [], blended: [] });
+  const [showPlanChanges, setShowPlanChanges] = useState(false);
+  const [synthError, setSynthError] = useState<string | null>(null);
   const [diff, setDiff] = useState<PackageDiffMap>({});
   const [active, setActive] = useState("A");
   const [busy, setBusy] = useState(false);
@@ -1503,15 +1509,27 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
 
   async function run(over: { budget?: number } = {}) {
     setBusy(true);
-    const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true });
-    setRealPkgs(payload.real ?? []);
-    setBlendedPkgs(payload.blended ?? []);
-    setDiff(payload.diff ?? {});
-    setMeasuredPreview(payload.measuredPreview ?? {});
-    setOutcomesMode(payload.outcomesMode ?? state.outcomesMode ?? "shadow");
-    setBusy(false);
+    setSynthError(null);
+    try {
+      const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true });
+      await updatePlan(() => {
+        setPreviousPlans({ real: realPkgs ?? [], blended: blendedPkgs ?? [] });
+        setShowPlanChanges(true);
+        setRealPkgs(payload.real ?? []);
+        setBlendedPkgs(payload.blended ?? []);
+        setDiff(payload.diff ?? {});
+        setMeasuredPreview(payload.measuredPreview ?? {});
+        setOutcomesMode(payload.outcomesMode ?? state.outcomesMode ?? "shadow");
+      });
+    } catch (error) { setSynthError(error instanceof Error ? error.message : String(error)); }
+    finally { setBusy(false); }
   }
   useEffect(() => { run(); }, []);
+  useEffect(() => {
+    if (!showPlanChanges || busy) return;
+    const timer = setTimeout(() => setShowPlanChanges(false), 4000);
+    return () => clearTimeout(timer);
+  }, [showPlanChanges, busy]);
 
   const basePkgs = realPkgs ?? blendedPkgs;
   const realPkg = realPkgs?.find((p) => p.id === active) ?? null;
@@ -1542,24 +1560,28 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   const pushingCells = simCells.filter((c) => c.simulated.perNeed.some((pn) => pushingNeedIds.has(pn.needId)));
 
   const renderPackage = (pkg: PackageResult, side: "real" | "blended") => {
+    const previous = previousPlans[side].find(p => p.id === pkg.id);
+    const movements = rankChanges(previous, pkg);
+    const removed = previous?.items.filter(item => !pkg.items.some(next => next.proposal.id === item.proposal.id)) ?? [];
     const other = side === "real" ? blendedPkg : realPkg;
     const otherIds = new Set((other?.items ?? []).map((x) => x.proposal.id));
     const firstPlan = pkg.changesFromPrevious.removed.length === 0
       && pkg.changesFromPrevious.added.length === pkg.items.length;
     return (
-      <div className="card" style={{ flex: 1 }}>
+      <div key={`${side}:${pkg.id}`} className="card synthesis-package" style={{ flex: 1 }}>
+        <PlanTransitionStyles scope={`${side}:${pkg.id}`} items={[...pkg.items, ...(previous?.items ?? [])].map(item => item.proposal.id)} />
         <div className="plan-head">
           <div>
             <h3>{side === "real" ? "Real voices" : `With ${syntheticCount} simulated residents`}</h3>
             <p className="muted">{pkg.description}. These {pkg.items.length} changes fit the budget.</p>
-            <p className="muted s">{firstPlan
-              ? "First plan"
-              : `Changes from previous: +${pkg.changesFromPrevious.added.length} / -${pkg.changesFromPrevious.removed.length}, money moved ${money(pkg.changesFromPrevious.moneyMovedB)}`}</p>
+            <p className="muted s" role="status">{firstPlan && !previous && <>First plan · </>}
+              Changes from previous: +{pkg.changesFromPrevious.added.length} / -{pkg.changesFromPrevious.removed.length}, money moved <PlanNumber value={pkg.changesFromPrevious.moneyMovedB} format={money} />
+            </p>
           </div>
           <div className="kpis">
-            <div><b>{money(pkg.totalCost)}</b><small>of ${pkg.budget}B</small></div>
-            <div><b>{pct(pkg.avgSupport)}</b><small>avg support</small></div>
-            <div><b>{pkg.avgChange.toFixed(1)}</b><small>avg change level</small></div>
+            <div><b><PlanNumber value={pkg.totalCost} format={money} /></b><small>of <PlanNumber value={pkg.budget} format={money} /></small></div>
+            <div><b><PlanNumber value={pkg.avgSupport} format={pct} /></b><small>avg support</small></div>
+            <div><b><PlanNumber value={pkg.avgChange} format={n => n.toFixed(1)} /></b><small>avg change level</small></div>
           </div>
         </div>
         <ScoreInspector pkg={pkg} />
@@ -1582,6 +1604,8 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
               <PlanRow
                 key={`${side}:${it.proposal.id}`}
                 it={it}
+                transitionName={planTransitionName(`${side}:${pkg.id}`, it.proposal.id)}
+                movement={showPlanChanges ? movements.get(it.proposal.id) : undefined}
                 state={state}
                 simulatedEffect={simulatedEffect}
                 onSelect={setSelectedProposalId}
@@ -1589,6 +1613,9 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
             );
           })}
         </ol>
+        {showPlanChanges && removed.length > 0 && <div className="plan-removals" role="status">
+          {removed.map(item => <p className="plan-removed" key={item.proposal.id}>Removed · {item.proposal.title}</p>)}
+        </div>}
         <CitizenIdeas
           pkg={pkg}
           proposals={state.proposals}
@@ -1602,8 +1629,10 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
 
   return (
     <div className="grid synth">
+      <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
+        {synthError && <p role="alert">{synthError}</p>}
         <p className="muted">Experimental settings, not an approved community governance rule.</p>
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
           <label key={k} className="slider">
@@ -1693,14 +1722,15 @@ function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise
   );
 }
 
-function PlanRow({ it, state, simulatedEffect, onSelect }: { it: PlanItem; state: AppState; simulatedEffect?: "added" | "removed" | null; onSelect?: (proposalId: string) => void }) {
+function PlanRow({ it, state, simulatedEffect, onSelect, transitionName, movement }: { transitionName?: string; movement?: string; it: PlanItem; state: AppState; simulatedEffect?: "added" | "removed" | null; onSelect?: (proposalId: string) => void }) {
   const [open, setOpen] = useState(false);
   const p = it.proposal;
+  const motionRef = usePlanRowMotion(it);
   return (
-    <li className={`plan-item ${open ? "open" : ""}`}>
+    <li ref={motionRef} style={{ viewTransitionName: transitionName }} className={`plan-item ${open ? "open" : ""} ${movement === "Added" ? "plan-added" : ""}`}>
       <button className="plan-sum" onClick={() => { setOpen(!open); onSelect?.(p.id); }} aria-expanded={open}>
         <div className="plan-title">
-          <b>{p.title}{p.emergent && p.variant && p.variant !== "full" && <span className="badge new" title="Citizen idea, weighed in the version most voters chose.">{VARIANT_LABELS[p.variant]}</span>}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
+          <b>{movement && <span className="badge plan-movement">{movement}</span>}{p.title}{p.emergent && p.variant && p.variant !== "full" && <span className="badge new" title="Citizen idea, weighed in the version most voters chose.">{VARIANT_LABELS[p.variant]}</span>}{it.keptForStability && <span className="badge" title="Kept this round because it was in the previous plan and still passes support and rights checks.">stability hold</span>}{isEdge(it.margin) && <span className="badge new" title="This item is near the selection cutoff; a small score shift could flip it out.">on the edge</span>}{simulatedEffect === "added" && <span className="badge new">added by simulated residents</span>}{simulatedEffect === "removed" && <span className="badge">removed by simulated residents</span>}</b>
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
