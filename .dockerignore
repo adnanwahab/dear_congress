@@ -23,3 +23,6 @@ fly.toml
 .agents
 .codex
 .aws
+
+# Generated release identity must be built inside the image.
+build-identity.json

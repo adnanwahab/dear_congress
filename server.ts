@@ -1,3 +1,4 @@
+import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
 import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
@@ -844,6 +845,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   development: process.env.NODE_ENV !== "production",
   routes: {
     // Process liveness only: no database writes or upstream calls.
+    "/version": {
+      GET: () => securityHeaders(Response.json(buildIdentity, { headers: { "Cache-Control": "no-store" } })),
+      HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
+    },
     "/healthz": {
       GET: () => securityHeaders(Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }, { headers: { "Cache-Control": "no-store" } })),
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),

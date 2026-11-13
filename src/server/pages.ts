@@ -1,3 +1,4 @@
+import { buildIdentity } from "./build-identity";
 import { PRIVACY_HTML } from "./privacy-page";
 import { SITE_URL, SITE_NAME, DEFAULT_DESCRIPTION, PAGE_TITLES, pageTitle } from "../shared/page-metadata";
 import type { CitizenProposalRecord } from "../shared/citizen-proposals";
@@ -40,6 +41,7 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
   if (!found) html = html.replace('<div id="root"></div>', `<main style="max-width:40rem;margin:12vh auto;padding:24px;font:20px/1.6 system-ui"><h1>Page not found</h1><p>The link may have changed, or this page may no longer exist.</p><p><a href="/feed">Go to Feed</a> · <a href="/votes">Go to Votes</a></p><footer><a href="/privacy">Privacy &amp; removal</a></footer></main>`).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
+  html = html.replace("</body>", `<footer data-build-commit="${buildIdentity.commit ?? "unknown"}"><a href="/version">Build ${buildIdentity.commit?.slice(0, 12) ?? "unknown"}</a> · ${buildIdentity.builtAt ?? "date unavailable"} · ${buildIdentity.environment} · ${buildIdentity.mode}</footer></body>`);
   return new Response(html, { status: found ? 200 : 404, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" } });
 }
 
