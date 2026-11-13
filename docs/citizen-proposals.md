@@ -66,3 +66,13 @@ For a UI check, use a temporary database and open `/votes`. Save and reload a dr
 This branch was prepared against GitHub `main` at `f53852e9d6537ae98e3e09fe792d0f4d9fdc5711`. At implementation time, that source used `/vote` and `fly.toml` targeted `dear-congress`, while the inspected `civic-synthesis.fly.dev` deployment already had newer `/votes`, `/feed`, and sample-draft screens absent from this repository.
 
 Before production rollout, bring the current deployed source into the repository and integrate these modules with its existing screens. On the newer UI, reuse the form/detail components and API, add the proposal CTA to the existing voting screen, include published citizen proposals alongside clearly labelled sample content, and add the journal conversion link. Preserve the deployed app's other routes and features. Verify the intended Fly app and persistent volume before deploying. This branch does not change `fly.toml`, trigger a production deployment, or claim the live app has already changed.
+
+## Optional discussion reading guide (SHE-308 first slice)
+
+Open a published proposal from `/votes` and enable **Show optional reading guide**
+in Public discussion. This local template repeats all loaded public comments
+with source links and offers clarifying questions. It defaults off and uses no
+AI provider, storage, journal content or votes. It does not summarize positions
+or infer consensus. Ordinary commenting works with the guide off. Formal
+summary corrections, appeals and comment reporting are pending; see
+[the SHE-308 follow-up and acceptance gaps](reviews/SHE-308.md).
