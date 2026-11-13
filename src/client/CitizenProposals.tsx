@@ -6,27 +6,11 @@ import {
 import "./citizen-proposals.css";
 
 const API = "/api/citizen-proposals";
-const VOTER_KEY = "civic_synthesis_voter_id";
 const DRAFTS_KEY = "civic_synthesis_proposal_drafts_v1";
 const jurisdictionLabels: Record<ProposalJurisdiction, string> = {
   city: "City", county: "County", state: "State", federal: "Federal", unsure: "Not sure yet",
 };
 const choiceLabels: Record<AdvisoryChoice, string> = { support: "Support", oppose: "Oppose", unsure: "Not sure" };
-let temporaryVoterId: string | undefined;
-
-function voterId() {
-  try {
-    const existing = localStorage.getItem(VOTER_KEY);
-    if (existing) return existing;
-    const id = temporaryVoterId ?? crypto.randomUUID();
-    temporaryVoterId = id;
-    localStorage.setItem(VOTER_KEY, id);
-    return id;
-  } catch {
-    return temporaryVoterId ??= crypto.randomUUID();
-  }
-}
-
 class ProposalRequestError extends Error {
   constructor(message: string, readonly status: number | null) { super(message); }
 }
@@ -36,7 +20,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   try {
     response = await fetch(path, {
       method: body === undefined ? "GET" : "POST",
-      headers: { "content-type": "application/json", "x-voter-id": voterId() },
+      headers: { "content-type": "application/json" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       cache: "no-store",
     });
@@ -85,7 +69,7 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
       <a className="cp-nav-propose" href="/proposals/new" aria-current={current === "new" ? "page" : undefined}>＋ Propose a law</a>
     </nav>
     <main id="proposal-main" tabIndex={-1}>{children}</main>
-    <footer className="cp-footer"><span>Civic Synthesis</span><p>Citizen proposals and browser responses are advisory. Publishing here does not enact a law or send anything to an official.</p></footer>
+    <footer className="cp-footer"><span>Civic Synthesis</span><p>Anonymous, non-binding advisory participation; one vote per browser ID, not one verified person. Publishing here does not enact a law or send anything to an official.</p></footer>
   </div>;
 }
 
@@ -259,7 +243,6 @@ function ProposalEditor() {
     setSubmitting(true); setError(""); setStatus("");
     // Preserve the exact retry key and text before the request can reach the server.
     // A storage failure must not prevent an otherwise valid public submission.
-    voterId();
     try { persistDraft(); }
     catch { setStorageWarning("A recovery draft couldn’t be saved in this browser. Keep this page open until publishing finishes, and retry here if the connection fails."); }
     try {

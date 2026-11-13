@@ -31,6 +31,7 @@ async function startServer(dbPath: string): Promise<RunningServer> {
       DB_PATH: dbPath,
       PORT: "0",
       NODE_ENV: "production",
+      ANON_COOKIE_SECRET: "integration-only-cookie-secret-at-least-32-chars",
       DEBUG_REQUEST_LOGS: "0",
       OPENAI_API_KEY: "",
       GEMINI_API_KEY: "",
@@ -87,18 +88,22 @@ async function startServer(dbPath: string): Promise<RunningServer> {
   } catch (error) { await stop(); throw error; }
 }
 
+// Isolated browser cookie jars survive a server restart; headers cannot select voters.
+const cookieJars = new Map<string, string>();
 interface RequestOptions { voter?: string; method?: string; body?: unknown; rawBody?: string }
 async function api<T>(server: RunningServer, path: string, options: RequestOptions = {}) {
   const hasBody = options.body !== undefined || options.rawBody !== undefined;
   const response = await fetch(new URL(path, server.url), {
     method: options.method ?? (hasBody ? "POST" : "GET"),
     headers: {
-      ...(options.voter ? { "x-voter-id": options.voter } : {}),
+      ...(cookieJars.get(options.voter ?? "reader") ? { cookie: cookieJars.get(options.voter ?? "reader")! } : {}),
       ...(hasBody ? { "content-type": "application/json" } : {}),
     },
     ...(hasBody ? { body: options.rawBody ?? JSON.stringify(options.body) } : {}),
     signal: AbortSignal.timeout(10_000),
   });
+  const issued = response.headers.get("set-cookie")?.split(";")[0];
+  if (issued) cookieJars.set(options.voter ?? "reader", issued);
   return { status: response.status, data: await response.json() as T };
 }
 

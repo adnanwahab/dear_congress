@@ -230,7 +230,7 @@ src/client/styles.css
 For browser clients on another origin, send:
 
 - `Content-Type: application/json`
-- `x-voter-id: <stable-client-id>` (recommended; enables per-voter aggregation)
+- Preserve the server-issued anonymous cookie in a cookie jar; `x-voter-id` is ignored at the HTTP boundary. See the public-write security configuration below.
 
 #### 1) Journal mode (default)
 Creates a journal entry only (feeds Needs tab), and does **not** force-create a ballot option.
@@ -283,3 +283,79 @@ A citizen idea runs through a pipeline instead of a yes/no:
 - **Costs, support and legal details are illustrative**, not real estimates.
 - **Storage is a JSON file.** The Postgres schema in the design doc (journals, needs, proposals, votes, plans, experiments, outcomes) is the natural next step.
 - Not yet built: user accounts, outcome measurement / policy experiments feeding back into journals, district-level views.
+
+## Public-write security
+
+Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
+of at least 32 characters (for example, generated with `openssl rand -hex 32`).
+Production fails closed without it. The server issues an anonymous signed
+`HttpOnly; Secure; SameSite=Lax; Path=/` cookie on API responses; browser requests
+use this cookie automatically. This is not verified identity. Clearing cookies
+creates a new ID, so both IP and ID limits are necessary. Existing data is retained;
+legacy client-selected IDs are not automatically adopted because that would allow
+impersonation. Existing clients may initially see no previous choice. Plan any
+legacy tally reconciliation with SHE-271 without deleting ballots or changing
+proposal/revision bindings.
+
+Non-browser clients must retain `Set-Cookie` and send `Cookie` on subsequent HTTPS
+requests, e.g. `curl -c cookies.txt -b cookies.txt ...`. A stable cookie jar replaces
+`x-voter-id`. Requests without cookies receive a new ID but still share their IP
+limit. Cross-origin browser writes are rejected; external journal UIs should link
+to the same-origin journal page for publication. Secure cookies require HTTPS;
+local development browsers should use localhost. Development secrets are ephemeral.
+
+Public write limits are per process, in memory, with a ten-minute fixed window:
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `PUBLIC_RATE_WINDOW_SECONDS` | `600` | Window duration |
+| `PUBLIC_IP_LIMIT` | `60` | Combined protected write attempts per IP |
+| `PUBLIC_ID_LIMIT` | `30` | Combined protected write attempts per signed ID |
+| `PUBLIC_JOURNAL_LIMIT` | `3` | Journal attempts per signed ID across all aliases |
+| `PUBLIC_SUBMISSIONS_ENABLED` | `1` | Set `0` and restart to pause journal publication |
+| `TRUST_FLY_PROXY` | unset | Set `1` only behind Fly HTTP proxy; configured in fly.toml |
+
+All limits must be positive integers. Invalid attempts consume the same budget.
+429 responses include seconds in `Retry-After` and a readable retry message.
+Journal aliases are `/api/journal`, `/api/entries`, and `/api/publish_draft` (including
+answer mode). `/api/votes`, `/api/answers`, citizen proposal publication/votes/comments, and label
+edits share the combined limits. Journal input is capped at 10,000 characters,
+request JSON at 64 KiB, and author at 120 characters. A three-attempt journal window
+provides the minimal cooldown; the optional `website` honeypot must remain empty.
+`/api/publish_labels` and `PATCH /api/journal/:id` are disabled with 403 until
+ownership authorization is available. UI label correction is consequently unavailable.
+
+The Fly HTTP proxy supplies `Fly-Client-IP`; no `X-Forwarded-For`, `X-Real-IP`, or
+other client-selected header is used. Outside trusted Fly mode, the socket peer
+is used and every forwarding header is ignored. Bind only IPv4 (`0.0.0.0`) to avoid
+bypassing the proxy over Fly's private IPv6 network. Do not expose this listener
+through another untrusted direct path with trusted Fly mode enabled. See
+[Fly's public service documentation](https://fly.io/docs/networking/services/) and
+[Fly support's proxy trust guidance](https://community.fly.io/t/security-guidance-verifying-fly-proxy-socket-peers-and-forwarded-headers/28891).
+IP keys are HMACs retained only during the window; journal content and author are
+not written to publication logs. Debug request logging defaults off.
+
+This JSON-file application requires **one writer process on one Fly machine**.
+The limiter resets on restart. Before running multiple machines/processes, replace
+it with shared storage-backed atomic counters (for example Redis increment + expiry
+in one transaction/script, keyed by HMAC(IP) and signed ID) and a shared transactional
+application database. Independent machine-local counters or files are insufficient.
+Verify machine count before rollout; this change does not inspect or alter production.
+
+API responses include HSTS, nosniff, no-referrer and CSP. Fly's response header
+configuration applies the same policy to HTML and bundled assets. Direct local Bun
+HTML responses do not get the Fly headers. CSP permits same-origin scripts,
+MapLibre blob workers, CARTO tile/style/font requests and Bugsnag reporting. It
+blocks plugins, other framing origins, script evaluation and external scripts.
+Arbitrary `MAP_STYLE_URL` hosts need explicit policy review. Inline styles remain
+allowed for React/MapLibre. Frame embedding is limited to the same origin; the old
+wildcard `FRAME_ANCESTORS` setting no longer grants embedding permission. CSP
+configuration tests pass; actual browser tile/worker/reporting verification remains
+required in an environment that permits a local server.
+
+Journal publishing requires a visible public-content confirmation. The submit
+area warns against addresses/contact details and links to removal requests; use
+only the entry ID, not private text, in a public removal request. Journal text is
+rendered through React text interpolation. Private browser drafts are never read
+or uploaded by the journal submission path. No identity verification, CAPTCHA,
+paid incentives, merge policy changes, or deployment is included.
