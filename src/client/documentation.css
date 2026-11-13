@@ -25,3 +25,17 @@
 .document-embed code { font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .documentation-layout { grid-template-columns: 1fr; } .documentation-toc { position: static; } .documentation-toc nav { display: flex; flex-wrap: wrap; gap: 10px 20px; } }
 @media (max-width: 600px) { .documentation-heading { align-items: start; flex-direction: column; } .documentation-heading p:last-child { font-size: 16px; } .civic-shell .documentation-article { padding: 24px 20px; } .documentation-article .document-title { font-size: 24px; } .documentation-article > p, .documentation-article li { font-size: 15px; } }
+.documentation-toc a[aria-current="location"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.documentation-progress { position: sticky; top: 0; z-index: 20; height: 3px; margin-bottom: -3px; pointer-events: none; }
+.documentation-progress > div { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+@keyframes document-progress { to { transform: scaleX(1); } }
+@supports (animation-timeline: scroll(root)) {
+  .documentation-progress > div {
+    animation: document-progress auto linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Position feedback follows scrolling directly; no eased motion or reveal. */
+  .documentation-progress > div { animation-duration: auto !important; }
+}
