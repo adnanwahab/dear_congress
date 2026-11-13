@@ -12,6 +12,7 @@ import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 import { MutationError } from './mutation-status';
+import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
 import { BottomNavigation } from "./Navigation";
@@ -730,7 +731,8 @@ function ReportEntry({ entryId }: { entryId: string }) {
 
 /* --------------------------------- Needs --------------------------------- */
 
-function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: string | null }) {
+export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: string | null }) {
+  const jurisdiction = useJurisdiction();
   const demandReal = state.demandReal ?? state.demand;
   const [measured, setMeasured] = useState<{ mode: OutcomesMode; outcomes: { series: OutcomePoint[] } | null }>({ mode: state.outcomesMode ?? "shadow", outcomes: null });
   const demandBlended = state.demandBlended ?? state.demand;
@@ -776,14 +778,14 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
     void run();
   }, [state.outcomesMode]);
   const need = state.needs.find((n) => n.id === sel)!;
-  const props = state.proposals.filter((p) => p.needId === sel);
+  const props = state.proposals.filter((p) => p.needId === sel && (!jurisdiction.value || p.jurisdiction === jurisdiction.value));
   const measuredRows = (measured.outcomes?.series ?? []).filter((r) => r.needId === sel);
   const measuredLatest = measuredRows.length ? [...measuredRows].sort((a, b) => b.year - a.year)[0] : null;
   const measuredSources = new Map<string, { name: string; url: string; caveat?: string }>();
   for (const row of measured.outcomes?.series ?? []) measuredSources.set(`${row.source.name}|${row.source.url}`, row.source);
 
   const jurisdictions = ["Houston", "Harris County", "Texas", "United States"];
-  const byJur = jurisdictions.map((j) => {
+  const byJur = jurisdictions.filter(j => !jurisdiction.value || j === jurisdiction.value).map((j) => {
     const needIds = [...new Set(state.proposals.filter((p) => p.jurisdiction === j && !p.rightsIssue).map((p) => p.needId))];
     return { j, ranked: needIds.map((id) => ({ id, d: demandReal[id]!.demand })).sort((a, b) => b.d - a.d).slice(0, 5) };
   });
@@ -791,8 +793,10 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
   return (
     <div className="grid two">
       <section className="card">
+        <JurisdictionPicker preference={jurisdiction} count={state.proposals.filter(p => !jurisdiction.value || p.jurisdiction === jurisdiction.value).length} />
         <h2>Shared needs</h2>
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
+        <p className="muted">Jurisdiction filters policy options and jurisdiction priorities below. Shared need rankings, journal map and measured outcomes stay unchanged.</p>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
         <div className="row" style={{ marginBottom: 8 }}>
           <button className={geoMode === "real" ? "" : "ghost"} aria-pressed={geoMode === "real"} onClick={() => switchMode("real")}>Real voices</button>
@@ -819,6 +823,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
             <li>
               <span>Policies</span>
               <ul className="policies">
+                {!props.length && <li>No policies for this need match the jurisdiction preference.</li>}
                 {props.map((p) => (
                   <li key={p.id}>
                     <div className="pol-head">
@@ -831,7 +836,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
                       {p.costEstimate === "designed" && <span className="badge" title="Made concrete with Make this possible: costed from the closest existing program, not yet reviewed.">Designed</span>}
                     </div>
                     <Split s={state.stats[p.id]!} />
-                    <small className="muted">{state.changeLevels[p.changeLevel]} · {p.authority} · {money(p.costB)}</small>
+                    <small className="muted">{p.jurisdiction} · {state.changeLevels[p.changeLevel]} · {p.authority} · {money(p.costB)}</small>
                   </li>
                 ))}
               </ul>
