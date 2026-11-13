@@ -561,3 +561,10 @@ about 60 seconds plus page loading time. Space pauses/resumes, ←/→ step, and
 exits. Clicking the page pauses; exit the tour to interact with voting or saved
 work. Map runs only its local illustrative simulation. No votes or drafts are saved
 by the tour. See [SHE-331 review notes](docs/reviews/SHE-331.md) for validation limits.
+
+## Official legislative metadata (opt-in first slice)
+
+A single-bill Congress.gov metadata importer and separate read-only lane are
+available on `/published`, `/feed` and `/outcomes`. No official records are seeded.
+See [operator usage, provenance and remaining acceptance](docs/legislative-metadata.md).
+Metadata check times do not verify full bill text or current legal status.
