@@ -85,7 +85,8 @@ export interface PublishDraftDeps {
 }
 
 export async function handlePublishDraftPost(body: PublishDraftBody, deps: PublishDraftDeps): Promise<PublishDraftSuccess> {
-  if (!body.text?.trim()) throw new PublishDraftInputError("text is required");
+  if (typeof body.text !== "string" || !body.text.trim()) throw new PublishDraftInputError("text is required");
+  if (body.text.length > 10000) throw new PublishDraftInputError("text must be 10,000 characters or fewer");
   const text = body.text.trim();
 
   const mode = resolvePublishDraftKind({

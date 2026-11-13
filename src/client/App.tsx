@@ -53,23 +53,12 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
-const VOTER_ID_KEY = "civic_synthesis_voter_id";
-
-function getVoterId() {
-  const existing = localStorage.getItem(VOTER_ID_KEY);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  localStorage.setItem(VOTER_ID_KEY, id);
-  return id;
-}
-
 async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
   const res = await fetch(path, {
     method: resolvedMethod,
     headers: {
       "content-type": "application/json",
-      "x-voter-id": getVoterId(),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -535,7 +524,7 @@ function JurisdictionMap({
 
 /* -------------------------------- Journal -------------------------------- */
 
-function JournalView({
+export function JournalView({
   state,
   refresh,
   liveStatus,
@@ -557,6 +546,8 @@ function JournalView({
   const [preview, setPreview] = useState<{ labels: string[]; matched: { need_id: string; name: string; voices: number }[]; deltas: { item_id: string; name: string; rankBefore: number; rankAfter: number }[] } | null>(null);
   const [undo, setUndo] = useState<{ forkId: string; expiresAt: number; needId: string | null } | null>(null);
   const [undoLeft, setUndoLeft] = useState(0);
+  const [confirmedPublic, setConfirmedPublic] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (!text.trim()) {
@@ -583,8 +574,10 @@ function JournalView({
   }, [undo]);
 
   async function submit() {
-    if (!text.trim()) return;
+    if (!text.trim() || !confirmedPublic || busy) return;
     setBusy(true);
+    setSubmitError("");
+    try {
     const published = await api<{ entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
       text,
       author,
@@ -609,6 +602,10 @@ function JournalView({
       if (ev.status === "error") es.close();
     };
     es.onerror = () => es.close();
+    setConfirmedPublic(false);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Could not publish. Please try again.");
+    } finally { setBusy(false); }
   }
 
   async function undoPublish() {
@@ -633,15 +630,19 @@ function JournalView({
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. Rent went up again and the bus to my job takes over an hour…"
           rows={6}
+          maxLength={10000}
           onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit(); }}
         />
         {text.trim() && <p className="note faint">{previewNeedsLine}</p>}
         {preview?.labels?.length ? (
           <div className="chips">{preview.labels.map((id) => <span key={id} className="chip s">{needLabel(state, id)}</span>)}</div>
         ) : null}
+        <p>This entry is public if submitted. Do not include addresses, contact details, or other private information. To request removal, <a href="https://github.com/adnanwahab/dear_congress/issues/new?title=Public%20journal%20removal%20request">open a removal request</a> with the entry link or ID only; do not repeat private text.</p>
+        <label><input type="checkbox" checked={confirmedPublic} onChange={e => setConfirmedPublic(e.target.checked)} /> I want to publish this entry publicly.</label>
+        {submitError && <p role="alert">{submitError}</p>}
         <div className="row">
-          <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
-          <button onClick={submit} disabled={busy || !text.trim()}>{busy ? "Publishing…" : "Publish"}</button>
+          <input maxLength={120} value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Name · neighborhood (optional)" />
+          <button onClick={submit} disabled={busy || !text.trim() || !confirmedPublic}>{busy ? "Publishing…" : "Publish publicly"}</button>
         </div>
 
         {entry && (
@@ -682,6 +683,7 @@ function JournalView({
               <p>{e.text}</p>
               <div className="feed-meta">
                 <span className="who">{e.author}</span>
+                <a href={`#entry-${encodeURIComponent(e.id)}`}>Entry link</a>
                 {e.extraction.needs.map((n) => <span key={n.id} className="chip s">{needLabel(state, n.id)}</span>)}
                 {e.corrected && <span className="badge ok">corrected</span>}
                 {e.synthetic && <span className="badge new" title={`Written by a simulated resident${e.source ? ` (${e.source})` : ""}. Not counted in needs unless you include simulated residents in Synthesize.`}>simulated</span>}
