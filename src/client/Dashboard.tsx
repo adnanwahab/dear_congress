@@ -1,3 +1,4 @@
+import { DailyQuestion } from './DailyQuestion';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
@@ -52,7 +53,7 @@ export function Dashboard({ request }: { request: Request }) {
     setBusy(true); setError(''); setNotice('');
     try {
       await request('/api/votes', { votes: [{ proposalId: item.id, stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] });
-      await load(); setNotice('Advisory vote saved. You can change it at any time.');
+      await load(); window.dispatchEvent(new Event('advisory-vote:saved')); setNotice('Advisory vote saved. You can change it at any time.');
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save your vote. Please try again.'); }
     finally { setBusy(false); }
   }
@@ -70,7 +71,7 @@ export function Dashboard({ request }: { request: Request }) {
   return <div className="civic-shell">
     <header className="civic-header"><div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">Live demo</span></div><div className="header-meta"><span className="pill warn">SAMPLE DATA</span><span className="pill info">Advisory · not binding</span></div></header>
     <main className="civic-main">
-      <section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2><a href={`${route}${item ? `?proposal=${encodeURIComponent(item.id)}` : ''}`}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
+      <p>Civic Synthesis is an independent public beta for exploring policy proposals and expressing non-binding advisory preferences; it is not an official government ballot.</p><DailyQuestion request={request} /><section className="hero"><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2><a href={`${route}${item ? `?proposal=${encodeURIComponent(item.id)}` : ''}`}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : 'Loading sample scenarios…'}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <div className="triple-grid">

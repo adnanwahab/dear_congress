@@ -1,0 +1,4 @@
+.daily-question { margin-bottom: 24px; min-width: 0; overflow-wrap: anywhere; }
+.daily-question h3 { font-size: 24px; line-height: 1.3; }
+.daily-actions { display: flex; flex-wrap: wrap; gap: 16px; }
+.daily-actions a { display: inline-block; padding: 12px 0; max-width: 100%; }
