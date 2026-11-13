@@ -1,3 +1,4 @@
+import { scoreAggregate } from "./aggregate-score";
 import { isPublicEntry } from "../shared/moderation";
 import { CHANGE_LEVELS, NEEDS, PROPOSALS, SEED_JOURNALS } from "./catalog";
 import { applyVariant, chosenVariant } from "./variants";
@@ -662,11 +663,13 @@ function scoreExplanation(row: Row, weights: Weights, stabilityBonus: number) {
 
   const target = row.score + row.changeCost;
   const correction = target - sumContrib;
-  parts.evidence.contribution += correction;
+
   const total = row.score + stabilityBonus;
 
   return {
     parts,
+    roundingAdjustment: correction,
+    weightDivisor: wsum,
     changePenalty: row.changeCost,
     stabilityBonus,
     total,
@@ -689,7 +692,6 @@ function cheapestIncumbentsToFree(incumbents: RankedRow[], needed: number): Rank
 }
 
 export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
-  const wsum = Object.values(w).reduce((s, v) => s + v, 0) || 1;
   return ctx.proposals.map((p) => {
     const st = ctx.stats[p.id]!;
     const measuredImpact = Number(ctx.outcomes.items[p.id] ?? 0);
@@ -701,9 +703,7 @@ export function scoreAll(ctx: Context, w: Weights, lambda: number): Row[] {
       reversibility: p.reversibility,
       evidence: round(clamp(Math.max(p.evidence, measuredImpact))),
     };
-    const base = (Object.keys(w) as (keyof Weights)[]).reduce((s, k) => s + w[k] * parts[k], 0) / wsum;
-    const changeCost = round((lambda * p.changeLevel) / 6);
-    return { p, parts, changeCost, score: round(base - changeCost) };
+    return { p, parts, ...scoreAggregate(parts, w, lambda, p.changeLevel) };
   });
 }
 
@@ -1217,6 +1217,29 @@ export function synthesizePackage(
   const unfundedPopularCost = deferred.filter((d) => d.reason.startsWith("Doesn't fit")).reduce((s, d) => s + d.costB, 0);
   return {
     id: opts.id, name: opts.name, description: opts.description,
+    scoreAudit: {
+      version: "score-arithmetic-v1",
+      proposals: rows.map((r) => {
+        const selected = items.find((i) => i.proposal.id === r.p.id);
+        const pending = waiting.find((w) => w.id === r.p.id);
+        const rejected = deferred.find((d) => d.id === r.p.id);
+        return {
+          id: r.p.id, title: r.p.title, costB: r.p.costB,
+          status: selected ? "selected" as const : "excluded" as const,
+          reason: selected ? "Included in final package"
+            : r.p.rightsIssue ? `Rights exclusion: ${r.p.rightsIssue}`
+            : r.p.costB === null ? "Cost unavailable; cannot select an uncosted proposal"
+            : pending?.reasonDetail ?? rejected?.reason ?? "Not selected after stability, persistence and churn rules",
+          base: scoreExplanation(r, opts.weights, 0),
+          selectedRank: selected?.explanation.total ?? null,
+          selectedStabilityBonus: selected?.explanation.stabilityBonus ?? null,
+          evidenceInputs: {
+            catalog: r.p.evidence,
+            measuredImpact: ctx.outcomes.items[r.p.id] ?? null,
+          },
+        };
+      }),
+    },
     items, totalCost, budget,
     avgSupport: round(items.reduce((s, i) => s + i.stats.support, 0) / Math.max(1, items.length)),
     avgChange: round(items.reduce((s, i) => s + i.proposal.changeLevel, 0) / Math.max(1, items.length), 2),
