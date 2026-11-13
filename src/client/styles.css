@@ -761,3 +761,27 @@ details[open] > summary::before { transform: rotate(135deg); }
 .demo-tour small { display: block; }
 .demo-tour > div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .demo-tour button { padding: 8px 12px; }
+
+/* Journey geometry stays in flow; only paint and transforms animate. */
+.stage-card { position: relative; padding: 0; }
+.stage-link { display: block; height: 100%; box-sizing: border-box; padding: 16px 19px 18px; border-radius: inherit; color: inherit; text-decoration: none; }
+.stage-link:hover { background: #edf5fa; box-shadow: inset 0 0 0 2px var(--accent); }
+.stage-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.stage-card::before, .stage-card::after { content: ''; position: absolute; pointer-events: none; height: 3px; top: -9px; left: 0; width: calc(100% + 16px); background: var(--line); }
+.stage-card:last-child::before, .stage-card:last-child::after { width: 100%; }
+.stage-card::after { background: var(--accent); transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) {
+  .stage-card { transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out); transition-delay: calc(var(--i) * 90ms); }
+  @starting-style { .stage-card { opacity: 0; transform: translateY(18px); } }
+  .stage-card::after { animation: journey-progress 200ms linear both; animation-delay: calc(950ms + var(--i) * 200ms); }
+}
+@keyframes journey-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (min-width: 681px) and (max-width: 1100px) {
+  .stage-card:nth-child(3n)::before, .stage-card:nth-child(3n)::after { width: 100%; }
+}
+@media (max-width: 680px) {
+  .stage-card { padding: 0; }
+  .stage-link { padding: 14px; }
+  .stage-card::before, .stage-card::after { width: calc(100% + 12px); }
+  .stage-card:nth-child(2n)::before, .stage-card:nth-child(2n)::after { width: 100%; }
+}

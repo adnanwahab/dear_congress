@@ -1,4 +1,6 @@
 import { TopicChip } from './TopicChip';
+import type { CSSProperties } from 'react';
+import { prepareStageMorph } from './view-transitions';
 import { AdvisoryVoteBars } from './AdvisoryVoteBars';
 import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
@@ -76,7 +78,7 @@ export function Dashboard({ request }: { request: Request }) {
   return <div className="civic-shell">
     <CivicHeader stage="Live demo" />
     <main className="civic-main">
-      <section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2><a href={`${route}${item ? `?proposal=${encodeURIComponent(item.id)}` : ''}`}>{title}</a></h2><p>{description}</p></li>)}</ol></section>
+      <section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h1>One proposal, from published change to sponsor</h1><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h2>{title}</h2><p>{description}</p></a></li>)}</ol></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : 'Loading sample scenarios…'}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <div className="triple-grid">
