@@ -1,4 +1,5 @@
 import { motionDuration } from "./motion";
+import { NeedTopicChip } from './TopicChip';
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
@@ -804,7 +805,7 @@ function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId: strin
             return (
               <li key={n.id} className={sel === n.id ? "on" : ""}>
                 <button onClick={() => setSel(n.id)}>
-                  <div className="need-top"><b>{n.label}</b><span className="num-s">{Math.round(d.demand * 100)}</span></div>
+                  <div className="need-top"><b>{n.label}</b><NeedTopicChip label={n.label} /><span className="num-s">{Math.round(d.demand * 100)}</span></div>
                   <Bar value={d.demand} />
                   <small>
                     rank real #{rankReal.get(n.id)} / blended #{rankBlend.get(n.id)}
