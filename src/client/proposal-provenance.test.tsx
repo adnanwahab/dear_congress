@@ -42,3 +42,19 @@ test('integrated workflow retains source provenance through API retry and all ci
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   for (const stage of ['published', 'feed', 'votes', 'draft']) expect(stdout).toContain(`PASS ${stage}:`);
 });
+
+test('compact cards keep sample status and safe source links in the disclosure summary', () => {
+  for (const item of DEMO_ITEMS) {
+    const html = renderToStaticMarkup(<ProposalProvenance item={item} compact />);
+    const summary = html.match(/<summary>(.*?)<\/summary>/)![1]!;
+    expect(summary).toContain('Sample scenario / not introduced bill');
+    expect(summary).toContain(item.jurisdiction);
+    expect(summary).toContain(`href="${item.sourceUrl}"`);
+    expect(summary).toContain('Not checked');
+    expect(html).not.toContain('<details open');
+    expect(html).toContain('Background only; does not establish');
+  }
+  const html = renderToStaticMarkup(<ProposalProvenance item={{ ...DEMO_ITEMS[0]!, sourceUrl: 'javascript:alert(1)', background: undefined }} compact />);
+  expect(html).not.toContain('<a ');
+  expect(html).toContain('Source not available');
+});

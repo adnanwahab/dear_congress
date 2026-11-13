@@ -1,0 +1,8 @@
+.argument-map { margin-block: 1rem; padding: 1rem; border: 1px solid var(--border, #bbb); border-radius: .5rem; overflow-wrap: anywhere; }
+.argument-map-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.argument-map-sides > section { min-width: 0; }
+.argument-map ul { padding-inline-start: 1.25rem; }
+.argument-map summary { cursor: pointer; }
+.argument-map :is(a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.argument-map blockquote { margin: 1rem 0; }
+@media (max-width: 700px) { .argument-map-sides { grid-template-columns: minmax(0, 1fr); } }

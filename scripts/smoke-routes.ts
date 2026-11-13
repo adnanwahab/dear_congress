@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { replaySnapshot } from '../src/server/audit-replay';
 import { CIVIC_STAGES, stageRoute } from '../src/shared/civic-stages';
 
 // Run the real production router/build with disposable state and no service credentials.
@@ -20,6 +21,36 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  const auditIndex = await get('/api/audit-samples');
+  assert.equal(auditIndex.status, 200);
+  const { samples } = await auditIndex.json();
+  assert.equal(samples.length, 1);
+  const audit = await get(samples[0].url);
+  assert.equal(audit.status, 200);
+  const auditBytes = await audit.text();
+  assert.equal(replaySnapshot(JSON.parse(auditBytes), samples[0].snapshotId).score, 0.599);
+  assert.equal(await (await get(samples[0].url)).text(), auditBytes);
+  assert.equal((await get('/api/audit-samples/' + '0'.repeat(64))).status, 404);
+  assert.equal((await fetch(new URL(samples[0].url, server!.url), { method: 'POST' })).status, 404);
+  const startLive = await fetch(new URL('/api/live', server!.url), {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({proposalId:'demo-housing'})});
+  assert.equal(startLive.status,200);
+  const live = await startLive.json();
+  const ownerCookie = startLive.headers.get('set-cookie')!.split(';')[0]!;
+  assert.equal((await get('/votes?live='+live.code)).status,200);
+  const phone = await get('/live/'+live.code);
+  assert.equal(phone.status,200);
+  assert.match(await phone.text(), /noindex,nofollow/);
+  const qr = await get('/api/live/'+live.code+'/qr');
+  assert.equal(qr.status,200); assert.match(await qr.text(), /<svg/);
+  const livePost = (action:string, cookie:string, body:unknown) => fetch(new URL('/api/live/'+live.code+'/'+action,server!.url),{method:'POST',headers:{'content-type':'application/json',cookie},body:JSON.stringify(body)});
+  const voter = await get('/api/live/'+live.code);
+  const voterCookie = voter.headers.get('set-cookie')!.split(';')[0]!;
+  assert.equal((await livePost('vote',voterCookie,{stance:1})).status,200);
+  const changed = await livePost('vote',voterCookie,{stance:-1});
+  assert.equal((await changed.json()).total,1);
+  assert.equal((await livePost('end',voterCookie,{})).status,403);
+  assert.equal((await livePost('end',ownerCookie,{})).status,200);
+  assert.equal((await livePost('vote',voterCookie,{stance:0})).status,409);
   const versionResponse = await get('/version');
   assert.equal(versionResponse.status, 200);
   assert.equal(versionResponse.headers.get('cache-control'), 'no-store');
@@ -32,7 +63,7 @@ try {
   const headVersion = await fetch(new URL('/version', server!.url), { method: 'HEAD' });
   assert.equal(headVersion.status, 200);
   assert.equal(await headVersion.text(), '');
-  for (const path of ['/', '/account', '/journal', '/needs', '/vote', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
+  for (const path of ['/', '/account', '/journal', '/needs', '/vote', '/vote/happybearlandia', '/vote/happybearlandia/pr/282', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/, path);
