@@ -1,0 +1,12 @@
+.reality-lens { flex: 0 0 100%; min-width: 0; font: 14px/1.5 var(--sans); border-top: 1px solid var(--line); padding-top: 8px; }
+.reality-lens-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.reality-lens-heading button { min-height: 44px; padding: 8px 12px; margin-left: auto; }
+.reality-lens button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.reality-lens dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 24px; margin: 12px 0; }
+.reality-lens dt { font-weight: 700; }
+.reality-lens dd { margin: 4px 0 0; }
+.reality-lens p { margin: 8px 0; }
+.civic-header:has(> .reality-lens) { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .workflow-shell .civic-header:has(.reality-lens button[aria-expanded="true"]) { position: static; }
+}
