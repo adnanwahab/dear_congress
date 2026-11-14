@@ -136,3 +136,37 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## SHE-433 versioned simulation shares
+
+The sandbox's **Reproducible scenario link** now emits `simulationShare=1` with
+explicit `parameter`, `horizon` and `clock`, alongside law, implementation
+strength, seed, population 24, revision and the recorded model version. Transit
+uses 720 minutes; housing uses 12 months, matching the existing provider API's
+fixed horizons. No new provider parameters or production writes are introduced.
+Generated replay URLs exclude proposal IDs and all ambient query parameters,
+including journal text, identities and unpublished proposal context.
+
+The versioned loader requires every replay field, rejects duplicate fields and
+unsupported settings, and restores inputs without automatic execution. Legacy
+reciprocal civic context remains supported. A run verifies the receipt's law,
+seed, population, strength, horizon/clock and shared model version before showing
+results; changed providers fail visibly rather than silently replaying new data.
+This pins a model recipe, not archived results or a guarantee of provider uptime.
+Native links support keyboard/touch; playback remains opt-in, with existing
+reduced-motion styling, cancellation, timeout and retry behavior.
+
+Governance and launch controls remain as documented in launch-merge-policy.md:
+disabled/dry-run defaults, quorum 10, current-head checks and human review are
+unchanged. No deployment, merge, release, vote, proposal or production data write
+is part of this work. Human review and provider parity remain release gates.
+
+Candidate validation in this workspace: 11 focused tests passed (132 assertions),
+typecheck and diff whitespace checks passed. The required full `bun test` run
+reported 476 passes and 26 failures; server-based tests failed to bind local
+sockets (`EADDRINUSE`, port 0). `bun run test:routes` was also blocked at server
+startup by the same bind failure. These checks need rerunning in an environment
+that permits listening sockets. No fresh browser, touch or screen-reader
+acceptance is claimed; the existing native controls and opt-in playback remain.
+PR audit found no SHE-433 PR; the open law-related result was SHE-405 (#133),
+which concerns proposal text comparison rather than simulation replay settings.

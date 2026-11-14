@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
-import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
+import {parseCivicLawContext,civicLawQuery,parseSimulationShare,simulationShareQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
 type Actor = {id:string;label?:string;x?:number;z?:number;[key:string]:string|number|boolean|null|undefined};
@@ -66,7 +66,7 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
     !Number.isInteger(data.manifest.population)||data.manifest.population<1||data.manifest.population>60||
     data.manifest.recordedCheckpoints!==data.frames.length||
     !isFiniteNumber(data.manifest.start)||!isFiniteNumber(data.manifest.end)||
-    data.manifest.start>data.manifest.end||typeof data.manifest.modelVersion!=='string'||!data.manifest.modelVersion||
+    data.manifest.start>data.manifest.end||typeof data.manifest.modelVersion!=='string'||!(/^[A-Za-z0-9._-]{1,80}$/).test(data.manifest.modelVersion)||
     !data.frames.length)throw Error('The model did not supply comparable recorded behavior.');
   for(let i=0;i<data.frames.length;i++){
     const frame=data.frames[i];
@@ -146,9 +146,9 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
 
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
 export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:string}){
-  const [imported]=useState(()=>typeof window==='undefined'?null:parseCivicLawContext(window.location.search));
+  const [imported]=useState(()=>typeof window==='undefined'?null:(new URLSearchParams(window.location.search).has('simulationShare')?parseSimulationShare(window.location.search):parseCivicLawContext(window.location.search)));
   const effectiveSeed=imported?.seed??seed;
-  const invalidContext=typeof window!=='undefined'&&new URLSearchParams(window.location.search).has('civicContext')&&!imported;
+  const invalidContext=typeof window!=='undefined'&&['civicContext','simulationShare'].some(key=>new URLSearchParams(window.location.search).has(key))&&!imported;
   const [lawId,setLawId]=useState(imported?.lawId??83);
   const [strength,setStrength]=useState((imported?.implementationStrength??1)*100);
   const [revision,setRevision]=useState(imported?.revision??1);
@@ -214,6 +214,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(!response.ok)throw Error(typeof payload?.error==='string'?payload.error:'Model request unavailable.');
       const parsed=parseLawBehaviorReceipt(payload);
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
+      if(parsed.status==='completed'&&(parsed.manifest?.start!==0||parsed.manifest?.end!==amendment.horizon||parsed.unit!==amendment.clock))throw Error('Model horizon changed. This scenario cannot be reproduced by this provider.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
@@ -230,7 +231,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
-    <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Demo sandbox · Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    {imported?.modelVersion&&<p role="status">Shared model version: {imported.modelVersion}. Inputs restored; run to check provider compatibility. Nothing runs automatically.</p>}
+    <p className="muted s">Shared links contain only reviewed model settings, seed, fixed horizon, population and model version. Journals, identities and unpublished proposals are excluded.</p>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
@@ -296,7 +299,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
-      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      <p><a href={'/synth?'+simulationShareQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery({...context,proposalId:undefined}),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic
