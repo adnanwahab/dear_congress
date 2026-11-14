@@ -43,6 +43,10 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+Game-loop neutrality and consent review, regression coverage, and pending human
+privacy/minors/accessibility checks are tracked in [SHE-544](docs/reviews/SHE-544.md).
+New rewards must extend that checklist and its stance-parity tests.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
