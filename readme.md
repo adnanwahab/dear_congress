@@ -679,3 +679,14 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Government responsibility explorer
+
+The six-stage sample workflow includes a read-only institutional explorer with
+federal and Texas paths: Writes → Authorizes → Funds → Implements. Each handoff
+links to an institutional source. Expand roles or select Text-only outline to
+read every explanation. The responsive flow uses native keyboard controls and
+requires no animation. General examples remain available during proposal loading
+or failure. These are educational roles, not verified office assignments for the
+selected fictional proposal; city, county and transit authority remain unresolved.
+See `src/shared/responsibility.ts` for the typed editorial contracts and citations.

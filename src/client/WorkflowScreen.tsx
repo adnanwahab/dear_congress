@@ -1,3 +1,4 @@
+import { ResponsibilityExplorer } from './ResponsibilityExplorer';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -151,6 +152,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </nav>}
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? <Skeleton kind="line" /> : 'Sample proposals unavailable'}</span></div>
     {stage === 'votes' && <ParticipationNotice />}
+    <ResponsibilityExplorer loading={loading} failed={!!loadError} proposal={item} />
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
