@@ -1,3 +1,4 @@
+import { GlossaryText } from './CivicGlossary';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
@@ -1898,9 +1899,9 @@ function PlanRow({ it, state, simulatedEffect, onSelect, transitionName, movemen
 
           <dl className="facts">
             <div><dt>Cost</dt><dd>{money(p.costB)} / year</dd></div>
-            <div><dt>Who implements it</dt><dd>{p.authority} via {p.mechanism}</dd></div>
+            <div><dt>Who implements it</dt><dd><GlossaryText text={p.authority} /> via <GlossaryText text={p.mechanism} /></dd></div>
             <div><dt>Jurisdiction</dt><dd>{p.jurisdiction}</dd></div>
-            <div><dt>Law change</dt><dd>{p.legalChange}</dd></div>
+            <div><dt>Law change</dt><dd><GlossaryText text={p.legalChange} /></dd></div>
             <div><dt>New agency</dt><dd>{it.newAgency ? "Yes" : "No"}</dd></div>
             <div><dt>Rollout</dt><dd>{it.rollout}</dd></div>
             <div><dt>How we'd know it worked</dt><dd>{p.metrics.map((m) => <code key={m}>{m}</code>)}</dd></div>

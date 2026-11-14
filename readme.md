@@ -43,6 +43,12 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+Inline civic reading help defines appropriation, committee, quorum, amendment and
+effective date with labeled editorial examples. Dotted-underlined terms in the
+guide, drafts and synthesis explanations open keyboard/tap help without leaving
+the page. Definitions are bundled for offline use after page load. See
+[SHE-491 validation and pending acceptance](docs/reviews/SHE-491.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS

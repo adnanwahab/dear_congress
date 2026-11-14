@@ -1,3 +1,4 @@
+import { GlossaryText } from './CivicGlossary';
 import { useEffect, useState } from 'react';
 import { metadataFreshness, type BillObservation } from '../shared/legislation';
 export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObservation[]; now?: number }) {
@@ -9,7 +10,7 @@ export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObser
       <h3>{b.type.toUpperCase()} {b.number} · Congress {b.congress}: {b.title}</h3>
       <p>Introduced bill record · US · {b.chamber} · introduced {b.introducedDate}. Current legal status unverified.</p>
       <p>Sponsor: {b.sponsors.join('; ') || 'Not provided by source'}</p>
-      <p>Last reported official action ({b.latestAction.actionDate}): {b.latestAction.text}</p>
+      <p>Last reported official action ({b.latestAction.actionDate}): <GlossaryText text={b.latestAction.text} /></p>
       <a href={b.sourceUrl} target="_blank" rel="noopener noreferrer">Congress.gov source for {b.type.toUpperCase()} {b.number}, Congress {b.congress}</a>
       <p role="status">{metadataFreshness(b, now)} · metadata retrieved {b.checkedAt} · upstream updated {b.upstreamUpdatedAt ?? 'unknown'}</p>
       <details><summary>Immutable metadata citation</summary><p>SHA-256: {b.sourceHash}</p><p>Exact metadata snapshots are retained by the importer. A hash verifies content consistency; it does not authenticate the source.</p></details>

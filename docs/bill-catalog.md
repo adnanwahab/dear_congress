@@ -55,7 +55,9 @@ It is bundled as text only when the lazy catalog screen loads.
 
 `LegislativeMarkdown` intentionally supports headings, paragraphs and unordered
 lists only. Text is escaped through React; HTML and link syntax are never
-executed, and no source URL is fetched. Inline formatting is displayed literally.
+executed, and no source URL is fetched. Inline formatting is displayed literally. Recognized civic terms in paragraphs
+and list items render as glossary buttons with labeled editorial examples; the
+original supplement text and source identity remain unchanged.
 Future expanded syntax should use an explicitly safe parser and new security
 fixtures rather than HTML injection. Later supplements need an explicit source
 mapping and review, not implicit runtime file discovery.

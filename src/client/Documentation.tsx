@@ -1,3 +1,4 @@
+import { GlossaryText } from './CivicGlossary';
 import { CivicHeader } from "./CivicHeader";
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { DESIGN_DOCUMENT } from './design-document';
@@ -10,7 +11,7 @@ import { trackDocumentSections } from './scroll-motion';
 function Inline({ text }: { text: string }) {
   return <>{text.split(/(\[[^\]]+\]\((?:https?:\/\/|\/)[^\s)]+\))/g).map((part,i) => {
     const link = part.match(/^\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)$/);
-    return link ? <a key={i} href={link[2]} >{link[1]}</a> : <Fragment key={i}>{part.replace(/\\#/g,'#')}</Fragment>;
+    return link ? <a key={i} href={link[2]} >{link[1]}</a> : <Fragment key={i}><GlossaryText text={part.replace(/\\#/g,'#')} /></Fragment>;
   })}</>;
 }
 const slug = (heading: string) => heading.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
