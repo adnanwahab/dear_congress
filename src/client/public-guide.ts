@@ -13,6 +13,8 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
 
+Local sample filters, comparisons, sponsor-card moves, household presets and synthesis sliders offer **Undo local change** for 20 seconds. A new action replaces the previous Undo. Focus or hover pauses expiry; leaving gives another 20 seconds. Undo history clears on navigation or reload. Restoring synthesis settings creates an unsaved preview. Public posts and advisory votes use separate explicit workflows.
+
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.

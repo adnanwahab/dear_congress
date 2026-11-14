@@ -255,6 +255,16 @@ src/client/styles.css
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
+### Local sandbox Undo
+
+Sample proposal filters, comparison selection/order, sponsor-card moves, household
+presets and synthesis sliders offer one-step **Undo local change** for 20 seconds.
+Each new action replaces the previous Undo; focus or hover pauses expiry and
+leaving gives another 20 seconds. Restoration is announced in place. History stays
+in page memory and clears on navigation/reload. Synthesis restoration requests
+only an unsaved preview. Public posts, advisory votes and saved synthesis commits
+retain their separate explicit workflows.
+
 ### Scoring rule sandbox
 
 `/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`

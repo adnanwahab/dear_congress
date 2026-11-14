@@ -65,6 +65,10 @@ test('native controls select, cap, reorder, remove and replay without requests o
     expect(replay.items.map(item => item.id)).toEqual([pair[1]!.id, pair[0]!.id, DEMO_ITEMS[2]!.id]);
     await act(async () => boxes[0]!.click());
     expect(boxes[3]!.hasAttribute('disabled')).toBe(false);
+    await act(async () => getByRole(host, 'button', { name: 'Undo local change' }).click());
+    expect((boxes[0] as HTMLInputElement).checked).toBe(true);
+    expect(getByRole(host, 'link', { name: 'Open shareable comparison snapshot' }).getAttribute('href')).toBe(href);
+    expect(host.textContent).toContain('Restored comparison selection and order');
     await act(async () => root.render(<ProposalCompare key="replay" items={DEMO_ITEMS} search={new URL(href, 'http://localhost').search} />));
     expect(getByRole(host, 'status').textContent).toContain('3 of 3');
     expect(window.localStorage.length).toBe(0); expect(window.sessionStorage.length).toBe(0);
