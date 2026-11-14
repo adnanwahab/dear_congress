@@ -6,3 +6,9 @@
 .argument-map :is(a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .argument-map blockquote { margin: 1rem 0; }
 @media (max-width: 700px) { .argument-map-sides { grid-template-columns: minmax(0, 1fr); } }
+.steelman-challenge { border-block-start: 1px solid var(--border, #bbb); margin-block-start: 1rem; padding-block-start: 1rem; }
+.steelman-challenge textarea { display: block; box-sizing: border-box; width: 100%; min-height: 6rem; margin-block: .5rem 1rem; font: inherit; }
+.steelman-challenge fieldset { min-width: 0; margin-block: 1rem; }
+.steelman-challenge fieldset label { display: block; margin-block: .75rem; }
+.steelman-challenge button { min-height: 44px; margin-block: .25rem; white-space: normal; }
+.steelman-challenge :is(button, textarea, input):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

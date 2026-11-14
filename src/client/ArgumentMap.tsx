@@ -1,5 +1,6 @@
 import type { DemoItem } from '../engine/demo';
 import './argument-map.css';
+import { SteelmanChallenge } from './SteelmanChallenge';
 
 // Deliberately independent of the catalog: editing proposal text invalidates the map.
 export const PILOT_TEXT = 'Fund a twelve-month pilot of fifteen-minute service through 10 p.m. on three priority corridors, with quarterly public reporting.';
@@ -27,6 +28,7 @@ export function ArgumentMap({ item, namespace = 'fictional-demo' }: { item: Demo
         <details><summary>Read counterargument</summary><ul><li>{point.reply}<p><strong>unverified assertion</strong> · Evidence strength: unassessed. No source or evidence assessment supplied.</p></li></ul></details>
         </li></ul>
       </section>)}</div>
+      <SteelmanChallenge key={PILOT_SCOPE + item.proposedText} item={item} />
       <p>Corrections and citation reports are not open in this read-only pilot. Human evidence review and argument moderation are required before public contributions.</p>
     </> : <p>No reviewed arguments yet. No argument map is available for this proposal revision.</p>}
   </section>;
