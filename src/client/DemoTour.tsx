@@ -1,3 +1,4 @@
+import { recordQuality } from './experience-quality';
 import { useEffect, useRef, useState } from 'react';
 import { TOUR_STOPS, tourState, tourUrl } from './demo-tour';
 
@@ -12,10 +13,12 @@ export function DemoTour() {
   const stop = TOUR_STOPS[step]!;
   const go = (next: number) => window.location.assign(tourUrl(next, paused));
   const exit = () => {
+    if (!finished) recordQuality('demo_exited');
     const url = new URL(window.location.href);
     for (const key of ['demo', 'step', 'paused']) url.searchParams.delete(key);
     window.location.assign(url.pathname + url.search + url.hash);
   };
+  useEffect(() => { if (active && step === 0) recordQuality('demo_started'); }, [active, step]);
   useEffect(() => {
     if (!active) return;
     if (window.location.pathname !== stop.route) { window.location.replace(tourUrl(step, paused)); return; }
@@ -28,7 +31,7 @@ export function DemoTour() {
     const start = performance.now();
     const timer = window.setTimeout(() => {
       if (step < TOUR_STOPS.length - 1) window.location.assign(tourUrl(step + 1));
-      else { setFinished(true); setPaused(true); }
+      else { recordQuality('demo_completed'); setFinished(true); setPaused(true); }
     }, remaining.current);
     return () => { window.clearTimeout(timer); remaining.current = Math.max(0, remaining.current - (performance.now() - start)); };
   }, [active, paused, finished, step]);
@@ -36,11 +39,11 @@ export function DemoTour() {
     if (!active) return;
     overlay.current?.focus();
     const click = (e: MouseEvent) => {
-      if (overlay.current?.contains(e.target as Node)) return;
+      if (overlay.current?.contains(e.target as Node) || (e.target as Element | null)?.closest?.('[data-experience-consent]')) return;
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
-      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat || (e.target as Element | null)?.closest?.('[data-experience-consent]')) return;
       if (![' ', 'ArrowLeft', 'ArrowRight', 'Escape'].includes(e.key)) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if (e.key === 'Escape') exit();

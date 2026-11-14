@@ -26,13 +26,20 @@ test('timer navigates; page clicks pause before actions; space resumes and clean
   dom.clearTimeout = (() => { pending = undefined; }) as any;
   const paths: string[] = [];
   dom.location.assign = path => { paths.push(String(path)); };
-  document.body.innerHTML = '<button id="vote">Vote</button><div id="root"></div>';
+  document.body.innerHTML = '<button id="vote">Vote</button><div data-experience-consent><button id="metrics">Privacy controls</button></div><div id="root"></div>';
   let writes = 0;
   document.getElementById('vote')!.addEventListener('click', () => writes++);
   const root = createRoot(document.getElementById('root')!);
   try {
     await act(async () => root.render(<DemoTour />));
     expect(delay).toBe(8000);
+    let privacyClicks = 0;
+    document.getElementById('metrics')!.addEventListener('click', () => privacyClicks++);
+    await act(async () => document.getElementById('metrics')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
+    expect(privacyClicks).toBe(1); expect(pending).toBeDefined();
+    const privacyKey = new dom.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    document.getElementById('metrics')!.dispatchEvent(privacyKey as any);
+    expect(privacyKey.defaultPrevented).toBe(false);
     await act(async () => document.getElementById('vote')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
     expect(writes).toBe(0); expect(pending).toBeUndefined();
     expect(dom.location.search).toContain('paused=1');

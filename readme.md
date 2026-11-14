@@ -679,3 +679,10 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+Optional experience-quality signals extend the same launch store and protected
+`/admin/stats` dashboard. The shared shell offers **Experience metrics & privacy**;
+collection defaults off, honors DNT/GPC, and retains only capability-segmented daily
+counts and latency buckets for 30 UTC dates. See [schema, consent, retention and
+measurement limits](docs/experience-quality.md). Existing vote/journal metrics,
+records and governance configuration are unchanged.

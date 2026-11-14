@@ -46,3 +46,16 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Optional experience-quality observations (SHE-563)
+
+`installRouteQuality` observes incoming route readiness through `pagereveal` and
+its transition's `finished` promise. Older browsers use two animation frames.
+Latency is navigation-start to incoming readiness, including load/render and any
+incoming animation; it is not an isolated animation benchmark. Failed transitions
+and leaving before readiness have separate counters. BFCache restores are excluded
+because their performance clock includes time away. Off/reduced/unsupported motion
+records a fallback when the immediate update or route is actually used.
+
+No observation is sent without affirmative first-party opt-in. See
+[experience quality](experience-quality.md) for the schema, retention and limits.

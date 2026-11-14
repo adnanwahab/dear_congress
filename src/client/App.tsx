@@ -1,3 +1,4 @@
+import { recordQuality } from './experience-quality';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
@@ -1601,6 +1602,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     } finally { if (version === requestVersion.current) setBusy(false); }
   }
   useEffect(() => {
+    recordQuality('compare_opened');
     // Opening the screen must not advance the saved stability baseline either.
     void run({}, true);
     return invalidateRequest;
