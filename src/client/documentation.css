@@ -7,10 +7,11 @@
 .documentation-toc h2 { font-size: 17px; margin-bottom: 18px; }
 .documentation-toc nav { display: grid; gap: 14px; }
 .documentation-toc a { font-size: 14px; text-decoration: none; line-height: 1.5; }
-.documentation-toc a:hover { text-decoration: underline; }
+@media (hover: hover) and (pointer: fine) {
+  .documentation-toc a:hover { text-decoration: underline; } }
 .documentation-api-link { display: block; padding-top: 20px; border-top: 1px solid var(--line); margin-top: 24px; }
 .civic-shell .documentation-article { padding: 36px 40px; }
-.documentation-note { padding: 12px 16px; background: #f3f5f8; color: #586573; font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
+.documentation-note { padding: 12px 16px; background: var(--bg); color: var(--muted); font-size: 13px; border-radius: 8px; margin-bottom: 30px; }
 .documentation-article .document-title { font-size: 29px; line-height: 1.25; margin-bottom: 12px; }
 .documentation-article > p { font-size: 16px; line-height: 1.8; margin: 14px 0; white-space: pre-line; overflow-wrap: anywhere; }
 .documentation-article h3 { font-size: 25px; margin: 38px 0 14px; padding-top: 22px; border-top: 1px solid var(--line); scroll-margin-top: 24px; }
@@ -19,9 +20,40 @@
 .documentation-article li { padding-left: 4px; margin: 10px 0; line-height: 1.75; }
 .document-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; margin: 22px 0; }
 .document-table table { border-collapse: collapse; font-size: 14px; width: 100%; min-width: 580px; }
-.document-table th { text-align: left; background: #f7f5ef; padding: 13px 15px; font-size: 12px; }
+.document-table th { text-align: left; background: var(--bg); padding: 13px 15px; font-size: 12px; }
 .document-table td { padding: 14px 15px; line-height: 1.6; border-top: 1px solid var(--line); vertical-align: top; }
-.document-embed { padding: 16px 20px; border-left: 3px solid #9db3ce; border-radius: 0 8px 8px 0; background: #f6f8fb; display: grid; gap: 6px; margin: 24px 0; font-size: 13px; color: var(--muted); }
+.document-embed { padding: 16px 20px; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: var(--bg); display: grid; gap: 6px; margin: 24px 0; font-size: 13px; color: var(--muted); }
 .document-embed code { font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .documentation-layout { grid-template-columns: 1fr; } .documentation-toc { position: static; } .documentation-toc nav { display: flex; flex-wrap: wrap; gap: 10px 20px; } }
 @media (max-width: 600px) { .documentation-heading { align-items: start; flex-direction: column; } .documentation-heading p:last-child { font-size: 16px; } .civic-shell .documentation-article { padding: 24px 20px; } .documentation-article .document-title { font-size: 24px; } .documentation-article > p, .documentation-article li { font-size: 15px; } }
+
+.three-app-loop { margin: 24px 0; background: #f6f8fb; border: 1px solid #ccd5df; border-radius: 16px; }
+.three-app-loop svg { display: block; width: 100%; height: auto; }
+.three-app-loop text { fill: #263b50; font: 18px Arial, sans-serif; }
+.three-app-loop .three-app-loop-name { font-size: 21px; font-weight: 700; }
+.three-app-loop .three-app-loop-new-tab { font-size: 14px; }
+.three-app-loop a rect { fill: #fff; stroke: #899fb6; stroke-width: 2; }
+.three-app-loop a:hover rect, .three-app-loop a:focus rect { fill: #e5f3f0; stroke: #096b64; stroke-width: 4; }
+.three-app-loop-pulse { animation: three-app-loop-travel 6s linear infinite; pointer-events: none; }
+@keyframes three-app-loop-travel { to { stroke-dashoffset: -100; } }
+@media (prefers-reduced-motion: reduce) { .three-app-loop-pulse { animation: none; display: none; } }
+.documentation-toc a[aria-current="location"] { color: var(--accent); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.documentation-progress { position: sticky; top: 0; z-index: 20; height: 3px; margin-bottom: -3px; pointer-events: none; }
+.documentation-progress > div { height: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+@keyframes document-progress { to { transform: scaleX(1); } }
+@supports (animation-timeline: scroll(root)) {
+  .documentation-progress > div {
+    animation: document-progress auto linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Position feedback follows scrolling directly; no eased motion or reveal. */
+  .documentation-progress > div { animation-duration: auto !important; }
+}
+
+.documentation-article details { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px; }
+.documentation-article summary { cursor: pointer; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
+.documentation-article details p { line-height: 1.8; overflow-wrap: anywhere; }
+.documentation-shell :is(a, button, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.documentation-layout > * { min-width: 0; }

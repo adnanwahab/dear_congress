@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { runViewTransition, motionDisabled, motionDuration } from './motion';
 import type { PackageResult } from '../engine/types';
 
-export const reducedPlanMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+export const reducedPlanMotion = motionDisabled;
 
 /** Encode every code point, avoiding collisions and invalid CSS identifiers. Side/package
  * scope is essential: the same proposal appears in both comparison columns. */
@@ -17,12 +17,8 @@ export function rankChanges(previous: PackageResult | undefined, next: PackageRe
   }));
 }
 
-export async function updatePlan(update: () => void) {
-  if (reducedPlanMotion() || typeof document.startViewTransition !== 'function') { flushSync(update); return; }
-  const transition = document.startViewTransition(() => flushSync(update));
-  // A skipped transition (e.g. a hidden tab) must never prevent the result update.
-  await transition.updateCallbackDone;
-  await transition.finished.catch(() => {});
+export function updatePlan(update: () => void) {
+  return runViewTransition(update, 'plan-rerank');
 }
 
 export function PlanNumber({ value, format }: { value: number; format: (n: number) => string }) {
@@ -32,11 +28,11 @@ export function PlanNumber({ value, format }: { value: number; format: (n: numbe
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let frame = 0;
     const finish = () => { cancelAnimationFrame(frame); current.current = value; setDisplay(value); };
-    if (media?.matches) { finish(); return; }
+    if (motionDisabled()) { finish(); return; }
     const from = current.current;
     const start = performance.now();
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / 700);
+      const t = Math.min(1, (now - start) / motionDuration(700));
       current.current = from + (value - from) * (1 - (1 - t) ** 3);
       setDisplay(current.current);
       if (t < 1) frame = requestAnimationFrame(tick);
@@ -45,7 +41,7 @@ export function PlanNumber({ value, format }: { value: number; format: (n: numbe
     media?.addEventListener('change', finish);
     return () => { cancelAnimationFrame(frame); media?.removeEventListener('change', finish); };
   }, [value]);
-  return <span className="plan-number" aria-label={format(value)}><span aria-hidden="true">{format(display)}</span></span>;
+  return <span className="plan-number" role="img" aria-label={format(value)}><span aria-hidden="true">{format(display)}</span></span>;
 }
 
 /** FLIP fallback for browsers without same-document View Transitions. */
@@ -62,7 +58,7 @@ export function usePlanRowMotion(identity: unknown) {
     const animation = row.animate([
       { transform: `translate(${prior.left - after.left}px, ${prior.top - after.top}px)` },
       { transform: 'translate(0, 0)' },
-    ], { duration: 700, easing: 'ease-in-out' });
+    ], { duration: motionDuration(700), easing: 'ease-in-out' });
     return () => animation.cancel();
   }, [identity]);
   return ref;
@@ -71,8 +67,8 @@ export function usePlanRowMotion(identity: unknown) {
 export function PlanTransitionStyles({ scope, items }: { scope: string; items: string[] }) {
   return <style>{[...new Set(items)].map(id => {
     const name = planTransitionName(scope, id);
-    return `::view-transition-group(${name}) { animation-duration: 700ms; animation-timing-function: ease-in-out; }
-      ::view-transition-new(${name}):only-child { animation: plan-enter 700ms ease-out; }
-      ::view-transition-old(${name}):only-child { animation: plan-leave 500ms ease-out forwards; }`;
+    return `html:is(:active-view-transition-type(plan-rerank), [data-motion-type="plan-rerank"])::view-transition-group(${name}) { animation-duration: var(--motion-plan); animation-timing-function: ease-in-out; }
+      html:is(:active-view-transition-type(plan-rerank), [data-motion-type="plan-rerank"])::view-transition-new(${name}):only-child { animation: plan-enter var(--motion-plan) ease-out; }
+      html:is(:active-view-transition-type(plan-rerank), [data-motion-type="plan-rerank"])::view-transition-old(${name}):only-child { animation: plan-leave calc(500ms * var(--motion-scale, 1)) ease-out forwards; }`;
   }).join('\n')}</style>;
 }
