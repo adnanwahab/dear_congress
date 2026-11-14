@@ -9,6 +9,10 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
+## Expert office hours
+
+On [Draft](/draft), expert office hours is a local rehearsal with fictional verification and conflicts. Nothing is published or sent. Expert opinion and unverified citation notes are separate from official decisions. Questions and timestamped answer history disappear on navigation, reload or draft changes. No real expert is verified or contacted.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
