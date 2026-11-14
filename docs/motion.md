@@ -46,3 +46,33 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Visitor motion studio (SHE-409)
+
+The shared header’s Motion disclosure offers Playful (the existing slides and
+expressive details), Calm (150 ms route fades and still in-page details), and Off
+(immediate changes). Each previews the same illustrative Journal → Needs route,
+using the route’s incoming keyframes. The preview is decorative, isolated from
+real and synthetic civic data, and never navigates, publishes or votes. Native
+summary, radios, checkbox and replay button retain keyboard and touch semantics;
+Escape closes the disclosure and returns focus to its summary. Settings remain
+available in loading shells and do not depend on API data.
+
+OS `prefers-reduced-motion: reduce` overrides every preset, including previews and
+review modes, and follows live device changes. Playful is the default otherwise.
+Selecting a preset applies it immediately; only checking “Remember my choice in
+this browser” writes the validated preset to localStorage (`civic-motion`).
+Unchecking removes that saved choice. Without consent or when storage is blocked,
+choices last for the current document. Saved settings are installed before the
+initial React shell/incoming snapshot, using the existing module initializer.
+No new inline script or CSP exception is introduced.
+
+The existing session/query review modes remain available. A studio selection
+clears the session review override; OS reduction still wins. Calm and Off bypass
+in-page JS motion via the shared helper, disable CSS decoration, and keep scroll
+reveal and redline text readable. Route snapshots and the illustrative preview do
+not change live DOM order, focusability, source identities or participation state.
+
+Governance remains as documented in launch-merge-policy.md: no policy/default or
+production setting was changed. Review candidates require human acceptance and
+required main checks; this UI creates no verified merge authority.
