@@ -14,3 +14,7 @@ To refresh a preview:
 4. Add the image under `src/client/assets/pr-previews/` and its matching entry in `src/server/hbl/previews.json`. Run type checks, preview tests, and a browser check of the list/detail pages.
 
 Review and remove obsolete Fly preview apps and their dedicated volumes when their PRs close. Auto-stop reduces idle compute but these are real Fly resources; deleting a registry record does not itself delete the associated app. This preview feature neither merges PRs nor changes production deployments.
+
+## PR attachment pairs
+
+List and detail cards show the first two unique raster images embedded in the PR description, side by side at desktop and mobile widths. Markdown and HTML image attachments must use immutable full-SHA GitHub blob/raw URLs in that PR's configured repository. Captions identify the image source commit; attachments are not treated as verified deployments. Unsupported hosts, mutable refs, cross-repository paths and SVGs are excluded. Images load lazily without a referrer and can be opened at full size. Browsing never downloads or builds a version. The operator registry remains the authority for exact-head Explore links and the fallback when attachments are absent.

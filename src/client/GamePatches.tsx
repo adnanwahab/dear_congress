@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Choice, Feedback, PublicPull, PullDetail, PullList } from '../shared/hbl-governance';
 import './game-patches.css';
 import VoteBatch from './VoteBatch';
+import { attachedScreenshots } from './pr-screenshots';
 
 import { REPOSITORIES, votingRoute } from '../shared/repository-voting';
 const VotingContext=createContext({api:'/api/hbl/pulls',verified:false,csrf:'',approved:false});
@@ -67,8 +68,10 @@ function CommunityBallot({ pull, stale, onSaved }: { pull: PublicPull; stale: bo
   }
   return <div className="gp-community"><p><b>{scope.verified?'Verified priority / revision ballot':'Community vote'}</b> · {totals?.yes ?? 0} Yes · {totals?.no ?? 0} No</p><div className="gp-community-actions" role="group" aria-label={`Vote on patch #${pull.number}`}><button aria-pressed={selected === 'yes'} disabled={busy || (scope.verified&&!scope.approved) || pull.state !== 'open'} onClick={() => void vote('yes')}>Yes</button><button aria-pressed={selected === 'no'} disabled={busy || (scope.verified&&!scope.approved) || pull.state !== 'open'} onClick={() => void vote('no')}>No</button>{busy && <span>Saving…</span>}{selected && <span>Your vote: {selected.toUpperCase()}</span>}</div><p role="status">{message}</p>{scope.verified&&!scope.approved&&<p>Sign in with an approved roster account to vote.</p>}{stale && <p className="gp-meta">Voting on the displayed cached revision. GitHub updates are temporarily unavailable.</p>}</div>;
 }
-function PatchPreview({pull}:{pull:PublicPull}) {
+export function PatchPreview({pull}:{pull:PublicPull}) {
  const preview=pull.preview;
+ const images=attachedScreenshots(pull);
+ if(images.length)return <section className="gp-attached-screenshots" aria-label={`Screenshots attached to PR #${pull.number}`}><div className={`gp-screenshot-pair${images.length===1?' gp-screenshot-single':''}`}>{images.map((image,index)=><figure key={image.src}><a href={image.src} target="_blank" rel="noopener noreferrer" aria-label={`Open screenshot ${index+1} of PR #${pull.number}`}><img src={image.src} alt={image.alt||`Screenshot ${index+1} attached to PR #${pull.number}`} loading="lazy" referrerPolicy="no-referrer" width="1440" height="1000"/></a><figcaption>Screenshot {index+1} · image source <code>{image.commit.slice(0,8)}</code></figcaption></figure>)}</div>{preview?.headSha===pull.headSha&&preview.exploreUrl&&<a className="gp-explore" href={preview.exploreUrl} target="_blank" rel="noopener noreferrer">Explore this version on Fly ↗</a>}</section>;
  if(!preview||preview.headSha!==pull.headSha)return <div className="gp-preview gp-preview-empty"><p>Screenshot for this revision is being prepared.</p><button disabled>Explore this version · preview pending</button></div>;
  return <figure className="gp-preview"><a href={preview.screenshotUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open screenshot of patch #${pull.number}`}><img src={preview.screenshotUrl} alt={`Rendered app from PR #${pull.number}: ${pull.title}`} loading="lazy" width="1440" height="1000" /></a><figcaption>Rendered commit <code>{preview.headSha.slice(0,8)}</code> · {date(preview.capturedAt)}{preview.note&&<p>{preview.note}</p>}</figcaption>{preview.exploreUrl?<a className="gp-explore" href={preview.exploreUrl} target="_blank" rel="noopener noreferrer">Explore this version on Fly ↗</a>:<><button disabled>Explore this version · deployment pending</button><p className="gp-meta">A matching Fly preview has not yet been verified.</p></>}</figure>;
 }
