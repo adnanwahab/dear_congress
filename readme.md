@@ -679,3 +679,22 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Civic marble-run sandbox
+
+Draft includes an unreviewed educational federal-process marble run after sample
+proposal loading succeeds. Play/pause, previous/next and reset use native keyboard
+and touch controls. Reduced motion and motion-off use manual steps; the static
+all-branches decision diagram stays visible. Committee revision, failed chamber
+support and delivery capacity are invented constraints, independent of sample
+counts, advisory votes, official bill records and model projections. Changing the
+proposal resets the run. Loading/failure/empty states use the existing proposal
+loader and retry controls rather than substituting a different source.
+
+The existing snapshot simulator models policy effects, not institutional passage;
+this sandbox makes no simulator requests and links to Synthesize separately.
+Process references are Congress.gov and USA.gov. This simplified path assumes
+identical chamber text and presidential signature, and omits veto/override paths.
+Governance remains as documented in docs/launch-merge-policy.md: disabled/dry-run
+automation, quorum 10 and active kill switch by default; human review and tagged
+release requirements are unchanged. No live configuration was inspected or changed.
