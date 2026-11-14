@@ -1089,3 +1089,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.surprise-explorer { margin-block: 1rem; overflow-wrap: anywhere; }
+.surprise-explorer button, .surprise-explorer a { min-height: 44px; display: inline-flex; align-items: center; }
+.surprise-explorer article { margin-block: 1rem; }

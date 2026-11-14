@@ -8,6 +8,7 @@ import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
 import { CivicHeader } from "./CivicHeader";
 import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSearch';
+import { SurpriseExplorer } from './SurpriseExplorer';
 import { DailyQuestion } from './DailyQuestion';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
@@ -92,6 +93,7 @@ export function Dashboard({ request }: { request: Request }) {
       <p>Civic Synthesis is an independent public beta for exploring policy proposals and expressing non-binding advisory preferences; it is not an official government ballot.</p><DailyQuestion request={request} /><section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h2>One proposal, from published change to sponsor</h2><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><details className="home-how"><summary>How it works</summary><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h3>{title}</h3><p>{description}</p></a></li>)}</ol></details></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : <Skeleton kind="line" />}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
+      <SurpriseExplorer items={items} loaded={!!data} failed={!!error} />
       <div className="triple-grid">
         <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalSearch items={items} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!error} />
           <div className="entry-list">{filtered.map(i => <article className={`entry-item ${item?.id === i.id ? 'entry-selected' : ''}`} key={i.id} style={proposalCardStyle("home", i.id)}><div className="entry-source">{i.source} <TopicChip linked topic={i.topic} /></div><h3>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className="outline" disabled={busy} onClick={() => select(i)}>View proposal</button></article>)}{!data && !error && <Skeleton kind="list" />}</div>
