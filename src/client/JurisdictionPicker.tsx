@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './jurisdiction.css';
+import { JurisdictionQuest } from './JurisdictionQuest';
 
 export const JURISDICTIONS = ['United States', 'Texas', 'Harris County', 'Houston'] as const;
 export type Jurisdiction = '' | typeof JURISDICTIONS[number];
@@ -35,6 +36,7 @@ export function JurisdictionPicker({ preference, count }: { preference: ReturnTy
     </select></label><button type="button" onClick={() => preference.change('')}>Clear jurisdiction preference</button></div>
     <p>Optional browsing preference, not residency verification or voting eligibility. No signup or device location needed.</p>
     <p role="status" aria-live="polite">{preference.notice} {preference.value ? `Showing ${preference.value} decision scope only; overlapping governments are not included.` : 'Showing All jurisdictions, including regional or unmapped scopes.'} {count === null ? 'Loading proposals…' : `${count} applicable proposals.`}</p>
+    <JurisdictionQuest key={preference.value} jurisdiction={preference.value} />
   </section>;
 }
 
