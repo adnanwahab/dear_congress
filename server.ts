@@ -1083,6 +1083,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/live": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.start(body.proposalId, resolveVoterId(req))); } },
     "/api/live/:code": { GET: req => Response.json(liveRounds.snapshot(req.params.code!, resolveVoterId(req))) },
     "/api/live/:code/vote": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.vote(req.params.code!, resolveVoterId(req), body.stance)); } },
+    "/api/live/:code/questions": { POST: async req => Response.json(liveRounds.question(req.params.code!, resolveVoterId(req), await req.json())) },
     "/api/live/:code/end": { POST: req => Response.json(liveRounds.end(req.params.code!, resolveVoterId(req))) },
     "/api/live/:code/events": { GET: req => liveRounds.events(req.params.code!, resolveVoterId(req), req.signal) },
     "/api/live/:code/qr": { GET: req => {

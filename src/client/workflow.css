@@ -99,3 +99,12 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.live-question-board { margin-top: 2rem; border-top: 1px solid currentColor; padding-top: 1rem; }
+.live-question-board form { display: grid; gap: .75rem; }
+.live-question-board textarea, .live-question-board input, .live-question-board select { box-sizing: border-box; width: 100%; min-height: 44px; font: inherit; }
+.live-question-board textarea { min-height: 100px; }
+.live-question-board button { min-height: 44px; margin: .25rem; white-space: normal; }
+.live-question-board li, .live-question-board blockquote { overflow-wrap: anywhere; }
+.live-question-board li { margin-bottom: 1.5rem; }
+.live-question-board :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

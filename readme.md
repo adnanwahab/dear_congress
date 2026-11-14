@@ -679,3 +679,21 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Live audience question wall
+
+Live QR rounds include a separate, temporary question board. Anonymous questions
+or optional self-described names wait for approval by the starting browser.
+Presenters approve, group differently worded duplicates, hide questions, review
+abuse reports and manually rotate least-shown approved groups. Exact normalized
+matches group automatically on approval. Upvotes never determine screen rotation,
+civic election votes, verified attendance, civic participation or merge authority.
+
+`POST /api/live/:code/questions` accepts the `QuestionAction` union in
+`src/server/live-questions.ts` and returns the existing typed `LiveSnapshot` with
+its audience/presenter-specific board projection. It uses the existing signed
+cookie, origin, JSON size and IP/identity rate limits. Submissions are capped at
+500 characters, names at 60, five submissions per browser and 200 per round.
+Questions freeze with the round and disappear on server restart; shared durable
+storage is still required for multiple replicas. See
+[implementation and acceptance evidence](docs/reviews/SHE-465.md).

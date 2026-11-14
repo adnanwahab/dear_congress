@@ -17,6 +17,12 @@ A signed browser cookie lets you change your saved choice. Clearing cookies or u
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
+## Live audience questions
+
+Live sample rounds have a separate question wall. Send a question anonymously or add an optional, self-described display name. Text and names wait for the starting browser's presenter review; approved questions are public to anyone with the link. Avoid private information. Matching approved questions are grouped under the first approved wording and name. Presenters can hide questions and review audience abuse reports. Each question group gets equal manual screen turns regardless of upvotes.
+
+Question upvotes are discussion signals, never civic election votes, verified attendance, verified civic participation or merge authority. Signed browser cookies and shared write limits deter abuse but do not prove unique people. Five questions per browser per round are allowed. The temporary board freezes when the round ends or expires and disappears on server restart. It does not feed civic ballots or synthesis.
+
 ## What is fictional and what is verified?
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
