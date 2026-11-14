@@ -664,3 +664,11 @@ Accessibility browser checks and the required manual screen-reader journey:
 [acceptance evidence guide](docs/accessibility-acceptance.md).
 Run `bun run test:a11y` after installing its separate browser tooling as documented.
 Automated results do not establish full WCAG conformance or human acceptance.
+
+## Human Flourishing draft catalog
+
+`/bills` browses 100 curated, unreviewed draft concepts across ten categories;
+`/bills/HFL-051` includes a separate legislative discussion supplement. These are
+independent of citizen submissions, official bill records, sample scoring and
+ballots. Search/filter URLs are shareable. See [catalog import, validation and
+rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
