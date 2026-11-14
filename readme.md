@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Illustrative budget receipt
+
+The synthesis plan ledger includes a proposal selector and annual/per-resident
+annual views. Frozen April 1, 2020 Census denominators match United States, Texas,
+Harris County and Houston jurisdictions; unsupported jurisdictions retain annual
+amounts and show an unavailable-denominator message. These are simulated fiscal
+amounts with unspecified funding sources, never verified personal tax bills.
+Conversions run locally without personal inputs, network requests or persistence.
+See [SHE-493 implementation and validation](docs/reviews/SHE-493.md).

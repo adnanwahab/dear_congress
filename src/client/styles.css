@@ -1089,3 +1089,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.budget-receipt { border: 1px solid var(--border, #888); border-radius: .5rem; padding: 1rem; margin-block: 1rem; overflow-wrap: anywhere; }
+.budget-receipt select { max-width: 100%; min-width: 0; }
+.budget-receipt dt { font-weight: bold; }
+.budget-receipt dd { margin-inline-start: 0; margin-block-end: .75rem; }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BudgetReceipt } from './BudgetReceipt';
 import type { PackageResult, Proposal } from '../engine/types';
 import { budgetAlternative, budgetMoney, budgetSummary, budgetUnits, planLedger } from '../shared/plan-budget';
 
@@ -42,6 +43,7 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
         <ul>{preview.removed.map(r => <li key={r.id}>Remove {r.title}: −{budgetMoney(r.amount)}</li>)}{preview.added.map(r => <li key={r.id}>Add {r.title}: +{budgetMoney(r.amount)}</li>)}</ul>
         <button onClick={() => { setRevision(preview); setCandidate(''); }}>Commit local ledger revision</button> <button onClick={() => setCandidate('')}>Cancel preview</button>
       </div>}</>}
+    <BudgetReceipt rows={ledger.rows} lane={lane} />
     <p><a download={`plan-budget-v1-${lane}-${pkg.id}.json`} href={`data:application/json;charset=utf-8,${encodeURIComponent(exportText)}`}>Download shareable versioned budget summary</a></p>
     <p className="muted">This fiscal snapshot contains item titles, costs and assumptions only. It does not verify outcomes, enact policy, save votes or reproduce synthesis from changing private inputs.</p>
   </section>;
