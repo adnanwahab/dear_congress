@@ -636,6 +636,13 @@ Official legislative observations have no reviewed topic binding, so hubs show
 that stage as not yet available rather than matching bill titles by keyword.
 See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).
 
+Topic hubs also include a zoomable, scrollable curiosity constellation with an
+equivalent list and source/next-step previews. It projects the same typed hub
+data without new inference or writes. Solid sample-lineage edges and dashed
+illustrative catalog edges remain separate; metric nodes are targets only.
+Official bills and verified measurements remain unavailable until reviewed source
+bindings exist. See [SHE-531 review](docs/reviews/SHE-531.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
