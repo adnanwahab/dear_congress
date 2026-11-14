@@ -1,3 +1,4 @@
+import { ProposalCredits } from "./ProposalCredits";
 import { ProposalFollow } from './ProposalFollow';
 import { ProposalObjections } from "./ProposalObjections";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -355,6 +356,10 @@ function ProposalDetail({ id }: { id: string }) {
       </div>
       <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
+      <ProposalCredits key={proposal.id} proposal={proposal} submit={async body => {
+        const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/credits`, body);
+        setProposal(result.proposal);
+      }} />
       <ProposalObjections proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/objections`, body);
         setProposal(result.proposal);

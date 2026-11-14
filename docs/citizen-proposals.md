@@ -225,3 +225,37 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Opt-in contributor credits (SHE-506)
+
+Published citizen detail pages include Contributors & credits, within the existing
+proposal flow. Each browser can self-report coauthor, research, editing or
+accessibility work for that exact immutable citizen text. An unchecked consent
+checkbox and unnamed attribution are the defaults. Select an invented pseudonym
+if desired. This is self-reported participation, not verified authorship, a vote,
+a simulated participant or permission to credit somebody else.
+
+`POST /api/citizen-proposals/:id/credits` uses the shared `ProposalCreditInput`:
+`revision` (server text binding), `expectedVersion` (ledger event count), and
+`action: "opt-in"` with `confirmedPublic: true`, `role`, `preference` and optional
+`alias`; or `action: "remove"`. Stale/retried successful writes return 409: reload
+and inspect before intentionally resubmitting. Serialized persistence rolls back
+failed writes. The existing signed cookie, same-origin and rate/body protections
+apply. Existing records require no migration. Credits never alter text, sources,
+ballots, comments, objections or repository governance.
+
+Removal is fulfilled immediately for the current browser's own credit. The stored
+pseudonym is deleted; append-only history retains action, role, preference and time,
+never past names or identity links. Updating also discards the previous pseudonym.
+Public projections allowlist current aliases and name-free history, excluding
+ownership hashes. No journal or account identity is read or copied. Existing share
+and watchlist exports continue to use public proposal text only, without credits.
+Publicly typed aliases can still identify someone; use invented names. Earlier
+screenshots, downloads and backups cannot be recalled. Cookie loss has no recovery
+workflow yet. JSON storage is not a cryptographically tamper-proof audit log.
+
+The form reuses responsive proposal controls, native labels/fieldset/details,
+error focus and live loading/status announcements. It adds no motion. Automated
+DOM coverage verifies consent, failure recovery, escaped markup and immediate
+removal; native keyboard, screen reader, mobile/zoom and reduced-motion visual
+acceptance remain manual review tasks.

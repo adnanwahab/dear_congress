@@ -204,3 +204,8 @@
 .cp-reading-help summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
 .cp-reading-help dt { font-weight: 700; margin-top: 16px; }
 .cp-reading-help dd { margin: 6px 0 0; line-height: 1.6; }
+
+.cp-credits { overflow-wrap: anywhere; }
+.cp-credits fieldset { min-width: 0; padding: 0; border: 0; margin: 16px 0; }
+.cp-credits input:not([type="checkbox"]), .cp-credits select { width: 100%; max-width: 100%; box-sizing: border-box; }
+.cp-credits button { white-space: normal; }
