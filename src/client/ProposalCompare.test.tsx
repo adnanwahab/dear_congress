@@ -66,7 +66,7 @@ test('native controls select, cap, reorder, remove and replay without requests o
     await act(async () => boxes[0]!.click());
     expect(boxes[3]!.hasAttribute('disabled')).toBe(false);
     await act(async () => root.render(<ProposalCompare key="replay" items={DEMO_ITEMS} search={new URL(href, 'http://localhost').search} />));
-    expect(getByRole(host, 'status').textContent).toContain('3 of 3');
+    expect(host.querySelector('.proposal-compare > [role="status"]')!.textContent).toContain('3 of 3');
     expect(window.localStorage.length).toBe(0); expect(window.sessionStorage.length).toBe(0);
   } finally {
     await act(async () => root.unmount()); host.remove();

@@ -21,6 +21,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The fictional transit proposal includes a goal-overlap preview. All its sample counts are invented; no consented real sample is connected. Compare response-weighted and equal-group views, inspect subgroup denominators, and read the unresolved constraints. Small groups and rare cells are withheld. Shared goals do not establish agreement on a policy or verified participation.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 ## Will my journal be public?
