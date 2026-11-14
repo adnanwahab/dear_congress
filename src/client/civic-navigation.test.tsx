@@ -16,6 +16,15 @@ test('home, navigation and stage headings use the same six labels before API loa
     expect(home).toContain("Today&#x27;s question");
     expect(home).toContain('it is not an official government ballot.');
     expect(renderToStaticMarkup(<WorkflowScreen stage="votes" request={request} />)).toContain("Today&#x27;s question");
+    const votingScreen = renderToStaticMarkup(<WorkflowScreen stage="votes" request={request} />);
+    expect(votingScreen).toContain('aria-label="Vote on application pull requests"');
+    expect(votingScreen).toContain('href="/vote/happybearlandia?view=prs"');
+    expect(votingScreen).toContain('href="/vote/happybearlandia?view=issues"');
+    expect(votingScreen).toContain('href="/vote/dear_congress?view=prs"');
+    expect(votingScreen).toContain('href="/vote/digital_pensieve?view=prs"');
+    expect(votingScreen).toContain('separate from the civic proposals');
+    const otherScreen = renderToStaticMarkup(<WorkflowScreen stage="draft" request={request} />);
+    expect(otherScreen).not.toContain('aria-label="Vote on application pull requests"');
     expect(nav).toContain('href="/draft?proposal=sample%26one" aria-current="page"');
     for (const s of CIVIC_STAGES) {
       expect(home).toContain(`<h3>${s.title}</h3>`);
