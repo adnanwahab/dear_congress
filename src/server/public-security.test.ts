@@ -96,6 +96,8 @@ describe("public write security", () => {
     expect(CSP).toContain("worker-src 'self' blob:");
     expect(CSP).toContain("https://basemaps.cartocdn.com");
     expect(CSP).toContain("https://*.bugsnag.com");
+    expect(CSP).toContain("connect-src 'self' https://happybearlandia.fly.dev ");
+    expect(CSP).not.toContain("http://localhost");
     expect(CSP).toContain("frame-ancestors 'self'");
     expect(CSP).not.toContain("unsafe-eval");
     const response = await guard(createPublicSecurity({}), request());

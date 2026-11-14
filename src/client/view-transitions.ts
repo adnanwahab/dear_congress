@@ -2,8 +2,9 @@ import { CIVIC_STAGES } from '../shared/civic-stages';
 
 /** Only the six civic stages have a direction; utilities use the default fade. */
 export function transitionDirection(from: string, to: string): 'forward' | 'backward' | null {
-  const source = new URL(from);
-  const destination = new URL(to);
+  // Navigation entries may hide or omit their URL; transitions are optional.
+  let source:URL,destination:URL;
+  try{source=new URL(from);destination=new URL(to);}catch{return null;}
   if (source.origin !== destination.origin) return null;
   const index = (url: URL) => {
     const path = url.pathname.replace(/\/+$/, '') || '/';

@@ -22,7 +22,7 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
     expect(requests[0]!.body.preview).toBe(true);
     await settle(0);
     expect(host.textContent).toContain('Live preview · not saved');
-    const sliders = [...host.querySelectorAll<HTMLInputElement>('input[type=range]')];
+    const sliders = [...host.querySelectorAll<HTMLInputElement>('.controls input[type=range]')];
     expect(sliders.length).toBe(8);
     for (const slider of sliders) {
       const before = requests.length;

@@ -39,6 +39,8 @@ test("production shell stays under budget and defers MapLibre JS and CSS", async
     if (path.endsWith(".css")) expect(asset.text).not.toContain(".maplibregl-");
   }
   expect(html).not.toContain("maplibre.css");
+  expect(html).not.toMatch(/<<<<<<<|=======|>>>>>>>/);
+  expect(html.match(/<script[^>]+type="module"/g)).toHaveLength(1);
 });
 
 test("served shell keeps its bundled entry render-blocking in the head", async () => {

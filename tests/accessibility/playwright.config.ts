@@ -3,7 +3,7 @@ export default defineConfig({
   testDir: '.',
   testMatch: '**/*.pw.ts',
   workers: 2,
-  outputDir: '../../artifacts/accessibility',
+  outputDir: '../../artifacts/accessibility/test-results',
   reporter: [['list'], ['json', { outputFile: '../../artifacts/accessibility/results.json' }], ['html', { outputFolder: '../../artifacts/accessibility/report', open: 'never' }]],
   use: { baseURL: 'http://127.0.0.1:3107', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   webServer: { command: 'bun --no-env-file scripts/accessibility-server.ts', cwd: new URL('../../', import.meta.url).pathname, url: 'http://127.0.0.1:3107/healthz', reuseExistingServer: false, timeout: 120000 },
