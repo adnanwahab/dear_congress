@@ -10,7 +10,7 @@ import { pathCentroid, rippleDelays } from './county-motion';
 
 const CENTERS = counties.map(c => pathCentroid(c.path));
 const IDS = counties.map(c => c.id);
-const COLORS = { agree: '#39caa0', review: '#e6bc60', object: '#687fa8', unevaluated: '#929292' };
+const COLORS = { agree: '#39caa0', review: '#e6bc60', object: '#687fa8', unevaluated: '#575757' };
 const LABELS = { agree: 'Hypothetical model agrees', review: 'Hypothetical model requests changes (near threshold)', object: 'Hypothetical model requests changes', unevaluated: 'Not evaluated' };
 function HeaderMetrics({ agreed, round }: { agreed: number; round: number }) {
   const evaluated = round > 1 ? counties.length : 0;

@@ -53,5 +53,5 @@ export function OutcomeTotal({ value }: { value: number }) {
     media?.addEventListener('change', change);
     return () => { window.cancelAnimationFrame(frame); media?.removeEventListener('change', change); };
   }, [value]);
-  return <strong aria-label={String(value)}><span aria-hidden="true">{display}</span></strong>;
+  return <strong role="img" aria-label={String(value)}><span aria-hidden="true">{display}</span></strong>;
 }

@@ -52,7 +52,7 @@ test('keyboard advisory journey confirms once and returns', async ({ page }) => 
   await tabTo(proposal);
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/votes\?proposal=/);
-  await expect(page.locator('main')).toContainText(/evidence/i);
+  await expect(page.locator('main')).toContainText('Compare arguments before voting');
   const support = page.getByRole('button', { name: /Cast advisory vote: Support/ });
   await tabTo(support);
   await page.keyboard.press('Enter');
