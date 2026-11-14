@@ -51,7 +51,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Resident 1');
     expect(host.textContent).toContain('Travel mode: walk → bus');
     expect(host.querySelectorAll('polyline').length).toBe(2);
-    expect(host.textContent).toContain('Minute 30');
+    expect(host.textContent).toContain('minute 30');
     const timeSlider=getByRole(host,'slider',{name:'Recorded simulation time'}) as HTMLInputElement;
     await act(async()=>fireEvent.change(timeSlider,{target:{value:'0'}}));
     expect(host.textContent).toContain('minute 0');
