@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { readAmendments, redline, sameBase, saveAmendment, type AmendmentDraft, type AmendmentFields, type AmendmentSource } from './amendment-drafts';
 import './amendment-editor.css';
+import ClauseMarginalia from './ClauseMarginalia';
 const storage = { getItem: (key: string) => localStorage.getItem(key), setItem: (key: string, value: string) => localStorage.setItem(key, value) };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Could not save in this browser. Your editing text is still here.';
 
@@ -31,6 +32,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
   }
   function fail(e: unknown) { setError(message(e)); setStatus(''); window.setTimeout(() => errorRef.current?.focus(), 0); }
   return <section className="amendment-editor" aria-label="Private amendment preparation">
+    <ClauseMarginalia key={`${source.kind}:${source.id}`} source={source} />
     <button type="button" aria-expanded={open} aria-controls={`${id}-editor`} onClick={show}>Suggest amendment</button>
     {open && <div id={`${id}-editor`}>
       <h2>Prepare a private amendment</h2>

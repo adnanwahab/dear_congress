@@ -22,7 +22,24 @@ async function click(name: string | RegExp) { await act(async () => { fireEvent.
 async function edit(label: string | RegExp, value: string) { await act(async () => { fireEvent.change(q().getByLabelText(label), { target: { value } }); }); }
 async function mount(s = source) { await act(async () => { root.render(<Editor key={`${s.kind}:${s.id}`} source={s} />); }); }
 try {
-  await mount(); await click('Suggest amendment');
+  await mount();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Annotate line 1');
+  await edit('Private note / citation', 'Why twelve months?');
+  await click('Save private note');
+  assert(q().getByText('Why twelve months?', { selector: 'p' }));
+  await click('Share for review');
+  assert((q().getByLabelText('Copyable review excerpt') as HTMLTextAreaElement).value.includes('Why twelve months?'));
+  await click('Close review excerpt');
+  await click('Report abuse');
+  assert(q().getByText(/Abuse report not submitted/));
+  await mount({ ...source, text: 'Changed source line.' });
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Reattach to selected line 1');
+  assert(q().getByText(/Reattached to current line/));
+  await mount();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Suggest amendment');
   assert.equal(q().getByRole('button', { name: 'Suggest amendment' }).getAttribute('aria-expanded'), 'true');
   await edit('Suggested replacement text', 'The pilot shall run for 18 months.');
   await edit('Rationale', '<script>bad()</script> Observe two summer seasons');
