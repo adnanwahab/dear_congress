@@ -99,3 +99,9 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+/* Static action cards share global focus styles and need no motion. */
+.policy-actions { overflow-wrap: anywhere; }
+.policy-actions ul { padding-inline-start: 1.25rem; }
+.policy-actions li { margin-block: 1rem; }
+.policy-actions a { display: inline-flex; align-items: center; min-height: 44px; padding-block: .5rem; }
