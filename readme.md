@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Neighborhood project check-ins
+
+`/map` preserves the county sandbox and adds opt-in fictional neighborhood projects.
+The schematic and equivalent native button list expose milestone, implementation
+and update records with stable demo IDs/revisions and publication/observation dates.
+Forecasts remain separate; unknown is not stalled and old observations stay dated.
+The 30-day freshness threshold is an illustrative demo rule, not a source SLA.
+Corrections enter only an append-only page-memory demo queue bound to the selected
+project/evidence revision. Nothing is published or delivered to a real moderator.
+No verified project feed or shared correction API is connected. Reload clears the
+queue. See [SHE-467 scope and remaining acceptance](docs/reviews/SHE-467.md).
