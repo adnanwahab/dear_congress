@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## The life of a law
+
+The home-page **The life of a law** disclosure opens six reader-controlled comic
+chapters following a fictional evening-bus proposal. Every chapter links to its
+real product stage with `demo-transit` selected and states the hypothetical or
+synthetic boundary. METRO is cited only as agency background; the story claims
+no enactment, endorsement or measured benefit. Reading performs no writes.
+**Skip illustrations · complete text edition** shows all narration, reality checks
+and stage links together. Motion is brief, can be paused, and respects reduced
+motion. Bundled text and inline drawings remain available without API results or
+image downloads. The existing timed guided demo remains a separate experience.
