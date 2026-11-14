@@ -99,3 +99,10 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.council-roleplay { overflow-wrap: anywhere; }
+.council-roleplay details { margin-block: 1rem; }
+.council-roleplay summary { cursor: pointer; padding-block: .75rem; }
+.council-choice { display: block; padding: .75rem; min-height: 44px; }
+.council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.council-controls button { min-height: 44px; }
