@@ -136,3 +136,48 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## SHE-426 deterministic ensemble sandbox
+
+After a successful paired run, **Run eight synthetic futures** requests eight
+consecutive uint32 seeds starting at the scenario seed (with wraparound), using
+that run's law, strength, population and model version. Requests are sequential,
+explicitly initiated and bounded by a shared 45-second deadline. Provider errors,
+cancellation or incompatible receipts yield no partial distribution. Changing law,
+strength or revision removes the ensemble; retry starts fresh. No new API,
+dependencies, persisted data, votes or package-to-model binding are introduced.
+
+Separate current-rule and edited-law plots show min–max, interpolated 25th–75th
+seed percentiles, median and a selectable seed trajectory. Percentiles use linear
+interpolation at `(N-1)*p` in sorted seed values. These are deterministic seed
+summaries, never population confidence intervals or calibrated forecasts. The
+same receipt model version, law identity, engine, clock, population, strength,
+horizon and checkpoints are required across seeds. Missing outcome metrics close
+that outcome plot instead of inventing values or changing N.
+
+Hover/touch chooses recorded checkpoints; a native time range supports keyboard
+and touch navigation; a native select chooses any of the eight seed trajectories.
+Each plot provides all exact summary and per-seed values in a scrollable table.
+Visible summaries and hover titles retain raw numeric precision. Only SVG labels
+round for space. There is no automatic playback or chart animation, including
+under reduced motion. Existing civic navigation and source/provenance remain in
+the parent explorer. This is an unreviewed demo sandbox.
+
+Audit: existing Dear Congress PRs #120 and #123 supply the paired-viewer work;
+#133 concerns law-text comparison, not ensemble output. GitHub search found no
+ensemble PR. The reference live home page was unavailable through the web tool.
+Merge policy remains as documented in launch-merge-policy.md: disabled/dry-run
+governance defaults, quorum 10, active default kill switch, required checks and
+human review; no configuration or external state was changed.
+
+SHE-426 local validation: focused ensemble and existing explorer suites **9 passed,
+0 failed (75 assertions)**; `bun run typecheck` and `git diff --check` passed.
+`bun test` completed with **477 passed, 26 failed**; server integration tests
+failed starting Bun listeners (`EADDRINUSE`, port 0). `bun run test:routes`
+failed at the same listener startup. These checks must pass in an environment
+that permits the disposable servers before human acceptance. Native browser
+rendering, keyboard/touch hardware, screen-reader output, reduced-motion and
+live provider/CORS parity for this new ensemble remain unverified. The DOM
+journey checks exact tables, explicit loading, selection, scrubbing, pointer
+selection and HTTP 429 failure; calculation tests reject mixed scenarios,
+versions, duplicate seeds, mismatched checkpoints and missing metrics.
