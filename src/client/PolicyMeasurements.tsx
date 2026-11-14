@@ -1,3 +1,4 @@
+import { SaveClaim } from './EvidenceNotebook';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
@@ -9,6 +10,7 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
       {SYNTHETIC_METRICS.map(metric => {
         const result = assessMetric(metric, asOf);
         return <article key={metric.id} className="card">
+          <SaveClaim source={{kind: 'synthetic-outcome', id: metric.id, claim: `${metric.label}: ${result.movement} · ${result.freshness} · ${result.target}`, citation: 'Fictional transit pilot — synthetic fixture, no external evidence; causal attribution not established.', url: 'https://github.com/adnanwahab/dear_congress/blob/main/src/shared/policy-measurements.ts', revision: JSON.stringify(metric)}} />
           <h3>{metric.label} · synthetic</h3>
           <p><strong>{result.movement}</strong> · {result.freshness} · {result.target}</p>
           <dl>

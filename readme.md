@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Personal evidence notebook
+
+Use **Save claim** on the selected fictional proposal or a synthetic outcome
+measurement, then open `/account#evidence-notebook`. Clips freeze the claim,
+citation, access timestamp and optional note in this browser profile only. They
+are not sent to the service or included in votes. Shared-device users can read
+them; clearing browser storage removes them. Export Markdown before clearing.
+Revisiting a changed app source record marks its original clips stale without
+rewriting notes. External source pages are not monitored. No change observed
+is not a freshness guarantee. Synthetic measurements cite their fixture module,
+not real-world evidence. See [SHE-537 validation](docs/reviews/SHE-537.md).
