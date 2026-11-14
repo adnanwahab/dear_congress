@@ -679,3 +679,12 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+### Fictional clause reveal
+
+Draft and Votes include a read-only drag comparison of illustrative current and
+proposed text. A native range slider supports touch and keyboard; side-by-side
+mode and complete selectable text remain available alongside background citations.
+Shared prefix/change/suffix anchors align without inferring legal clause boundaries.
+This demo does not display imported official legal text or publish any choice.
+See [SHE-405 verification and limits](docs/reviews/SHE-405.md).
