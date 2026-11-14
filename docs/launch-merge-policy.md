@@ -76,3 +76,20 @@ Non-HBL PR scopes remain disabled/dry-run; issues never merge. Browser advisory
 choices remain separate from verified GitHub membership/ballots. Shared roster
 capacity 100, auth/CSRF, revision isolation and durable records are unchanged.
 These are source defaults, not an assertion about production environment values.
+
+## Reviewed November 14 release and parity follow-up
+
+The target statement above records the original recovery review. Reviewed source
+`795c6944` targets `civic-synthesis`; the operator explicitly authorized its merge
+and publication of `v2026.11.14` on their behalf. The tag validation passed before
+rollout. Encrypted backups, isolated restores and previous-image compatibility
+were verified entirely within Fly; production records and archives were not
+downloaded. The qualified image was deployed by digest after tag validation,
+while automatic deployment remains paused. This does not enable future releases.
+
+The browser verifier follows the shared Participation & privacy entry (`/account`),
+opening the visible More dialog on mobile. It then retains its existing account,
+privacy/removal, route, version and no-write checks. Dashboard does not expose the
+old direct `/privacy` shortcut. Actual deployed desktop1440 and mobile390 parity
+passed after this test-only navigation correction; application code stayed at the
+reviewed revision. Native cross-app model verification is recorded separately.
