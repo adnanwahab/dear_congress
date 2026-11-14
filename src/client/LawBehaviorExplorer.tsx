@@ -108,19 +108,21 @@ function ActorPositionMap({actors,bounds,label,changed}:{
 function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric:string;index:number}){
   if(frames.length<2||!metric||frames.some(f=>!isFiniteNumber(f.baseline.metrics[metric])||
     !isFiniteNumber(f.edited.metrics[metric])))return <p className="muted s">No complete paired recorded series for this outcome.</p>;
-  const values=frames.flatMap(f=>[f.baseline.metrics[metric],f.edited.metrics[metric]]);
+  // The guard above establishes a finite observed value in *every* paired frame.
+  const value=(frame:LawBehaviorFrame,side:'baseline'|'edited'):number=>frame[side].metrics[metric]!;
+  const values=frames.flatMap(f=>[value(f,'baseline'),value(f,'edited')]);
   const min=Math.min(...values),max=Math.max(...values),span=max-min||1;
   const start=frames[0]!.time,extent=frames.at(-1)!.time-start||1;
   const x=(v:number)=>28+(v-start)*478/extent,y=(v:number)=>143-(v-min)*111/span;
-  const path=(side:'baseline'|'edited')=>frames.map(f=>x(f.time).toFixed(1)+','+y(f[side].metrics[metric]).toFixed(1)).join(' ');
+  const path=(side:'baseline'|'edited')=>frames.map(f=>x(f.time).toFixed(1)+','+y(value(f,side)).toFixed(1)).join(' ');
   const current=frames[index]!;
   return <svg viewBox="0 0 530 174" role="img" aria-label="Time-aligned plot of actual current-rule and edited-law model outputs">
     <line x1="28" y1="143" x2="505" y2="143" stroke="#92a9ba"/>
     <polyline points={path('baseline')} className="sim-plot-base"/>
     <polyline points={path('edited')} className="sim-plot-edited"/>
     {frames.map(f=><g key={f.time}>
-      <circle cx={x(f.time)} cy={y(f.baseline.metrics[metric])} r="2" fill="#166d9e"/>
-      <circle cx={x(f.time)} cy={y(f.edited.metrics[metric])} r="2" fill="#15845a"/>
+      <circle cx={x(f.time)} cy={y(value(f,'baseline'))} r="2" fill="#166d9e"/>
+      <circle cx={x(f.time)} cy={y(value(f,'edited'))} r="2" fill="#15845a"/>
     </g>)}
     <line x1={x(current.time)} x2={x(current.time)} y1="12" y2="143" stroke="#d98b17" strokeDasharray="4 3" strokeWidth="2"/>
     <text x="30" y="13" fontSize="11" fill="#3a5160">{formatted(max)}</text>
@@ -205,7 +207,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <legend>Change and rerun one supported law model</legend>
       <label>Reviewed law
         <select value={lawId} onChange={e=>{const id=Number(e.target.value);
-          changedInput(id,id===21?100:100);}}>
+          changedInput(id,100);}}>
           {MODELED_LAWS.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}
         </select>
       </label>
