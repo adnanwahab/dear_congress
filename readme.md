@@ -679,3 +679,26 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Community learning embed (v1)
+
+In `/feed`, select a sample and expand “Embed this sample on a community website”
+to copy the iframe HTML or preview it. `/embed/v1?proposal=demo-housing` renders a
+static accessible card; `/embed/v1` lists samples. Missing samples return 404.
+The v1 URL pins the card contract, not an immutable content revision.
+
+Only fictional beta scenarios are supported. Existing editorial background sources
+and their review dates are preserved; currently unchecked sources are explicitly
+labeled, not represented as reviewed evidence or official proposal text. Real
+advisory records, citizen inputs, votes and model simulations are never loaded.
+
+The dedicated route permits HTTP/HTTPS framing using its own restrictive CSP
+sandbox: no scripts, forms, storage code, API calls, images or analytics. Links open
+new tabs with no opener/referrer so full-app participation requires leaving the
+card. The iframe snippet also has a sandbox, no-referrer policy, lazy loading,
+accessible title and a scrollable fixed height. Hosts must allow the Civic origin
+in their own `frame-src`; do not loosen the host's other CSP rules. Ordinary app
+routes keep their existing frame policy. HTTP requests still reach hosting logs;
+this is not an anonymous-network guarantee. No asynchronous loading state or
+animation is introduced: the browser loads one complete document. Native links
+support keyboard and touch; reduced-motion users receive the same static card.
