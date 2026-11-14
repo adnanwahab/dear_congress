@@ -189,6 +189,8 @@ export interface JournalEntry {
   createdAt: string;
   extraction: Extraction;
   corrected: boolean;
+  /** Explicit provenance; legacy rows are classified from seeded/synthetic flags. */
+  origin?: import("../shared/journal-origin").JournalOrigin;
   seeded?: boolean;
   /** Written by a simulated resident (e.g. happybearlandia /world), not a real person. */
   synthetic?: boolean;

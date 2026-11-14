@@ -1,3 +1,4 @@
+import { journalOrigin } from "../shared/journal-origin";
 import { createHash } from "node:crypto";
 import type { DB, JournalEntry } from "../engine/types";
 
@@ -6,7 +7,7 @@ const ownerHash = (id: string) => createHash("sha256").update(`journal-owner:${i
 /** Drop coordinates and client tile identifiers on every public journal surface. */
 export function publicJournal(entry: JournalEntry): JournalEntry {
   const { id, author, text, createdAt, extraction, corrected, seeded, synthetic, source } = entry;
-  return { id, author, text, createdAt, extraction, corrected,
+  return { id, author, text, createdAt, extraction, corrected, origin: journalOrigin(entry),
     ...(seeded !== undefined ? { seeded } : {}),
     ...(synthetic !== undefined ? { synthetic } : {}),
     ...(source !== undefined ? { source } : {}),
