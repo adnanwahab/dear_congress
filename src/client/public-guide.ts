@@ -5,6 +5,7 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 
 ## Choose a safe starting path
 
+- Explore: try the [Houston and Harris County source treasure hunt](/documentation#civic-source-treasure-hunt). Demo learning prompts link to dated official records. Progress is self-reported, held only on the page, and is never verified civic participation.
 - Read: open the [proposal feed](/feed) or [published sources](/published). Check each item's source and sample label before relying on it.
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
