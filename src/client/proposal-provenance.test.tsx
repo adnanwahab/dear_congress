@@ -59,3 +59,12 @@ test('compact cards keep sample status and safe source links in the disclosure s
   expect(html).not.toContain('<a ');
   expect(html).toContain('Source not available');
 });
+
+ test('inspection reports missing evidence honestly and preserves reduced-motion fallback', async () => {
+  const html = renderToStaticMarkup(<ProposalProvenance item={{ ...DEMO_ITEMS[0]!, sourceUrl: '', background: undefined }} compact />);
+  for (const label of ['Original claim: Unavailable', 'Publication date: Not available', 'Unsupported source', 'Scope:', 'Limitations:', 'Close source inspection']) expect(html).toContain(label);
+  const css = await Bun.file(new URL('./workflow.css', import.meta.url)).text();
+  expect(css).toContain('prefers-reduced-motion: reduce');
+  expect(css).toContain('transition: none !important');
+  expect(css).toContain('min-height: 44px');
+ });

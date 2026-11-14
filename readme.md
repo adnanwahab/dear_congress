@@ -679,3 +679,9 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+Compact sample background-source chips open on hover, focus or tap. Escape, the
+Close source inspection button, or an outside tap dismisses them. Original links
+open a separate tab, retaining the civic journey. These references do not verify
+scenario claims: original quotations and publication dates are unavailable and
+explicitly labeled; source check dates remain distinct from publication dates.
