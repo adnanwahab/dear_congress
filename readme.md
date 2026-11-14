@@ -636,6 +636,14 @@ Official legislative observations have no reviewed topic binding, so hubs show
 that stage as not yet available rather than matching bill titles by keyword.
 See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).
 
+Topic hubs also offer four optional community annotation layers in a read-only
+beta: research questions, lived experience, corrections and implementation notes.
+Layers default off and separate reviewed references from individual accounts.
+No annotation records or public write/report endpoints are registered. Contributions
+remain closed pending consent/withdrawal, private reporting and authenticated
+moderator operations; existing comments are never imported as annotations.
+See [SHE-527 scope and rollout gates](docs/reviews/SHE-527.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
