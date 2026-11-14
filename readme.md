@@ -43,6 +43,12 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+The guide's evidence layers explorer connects the existing synthetic policy
+measurements to claim, source identity, measurement, transformation and UI layers.
+It exports Markdown methodology without private inputs and links to all six stages.
+Stale and missing fixtures remain explicit; there is no archived real-source or
+dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
