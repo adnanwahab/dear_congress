@@ -17,6 +17,10 @@ A signed browser cookie lets you change your saved choice. Clearing cookies or u
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
+## Try a fictional budget puzzle
+
+The [budget-balancing puzzle](/synth) offers five invented programs and a fixed $40B play budget. Compare who gains and which goals wait in more than one feasible plan. It is a demo awaiting review; costs and effects are game assumptions, not evidence or predictions. Choices stay in page memory, reset on leaving or reloading, and never become votes, public synthesis or simulator inputs.
+
 ## What is fictional and what is verified?
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.

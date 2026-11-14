@@ -1,5 +1,6 @@
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
+import { BudgetPuzzle } from "./BudgetPuzzle";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
 import { DemoTour } from './DemoTour';
@@ -1715,6 +1716,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
 
   return (
     <div className="stack">
+      <BudgetPuzzle />
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">

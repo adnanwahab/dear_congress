@@ -1089,3 +1089,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.budget-puzzle fieldset { min-width: 0; border: 1px solid var(--border); border-radius: 8px; }
+.budget-puzzle-programs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; }
+.budget-puzzle-program { display: flex; flex-direction: column; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: 8px; overflow-wrap: anywhere; cursor: pointer; }
+.budget-puzzle-program input { width: 24px; height: 24px; vertical-align: middle; }
+.budget-puzzle-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+.budget-puzzle button { min-height: 44px; min-width: 44px; white-space: normal; }
