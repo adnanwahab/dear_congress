@@ -37,6 +37,8 @@ Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft
 
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
 
+Optional related reading on the dashboard and sample journey offers one source read when a reviewed association is available. Each suggestion explains why it appears and what the source does and does not establish. Dismiss it without receiving a replacement, or turn related reading off and back on. These preferences stay in this browser; if storage is blocked, they last only on the open page. Suggestions use the viewed sample, never your vote or public posting activity.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.

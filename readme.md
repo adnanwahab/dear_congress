@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Optional related reading
+
+The dashboard and civic workflow show at most one optional source read for the
+selected fictional sample. Housing, food access and medical-price samples have
+fixed editorial associations; other samples show an honest empty state. Each
+suggestion explains its relation, publisher, review date and limited scope.
+These background pages do not substantiate fictional clauses or predicted effects.
+Dismissal never queues a replacement. Dismiss and turn-off choices persist only
+in this browser (`civic_optional_reads_v1`); blocked storage retains them for the
+mounted page. A turn-on control remains available. No vote, posting volume,
+profile, reward, tracking request or model ranking determines a suggestion.
