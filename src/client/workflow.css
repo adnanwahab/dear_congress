@@ -99,3 +99,8 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }

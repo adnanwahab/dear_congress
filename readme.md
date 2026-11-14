@@ -679,3 +679,11 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Sample proposal audio
+
+The six-stage workflow includes a click-to-play synthetic voice explainer with
+transcript, passage sources and subtitles for the selected fictional sample.
+Voice availability and duration depend on the browser/OS. Tradeoff evidence gaps
+are stated explicitly; background agency references are not treated as proof.
+See [SHE-490 scope and validation limits](docs/reviews/SHE-490.md).
