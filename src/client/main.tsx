@@ -1,3 +1,4 @@
+import { installJourneyHistory } from "./journey-history";
 import { installMotion } from "./motion";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -9,6 +10,7 @@ installMotion(window);
 import { installScrollReveals } from "./scroll-motion";
 
 installViewTransitions(window);
+installJourneyHistory(window);
 installStageSwipe(window);
 // Commit the shell before the render-blocking module releases the incoming snapshot.
 flushSync(() => createRoot(document.getElementById("root")!).render(<><a className="skip-navigation" href="#main-content" onClick={event => { const main = document.getElementById("main-content"); if (main) { event.preventDefault(); main.focus(); main.scrollIntoView({ block: "start" }); } }}>Skip to main content</a><App /></>));
