@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {lawOutcomeTrace} from './law-outcome-trace';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -158,6 +159,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
+  const [traceOpen,setTraceOpen]=useState(false);
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
@@ -192,7 +194,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   },[playing,receipt]);
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
-    setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
+    setReceipt(null);setTraceOpen(false);setError('');setDirty(true);setFrameIndex(0);
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
@@ -230,7 +232,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
-    <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
@@ -290,6 +292,16 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </section>
       </div>
       <p className="civic-law-difference">Recorded difference: {formatted(diff)} {unit} (edited minus current rules).</p>
+      <button type="button" aria-expanded={traceOpen} aria-controls="law-outcome-trace" onClick={()=>{setTraceOpen(old=>!old);setPlaying(false);}}>Inspect selected outcome evidence</button>
+      {traceOpen&&frame&&<section id="law-outcome-trace" aria-label="Selected outcome evidence">
+        <h4>{METRICS[selectedMetric]?.label||'Outcome unavailable'} · sandbox why-chain</h4>
+        <p><strong>Observed simulation correlation:</strong> {formatted(baselineMetric)} → {formatted(editedMetric)} {unit} at {receipt.unit} {frame.time}. These are paired recorded outputs, not real votes or measured policy effects.</p>
+        <p><strong>Model rule mapping:</strong> {law.label}; {amendment.parameterKey}: {amendment.originalValue} → {amendment.editedValue} {amendment.units}. This local mapping is not an executed mechanism receipt.</p>
+        <p><strong>Causal interpretation unavailable:</strong> the receipt does not supply project/event IDs or a validated causal explanation. Event timestamps and executed mechanism receipts are missing; checkpoint times must not be treated as event times.</p>
+        <p>Seed {receipt.manifest?.seed} · model version {receipt.manifest?.modelVersion} · code version unavailable. Model version alone does not establish a code revision.</p>
+        <a download={`law-${lawId}-${selectedMetric}-trace.json`} href={'data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(lawOutcomeTrace(receipt,context,selectedMetric,frameIndex,new URL(hblOrigin).origin),null,2))}>Export selected outcome trace (JSON)</a>
+        <p className="muted s">Export includes the full recorded receipt, selected checkpoint, scenario revision, parameter mapping, seed and explicit missing evidence.</p>
+      </section>}
       {reference&&strength!==100&&isFiniteNumber(originalValue)&&<p className="muted s">
         Original 100% setting at this checkpoint: {formatted(originalValue)} {unit}. The original run is retained.
       </p>}

@@ -136,3 +136,11 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+### SHE-430 checkpoint evidence candidate
+
+The demo inspector now exposes selected outcome values, checkpoint time and the
+local parameter mapping, and downloads the validated receipt with seed and model
+version. Code revision, events, event timestamps and executed mechanism receipts
+remain explicitly unavailable in provider v1. This does not complete an event
+causality chain. See [SHE-430 validation and remaining acceptance](reviews/SHE-430.md).
