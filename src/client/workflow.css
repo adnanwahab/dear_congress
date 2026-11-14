@@ -99,3 +99,8 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.discovery-deck { margin-bottom: 24px; }
+.discovery-deck article { touch-action: pan-y pinch-zoom; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.discovery-deck .workflow-card-actions { margin-top: 16px; align-items: center; }
+.discovery-deck button, .discovery-deck a { min-height: 44px; }

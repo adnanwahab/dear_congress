@@ -37,7 +37,7 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   }
   const disclosures = [...container.querySelectorAll('details.workflow-provenance-compact')];
   if (stage === 'feed' || stage === 'published') {
-    assert.equal(disclosures.length, 12);
+    assert.equal(disclosures.length, stage === 'feed' ? 13 : 12);
     for (const disclosure of disclosures) {
       assert.equal(disclosure.hasAttribute('open'), false);
       const summary = disclosure.querySelector('summary')!;
