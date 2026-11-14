@@ -35,3 +35,7 @@
 @media(max-width:740px){.civic-law-controls,.civic-law-playback-controls{grid-template-columns:1fr}.civic-law-playback-controls button{width:100%}}
 @media(max-width:440px){.civic-law-behavior{padding:12px}.civic-law-lanes,.civic-law-actors{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.civic-law-behavior *{scroll-behavior:auto!important;transition:none!important}}
+
+.civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
+
+@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}

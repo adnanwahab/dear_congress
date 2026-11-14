@@ -68,12 +68,18 @@ test('invalid or unpaired model receipts fail closed instead of filling unknown 
 
 test('simulation first-load shows native accessible controls with explicit separate-model disclosure, no iframe or images',()=>{
   const html=renderToStaticMarkup(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>);
-  expect(html).toContain('Watch a law change simulated behavior');
+  expect(html).toContain('Run two futures for one policy');
   expect(html).toContain('your frozen civic package is not automatically applied');
-  expect(html).toContain('Run two simulated worlds');
+  expect(html).toContain('Run two futures');
   expect(html).toContain('Implementation strength');
   expect(html).toContain('reviewed mechanism sandbox');
   expect(html).not.toContain('<iframe');
   expect(html).not.toContain('<img');
   expect(html).toContain('83 · Transit frequency');
 });
+
+ test('malformed metric maps, actor identities and manifest bounds fail closed',()=>{
+ for(const mutate of [(v:any)=>v.frames[0].baseline.metrics=null,(v:any)=>v.frames[0].baseline.actors=[{id:'a'},{id:'a'}],(v:any)=>v.manifest.seed=-1,(v:any)=>v.manifest.recordedCheckpoints=3,(v:any)=>v.frames[1].time=999]){
+ const value=structuredClone(realShape);mutate(value);expect(()=>parseLawBehaviorReceipt(value)).toThrow();
+ }
+ });

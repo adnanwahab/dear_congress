@@ -67,3 +67,8 @@ test('journey morph names only ordinary navigation and clears on BFCache restore
   restore!();
   expect(card.style.viewTransitionName).toBe('');
 });
+
+test('missing or hidden navigation URLs safely omit optional transition',()=>{
+ expect(transitionDirection('',url('/synth'))).toBeNull();
+ expect(transitionDirection(url('/synth'),'')).toBeNull();
+});

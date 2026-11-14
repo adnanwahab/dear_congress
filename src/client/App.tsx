@@ -286,7 +286,7 @@ function LegacyApp() {
   };
 
   const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
-  if (!state) return <div className="legacy-shell">{header}{loadError ? <main id="main-content" tabIndex={-1}><h1>Unable to load this page</h1><div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div></main> : <PageSkeleton path={window.location.pathname} />}</div>;
+  if (!state) return <div className="legacy-shell">{loadError ? <>{header}<main id="main-content" tabIndex={-1}><h1>Unable to load this page</h1><div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div></main></> : <PageSkeleton path={window.location.pathname} />}</div>;
 
   return (
     <div className="legacy-shell">
@@ -1517,7 +1517,6 @@ function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, comp
         <a className="sim-link" href={livingCityUrl(HBL_URL, result.snapshot, options.seed)} target="_blank" rel="noopener">Explore a synthetic living city →</a>
         <p className="muted s">Starts a separate population experiment with seed {options.seed}{result.snapshot.location ? " at this location" : " at the default district"}. Edit rent, jobs and transit to inspect household responses. Population assumptions are synthetic; the frozen civic plan is retained as a reference and is not applied to this model.</p>
       </div>}
-      {result && valid && <LawBehaviorExplorer key={result.snapshot.id + ':' + options.seed} seed={options.seed} hblOrigin={HBL_URL} />}
       {error && <p className="note warn" role="alert">{error}</p>}
     </div>
   );
@@ -1715,7 +1714,10 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
   };
 
   return (
-    <div className="grid synth">
+    <div className="stack">
+      <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
+      <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
+      <div className="grid synth">
       <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
@@ -1806,6 +1808,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           </>
         )}
       </section>
+      </div></details>
     </div>
   );
 }

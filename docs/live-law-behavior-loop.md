@@ -36,3 +36,103 @@ To wire a *particular* policy amendment into the HBL simulation rather than a la
 Synthetic model differences cannot verify future real-world outcomes, representative citizens, causal policy attribution, rights, or official enacted status. This is not an electoral-advice engine or a prediction.
 
 This feature is **draft, not deployed**. It depends on the simultaneous review/merge of HBL PR #316 and the Civic Synthesis PR; release approval remains human-owned.
+
+## November 14 launch increment
+
+The native sandbox is now the first action on `/synth`; package capture is no
+longer required. Existing package synthesis/scoring remains under an advanced
+section. The allowlisted control produces a `civic-reviewed-amendment.v1` local
+discussion recipe (proposal/demo ID, revision, original/edited value, units,
+permitted increments, seed, fixed horizon and eventual model version). It does
+not persist a legal amendment, submit a ballot, or claim to compile prose. The
+existing proposal editor remains available for unmodeled discussion drafts.
+
+Public reciprocal context uses `civicContext=1`, `lawId`,
+`implementationStrength`, `seed`, `population=24`, `proposalId`, `revision`, and
+optional `modelVersion`. Only validated fields are copied. Same-page reproducible
+links restore inputs without running automatically. Model-version mismatches,
+invalid context, wrong-request receipts and malformed actor/metric records are
+rejected. Runs have a 45-second deadline, cancellation and retry. Provider
+HTTP 429/504/network errors are explicit failures, never fabricated results.
+The CSP permits the exact HBL HTTPS origin while retaining the other restrictions.
+
+The inspector selects the same actual synthetic ID in both branches. WHY shows
+recorded checkpoint/parameter/provenance and explicitly says that project/event
+IDs and a validated causal explanation are unavailable in this v1 receipt.
+Nothing invents causal evidence missing from the provider.
+
+Browser acceptance is reproducible with two disposable local servers:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs \
+CIVIC_TEST_ORIGIN=http://127.0.0.1:4399 \
+HBL_TEST_ORIGIN=http://127.0.0.1:4498 \
+node scripts/verify-law-launch-browser.mjs
+```
+
+This test forwards the exact production-origin API request to the **real local
+HBL endpoint**, retaining the Civic CSP and rendering genuine model receipts.
+It does not prove production deployment/CORS parity. It checks 100%→50%, identical
+baseline, actor/time selection, WHY, revision-preserving share/reopen, invalid
+mechanisms, version mismatch, 320px, keyboard focus and reduced motion. Server
+state must be disposable and governance disabled; the test never votes.
+
+### Executed candidate evidence (2026-11-14)
+
+- `bun test`: **536 passed, 0 failed**, 106,478 assertions across 131 files.
+- `bun run typecheck`: passed.
+- `bun run test:routes`: passed using production HTML/bundled assets and disposable data.
+- `node scripts/verify-law-launch-browser.mjs` with the two loopback origins:
+  passed, **3 real HBL requests**, identical baseline for seed42 at100%/50%,
+  actual actor/time rendering, WHY limits, revision2 link reopen without autorun,
+  unsupported context rejected, mismatched model version rejected, 320px/reduced
+  motion and keyboard focus, **zero page errors**. Screenshot inspected at
+  `/private/tmp/civic-launch-320.png`. This is local integration evidence only.
+- Chromium emitted pre-existing, nonblocking CSP warnings about optional inline
+  speculation rules. The simulation endpoint is allowed only at the exact HBL
+  HTTPS origin; no broad CSP exception was added to silence those warnings.
+
+### Preserved civic flows and remaining launch gaps
+
+Source audit confirms `/votes` already links HBL PRs/issues and Dear Congress /
+Digital Pensieve PRs, separated from civic proposals; no duplicate navigation
+implementation was needed. `WorkflowScreen`, `ParticipationNotice`,
+`AmendmentEditor`, `ArgumentMap`, `ProposalProvenance` and `PolicyMeasurements`
+retain advisory support/opposition/uncertainty, original comments, fictional vs
+sourced labels and simulated-outcome boundaries. Full tests exercise those
+existing paths; this increment did not submit any vote or civic proposal.
+
+Remaining: a saved civic proposal revision is not yet bound server-side to this
+model sandbox. The local recipe and safe URLs do not prove that arbitrary legal
+text was modeled. The v1 receipt lacks event/project IDs for a full causal
+inspector. Production SHA/CORS/release parity, staged deployment/rollback,
+complete external accessibility matrix, real user study and human release
+approval remain unverified. Demo outcomes are not institutional follow-through.
+
+The focused existing `/synth` accessibility suite also passed **5/5 projects**:
+desktop1440px, mobile390px, reduced motion, forced colors, and720px reflow.
+It used the installed Chromium1243 executable via a temporary local config;
+assertions/rules were unchanged. Keyboard skip/focus, one main/heading and axe
+critical/serious violations all passed. The full multi-route/advisory-write
+accessibility suite was not run; no autonomous vote was submitted. The existing
+harness output-directory overlap was corrected by moving raw test artifacts to
+`artifacts/accessibility/test-results`, separate from the HTML reporter.
+
+### Why the live build SHA remains a release gate
+
+`src/server/build-identity.ts` reads the image's `build-identity.json` once;
+a missing/invalid lowercase40-character commit becomes `null`. It intentionally
+does not accept runtime SHA overrides. Current `Dockerfile` already passes
+`ARG BUILD_COMMIT` into `scripts/write-build-identity.ts`, which fails if the SHA
+is invalid. The tagged-release workflow already supplies the validated tag commit
+as `--build-arg BUILD_COMMIT` and verifies the serving version. Therefore current
+source wiring is present: the observed production null commit cannot establish
+which older/different build path or image is running. Inspect the actual image /
+release provenance before rollout; do not fabricate a commit or override `/version`
+at runtime. Current checked-in Fly target is `civic-synthesis`. No deployment ran.
+
+Optional browser tooling/report assets were retained outside the app checkout
+after accessibility verification. The repository's existing CSS source audit
+otherwise scanned nested Playwright dependency/report CSS and exceeded its
+5-second timeout. No assertions or test deadlines were weakened; the final
+unchanged full suite passed536/536 after separating external tool artifacts.

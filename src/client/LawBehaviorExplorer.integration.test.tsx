@@ -1,6 +1,5 @@
 import {expect,test} from 'bun:test';
 import {act} from 'react';
-import {createRoot} from 'react-dom/client';
 import {Window} from 'happy-dom';
 import {getByRole,fireEvent} from '@testing-library/dom';
 import {LawBehaviorExplorer,type LawBehaviorReceipt} from './LawBehaviorExplorer';
@@ -28,7 +27,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const body=JSON.parse(String(init?.body)) as {lawId:number;seed:number;population:number;implementationStrength:number};
     requests.push({href:String(uri),body});
     const payload=receipt(body.implementationStrength);
-    return{ok:true,status:200,json:async()=>payload} as Response;
+    return Response.json(payload);
   }) as typeof fetch;
   const globals={window:browser,document:browser.document,navigator:browser.navigator,
     fetch:mockedFetch,IS_REACT_ACT_ENVIRONMENT:true};
@@ -37,12 +36,13 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
   // Access the installed DOM globals to keep React and test-library TypeScript types aligned.
   const host=document.createElement('main');
   document.body.append(host);
+  const {createRoot}=await import('react-dom/client');
   const root=createRoot(host);
   try{
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
     expect(host.querySelector('iframe')).toBeNull();
     expect(host.textContent).toContain('frozen civic package is not automatically applied');
-    await act(async()=>getByRole(host,'button',{name:'Run two simulated worlds'}).click());
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
@@ -60,7 +60,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>fireEvent.change(strength,{target:{value:'50'}}));
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     expect(host.textContent).toContain('The input has changed');
-    await act(async()=>getByRole(host,'button',{name:'Run two simulated worlds'}).click());
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
     expect(requests[1]?.body.implementationStrength).toBe(.5);
     expect(host.textContent).toContain('Original 100% setting');
@@ -74,4 +74,34 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     }
     await browser.happyDOM.close();
   }
+});
+
+test('bounded request, cancellation, response identity and unsupported context never leave a spinner',async()=>{
+ const browser=new Window({url:'https://civic-synthesis.fly.dev/synth'});
+ const previous=Object.fromEntries(['window','document','navigator','fetch','IS_REACT_ACT_ENVIRONMENT'].map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+ let timeout:(()=>void)|undefined,resolve:((r:Response)=>void)|undefined;
+ const originalTimeout=browser.setTimeout.bind(browser);
+ browser.setTimeout=((fn:any,ms:number,...args:any[])=>{if(ms===45000){timeout=fn;return 123 as any;}return originalTimeout(fn,ms,...args)}) as any;
+ for(const [key,value] of Object.entries({window:browser,document:browser.document,navigator:browser.navigator,IS_REACT_ACT_ENVIRONMENT:true,fetch:(_u:any,init:RequestInit)=>new Promise<Response>((done,reject)=>{resolve=done;init.signal?.addEventListener('abort',()=>reject(new Error('aborted')));})}))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
+ const host=document.createElement('main');document.body.append(host);const {createRoot}=await import('react-dom/client');const root=createRoot(host);
+ try{
+  await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  expect(host.textContent).toContain('45-second limit');
+  await act(async()=>timeout!());
+  expect(host.textContent).toContain('exceeded the 45-second limit');
+  expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  await act(async()=>getByRole(host,'button',{name:'Cancel run'}).click());
+  expect(host.textContent).toContain('Run canceled');
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  const mismatch=receipt(1);mismatch.manifest!.seed=43;
+  await act(async()=>resolve!(Response.json(mismatch)));
+  expect(host.textContent).toContain('does not match this request');
+  expect(host.querySelector('.civic-law-lanes')).toBeNull();
+ }finally{
+  await act(async()=>root.unmount());host.remove();
+  for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}
+  await browser.happyDOM.close();
+ }
 });
