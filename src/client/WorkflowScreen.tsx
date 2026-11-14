@@ -158,6 +158,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </section>}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
     {stage === 'outcomes' && <ProposalWatchlist />}
+    {stage === 'outcomes' && <p><a href="/synth">Explore the alternate futures gallery</a> · Separate hypothetical law models; this sample proposal is not applied.</p>}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
     {loading && !data && <WorkflowSkeleton stage={stage} />}

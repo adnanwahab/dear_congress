@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {FuturesGallery} from './FuturesGallery';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -158,6 +159,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
+  const [comparing,setComparing]=useState(false);
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
@@ -192,7 +194,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   },[playing,receipt]);
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
-    setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
+    setComparing(false);setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
@@ -200,7 +202,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     if(!Number.isInteger(effectiveSeed)||effectiveSeed<0||effectiveSeed>4294967295)return;
     const request=++generation.current;controller.current?.abort();
     const abort=new AbortController();controller.current=abort;
-    setBusy(true);setPlaying(false);setReceipt(null);setError('');setDirty(false);
+    setBusy(true);setPlaying(false);setComparing(false);setReceipt(null);setError('');setDirty(false);
     let timedOut=false;
     const timeout=window.setTimeout(()=>{timedOut=true;abort.abort();},45000);
     try{
@@ -262,6 +264,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         {' · '}{strength}% reviewed parameter
         {' · '}{frames.length} checkpoints, {receipt.unit}s {frames[0]?.time}–{frames.at(-1)?.time}.
       </p>
+      <FuturesGallery sourceOrigin={hblOrigin} receipt={receipt} metric={selectedMetric} label={METRICS[selectedMetric]?.label||"Outcome unavailable"} unit={unit} onCompare={open=>{setComparing(open);setPlaying(false);}}/>
+      {comparing&&<>
       <div className="civic-law-playback-controls">
         <label>Recorded model outcome
           <select value={selectedMetric} onChange={e=>{setMetric(e.target.value);setPlaying(false);}}>
@@ -316,6 +320,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         <p>Only reviewed parameters are executable. Synthetic results are not claims about actual people, future legislation, happiness, rights or budgets.</p>
         <ul>{receipt.limitations?.map((text,index)=><li key={index}>{text}</li>)}</ul>
       </details>
+      </>}
     </>}
   </section>;
 }
