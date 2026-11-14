@@ -99,3 +99,14 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.journey-ribbon input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accent, #496fc4); }
+.journey-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .35rem; padding: 0; list-style: none; }
+.journey-steps button { width: 100%; min-height: 44px; padding: .5rem .25rem; }
+.journey-steps button[aria-pressed="true"] { outline: 3px solid currentColor; outline-offset: 2px; }
+.journey-artifact { padding: 1rem; margin-block: 1rem; border: 1px solid currentColor; border-radius: 12px; overflow-wrap: anywhere; }
+.journey-artifact h3, .journey-artifact h4 { margin-block: .4rem; }
+@media (max-width: 600px) {
+  .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: .85rem; }
+  .journey-ribbon { padding: .85rem; }
+}
