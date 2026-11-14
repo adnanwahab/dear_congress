@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Weekly civic discovery (SHE-538)
+
+The Dashboard reuses its typed `/api/demo` payload for a read-only sample
+walkthrough alongside weekly self-guided trivia and an evidence tour.
+All sessions are optional and available anytime; they record no participation
+and add no incentives or writes. Native disclosures support keyboard/touch;
+no new animation is used. Official external calendars and hypothetical gatherings
+are separately labeled. No hosted events or moderated public event discussion
+are operational. See [scope and validation](docs/reviews/SHE-538.md).
