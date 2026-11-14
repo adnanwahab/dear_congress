@@ -32,6 +32,7 @@ import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
 import { loadMapLibre } from "./maplibre";
 import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
+import { LawBehaviorExplorer } from "./LawBehaviorExplorer";
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";
@@ -1516,6 +1517,7 @@ function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, comp
         <a className="sim-link" href={livingCityUrl(HBL_URL, result.snapshot, options.seed)} target="_blank" rel="noopener">Explore a synthetic living city →</a>
         <p className="muted s">Starts a separate population experiment with seed {options.seed}{result.snapshot.location ? " at this location" : " at the default district"}. Edit rent, jobs and transit to inspect household responses. Population assumptions are synthetic; the frozen civic plan is retained as a reference and is not applied to this model.</p>
       </div>}
+      {result && valid && <LawBehaviorExplorer key={result.snapshot.id + ':' + options.seed} seed={options.seed} hblOrigin={HBL_URL} />}
       {error && <p className="note warn" role="alert">{error}</p>}
     </div>
   );
