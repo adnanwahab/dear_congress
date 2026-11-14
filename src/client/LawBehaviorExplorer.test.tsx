@@ -83,3 +83,9 @@ test('simulation first-load shows native accessible controls with explicit separ
  const value=structuredClone(realShape);mutate(value);expect(()=>parseLawBehaviorReceipt(value)).toThrow();
  }
  });
+
+ test('provider limitations must be bounded displayable text',()=>{
+  for(const limitations of [null,{},[{}],Array(101).fill('limit'),['x'.repeat(10001)]]){
+    expect(()=>parseLawBehaviorReceipt({...realShape,limitations})).toThrow();
+  }
+ });

@@ -42,10 +42,16 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
     expect(host.querySelector('iframe')).toBeNull();
     expect(host.textContent).toContain('frozen civic package is not automatically applied');
+    expect(host.textContent).toContain('What this model cannot tell you');
+    expect(host.textContent).toContain('Demo / sandbox');
+    expect(host.textContent).toContain('No run checked yet');
+    expect(requests).toHaveLength(0);
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
+    expect(host.textContent).toContain('Receipt checks passed');
+    expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
     expect(host.textContent).toContain('World B · edited law');
     expect(host.textContent).toContain('What modeled residents did differently');
@@ -56,8 +62,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const timeSlider=getByRole(host,'slider',{name:'Recorded simulation time'}) as HTMLInputElement;
     await act(async()=>fireEvent.change(timeSlider,{target:{value:'0'}}));
     expect(host.textContent).toContain('minute 0');
-    const strength=host.querySelector('.civic-law-controls input[type=range]') as HTMLInputElement;
-    await act(async()=>fireEvent.change(strength,{target:{value:'50'}}));
+    await act(async()=>getByRole(host,'button',{name:'Transit at 50%'}).click());
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     expect(host.textContent).toContain('The input has changed');
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
@@ -65,6 +70,14 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[1]?.body.implementationStrength).toBe(.5);
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
+    await act(async()=>getByRole(host,'button',{name:'Restore 100% assumption'}).click());
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect(requests).toHaveLength(2);
+    for(const name of ['Construction cost at 50%','Permit capacity at 50%']){
+      await act(async()=>getByRole(host,'button',{name}).click());
+      expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).value).toBe(name.startsWith('Construction')?'22':'23');
+      expect(requests).toHaveLength(2);
+    }
     expect(host.querySelector('iframe')).toBeNull();
   }finally{
     await act(async()=>root.unmount());host.remove();
@@ -88,8 +101,10 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
   expect(host.textContent).toContain('45-second limit');
+  expect(getByRole(host,'button',{name:'Transit at 50%'}).closest('fieldset')?.disabled).toBe(true);
   await act(async()=>timeout!());
   expect(host.textContent).toContain('exceeded the 45-second limit');
+  expect(host.textContent).toContain('Run check failed');
   expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
   await act(async()=>getByRole(host,'button',{name:'Cancel run'}).click());
