@@ -35,6 +35,8 @@ In the publishing browser, use Delete my entry in [Journal](/journal) to remove 
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
+Votes also offers a mini citizen-jury rehearsal for three opt-in seats sharing one device with a facilitator. Pseudonyms, notes and consent stay in page memory; reload, proposal change or Delete room removes them. Reports only pause this local rehearsal and are not sent to a moderator. Summary previews require every seat’s consent to the exact text and identify the group as non-representative. Public publishing and the public pilot are unavailable. Rehearsal seats are not verified civic participants.
+
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
 
 ## Sources and methodology
