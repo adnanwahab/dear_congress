@@ -136,3 +136,24 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Possible 2035 letter (SHE-494)
+
+The native sandbox includes a local fictional letter after a completed paired run.
+Every outcome sentence quotes a finite metric pair from the last logged checkpoint,
+including unchanged or adverse values; the greeting and closing are explicitly
+creative connective text. Both card and self-contained HTML download say
+**Simulated fiction, not prediction**. Seed, actual model horizon/version,
+implementation assumption, scope, limitations and full provider receipt travel
+with the export. The fictional 2035 setting never extends the model horizon.
+
+Citations link to attached checkpoint records. Provider v1 has no event/project
+receipt IDs, so the feature explicitly discloses that limitation instead of
+inventing causal evidence. True event-level citations need a reviewed provider
+contract extension. Input edits, loading, cancellation, unsupported mechanisms
+and errors remove the old letter/export. No generation service, persistence,
+clipboard publication or automatic sharing is used. Native links/details support
+keyboard use; wrapping layouts handle narrow screens and no motion is introduced.
+Governance remains as documented in launch-merge-policy.md: disabled/dry-run
+source defaults, quorum 10 and active kill switch; human approval and tagged
+release remain required. No live settings were inspected or changed.

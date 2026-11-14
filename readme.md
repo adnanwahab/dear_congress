@@ -679,3 +679,9 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+The native law behavior sandbox can create a **Letter from a possible 2035** from
+its logged paired outcomes. It labels creative text and says **Simulated fiction,
+not prediction** on the card and local HTML export. The export attaches seed,
+actual horizon, assumption and checkpoint receipts; the provider supplies no
+causal event IDs. See [the contract and limits](docs/live-law-behavior-loop.md#possible-2035-letter-she-494).

@@ -83,3 +83,40 @@ test('simulation first-load shows native accessible controls with explicit separ
  const value=structuredClone(realShape);mutate(value);expect(()=>parseLawBehaviorReceipt(value)).toThrow();
  }
  });
+
+test('future letter cites exact paired logs, preserves assumptions and never extends model horizon to 2035',async()=>{
+  const {buildFutureLetter,exportFutureLetter,FutureLetterCard,FICTION_LABEL}=await import('./FutureLetter');
+  const letter=buildFutureLetter(realShape)!;
+  expect(letter.outcomes).toEqual([
+    {text:'At recorded minute 15, meanCommuteMinutes: current rules 17; edited law 12.',receiptIndex:1},
+    {text:'At recorded minute 15, trips: current rules 1; edited law 1.',receiptIndex:1}
+  ]);
+  const {PUBLIC_GUIDE}=await import('./public-guide');
+  expect(PUBLIC_GUIDE).toContain(FICTION_LABEL);
+  expect(PUBLIC_GUIDE).toContain('provider has no causal event receipts');
+  expect(letter.seed).toBe(42);
+  expect(letter.horizon).toContain('0–15 minutes');
+  expect(letter.horizon).toContain('2035 is a fictional setting');
+  expect(letter.assumption).toContain('50%');
+  const html=exportFutureLetter(letter);
+  expect(html).toContain(FICTION_LABEL);
+  expect(html).toContain('href="#receipt-1"');
+  expect(html).toContain('id="receipt-1"');
+  expect(html).toContain('event/project receipts are unavailable');
+  expect(html).toContain('Creative connective text:');
+  expect(html).toContain('Synthetic outcomes are not empirical forecasts.');
+  expect(html).toContain('&quot;schemaVersion&quot;');
+  const unsafe={...letter,assumption:'<script>alert("test")</script>'};
+  expect(exportFutureLetter(unsafe)).not.toContain('<script>');
+  expect(buildFutureLetter({...realShape,status:'mechanism-unavailable'})).toBeNull();
+  expect(buildFutureLetter({...realShape,frames:[]})).toBeNull();
+  expect(buildFutureLetter({...realShape,frames:[{time:0,baseline:{metrics:{},actors:[]},edited:{metrics:{},actors:[]}}]})).toBeNull();
+  for(const state of [{receipt:null,busy:true,error:''},{receipt:null,busy:false,error:'Failed'},{receipt:null,busy:false,error:''}]){
+    const markup=renderToStaticMarkup(<FutureLetterCard {...state}/>);
+    expect(markup).toContain(FICTION_LABEL);
+    expect(markup).not.toContain('download=');
+  }
+  const markup=renderToStaticMarkup(<FutureLetterCard receipt={realShape} busy={false} error=""/>);
+  expect(markup).toContain('download="possible-2035-letter.html"');
+  expect(markup).toContain('tabindex="-1"');
+});

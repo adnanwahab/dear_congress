@@ -47,6 +47,8 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
     expect(host.textContent).toContain('World A · current rules');
+    expect(host.textContent).toContain('Simulated fiction, not prediction');
+    expect(host.querySelector('a[download]')).not.toBeNull();
     expect(host.textContent).toContain('World B · edited law');
     expect(host.textContent).toContain('What modeled residents did differently');
     expect(host.textContent).toContain('Resident 1');
@@ -59,6 +61,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const strength=host.querySelector('.civic-law-controls input[type=range]') as HTMLInputElement;
     await act(async()=>fireEvent.change(strength,{target:{value:'50'}}));
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect(host.querySelector('a[download]')).toBeNull();
     expect(host.textContent).toContain('The input has changed');
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
@@ -99,6 +102,7 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>resolve!(Response.json(mismatch)));
   expect(host.textContent).toContain('does not match this request');
   expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect(host.querySelector('a[download]')).toBeNull();
  }finally{
   await act(async()=>root.unmount());host.remove();
   for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}

@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {FutureLetterCard} from './FutureLetter';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -317,5 +318,6 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         <ul>{receipt.limitations?.map((text,index)=><li key={index}>{text}</li>)}</ul>
       </details>
     </>}
+    <FutureLetterCard receipt={receipt} busy={busy} error={error}/>
   </section>;
 }
