@@ -49,7 +49,8 @@ test('compact cards keep sample status and safe source links in the disclosure s
     const summary = html.match(/<summary>(.*?)<\/summary>/)![1]!;
     expect(summary).toContain('Sample scenario / not introduced bill');
     expect(summary).toContain(item.jurisdiction);
-    expect(summary).toContain(`href="${item.sourceUrl}"`);
+    expect(summary).not.toContain("<a ");
+    expect(html).toContain(`href="${item.sourceUrl}"`);
     expect(summary).toContain('Not checked');
     expect(html).not.toContain('<details open');
     expect(html).toContain('Background only; does not establish');

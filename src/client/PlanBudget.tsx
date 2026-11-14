@@ -24,7 +24,7 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
     {revision && <p role="status">Local plan revision committed for this ledger only. Original synthesis selections are preserved. <button onClick={() => { setRevision(null); setCandidate(''); }}>Restore original ledger</button></p>}
     <label>Filter ledger items <input value={filter} onChange={e => setFilter(e.target.value)} /></label>
     <p>{rows.length} of {ledger.rows.length} items shown. Totals always include every item.</p>
-    <div className="budget-table-scroll"><table>
+    <div className="budget-table-scroll" role="region" aria-label="Budget allocation table" tabIndex={0}><table>
       <caption>Allocation waterfall: cumulative cost equals the sum of all preceding annual allocations. Each bar starts at the previous cumulative amount. Text values provide the same information.</caption>
       <thead><tr><th scope="col">Item / jurisdiction</th><th scope="col">Estimate source / date</th><th scope="col">Annual allocation</th><th scope="col">Cumulative</th><th scope="col">Waterfall</th></tr></thead>
       <tbody>{rows.map(r => <tr key={r.id}><th scope="row">{r.title}<br />{r.jurisdiction}</th><td>{r.source}<br />Date: {r.date}<br />Uncertainty: unknown</td><td>{budgetMoney(r.amount)}</td><td>{budgetMoney(r.cumulative)}</td><td><span className="budget-track" aria-hidden="true"><span style={{ marginLeft: `${ledger.budget ? (r.cumulative - r.amount) / ledger.budget * 100 : 0}%`, width: `${ledger.budget ? r.amount / ledger.budget * 100 : 0}%` }} /></span></td></tr>)}</tbody>

@@ -41,7 +41,7 @@ export function PlanNumber({ value, format }: { value: number; format: (n: numbe
     media?.addEventListener('change', finish);
     return () => { cancelAnimationFrame(frame); media?.removeEventListener('change', finish); };
   }, [value]);
-  return <span className="plan-number" aria-label={format(value)}><span aria-hidden="true">{format(display)}</span></span>;
+  return <span className="plan-number"><span aria-hidden="true">{format(display)}</span><span className="sr">{format(value)}</span></span>;
 }
 
 /** FLIP fallback for browsers without same-document View Transitions. */

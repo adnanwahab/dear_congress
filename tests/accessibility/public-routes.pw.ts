@@ -21,6 +21,7 @@ for (const route of routes) test(`${route} accessibility evidence`, async ({ pag
   expect(await focused.evaluate(el => {
     const css = getComputedStyle(el); return css.outlineStyle !== 'none' && parseFloat(css.outlineWidth) > 0;
   })).toBe(true);
+  await page.waitForTimeout(350);
   const results = await new AxeBuilder({ page }).analyze();
   await info.attach('axe-results.json', { body: JSON.stringify({ route, project: info.project.name, results }, null, 2), contentType: 'application/json' });
   await info.attach('route.png', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
@@ -44,7 +45,7 @@ test('keyboard advisory journey confirms once and returns', async ({ page }) => 
   await page.keyboard.type('housing');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/feed$/);
-  await expect(page.getByRole('status').filter({ hasText: 'Showing' })).toContainText('proposals');
+  await expect(page.locator('.proposal-search [role="status"]').first()).toContainText('proposals');
   expect(writes).toBe(0);
   // Sample proposal links retain the selected source ID across civic stages.
   const proposal = page.locator('main a[href*="/votes?proposal="]').first();
