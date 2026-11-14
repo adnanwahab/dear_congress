@@ -11,6 +11,8 @@ primary_region = 'iad'
   DB_PATH = '/data/db.json'
   NODE_ENV = 'production'
   DEBUG_REQUEST_LOGS = '0'
+  # Fly terminates public HTTPS before forwarding HTTP to the application.
+  TRUST_FLY_PROXY = '1'
   HBL_SINGLE_WRITER = '1'
   HBL_PUBLIC_ORIGIN = 'https://civic-synthesis.fly.dev'
   HBL_DB_PATH = '/data/db.json.hbl.sqlite'
