@@ -679,3 +679,16 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+### Build-a-plan workbench
+
+Each synthesis lane has a separate, initially empty $40B advisory construction kit.
+Drag policies between Available and Workbench or use native Add/Remove buttons
+with touch or keyboard. Costs use integer millions; over-budget selections remain
+visible with a deterministic shortfall explanation. Rights-blocked and unknown or
+invalid-cost policies cannot be added. Other policy interactions are not modeled.
+Source IDs, jurisdictions and estimate caveats stay visible, with an ordered local
+change log. Changes live only in component memory, reset with the package/lane,
+and never call a voting, publication or synthesis write endpoint. Existing ledger
+exports still describe the ledger, independently of this experiment. Motion uses
+the existing typed plan transition helper and respects reduced motion.

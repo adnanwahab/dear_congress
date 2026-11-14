@@ -1089,3 +1089,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.plan-workbench { border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-block: 1rem; }
+.plan-workbench-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; }
+.plan-workbench-columns > section { border: 1px dashed currentColor; border-radius: 8px; padding: .75rem; min-width: 0; }
+.plan-workbench-columns ul { list-style: none; padding: 0; max-height: 32rem; overflow-y: auto; }
+.plan-workbench-columns li { border-bottom: 1px solid var(--border); padding-block: .75rem; overflow-wrap: anywhere; }
+.plan-workbench button { min-height: 44px; min-width: 44px; }
