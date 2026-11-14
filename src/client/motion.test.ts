@@ -92,3 +92,56 @@ test('snapshot selectors outside the central motion section always declare a typ
     if (file !== 'src/client/motion.ts') expect(source).not.toMatch(/\.startViewTransition\s*\(/);
   }
 });
+
+test('unsupported, rejected startup and rejected legacy startup commit exactly once', () => withWindow(async () => {
+  let updates = 0;
+  await runViewTransition(() => updates++, 'filter');
+  for (const error of [new DOMException('hidden', 'InvalidStateError'), new TypeError('unsupported')]) {
+    document.startViewTransition = (() => { throw error; }) as typeof document.startViewTransition;
+    await runViewTransition(() => updates++, 'filter');
+    expect(document.documentElement.dataset.motionType).toBeUndefined();
+  }
+  expect(updates).toBe(3);
+}));
+
+test('reduced motion never starts a snapshot and preserves focused controls', () => withWindow(async win => {
+  const button = document.createElement('button'); document.body.append(button); button.focus();
+  win.matchMedia = (() => ({ matches: true })) as unknown as typeof win.matchMedia;
+  document.startViewTransition = (() => { throw new Error('must not start'); }) as typeof document.startViewTransition;
+  let updates = 0;
+  await runViewTransition(() => updates++, 'theme');
+  expect(updates).toBe(1); expect(document.activeElement).toBe(button);
+}));
+
+test('interrupted legacy transition cannot clean up the newer transition type', () => withWindow(async () => {
+  const finishers: (() => void)[] = [];
+  document.startViewTransition = ((arg: unknown) => {
+    if (typeof arg !== 'function') throw new TypeError('callback only');
+    arg();
+    return { ready: Promise.reject(new Error('interrupted')), updateCallbackDone: Promise.resolve(),
+      finished: new Promise<void>(resolve => finishers.push(resolve)) };
+  }) as typeof document.startViewTransition;
+  const first = runViewTransition(() => {}, 'filter');
+  const second = runViewTransition(() => {}, 'theme');
+  finishers[0]!(); await first;
+  expect(document.documentElement.dataset.motionType).toBe('theme');
+  finishers[1]!(); await second;
+  expect(document.documentElement.dataset.motionType).toBeUndefined();
+}));
+
+test('application update errors remain observable and are never retried', () => withWindow(async () => {
+  let calls = 0;
+  document.startViewTransition = ((arg: { update: () => void }) => { arg.update(); }) as typeof document.startViewTransition;
+  await expect(runViewTransition(() => { calls++; throw new Error('update failed'); }, 'filter')).rejects.toThrow('update failed');
+  expect(calls).toBe(1);
+}));
+
+test('options accepted without types still expose the CSS compatibility attribute', () => withWindow(async () => {
+  document.startViewTransition = ((options: { update: () => void }) => {
+    expect(document.documentElement.dataset.motionType).toBe('filter');
+    options.update();
+    return { ready: Promise.resolve(), updateCallbackDone: Promise.resolve(), finished: Promise.resolve() };
+  }) as typeof document.startViewTransition;
+  await runViewTransition(() => {}, 'filter');
+  expect(document.documentElement.dataset.motionType).toBeUndefined();
+}));

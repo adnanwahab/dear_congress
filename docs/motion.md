@@ -46,3 +46,32 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Cross-browser adapter (SHE-541)
+
+The shared adapter detects `document.startViewTransition`; unavailable APIs and
+startup failures commit immediately with `flushSync`. Existing component CSS/JS
+motion remains available; no snapshot polyfill, click interception, history
+replacement, focus movement or network delay is introduced. Theme changes remain
+instant without native snapshots. Reduced motion and `motion=off` bypass snapshots.
+Update callback errors still reject and are never retried.
+
+Every native call exposes `data-motion-type` until completion, including engines
+that accept options but omit transition types. Callback-only APIs retry once with
+a callback; filter and theme snapshot CSS now uses the same attribute fallback as
+other typed transitions. Ownership prevents an interrupted older animation from
+clearing a newer animation's CSS scope. Rejected visual promises are observed
+without hiding update failures.
+
+Cross-document transitions stay a progressive enhancement of ordinary anchors:
+unsupported engines perform ordinary page loads with native history/focus behavior.
+Reviewed API guidance: [MDN ViewTransition](https://developer.mozilla.org/en-US/docs/Web/API/ViewTransition)
+and [Chrome cross-document guidance](https://developer.chrome.com/docs/modern-web-guidance/guides/ui-behaviors/cross-document-transitions).
+
+For isolated browser QA, start `bun --no-env-file scripts/accessibility-server.ts`,
+then `bun scripts/verify-motion-browser.mjs` with Playwright available. Set
+`PLAYWRIGHT_MODULE` to its module path if installed separately. The verifier tests
+Chromium, Firefox and WebKit with normal/reduced motion, forced missing APIs,
+keyboard/touch activation, back/forward, skip-link focus and interrupted navigation.
+Missing engines fail the command. WebKit automation does not establish Safari/iOS
+acceptance. See [SHE-541 evidence and remaining checks](reviews/SHE-541.md).
