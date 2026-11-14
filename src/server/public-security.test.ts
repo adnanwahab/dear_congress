@@ -45,6 +45,23 @@ describe("public write security", () => {
     expect((await guard(security, request("/api/votes", {}, { origin: "https://localhost", "fly-client-ip": "192.0.2.9" })) ).status).toBe(200);
     expect((await guard(security, request("/api/votes", {}, { "fly-client-ip": "192.0.2.9", "x-forwarded-for": "192.0.2.99" })) ).status).toBe(429);
   });
+  test("Fly deployment accepts its HTTPS browser origin and rejects foreign or forged forwarding origins", async () => {
+    const fly = readFileSync(new URL("../../fly.toml", import.meta.url), "utf8");
+    expect(fly).toMatch(/TRUST_FLY_PROXY\s*=\s*['"]1['"]/);
+    const security = createPublicSecurity({ ANON_COOKIE_SECRET: secret, TRUST_FLY_PROXY: "1" });
+    let writes = 0;
+    const submit = (origin: string, extra: Record<string, string> = {}) => guard(security,
+      new Request("http://civic-synthesis.fly.dev/api/votes", { method: "POST", headers: { origin, ...extra }, body: "{}" }),
+      undefined, () => { writes++; return Response.json({ ok: true }); });
+    expect((await submit("https://civic-synthesis.fly.dev")).status).toBe(200);
+    for (const origin of ["https://evil.example", "http://civic-synthesis.fly.dev", "https://civic-synthesis.fly.dev:8443"]) {
+      expect((await submit(origin, { "x-forwarded-host": "evil.example", "x-forwarded-proto": "http" })).status).toBe(403);
+    }
+    expect(writes).toBe(1);
+    const local = createPublicSecurity({ ANON_COOKIE_SECRET: secret });
+    expect((await guard(local, request("/api/votes", {}, { origin: "http://localhost" }))).status).toBe(200);
+    expect((await guard(local, request("/api/votes", {}, { origin: "https://localhost", "x-forwarded-proto": "https" }))).status).toBe(403);
+  });
   test("paused submissions, cross-origin writes and unauthorized edits never run handler", async () => {
     const security = createPublicSecurity({ ANON_COOKIE_SECRET: secret, PUBLIC_SUBMISSIONS_ENABLED: "0" });
     const unexpected = () => { throw new Error("must not write"); };

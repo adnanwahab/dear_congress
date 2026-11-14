@@ -377,6 +377,9 @@ Public write limits are per process, in memory, with a ten-minute fixed window:
 | `PUBLIC_SUBMISSIONS_ENABLED` | `1` | Set `0` and restart to pause journal publication |
 | `TRUST_FLY_PROXY` | unset | Set `1` only behind Fly HTTP proxy; configured in fly.toml |
 
+Fly deployments must retain `TRUST_FLY_PROXY=1`: the public browser uses HTTPS while Bun receives the proxy request over HTTP. Missing this setting rejects valid submissions with “Use a same-origin submission or a cookie-aware API client.” Keep it unset for direct local HTTP. Origin host/port checks remain exact; do not trust caller-provided forwarded-origin headers.
+
+
 All limits must be positive integers. Invalid attempts consume the same budget.
 429 responses include seconds in `Retry-After` and a readable retry message.
 Journal aliases are `/api/journal`, `/api/entries`, and `/api/publish_draft` (including
