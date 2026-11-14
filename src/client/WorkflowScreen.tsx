@@ -141,6 +141,14 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
     {stage === 'votes' && <DailyQuestion request={request} />}<section className="workflow-heading"><div><p className="workflow-eyebrow" style={{ viewTransitionName: `journey-stage-${meta.n}` }}>Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.title}</h1><p><strong>{meta.heading}</strong></p><p>{meta.description}</p></div>{meta.next && <a className="workflow-next" href={route(meta.next,item?.id ?? selected)}>Next: {STAGES[meta.next].title} →</a>}</section>
+    {stage === 'votes' && <nav className="panel workflow-repository-voting" aria-label="Vote on application pull requests">
+      <h2>Review and vote on app changes</h2>
+      <p>Developer pull-request and issue voting is separate from the civic proposals below. These votes are advisory, not merge approvals.</p>
+      <p><a href="/vote/happybearlandia?view=prs">HappyBearLandia pull requests</a>{' · '}
+        <a href="/vote/happybearlandia?view=issues">HappyBearLandia issues</a>{' · '}
+        <a href="/vote/dear_congress?view=prs">Dear Congress pull requests</a>{' · '}
+        <a href="/vote/digital_pensieve?view=prs">Digital Pensieve pull requests</a></p>
+    </nav>}
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? <Skeleton kind="line" /> : 'Sample proposals unavailable'}</span></div>
     {stage === 'votes' && <ParticipationNotice />}
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />

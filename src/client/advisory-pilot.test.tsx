@@ -17,7 +17,7 @@ test('blocked PR primary status is Blocked and keeps the actual base reason', ()
   expect(html).not.toContain('Ready for review');
 });
 
-test('direct list and detail render labeled pilot; civic votes have no developer PR entry point', () => {
+test('direct list and detail render labeled pilot; civic vote page labels repository voting separately', () => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
   try {
     for (const pathname of ['/vote/happybearlandia', '/vote/happybearlandia/pr/282']) {
@@ -32,7 +32,12 @@ test('direct list and detail render labeled pilot; civic votes have no developer
     }
     const request = async <T,>(): Promise<T> => {throw Error('offline');};
     const civic = renderToStaticMarkup(<WorkflowScreen stage="votes" request={request} />);
-    expect(civic).not.toContain('/vote/happybearlandia');
+    expect(civic).toContain('aria-label="Vote on application pull requests"');
+    expect(civic).toContain('href="/vote/happybearlandia?view=prs"');
+    expect(civic).toContain('separate from the civic proposals below');
+    expect(civic).toContain('advisory, not merge approvals');
+    expect(civic).not.toContain('Cast advisory vote'); // Initial SSR has no loaded proposal.
+    expect(civic).toContain('Verified eligible participants — advisory');
   } finally {
     if (previous) Object.defineProperty(globalThis, 'window', previous);
     else Reflect.deleteProperty(globalThis, 'window');
