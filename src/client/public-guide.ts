@@ -21,6 +21,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The optional household demo in [Civic plans](/synth) follows one synthetic household through two local budget ledgers. Each line shows a logged event and modeled balance, with matching population, seed and common assumptions in both futures. The demo credit is an illustrative assumption, not an effect of the selected policy package. It uses no resident data and saves no choices.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 ## Will my journal be public?
