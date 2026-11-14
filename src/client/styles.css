@@ -1089,3 +1089,16 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+/* Static local budget fixture: no animation or network dependency. */
+.neighborhood-budget { margin-block: 2rem; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--ink); border-radius: 16px; }
+.neighborhood-budget p { max-width: 80ch; }
+.neighborhood-projects, .neighborhood-blocks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
+.neighborhood-projects button, .neighborhood-block { padding: 1rem; border: 1px solid currentColor; border-radius: 10px; min-width: 0; }
+.neighborhood-projects button { text-align: left; white-space: normal; }
+.neighborhood-projects span { display: block; margin-top: .5rem; }
+.neighborhood-projects [aria-pressed="true"] { outline: 3px solid currentColor; outline-offset: 2px; }
+.neighborhood-budget button { min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
+.neighborhood-block button { display: block; width: 100%; margin-top: .5rem; }
+.neighborhood-list { grid-template-columns: 1fr; }
+@media (max-width: 600px) { .neighborhood-projects, .neighborhood-blocks { grid-template-columns: 1fr; } }

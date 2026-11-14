@@ -41,6 +41,7 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
 - [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered.
+- [Neighborhood budget demo](/map) lets you place fictional projects with 100 hypothetical credits. Allocations stay only in page memory and disappear on reload; nothing is submitted or funded. Coverage and beneficiaries follow declared fictional assumptions, not measured use or verified civic participation. Select a project and use Place buttons with touch or keyboard, or drag onto a block.
 - [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative.
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
