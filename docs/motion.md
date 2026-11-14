@@ -46,3 +46,8 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+The cinematic browser regression candidate runs with `bun run test:visual`.
+See [SHE-542 coverage and baseline review](reviews/SHE-542.md) for the four device/
+motion projects, isolated fixtures, screenshot approval procedure and remaining
+morph/fly-through gaps. Missing screenshot baselines deliberately fail CI.

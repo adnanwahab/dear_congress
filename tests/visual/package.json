@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "playwright test --config playwright.config.ts", "typecheck": "tsc --noEmit --strict --skipLibCheck --target ESNext --module ESNext --moduleResolution bundler *.ts" },
+  "devDependencies": { "@playwright/test": "1.63.0" }
+}
