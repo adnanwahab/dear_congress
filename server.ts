@@ -1,3 +1,4 @@
+import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/shared/journal-origin";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -201,6 +202,7 @@ async function load(): Promise<DB> {
     loaded.schemaVersion = schemaVersion;
   }
 
+  if (migrateJournalOrigins(loaded.entries)) await Bun.write(DB_PATH, JSON.stringify(loaded, null, 2));
   return loaded;
 }
 
@@ -216,6 +218,7 @@ function seed(): DB {
     extraction: extract(s.text),
     corrected: false,
     seeded: true,
+    origin: "sample",
   }));
   return db;
 }
@@ -315,6 +318,7 @@ function createJournalEntry(input: {
     createdAt: new Date().toISOString(),
     extraction: input.extraction,
     corrected: input.corrected,
+    origin: input.synthetic ? "simulated" : "real",
     ...(input.synthetic ? { synthetic: true } : {}),
     ...(input.source ? { source: input.source } : {}),
     ...(roundedLoc ? { location: roundedLoc } : {}),
@@ -506,8 +510,9 @@ const entryListeners = new Set<(payload: string) => void>();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function entriesPayload() {
-  return JSON.stringify({ entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal) });
+function entriesPayload(origin?: string | null) {
+  const entries = db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal);
+  return JSON.stringify({ entries: origin ? journalFeed(entries, origin === "all" ? ["real", "sample", "simulated"] : [origin as JournalOrigin]) : entries });
 }
 
 function emitEntriesUpdate() {
@@ -818,6 +823,7 @@ function parseWhatIfExtraEntries(input: unknown) {
       extraction: extract(text, ctx.proposals, ctx.needs),
       corrected: false,
       synthetic: true,
+      origin: "simulated",
       source: "what-if",
     });
   }
@@ -990,6 +996,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           createdAt: new Date().toISOString(),
           extraction,
           corrected: false,
+          origin: "real",
           ...(roundedLoc ? { location: roundedLoc } : {}),
         };
         db.entries.push(entry);
@@ -1064,6 +1071,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
     "/api/entries/events": {
       GET: (req) => {
+        const origin = new URL(req.url).searchParams.get("origin");
+        if (origin && !["real", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
         let listener: ((payload: string) => void) | null = null;
 
         const stream = new ReadableStream({
@@ -1072,9 +1081,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
             const write = (payload: string) => controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
 
             // initial snapshot
-            write(entriesPayload());
+            write(entriesPayload(origin));
 
-            listener = (payload: string) => write(payload);
+            listener = (payload: string) => write(origin ? entriesPayload(origin) : payload);
             entryListeners.add(listener);
 
             const cleanup = () => {
@@ -1114,7 +1123,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const url = new URL(req.url);
         const limit = Number(url.searchParams.get("limit") ?? 50);
         if (!Number.isInteger(limit) || limit < 1 || limit > 100) return withReadCors(req, bad("limit must be an integer between 1 and 100"));
-        const all = entriesNewestFirst();
+        const origin = url.searchParams.get("origin");
+        if (origin && !["real", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
+        // Unfiltered API reads retain their existing raw-record contract.
+        const all = origin ? journalFeed(entriesNewestFirst(), origin === "all" ? ["real", "sample", "simulated"] : [origin as JournalOrigin]) : entriesNewestFirst();
         const cursor = url.searchParams.get("cursor");
         const index = cursor ? all.findIndex(entry => entry.id === cursor) : -1;
         if (cursor && index === -1) return withReadCors(req, bad("unknown cursor"));
@@ -1156,6 +1168,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           createdAt: new Date().toISOString(),
           extraction,
           corrected: labels.valid.length > 0,
+          origin: "real",
           ...(roundedLoc ? { location: roundedLoc } : {}),
         };
 
