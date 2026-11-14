@@ -364,6 +364,26 @@ table.versions .badge { margin-left: 6px; }
 .civic-header { view-transition-name: civic-header; font: 16px/1.45 var(--sans); min-height: 75px; padding: 20px max(28px, 3.33vw); display: flex; justify-content: space-between; align-items: center; gap: 20px; background: var(--card); border-bottom: 1px solid var(--line); }
 .header-brand, .header-meta { display: flex; align-items: center; gap: 16px; }
 .header-brand > a { color: var(--ink); font-size: 24px; font-weight: 700; text-decoration: none; }
+/* Dark inks on light surfaces, luminous hues on dark surfaces. */
+.header-brand > a {
+  --title-red: #a32642; --title-gold: #805400; --title-green: #21643e;
+  --title-cyan: #006779; --title-blue: #3452ad; --title-purple: #803c99;
+}
+:root[data-theme="dark"] .header-brand > a {
+  --title-red: #ff9bb3; --title-gold: #f3ce78; --title-green: #8edca8;
+  --title-cyan: #7ddae9; --title-blue: #a8baff; --title-purple: #dcb0f5;
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .header-brand > a { animation: title-rainbow 12s linear infinite; }
+}
+@keyframes title-rainbow {
+  0%, 100% { color: var(--title-red); }
+  16.667% { color: var(--title-gold); }
+  33.333% { color: var(--title-green); }
+  50% { color: var(--title-cyan); }
+  66.667% { color: var(--title-blue); }
+  83.333% { color: var(--title-purple); }
+}
 .civic-shell .pill { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 20px; padding: 2px 12px; white-space: nowrap; font-size: 16px; line-height: 1.4; }
 .civic-shell .pill.warn, .civic-shell .pill.info { border: 0; border-radius: 7px; font-weight: 700; padding: 5px 12px; }
 .civic-shell .pill.warn { background: var(--warn-bg); color: var(--warn-ink); }
