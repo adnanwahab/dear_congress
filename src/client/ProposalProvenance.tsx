@@ -34,7 +34,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     <summary>
       <span className="workflow-source-status">Sample scenario / not introduced bill</span>
       <span> · {item.jurisdiction} · </span>
-      {url ? <a href={url} target="_blank" rel="noopener noreferrer">{item.background?.name ?? 'Source not available'} ↗</a> : <span>Source not available</span>}
+      {url ? <span>{item.background?.name ?? 'Source not available'}</span> : <span>Source not available</span>}
       <span> · {freshness(item) === 'Source not available / not checked' ? 'Not checked' : freshness(item)} </span>
       <span className="workflow-source-toggle" aria-hidden="true">⌄</span>
     </summary>

@@ -186,7 +186,7 @@ function LegacyApp() {
   useEffect(() => {
     const onPopState = () => {
       const next = tabFromPath(window.location.pathname);
-      if (next) setTab(next);
+      if (next) { setTab(next); requestAnimationFrame(() => document.getElementById("main-content")?.focus()); }
       setFocusNeedId(new URLSearchParams(window.location.search).get("need"));
     };
     window.addEventListener("popstate", onPopState);
@@ -283,13 +283,14 @@ function LegacyApp() {
   };
 
   const header = <CivicHeader stage={TABS.find(t => t.id === tab)?.label ?? "Journal"} />;
-  if (!state) return <div className="legacy-shell">{header}{loadError ? <div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div> : <PageSkeleton path={window.location.pathname} />}</div>;
+  if (!state) return <div className="legacy-shell">{header}{loadError ? <main id="main-content" tabIndex={-1}><h1>Unable to load this page</h1><div className="loading" role="alert">{loadError}<button onClick={refresh}>Try again</button></div></main> : <PageSkeleton path={window.location.pathname} />}</div>;
 
   return (
     <div className="legacy-shell">
       {header}
       <div className="app engine-workspace">
-      <main>
+      <main id="main-content" tabIndex={-1}>
+        <h1>{TABS.find(t => t.id === tab)?.label}</h1>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
         {tab === "vote" && <VoteView state={state} refresh={refresh} />}

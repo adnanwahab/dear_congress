@@ -789,7 +789,7 @@ details[open] > summary::before { transform: rotate(135deg); }
 .stage-card::after { background: var(--accent); transform-origin: left; }
 @media (prefers-reduced-motion: no-preference) {
   .stage-card { transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out); transition-delay: calc(var(--i) * 90ms); }
-  @starting-style { .stage-card { opacity: 0; transform: translateY(18px); } }
+  @starting-style { .stage-card { opacity: 1; transform: translateY(18px); } }
   .stage-card::after { animation: journey-progress 200ms linear both; animation-delay: calc(950ms + var(--i) * 200ms); }
 }
 @keyframes journey-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -809,7 +809,7 @@ details[open] > summary::before { transform: rotate(135deg); }
 
 /* Content remains readable unless both the platform and motion preference opt in. */
 @keyframes scroll-reveal {
-  from { opacity: .15; transform: translateY(20px); }
+  from { opacity: 1; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @supports (animation-timeline: view()) {
@@ -1062,3 +1062,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .budget-ledger caption { text-align: left; margin-block: .5rem; }
 .budget-track { display: block; width: 8rem; background: var(--border, #ddd); height: .8rem; }
 .budget-track > span { display: block; height: 100%; background: var(--accent, #7350c2); }
+
+/* Shared keyboard navigation stays above sticky headers and phone navigation. */
+.skip-navigation { position: fixed; top: 8px; left: 8px; z-index: 10000; padding: 12px 18px; background: var(--bg, white); color: var(--ink, black); border: 2px solid currentColor; transform: translateY(-200%); }
+.skip-navigation:focus { transform: none; }
+:focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
+#main-content { scroll-margin-top: 90px; }
+@media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }

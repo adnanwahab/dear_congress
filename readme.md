@@ -659,3 +659,8 @@ Production acceptance also requires the [release parity contract](docs/release-p
 HTTP trust/identity checks and rendered desktop/mobile smoke checks against the
 served origin. Failed or missing evidence is NO-GO; SHE-280 retains the human
 rollout and rollback decision.
+
+Accessibility browser checks and the required manual screen-reader journey:
+[acceptance evidence guide](docs/accessibility-acceptance.md).
+Run `bun run test:a11y` after installing its separate browser tooling as documented.
+Automated results do not establish full WCAG conformance or human acceptance.

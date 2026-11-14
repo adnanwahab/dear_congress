@@ -80,7 +80,7 @@ export function Dashboard({ request }: { request: Request }) {
   }
   return <div className="civic-shell">
     <CivicHeader stage="Live demo" />
-    <main className="civic-main">
+    <main id="main-content" tabIndex={-1} className="civic-main">
       <section className="home-start" aria-labelledby="home-start-title">
         <h1 id="home-start-title">Where would you like to start?</h1>
         <div className="home-start-choices">

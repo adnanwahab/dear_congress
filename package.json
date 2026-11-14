@@ -16,7 +16,8 @@
     "symphony:mini:check": "bun --no-env-file .mini-symphony/runner.js --config .mini-symphony/config.json --check",
     "symphony:mini:sync": "bun --no-env-file .mini-symphony/import-linear.js --config .mini-symphony/config.json",
     "clusters:pilot": "bun src/server/need-clusters/run.ts",
-    "audit:replay": "bun scripts/audit-replay.ts"
+    "audit:replay": "bun scripts/audit-replay.ts",
+    "test:a11y": "cd tests/accessibility && npm test"
   },
   "dependencies": {
     "@deck.gl/core": "9.2",

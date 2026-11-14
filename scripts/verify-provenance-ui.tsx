@@ -43,7 +43,8 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
       const summary = disclosure.querySelector('summary')!;
       assert.match(summary.textContent!, /Sample scenario \/ not introduced bill/);
       assert.match(summary.textContent!, /Not checked/);
-      assert(summary.querySelector('a[href^="https:"]'));
+      assert(!summary.querySelector('a'));
+      assert(disclosure.querySelector('.workflow-provenance-body a[href^="https:"]'));
       (summary as any).click();
       assert.equal(disclosure.hasAttribute('open'), true);
       (summary as any).click();
