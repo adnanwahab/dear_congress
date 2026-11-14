@@ -18,7 +18,7 @@ Tokens in styles.css (normal timing):
 | `--motion-plan` | 700 ms | Plan row movement/entry |
 | `--ease-out` | cubic-bezier(.2,.8,.2,1) | Navigation easing |
 
-In-page types: `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
+In-page types: `time-zoom` (outcome range changes), `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
 Cross-document types: `forward`, `backward`; other navigation retains the default
 crossfade. Sponsor movement disables only its own root crossfade. Plan exits use
 500 ms and entries/moves use 700 ms. Default navigation timings are unchanged.
