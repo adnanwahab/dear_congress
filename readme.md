@@ -45,6 +45,10 @@ translations approved. See [SHE-361 validation and remaining review](docs/review
 
 ## Appearance
 
+The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
+animation. Light and dark themes use separate brightness levels; reduced motion
+keeps the ordinary title color, and forced colors uses system colors.
+
 The shared civic header cycles **System → Light → Dark**. System is the default;
 explicit choices override the OS and persist in this browser across routes and
 reloads. Storage-blocked browsers retain a choice only for the current page.
