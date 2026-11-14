@@ -99,3 +99,7 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.civic-sampler { margin-block: 1rem; }
+.sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.sampler-actions button, .sampler-actions a { min-height: 44px; }
