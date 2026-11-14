@@ -19,6 +19,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 ## What is fictional and what is verified?
 
+The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
+
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
