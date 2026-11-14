@@ -36,7 +36,7 @@ jobs:
     # Stay paused until SHE-281 recovers the live source and verifies the Fly target.
     if: vars.PRODUCTION_RELEASES_ENABLED == 'true'
     name: Deploy app
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:
@@ -56,3 +56,19 @@ jobs:
         run: bun scripts/verify-release.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT"
         env:
           RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+      - name: Install isolated parity browser
+        run: |
+          npm install --prefix /tmp/release-browser --no-package-lock --no-save playwright@1.56.1
+          /tmp/release-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify production desktop and mobile parity
+        run: bun scripts/verify-release-browser.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT"
+        env:
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          PLAYWRIGHT_MODULE: /tmp/release-browser/node_modules/playwright/index.mjs
+      - name: Retain redacted parity evidence for SHE-280
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-parity
+          path: release-parity-*.json
+          if-no-files-found: warn

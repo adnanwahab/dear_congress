@@ -105,6 +105,10 @@ export function citizenProposalView(record: CitizenProposalRecord, voterId?: str
     counts,
     countTotal: counts.support + counts.oppose + counts.unsure,
     ownVote: voterId ? record.votesByVoterHash[voterHash(voterId)] ?? null : null,
+    canRespondToObjections: !!voterId && voterHash(voterId) === record.ownerHash,
+    objections: (record.objections ?? []).map(({ id, text, severity, constituency, createdAt, responses }) => ({
+      id, text, severity, constituency, createdAt, responses: responses.map(({ status, reason, createdAt, actor }) => ({ status, reason, createdAt, actor })),
+    })),
     comments: (record.comments ?? []).map(({ id, text, displayName, createdAt }) => ({ id, text, displayName, createdAt })),
   };
 }
@@ -195,6 +199,47 @@ export function commentCitizenProposal(store: CitizenProposalStore, id: string, 
     submitKeyHash,
     bodyHash,
   });
+  return record;
+}
+
+/** Additive objection ledger. Never changes proposal text or existing ballots. */
+export function objectCitizenProposal(store: CitizenProposalStore, id: string, voterId: string, input: unknown) {
+  const record = findCitizenProposal(store, id);
+  const owner = voterHash(voterId);
+  const body = objectBody(input);
+  const bounded = (name: string, limit: number) => {
+    const value = body[name];
+    if (typeof value !== "string" || !value.trim() || value.trim().length > limit) {
+      throw new CitizenProposalError(`${name} is required and must be ${limit} characters or fewer.`);
+    }
+    return value.trim();
+  };
+  if (body.action === "respond") {
+    if (owner !== record.ownerHash) throw new CitizenProposalError("Only the publishing browser can respond as proposer.", 403);
+    const objection = record.objections?.find(o => o.id === body.objectionId);
+    if (!objection) throw new CitizenProposalError("Objection not found on this proposal.", 404);
+    if (body.status !== "declined" && body.status !== "unresolved") {
+      throw new CitizenProposalError("Choose declined or unresolved. Acceptance requires a published revision and is not available yet.");
+    }
+    const reason = bounded("reason", 2000);
+    if (body.expectedVersion !== objection.responses.length) throw new CitizenProposalError("The response history changed. Reload before responding.", 409);
+    objection.responses.push({ status: body.status, reason, createdAt: new Date().toISOString(), actor: "proposer" });
+    return record;
+  }
+  if (body.action !== "create" || body.confirmedPublic !== true) throw new CitizenProposalError("Confirm public objection publication.");
+  const text = bounded("text", 2000);
+  const constituency = bounded("constituency", 160);
+  if (body.severity !== "concern" && body.severity !== "major" && body.severity !== "blocking") throw new CitizenProposalError("Choose concern, major, or blocking severity.");
+  if (typeof body.idempotencyKey !== "string" || !uuid.test(body.idempotencyKey)) throw new CitizenProposalError("A stable UUID idempotencyKey is required.");
+  const submitKeyHash = hash(`${owner}:objection:${body.idempotencyKey.toLowerCase()}`);
+  const bodyHash = hash(JSON.stringify({ text, constituency, severity: body.severity }));
+  const existing = record.objections?.find(o => o.submitKeyHash === submitKeyHash);
+  if (existing) {
+    if (existing.bodyHash !== bodyHash) throw new CitizenProposalError("This objection was already submitted with different content.", 409);
+    return record;
+  }
+  (record.objections ??= []).push({ id: `objection_${crypto.randomUUID()}`, text, constituency, severity: body.severity,
+    createdAt: new Date().toISOString(), responses: [], submitKeyHash, bodyHash });
   return record;
 }
 
@@ -289,6 +334,18 @@ export function createCitizenProposalHandlers(deps: {
         const record = voteCitizenProposal(store, id, voter, body);
         try { await deps.save(); }
         catch (error) { record.votesByVoterHash = previous; throw error; }
+        return { proposal: citizenProposalView(record, voter) };
+      });
+    }),
+    objection: (req: Request, id: string) => handle(async () => {
+      const voter = requestVoter(req, true)!;
+      const body = await readBody(req);
+      return serialized(async () => {
+        const record = findCitizenProposal(deps.getStore(), id);
+        const previous = structuredClone(record.objections);
+        objectCitizenProposal(deps.getStore(), id, voter, body);
+        try { await deps.save(); }
+        catch (error) { record.objections = previous; throw error; }
         return { proposal: citizenProposalView(record, voter) };
       });
     }),

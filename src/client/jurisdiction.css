@@ -1,0 +1,6 @@
+.jurisdiction-picker { padding: 16px; margin-bottom: 20px; border: 1px solid var(--line, #ccc); border-radius: 8px; }
+.jurisdiction-picker > div { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.jurisdiction-picker label { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
+.jurisdiction-picker select { min-height: 44px; max-width: 100%; }
+.jurisdiction-picker button { min-height: 44px; white-space: normal; }
+.jurisdiction-picker p { margin: 10px 0 0; }

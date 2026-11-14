@@ -461,7 +461,7 @@ describe("stabilized synthesis", () => {
     const pkg = balancedPkg(seeded(), { A: balancedIds(seeded()) });
     for (const it of pkg.items) {
       const sum = Object.values(it.explanation.parts).reduce((s, p) => s + p.contribution, 0);
-      const expected = sum - it.explanation.changePenalty + it.explanation.stabilityBonus;
+      const expected = sum + it.explanation.roundingAdjustment - it.explanation.changePenalty + it.explanation.stabilityBonus;
       expect(Math.abs(expected - it.explanation.total)).toBeLessThanOrEqual(1e-9);
       expect(Math.abs(it.explanation.total - (it.score + it.explanation.stabilityBonus))).toBeLessThanOrEqual(1e-9);
     }

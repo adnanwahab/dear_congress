@@ -23,3 +23,12 @@ test('revisions resolve objections for every county, with no forced unanimous vo
   expect(ids.every(id => requirements(id).every((need, i) => plan[i]! >= need))).toBe(true);
   expect(improvePlan(plan, ids)).toEqual(plan);
 });
+
+test('unevaluated or missing scenario inputs never become dissent or agreement', () => {
+  expect(countyVote('48201', INITIAL_PLAN, false).status).toBe('unevaluated');
+  expect(countyVote('', INITIAL_PLAN).status).toBe('unevaluated');
+  expect(countyVote('48201', []).status).toBe('unevaluated');
+  expect(countyVote('48201', [NaN, 100, 100, 100]).status).toBe('unevaluated');
+  expect(countyVote('48201', [0, 0, 0, 0]).status).toBe('object');
+  expect(countyVote('48201', [100, 100, 100, 100]).status).toBe('agree');
+});

@@ -17,7 +17,7 @@ test('every stable sample keeps its source and shows publisher, jurisdiction and
     expect(item.background?.publisher).toBeTruthy();
   }
   const payload = demoPayload({ browser: { 'demo-housing': { stance: 1 } } }, 'browser', new Date('2026-11-13'));
-  expect(payload.items[0]!.support).toBe(DEMO_ITEMS[0]!.support + 1);
+  expect(payload.items[0]!.support).toBe(DEMO_ITEMS[0]!.support);
   expect(payload.items[0]!.background?.checkedAt).toBeNull();
 });
 
@@ -41,4 +41,21 @@ test('integrated workflow retains source provenance through API retry and all ci
   const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   for (const stage of ['published', 'feed', 'votes', 'draft']) expect(stdout).toContain(`PASS ${stage}:`);
+});
+
+test('compact cards keep sample status and safe source links in the disclosure summary', () => {
+  for (const item of DEMO_ITEMS) {
+    const html = renderToStaticMarkup(<ProposalProvenance item={item} compact />);
+    const summary = html.match(/<summary>(.*?)<\/summary>/)![1]!;
+    expect(summary).toContain('Sample scenario / not introduced bill');
+    expect(summary).toContain(item.jurisdiction);
+    expect(summary).not.toContain("<a ");
+    expect(html).toContain(`href="${item.sourceUrl}"`);
+    expect(summary).toContain('Not checked');
+    expect(html).not.toContain('<details open');
+    expect(html).toContain('Background only; does not establish');
+  }
+  const html = renderToStaticMarkup(<ProposalProvenance item={{ ...DEMO_ITEMS[0]!, sourceUrl: 'javascript:alert(1)', background: undefined }} compact />);
+  expect(html).not.toContain('<a ');
+  expect(html).toContain('Source not available');
 });

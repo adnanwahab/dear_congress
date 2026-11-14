@@ -19,15 +19,20 @@ export const DEMO_ITEMS: DemoItem[] = [
   { id: 'demo-shade', title: 'Add shade at the hottest bus stops', topic: 'Climate', jurisdiction: 'City', source: 'Local resilience', background: {"name": "City of Houston", "publisher": "City of Houston", "scope": "City homepage only; does not substantiate bus stop heat or shelter claims", "checkedAt": null}, sourceUrl: 'https://www.houstontx.gov/', summary: 'Install shade and seating at high-use bus stops with the greatest heat exposure. Prioritize riders with limited mobility and publish a maintenance schedule.', currentText: 'Bus stop shelter placement follows the existing amenity program.', proposedText: 'Prioritize shade and accessible seating at high-ridership, high-heat stops and publish annual installation and maintenance targets.', sponsors: ['City resilience office', 'Transit accessibility committee'], support: 1340, oppose: 180, unsure: 180 },
   { id: 'demo-budget', title: 'Show residents where each budget dollar goes', topic: 'Government', jurisdiction: 'County', source: 'Public finance', background: {"name": "Harris County", "publisher": "Harris County", "scope": "County homepage only; does not substantiate budget dashboard claims", "checkedAt": null}, sourceUrl: 'https://www.harriscountytx.gov/', summary: 'Publish a searchable budget with project spending and milestones. Make the data downloadable and explain changes in plain English.', currentText: 'Budget and project spending reports are published in separate documents.', proposedText: 'Publish a searchable, accessible budget dashboard linking approved spending to project milestones, with monthly downloadable updates.', sponsors: ['County budget office', 'Government accountability committee'], support: 1560, oppose: 90, unsure: 150 },
 ];
-export interface DemoPayload { items: DemoItem[]; updatedAt: string; closesAt: string; votes: Record<string, number>; }
+export interface AdvisoryCounts { support: number; oppose: number; unsure: number; }
+export interface DemoPayload { verified: { status: "unavailable" }; browserCounts: Record<string, AdvisoryCounts>; items: DemoItem[]; updatedAt: string; closesAt: string; votes: Record<string, number>; }
 export function demoPayload(votesByVoter: Record<string, Record<string, { stance: number }>>, voterId: string, now = new Date()): DemoPayload {
   const items = DEMO_ITEMS.map(item => ({ ...item }));
   const byId = new Map(items.map(item => [item.id, item]));
-  for (const votes of Object.values(votesByVoter)) for (const vote of Object.entries(votes)) {
-    const item = byId.get(vote[0]);
-    if (item) { if (vote[1].stance > 0) item.support++; else if (vote[1].stance < 0) item.oppose++; else item.unsure++; }
+  // Never blend cookie identities into fictional fixtures or civic eligibility.
+  const browserCounts: Record<string, AdvisoryCounts> = Object.fromEntries(items.map(i => [i.id, { support: 0, oppose: 0, unsure: 0 }]));
+  for (const votes of Object.values(votesByVoter)) for (const [id, vote] of Object.entries(votes)) {
+    const counts = browserCounts[id];
+    if (Object.hasOwn(browserCounts, id) && counts) {
+      if (vote.stance > 0) counts.support++; else if (vote.stance < 0) counts.oppose++; else counts.unsure++;
+    }
   }
   const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const closes = new Date(day); closes.setUTCDate(day.getUTCDate() + (7 - day.getUTCDay() || 7));
-  return { items, updatedAt: day.toISOString(), closesAt: closes.toISOString(), votes: Object.fromEntries(Object.entries(votesByVoter[voterId] ?? {}).filter(([id]) => byId.has(id)).map(([id,v]) => [id,v.stance])) };
+  return { verified: { status: "unavailable" }, browserCounts, items, updatedAt: day.toISOString(), closesAt: closes.toISOString(), votes: Object.fromEntries(Object.entries(votesByVoter[voterId] ?? {}).filter(([id]) => byId.has(id)).map(([id,v]) => [id,v.stance])) };
 }

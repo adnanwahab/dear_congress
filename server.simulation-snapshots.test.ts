@@ -118,3 +118,31 @@ describe("/api/simulation-snapshots", () => {
   });
 
 });
+
+test("comparison capture and replay preserve frozen inputs, privacy and missing-link behavior", async () => {
+  const { server, dbPath } = await startServer();
+  const before = await Bun.file(dbPath).json();
+  const response = await fetch(new URL("/api/policy-comparisons", server.url), {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ a: "A", b: "B", seed: 0 }),
+  });
+  expect(response.status).toBe(201);
+  const { comparison } = await response.json();
+  const replay = await fetch(new URL(`/api/policy-comparisons/${comparison.id}`, server.url));
+  expect(replay.status).toBe(200);
+  expect((await replay.json()).comparison).toEqual(comparison);
+  expect(comparison.content.runSeeds).toEqual(Array.from({ length: 100 }, (_, i) => i));
+  expect(comparison.content.worlds.map((p: { id: string }) => p.id)).toEqual(["A", "B"]);
+  const saved = await Bun.file(dbPath).json();
+  expect(saved.lastPlan).toEqual(before.lastPlan);
+  expect(saved.votesByVoter).toEqual(before.votesByVoter);
+  expect(saved.entries).toEqual(before.entries);
+  expect(saved.policyComparisons).toEqual([comparison]);
+  const missing = await fetch(new URL("/api/policy-comparisons/cmp_missing", server.url));
+  expect(missing.status).toBe(404);
+  const invalid = await fetch(new URL("/api/policy-comparisons", server.url), {
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ a: "A", b: "B", budget: 5 }),
+  });
+  expect(invalid.status).toBe(400);
+  expect((await Bun.file(dbPath).json()).policyComparisons).toEqual([comparison]);
+});

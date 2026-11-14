@@ -1,3 +1,12 @@
+import { discoverJournal } from './src/shared/journal-discovery';
+import { topicHub } from './src/shared/topic-hubs';
+import { LiveRounds } from './src/server/live-rounds';
+import { liveQR } from './src/server/live-qr';
+const liveRounds = new LiveRounds();
+import { handleRulePreview } from "./src/server/synthesis-rule-preview";
+import { createPolicyComparison, storePolicyComparison } from "./src/server/policy-comparison";
+import { auditSampleResponse } from "./src/server/audit-samples";
+import { readBills } from './src/server/legislation/import';
 import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/shared/journal-origin";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
@@ -9,9 +18,9 @@ import { boundedJson, PublicInputError } from "./src/server/public-security";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
-import { buildBrowser } from "./src/server/browser-build";
+import { buildBrowser, transitionShell } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
-import { NEEDS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
+import { NEEDS, PROPOSALS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
 import {
   ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
@@ -46,7 +55,26 @@ import {
 } from "./src/server/outcomes";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
-const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self'").trim() || "'self'";
+
+function normalizeFrameAncestors(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => {
+      const lower = token.toLowerCase();
+      if (lower === "self" || lower === "'self'") return "'self'";
+      if (lower === "none" || lower === "'none'") return "'none'";
+      return token;
+    })
+    .join(" ");
+}
+
+const DEFAULT_DEV_FRAME_ANCESTORS = "'self' http://localhost:3000 http://127.0.0.1:3000 http://localhost:5173 http://127.0.0.1:5173 http://localhost:8000 http://127.0.0.1:8000";
+const FRAME_ANCESTORS = normalizeFrameAncestors(
+  (process.env.FRAME_ANCESTORS
+    ?? (process.env.NODE_ENV === "production" ? "'self'" : DEFAULT_DEV_FRAME_ANCESTORS)).trim(),
+) || "'self'";
 const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
 const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
@@ -399,6 +427,8 @@ function state(voterId = "anon") {
   const measuredOutcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
   const ctxReal = buildContext(db, undefined, { outcomes: measuredOutcomes });
   const ctxBlended = buildContext(db, undefined, { includeSynthetic: true, outcomes: measuredOutcomes });
+  // Presentation-only simulated view: exclude real journals and priority allocations.
+  const ctxSimulated = buildContext({ ...db, entries: db.entries.filter(e => e.synthetic), allocationByVoter: {} }, undefined, { includeSynthetic: true, outcomes: measuredOutcomes });
   const userVotes = db.votesByVoter[voterId] ?? {};
   const userAllocation = db.allocationByVoter[voterId] ?? {};
   const userGoalVotes = db.goalVotesByVoter[voterId] ?? {};
@@ -427,6 +457,7 @@ function state(voterId = "anon") {
     demand: ctxReal.demand,
     demandReal: ctxReal.demand,
     demandBlended: ctxBlended.demand,
+    demandSimulated: ctxSimulated.demand,
     mechanismShare: ctxReal.mechanismShare,
     goalSupport: ctxReal.goalSupport,
     entries: db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal),
@@ -512,7 +543,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function entriesPayload(origin?: string | null) {
   const entries = db.entries.filter(isPublicEntry).map(publicEntry).reverse().map(publicJournal);
-  return JSON.stringify({ entries: origin ? journalFeed(entries, origin === "all" ? ["real", "sample", "simulated"] : [origin as JournalOrigin]) : entries });
+  const selected = origin === "all" ? ["real", "sample", "simulated"] : origin === "public" ? ["real"] : [origin as JournalOrigin];
+  return JSON.stringify({ needs: currentNeeds().map(n => ({ id: n.id, label: n.label })), entries: origin ? journalFeed(entries, selected as JournalOrigin[]) : entries });
 }
 
 function emitEntriesUpdate() {
@@ -834,7 +866,7 @@ function parseWhatIfExtraEntries(input: unknown) {
 // Build the browser shell once; render per-request canonical and social metadata.
 const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
 if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
-const shell = await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text();
+const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
@@ -850,6 +882,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/api/topics/:id": { GET: (req) => {
+      const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
+      return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });
+    } },
     // Process liveness only: no database writes or upstream calls.
     "/version": {
       GET: () => securityHeaders(Response.json(buildIdentity, { headers: { "Cache-Control": "no-store" } })),
@@ -905,6 +941,19 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/audit-samples": {
+      GET: () => auditSampleResponse(),
+    },
+    "/api/audit-samples/:id": {
+      GET: (req) => auditSampleResponse(req.params.id!),
+    },
+    "/api/legislation": {
+      GET: async () => {
+        const headers = { "cache-control": "no-store" };
+        try { return Response.json({ bills: await readBills(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
+        catch { return Response.json({ error: "Official metadata unavailable" }, { status: 503, headers }); }
+      },
+    },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
     },
@@ -925,6 +974,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/api/citizen-proposals/:id/vote": {
       POST: (req) => citizenProposalHandlers.vote(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/objections": {
+      POST: (req) => citizenProposalHandlers.objection(req, req.params.id!),
     },
     "/api/citizen-proposals/:id/comments": {
       POST: (req) => citizenProposalHandlers.comment(req, req.params.id!),
@@ -1028,6 +1080,15 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
 
+    "/api/live": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.start(body.proposalId, resolveVoterId(req))); } },
+    "/api/live/:code": { GET: req => Response.json(liveRounds.snapshot(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/vote": { POST: async req => { const body = await req.json(); return Response.json(liveRounds.vote(req.params.code!, resolveVoterId(req), body.stance)); } },
+    "/api/live/:code/end": { POST: req => Response.json(liveRounds.end(req.params.code!, resolveVoterId(req))) },
+    "/api/live/:code/events": { GET: req => liveRounds.events(req.params.code!, resolveVoterId(req), req.signal) },
+    "/api/live/:code/qr": { GET: req => {
+      liveRounds.snapshot(req.params.code!, resolveVoterId(req));
+      return new Response(liveQR(publicSecurity.origin(req) + '/live/' + req.params.code!), { headers: { 'content-type': 'image/svg+xml' } });
+    } },
     "/api/votes": {
       POST: async (req) => {
         const voterId = resolveVoterId(req);
@@ -1072,7 +1133,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/entries/events": {
       GET: (req) => {
         const origin = new URL(req.url).searchParams.get("origin");
-        if (origin && !["real", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
+        if (origin && !["real", "public", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
         let listener: ((payload: string) => void) | null = null;
 
         const stream = new ReadableStream({
@@ -1124,9 +1185,14 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const limit = Number(url.searchParams.get("limit") ?? 50);
         if (!Number.isInteger(limit) || limit < 1 || limit > 100) return withReadCors(req, bad("limit must be an integer between 1 and 100"));
         const origin = url.searchParams.get("origin");
-        if (origin && !["real", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
-        // Unfiltered API reads retain their existing raw-record contract.
-        const all = origin ? journalFeed(entriesNewestFirst(), origin === "all" ? ["real", "sample", "simulated"] : [origin as JournalOrigin]) : entriesNewestFirst();
+        const discovery = url.searchParams.get("discovery") === "1";
+        if (!discovery && origin && !["real", "public", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, public, sample, simulated or all"));
+        let all = entriesNewestFirst();
+        if (discovery) {
+          const entryId = url.searchParams.get("entry");
+          if (entryId) all = all.filter(e => e.id === entryId);
+          else try { all = discoverJournal(all, url.searchParams); } catch (error) { return withReadCors(req, bad((error as Error).message)); }
+        } else if (origin) all = journalFeed(all, origin === "all" ? ["real", "sample", "simulated"] : [origin === "public" ? "real" : origin as JournalOrigin]);
         const cursor = url.searchParams.get("cursor");
         const index = cursor ? all.findIndex(entry => entry.id === cursor) : -1;
         if (cursor && index === -1) return withReadCors(req, bad("unknown cursor"));
@@ -1399,6 +1465,28 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
     // Freeze the current plan (optionally tied to one journal entry) for HappyBearLandia to
     // simulate in many paired futures. Returns the snapshot and a shareable HBL URL.
+    "/api/policy-comparisons": {
+      POST: async (req) => {
+        try {
+          let body: unknown;
+          try { body = await req.json(); } catch { throw new SnapshotError("body must be JSON"); }
+          const comparison = createPolicyComparison(db, body, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
+          storePolicyComparison(db, comparison);
+          await save();
+          return Response.json({ comparison }, { status: 201 });
+        } catch (err) {
+          if (err instanceof SnapshotError) return Response.json({ error: err.message }, { status: err.status });
+          throw err;
+        }
+      },
+    },
+    "/api/policy-comparisons/:id": {
+      GET: (req) => {
+        const comparison = db.policyComparisons?.find(item => item.id === req.params.id);
+        return comparison ? Response.json({ comparison }) : Response.json({ error: "Comparison unavailable; no live replacement was generated" }, { status: 404 });
+      },
+    },
+
     "/api/simulation-snapshots": {
       POST: async (req) => {
         let body: { entryId?: string; package?: string; runs?: number; years?: number; seed?: number } = {};
@@ -1439,9 +1527,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       }), { headers: { "cache-control": "no-store" } })),
     },
 
+    "/api/synthesis-rule-preview": { POST: handleRulePreview },
+
     "/api/synthesize": {
       POST: async (req) => {
-        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare } = (await req.json()) as {
+        const { weights, lambda, budget, includeSynthetic, extraEntries, previous, challengerStreak, now, outcomes, compare, preview } = (await req.json()) as {
           weights?: Weights;
           lambda?: number;
           budget?: number;
@@ -1452,6 +1542,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           now?: string | number;
           outcomes?: SynthesisOutcomes;
           compare?: boolean;
+          preview?: boolean;
         };
 
         const parsed = parseWhatIfExtraEntries(extraEntries);
@@ -1505,7 +1596,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
 
           // In compare mode, persist only the REAL side exactly like a normal real-only run.
           // what-if requests (extraEntries) remain read-only.
-          if (!hasWhatIfEntries) {
+          if (!hasWhatIfEntries && preview !== true) {
             db.lastPlan = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
             db.challengerStreak = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.challengerStreak]));
             await save();
@@ -1538,7 +1629,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         // What-if requests must be read-only: include request-scoped extra entries
         // in synthesis without mutating or persisting server state.
         const isRealOnly = includeSynthetic !== true;
-        if (!hasWhatIfEntries && isRealOnly) {
+        if (!hasWhatIfEntries && isRealOnly && preview !== true) {
           db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
           db.challengerStreak = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.challengerStreak]));
           await save();

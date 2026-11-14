@@ -1,0 +1,13 @@
+.bill-catalog{background:#101820;color:#e6edf3;min-height:100vh;padding-bottom:10rem;font:1rem/1.65 system-ui,sans-serif;color-scheme:dark}
+.bill-catalog main{max-width:1200px;margin:auto;padding:3rem clamp(1rem,4vw,3rem);overflow-wrap:anywhere}
+.bill-catalog h1{font-size:clamp(2rem,5vw,3.6rem);line-height:1.15;max-width:850px;letter-spacing:-.035em;margin:.5em 0}
+.bill-catalog h2{font-size:1.4rem;line-height:1.35}.bill-catalog a{color:#a9dfcf;text-underline-offset:4px}
+.bill-eyebrow,.bill-meta,.bill-category{color:#b7c7d3}.bill-eyebrow{letter-spacing:.12em;font-size:.78rem}.bill-meta{font-size:.85rem}.bill-category{font-size:.8rem}
+.bill-lead{font-size:1.2rem;color:#c8d7df}.bill-notice{border:1px solid #526576;background:#1a2934;border-radius:12px;padding:1.2rem;margin:1.5rem 0}
+.bill-catalog input{display:block;box-sizing:border-box;width:100%;padding:1rem;margin:.4rem 0 1.3rem;background:#1a2530;color:#fff;border:1px solid #738799;border-radius:10px;font:inherit}
+.bill-catalog button{background:#1a2530;color:#dce8ee;border:1px solid #738799;border-radius:24px;padding:.6rem 1rem;min-height:44px;font:inherit;cursor:pointer;white-space:normal;text-align:left}
+.bill-catalog button[aria-pressed=true]{background:#b8e8d7;color:#10221d;border-color:#b8e8d7}.bill-catalog :is(a,button,input):focus-visible{outline:3px solid #ffdb85;outline-offset:4px}
+.bill-chips{display:flex;flex-wrap:wrap;gap:.6rem}.bill-results{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin:1.5rem 0}
+.bill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:1.1rem}.bill-grid article{background:#18232e;border:1px solid #465867;border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;align-items:flex-start}.bill-grid article h2{margin:.4rem 0}.bill-grid article a{margin-top:auto;padding-top:1rem;min-height:44px;display:inline-flex;align-items:center}
+.bill-fields{display:grid;gap:1rem}.bill-fields>div{border-bottom:1px solid #465867;padding:1rem 0}.bill-fields dt{font-weight:700;color:#b8e8d7}.bill-fields dd{margin:.3rem 0}.bill-document{max-width:78ch;margin:3rem 0}.bill-document h3{margin-top:2rem}.bill-catalog section{margin-top:2rem}
+@media(max-width:600px){.bill-catalog main{padding-top:1.5rem}.bill-chips button{font-size:.9rem}.bill-grid article{padding:1.1rem}}

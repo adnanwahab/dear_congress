@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "source": {
+    "sha": "0268a4c32099463da0e8922ae08e9563af369709",
+    "dirty": true
+  },
+  "kind": "local-synthetic-microbenchmark",
+  "generator": "fixed-vocabulary-v1",
+  "bun": "1.4.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "topology": "single-process SQLite WAL FULL; local rules; no replication/network/provider",
+  "events": 1000,
+  "duplicates": 50,
+  "elapsedMs": 155.117417,
+  "completedPerSecond": 6446.729318603856,
+  "enqueueAndProcessMs": {
+    "p95": 0.16237500000000438,
+    "p99": 1.1948329999999885
+  },
+  "deletionMs": 11.375084000000015,
+  "reconciled": true,
+  "assumptions": {
+    "peakFactor": 10,
+    "bytesPerEvent": 2048,
+    "fixedMonthlyUSD": 300,
+    "variableUSDPerMillion": [
+      1,
+      10,
+      100
+    ]
+  },
+  "modeledOnly": [
+    {
+      "daily": 1000000,
+      "meanPerSecond": 11.574074074074074,
+      "peakPerSecond": 115.74074074074075,
+      "payloadGBPerDay": 2.048,
+      "monthlySensitivityUSD": [
+        330,
+        600,
+        3300
+      ]
+    },
+    {
+      "daily": 10000000,
+      "meanPerSecond": 115.74074074074075,
+      "peakPerSecond": 1157.4074074074074,
+      "payloadGBPerDay": 20.48,
+      "monthlySensitivityUSD": [
+        600,
+        3300,
+        30300
+      ]
+    },
+    {
+      "daily": 300000000,
+      "meanPerSecond": 3472.222222222222,
+      "peakPerSecond": 34722.22222222222,
+      "payloadGBPerDay": 614.4,
+      "monthlySensitivityUSD": [
+        9300,
+        90300,
+        900300
+      ]
+    }
+  ],
+  "limitation": "Closed-loop microbenchmark; no daily capacity, SLO, vendor cost or production-readiness claim. Not a 24-hour soak."
+}

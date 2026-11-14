@@ -1,0 +1,15 @@
+/* Opaque, theme-independent pairs preserve AA contrast on every surrounding surface. */
+.topic-chip.topic-chip {
+  display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .55rem;
+  border-radius: 999px; color: #fff; font: 600 .75rem/1.4 Arial, sans-serif;
+  letter-spacing: normal; text-transform: none; vertical-align: middle;
+  max-width: 100%; view-transition-class: topic-chip;
+}
+.topic-chip.topic-chip > span { color: #fff; padding: 0; background: transparent; }
+.topic-chip svg { width: 1rem; height: 1rem; flex: 0 0 1rem; }
+.topic-filters { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+.topic-filters button { background: transparent; padding: .2rem; border: 2px solid transparent; border-radius: 999px; }
+.topic-filters button[aria-pressed="true"] { border-color: currentColor; }
+.topic-filters button:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+.need-top { flex-wrap: wrap; align-items: center; gap: .4rem; }

@@ -35,7 +35,7 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     const post = (voter: string, body: unknown) => request(voter, '/api/votes', body);
     const vote = { proposalId: 'demo-housing', stance: 1, importance: .5, acceptCompromise: true, concern: '', changeMind: '' };
     expect((await fetch(new URL('/healthz', origin))).status).toBe(200);
-    for (const route of ['/published','/feed','/votes','/draft','/sponsors','/outcomes','/journal','/api-docs','/map']) {
+    for (const route of ['/account','/published','/feed','/votes','/draft','/sponsors','/outcomes','/journal','/api-docs','/map']) {
       expect((await fetch(new URL(route, origin))).status).toBe(200);
     }
     expect((await fetch(new URL('/api/reset', origin), { method: 'POST' })).status).toBe(404);
@@ -68,14 +68,17 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     expect(ownRes.headers.get('cache-control')).toContain('no-store');
     const own = await ownRes.json() as DemoPayload;
     expect(own.votes['demo-housing']).toBe(1);
-    expect(own.items[0]!.support).toBe(DEMO_ITEMS[0]!.support + 1);
+    expect(own.items).toEqual(DEMO_ITEMS);
+    expect(own.browserCounts['demo-housing']).toEqual({ support: 1, oppose: 0, unsure: 0 });
+    expect(own.verified).toEqual({ status: 'unavailable' });
     const other = await (await get('bob')).json() as DemoPayload;
     expect(other.votes).toEqual({});
     expect(other.items[0]!.support).toBe(own.items[0]!.support);
     expect((await post('alice', { votes: [{ ...vote, stance: -1 }] })).status).toBe(200);
     let changed = await (await get('alice')).json() as DemoPayload;
     expect(changed.items[0]!.support).toBe(DEMO_ITEMS[0]!.support);
-    expect(changed.items[0]!.oppose).toBe(DEMO_ITEMS[0]!.oppose + 1);
+    expect(changed.items[0]!.oppose).toBe(DEMO_ITEMS[0]!.oppose);
+    expect(changed.browserCounts['demo-housing']).toEqual({ support: 0, oppose: 1, unsure: 0 });
     const persisted = await Bun.file(path).text();
     expect((await post('alice', { votes: [vote], allocation: { housing: -10 } })).status).toBe(400);
     expect((await post('alice', { votes: [{ ...vote, stance: 10 }] })).status).toBe(400);
@@ -88,7 +91,9 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     server = (await import(`./server.ts?demo-restart=${crypto.randomUUID()}`)).server;
     changed = await (await get('alice')).json() as DemoPayload;
     expect(changed.votes['demo-housing']).toBe(-1);
-    expect(changed.items[0]!.support).toBe(DEMO_ITEMS[0]!.support + 12);
+    expect(changed.items).toEqual(DEMO_ITEMS);
+    expect(changed.browserCounts['demo-housing']).toEqual({ support: 12, oppose: 1, unsure: 0 });
+    expect(changed.verified).toEqual({ status: 'unavailable' });
   } finally {
     server?.stop(true);
     for (const [key,value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }

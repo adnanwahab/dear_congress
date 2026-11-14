@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { buildBrowser } from "./browser-build";
+import { buildBrowser, transitionShell } from "./browser-build";
 
 test("production shell stays under budget and defers MapLibre JS and CSS", async () => {
   const build = await buildBrowser(true);
@@ -39,4 +39,12 @@ test("production shell stays under budget and defers MapLibre JS and CSS", async
     if (path.endsWith(".css")) expect(asset.text).not.toContain(".maplibregl-");
   }
   expect(html).not.toContain("maplibre.css");
+});
+
+test("served shell keeps its bundled entry render-blocking in the head", async () => {
+  const build = await buildBrowser(true);
+  const html = transitionShell(await build.outputs.find(output => output.type.startsWith("text/html"))!.text());
+  const head = html.slice(0, html.indexOf('</head>'));
+  expect(head).toMatch(/<script blocking="render"[^>]*type="module"[^>]*src=/);
+  expect(html).toContain('<div id="root"></div>');
 });

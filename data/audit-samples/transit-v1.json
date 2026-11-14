@@ -1,0 +1,44 @@
+{
+  "snapshotId": "1f7e69e237537e7ccd80cc4e5431b3aadad7778a521c7ef22cac0edafe39a480",
+  "payload": {
+    "schema": "dear-congress-audit-sample.v1",
+    "rules": "aggregate-score.v1",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "fabricated-civic-proposal",
+    "dataClass": "fabricated; no real participation or official evidence",
+    "processedAt": "2026-11-13T00:00:00.000Z",
+    "proposal": {
+      "id": "audit-sample-transit",
+      "version": "1",
+      "title": "Fabricated evening bus pilot"
+    },
+    "counts": {
+      "support": 60,
+      "oppose": 25,
+      "unsure": 15
+    },
+    "parts": {
+      "support": 0.6,
+      "welfare": 0.7,
+      "fairness": 0.8,
+      "feasibility": 0.667,
+      "reversibility": 0.9,
+      "evidence": 0.5
+    },
+    "weights": {
+      "support": 0.3,
+      "welfare": 0.25,
+      "fairness": 0.15,
+      "feasibility": 0.1,
+      "reversibility": 0.1,
+      "evidence": 0.1
+    },
+    "lambda": 0.25,
+    "changeLevel": 2,
+    "expected": {
+      "total": 100,
+      "score": 0.599,
+      "changeCost": 0.083
+    }
+  }
+}

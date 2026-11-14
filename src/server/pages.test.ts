@@ -67,3 +67,23 @@ test("recovered product routes resolve, including trailing slash, while privacy 
     expect(renderPage(shell, path, []).status).toBe(200);
   }
 });
+
+test('speculation is limited to same-origin navigation routes and prioritizes the next stage', async () => {
+  const { speculationRules } = await import('./pages');
+  const { CIVIC_STAGES, STAGES } = await import('../shared/civic-stages');
+  const { securityHeaders } = await import('./public-security');
+  for (const stage of CIVIC_STAGES) {
+    const response = securityHeaders(renderPage(shell, stage.route, []));
+    expect(response.headers.get('cache-control')).toBe('no-cache');
+    expect(response.headers.get('content-security-policy')).toContain("'inline-speculation-rules'");
+    expect(response.headers.get('content-security-policy')).not.toContain("script-src 'self' 'unsafe-inline'");
+    const html = await response.text();
+    const rules = JSON.parse(html.match(/<script type="speculationrules">(.*?)<\/script>/)![1]!);
+    expect(rules).toEqual(speculationRules(stage.route));
+    expect(rules.prerender.map((r: { eagerness: string }) => r.eagerness)).toEqual(['moderate', 'eager']);
+    expect(rules.prerender[0].where.and[0].href_matches).toEqual(
+      [...CIVIC_STAGES.map(s => s.route), '/map', '/journal'].flatMap(path => [path, `${path}?*`])
+    );
+    expect(rules.prerender[1].where.and[0].href_matches).toEqual([STAGES[stage.next].route, `${STAGES[stage.next].route}?*`]);
+  }
+});

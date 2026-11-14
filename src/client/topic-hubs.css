@@ -1,0 +1,6 @@
+.topic-hubs { max-width: 72rem; margin: auto; padding: 1rem; overflow-wrap: anywhere; }
+.topic-hubs nav { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.topic-hubs article { padding: 1rem 0; border-bottom: 1px solid var(--border, #888); }
+.topic-hubs article p a { display: inline-block; margin-right: 1rem; }
+.topic-hubs input { max-width: 100%; display: block; }
+.topic-return { display: block; padding: 1rem; }

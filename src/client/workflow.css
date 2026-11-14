@@ -4,8 +4,8 @@
 .workflow-eyebrow { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 .workflow-next { font-size: 14px; font-weight: 700; white-space: nowrap; text-decoration: none; padding-bottom: 4px; }
 .workflow-progress { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 24px; }
-.workflow-progress a { display: flex; gap: 8px; align-items: center; text-decoration: none; font-size: 13px; color: var(--muted); background: #eeece6; padding: 8px 12px; border-radius: 7px; }
-.workflow-progress a[aria-current="step"] { background: var(--accent); color: white; }
+.workflow-progress a { display: flex; gap: 8px; align-items: center; text-decoration: none; font-size: 13px; color: var(--muted); background: var(--bg); padding: 8px 12px; border-radius: 7px; }
+.workflow-progress a[aria-current="step"] { background: var(--accent); color: var(--on-accent); }
 .workflow-progress span { font-weight: 700; }
 .workflow-status { min-height: 22px; color: var(--accent); font-size: 14px; margin: 0 0 12px !important; }
 .workflow-filters { display: grid; grid-template-columns: minmax(0,1fr) 200px; gap: 12px; margin-bottom: 22px; }
@@ -14,12 +14,12 @@
 .workflow-source h3 { font-size: 21px; margin: 12px 0; line-height: 1.3; }
 .workflow-source p { color: var(--muted); font-size: 15px; }
 .workflow-topic { color: var(--muted); font-size: 13px; }
-.workflow-source-note { padding: 12px 14px; background: #f7f5ef; border-radius: 7px; font-size: 12px; color: var(--muted); margin: 16px 0; }
+.workflow-source-note { padding: 12px 14px; background: var(--bg); border-radius: 7px; font-size: 12px; color: var(--muted); margin: 16px 0; }
 .workflow-card-actions { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; font-weight: 700; margin-top: auto; }
 .workflow-feed-layout { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(280px,.8fr); gap: 24px; align-items: start; }
 .workflow-feed-list { display: grid; gap: 14px; }
 .workflow-feed-item { padding: 20px; border: 1px solid var(--line); border-radius: 11px; }
-.workflow-feed-item.selected { border-color: var(--accent); background: #f7faff; }
+.workflow-feed-item.selected { border-color: var(--accent); background: var(--accent-soft); }
 .workflow-feed-item h3 { font-size: 22px; line-height: 1.3; margin: 8px 0 10px; }
 .workflow-feed-item p { color: var(--muted); }
 .workflow-feed-bottom { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
@@ -52,15 +52,50 @@
 .workflow-outcome-list h3 { font-size: 21px; line-height: 1.3; margin: 14px 0 10px; }
 .workflow-outcome-list small { display: block; margin-top: 8px; color: var(--muted); }
 .workflow-outcome-list a { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 700; }
-.workflow-outcome-badge { display: inline-block; color: #245593; background: #e3ecf8; font-size: 12px; font-weight: 700; border-radius: 5px; padding: 4px 8px; }
-.outcome-3 { color: #285c36; background: #e4f1e8; }
-.outcome-4 { color: #79500a; background: #fcf0d7; }
+.workflow-outcome-badge { display: inline-block; color: var(--accent); background: var(--accent-soft); font-size: 12px; font-weight: 700; border-radius: 5px; padding: 4px 8px; }
+.outcome-3 { color: var(--good-ink); background: var(--good-bg); }
+.outcome-4 { color: var(--warn-ink); background: var(--warn-bg); }
 .workflow-next-step { font-size: 14px; color: var(--muted); margin-top: 16px !important; padding-top: 12px; border-top: 1px solid var(--line); }
 .workflow-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; color: var(--muted); font-size: 13px; margin-top: 26px; text-align: left; }
 @media (max-width: 1100px) { .workflow-source-grid, .workflow-outcome-list { grid-template-columns: repeat(2,minmax(0,1fr)); } .workflow-board { grid-template-columns: repeat(3,minmax(0,1fr)); } .workflow-prepare { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .workflow-heading { align-items: start; flex-direction: column; } .workflow-heading > div > p:last-child { font-size: 16px; } .workflow-feed-layout, .workflow-two { grid-template-columns: 1fr; } .workflow-sticky { position: static; } .workflow-feed-layout .workflow-sticky { order: -1; } .workflow-progress { gap: 6px; } .workflow-progress a { font-size: 11px; padding: 7px 9px; } .workflow-filters { grid-template-columns: 1fr; } .workflow-source-grid, .workflow-outcome-list { grid-template-columns: 1fr; } .workflow-board { grid-template-columns: repeat(2,minmax(0,1fr)); } .workflow-outcome-stats { gap: 9px; } .workflow-outcome-stats .panel { padding: 15px; } .workflow-outcome-stats span { font-size: 14px; } .workflow-outcome-stats strong { font-size: 30px; } .workflow-feed-bottom { flex-wrap: wrap; } .workflow-prepare > div:last-child { grid-template-columns: 1fr; } }
 @media (max-width: 460px) { .workflow-board { grid-template-columns: 1fr; } }
 
-.workflow-provenance { margin: 12px 0; padding: 12px; border: 1px solid var(--border, #d5dbe1); border-radius: 8px; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.workflow-provenance { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .workflow-provenance strong { display: block; }
 .workflow-provenance p { margin: 6px 0 0; }
+
+.outreach-draft > label { display: grid; gap: .5rem; margin: 1rem 0; }
+.outreach-draft input:not([type="checkbox"]), .outreach-draft textarea { box-sizing: border-box; width: 100%; min-width: 0; font: inherit; }
+.outreach-draft textarea { resize: vertical; }
+.outreach-preview { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+
+.policy-measurements { min-width: 0; overflow-wrap: anywhere; }
+.policy-measurements summary { cursor: pointer; padding: .75rem 0; }
+.policy-measurements summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.policy-measurements dd { margin: 0 0 .75rem; }
+.policy-measurements dt { font-weight: 600; }
+
+/* A single source line; narrow cards can scroll it without hiding sample status.
+   Native summary supplies keyboard activation and expanded/collapsed semantics. */
+.workflow-card-actions { min-width: 0; width: 100%; }
+.workflow-provenance-compact { min-width: 0; max-width: 100%; padding: 0; font-weight: 400; }
+.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: nowrap; overflow-x: auto; list-style: none; }
+.workflow-provenance-compact > summary::-webkit-details-marker { display: none; }
+.workflow-provenance-compact > summary::before { content: none; }
+.workflow-source-status { font-weight: 600; }
+.workflow-source-toggle { display: inline-block; transition: transform var(--motion-base, 220ms) ease-out; }
+.workflow-provenance-compact[open] .workflow-source-toggle { transform: rotate(180deg); }
+.workflow-provenance-compact > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.workflow-provenance-body { padding: 12px; border-top: 1px solid var(--border, #d5dbe1); }
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) and (transition-behavior: allow-discrete) {
+  .workflow-provenance-compact { interpolate-size: allow-keywords; }
+  .workflow-provenance-compact::details-content {
+    display: flow-root; block-size: 0; opacity: 0; overflow: clip;
+    transition: block-size var(--motion-base, 220ms) ease-out, opacity var(--motion-base, 220ms) ease-out, content-visibility var(--motion-base, 220ms) allow-discrete;
+  }
+  .workflow-provenance-compact[open]::details-content { block-size: auto; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
+}

@@ -1,0 +1,5 @@
+.sponsor-drag-handle { touch-action: none; cursor: grab; align-self: flex-start; padding: 5px 9px; font-size: 12px; }
+.sponsor-drag-handle:active { cursor: grabbing; }
+.tracked-draft { position: relative; }
+.sponsor-drop-target { outline: 2px solid var(--accent, #286c59); outline-offset: -2px; }
+.sponsor-instructions { font-size: 13px; }

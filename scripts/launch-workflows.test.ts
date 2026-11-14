@@ -47,3 +47,14 @@ test('release image and smoke verification bind to the validated full SHA', asyn
   expect(smoke.env.RELEASE_COMMIT).toBe('${{ needs.validate.outputs.commit }}');
   expect(steps.indexOf(smoke)).toBeGreaterThan(steps.indexOf(deploy));
 });
+
+test('production parity browser is SHA-bound and preserves redacted evidence on failure', async () => {
+  const steps = (await read('fly-deploy')).jobs.deploy.steps;
+  const browser = steps.find((step: any) => step.name === 'Verify production desktop and mobile parity');
+  expect(browser.run).toContain('https://civic-synthesis.fly.dev "$RELEASE_COMMIT"');
+  expect(browser.env.RELEASE_COMMIT).toBe('${{ needs.validate.outputs.commit }}');
+  expect(browser['continue-on-error']).toBeUndefined();
+  const evidence = steps.find((step: any) => step.uses === 'actions/upload-artifact@v4');
+  expect(evidence.if).toBe('always()');
+  expect(evidence.with.path).toBe('release-parity-*.json');
+});

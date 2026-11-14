@@ -240,7 +240,14 @@ test("public proposals survive server restarts with independent browser votes an
     expect(commented.comments[0]!.text).toBe(comment.text);
     expect((await ok<{ proposal: CitizenProposalView }>(server, `${detail}/comments`, { voter: otherVoter, body: comment })).proposal.comments).toEqual(commented.comments);
 
-    const publicJson = JSON.stringify(commented);
+    const objectionBody = { action: "create", text: "Weekend access is missing", severity: "major", constituency: "Shift workers", confirmedPublic: true, idempotencyKey: crypto.randomUUID() };
+    const objected = (await ok<{ proposal: CitizenProposalView }>(server, `${detail}/objections`, { voter: otherVoter, body: objectionBody })).proposal;
+    expect(objected.objections).toHaveLength(1);
+    expect(objected.counts).toEqual(commented.counts);
+    const responseBody = { action: "respond", objectionId: objected.objections[0]!.id, expectedVersion: 0, status: "declined", reason: "A separate weekend pilot is needed" };
+    const responded = (await ok<{ proposal: CitizenProposalView }>(server, `${detail}/objections`, { voter: author, body: responseBody })).proposal;
+    expect(responded.objections[0]!.responses[0]!.status).toBe("declined");
+    const publicJson = JSON.stringify(responded);
     for (const privateValue of [author, otherVoter, input.idempotencyKey, comment.idempotencyKey, "ownerHash", "votesByVoterHash", "publishKeyHash", "submitKeyHash", "bodyHash"]) {
       expect(publicJson).not.toContain(privateValue);
     }
@@ -253,6 +260,7 @@ test("public proposals survive server restarts with independent browser votes an
     expect(restarted.countTotal).toBe(1);
     expect(restarted.ownVote).toBe("support");
     expect(restarted.comments).toEqual(commented.comments);
+    expect(restarted.objections).toEqual(responded.objections);
     expect(restarted.publishedAt).toBe(published.publishedAt);
     expect((await ok<{ proposal: CitizenProposalView }>(server, detail)).proposal.ownVote).toBeNull();
     expect((await ok<{ proposal: CitizenProposalView }>(server, base, { voter: author, body: input })).proposal.id).toBe(published.id);
