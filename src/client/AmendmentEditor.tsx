@@ -1,3 +1,4 @@
+import { requestHaptic } from './haptics';
 import { useId, useRef, useState } from 'react';
 import { readAmendments, redline, sameBase, saveAmendment, type AmendmentDraft, type AmendmentFields, type AmendmentSource } from './amendment-drafts';
 import './amendment-editor.css';
@@ -40,7 +41,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
       {conflict && <div role="alert"><p>The source has changed since this draft began. Review the current text below. Earlier versions stay unchanged; nothing is automatically rebased. Starting fresh replaces the unsaved editing fields below.</p><h3>Current source text</h3><p className="amendment-text">{source.text}</p><button type="button" onClick={() => { setBase({ ...source }); setFields({ replacement: source.text, rationale: '', impact: '', citation: '' }); setSelected(null); setError(''); setStatus('Started a fresh amendment against the current source.'); }}>Start fresh against current source</button></div>}
       <form onSubmit={e => {
         e.preventDefault();
-        try { const next = saveAmendment(storage, source, base, fields); setVersions(next); setSelected(next[next.length - 1]!); setError(''); setStatus('New private version saved in this browser. Not submitted or published.'); }
+        try { const next = saveAmendment(storage, source, base, fields); setVersions(next); setSelected(next[next.length - 1]!); setError(''); setStatus('New private version saved in this browser. Not submitted or published.'); requestHaptic(e.nativeEvent); }
         catch (e) { fail(e); }
       }}>
         {(['replacement', 'rationale', 'impact', 'citation'] as const).map(key => <label key={key} htmlFor={`${id}-${key}`}>

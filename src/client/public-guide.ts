@@ -45,6 +45,10 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+## Optional tactile feedback
+
+Optional haptics is off by default. Enable it in Page actions (More on phones). On supported devices, brief feedback marks a demo card move, a manual recorded-model time tick, or a successful private amendment save. It never marks a vote, support level, or progress milestone. Reduced motion pauses feedback. Devices without vibration continue normally. The preference stays in this browser, or only this page if storage is blocked.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
