@@ -34,8 +34,9 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     fetch:mockedFetch,IS_REACT_ACT_ENVIRONMENT:true};
   const previous=Object.fromEntries(Object.keys(globals).map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
   for(const [key,value] of Object.entries(globals))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
-  const host=browser.document.createElement('main');
-  browser.document.body.append(host);
+  // Access the installed DOM globals to keep React and test-library TypeScript types aligned.
+  const host=document.createElement('main');
+  document.body.append(host);
   const root=createRoot(host);
   try{
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
