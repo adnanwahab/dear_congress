@@ -23,6 +23,10 @@ Sample proposals, sample tallies, simulated residents, illustrative costs and fu
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
+## Optional stakeholder lenses
+
+On [Explore civic plans](/synth), optional synthetic stakeholder lenses offer four invented household scenarios with assumptions, metrics and conditional tradeoffs. Each separates unavailable direct household evidence, unvalidated extrapolation and fictional narrative. They do not predict package effects or describe you. Selection stays in page memory, can be reset, and is not saved or sent to a simulation. Selecting a lens is not a vote or verified civic participation.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.
