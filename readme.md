@@ -255,6 +255,16 @@ src/client/styles.css
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
 
+### Scenario presets
+
+The `/synth` paired-world explorer offers demo housing and transit presets using
+only the existing reviewed law parameter allowlist. Selecting a card shows exact
+implementation-strength changes, seed, synthetic population and horizon before
+an explicit run. Reset local scenario cancels pending work and restores the
+page’s starting parameters without saving data. Flood remains unavailable until
+its simulator mechanism is reviewed. These synthetic worlds are separate from
+actual outcomes, real votes and resident records.
+
 ### Scoring rule sandbox
 
 `/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`

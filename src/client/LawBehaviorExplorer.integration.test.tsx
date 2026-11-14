@@ -41,6 +41,15 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
   try{
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
     expect(host.querySelector('iframe')).toBeNull();
+    const housing=getByRole(host,'button',{name:/Housing · construction assumption/});
+    await act(async()=>housing.click());
+    expect(requests).toHaveLength(0);
+    expect(housing.getAttribute('aria-pressed')).toBe('true');
+    expect(host.textContent).toContain('Reviewed amendment: law 22, implementationStrength, 1 → 0.5');
+    expect(host.textContent).toContain('Flood scenario unavailable');
+    await act(async()=>getByRole(host,'button',{name:'Reset local scenario'}).click());
+    expect(housing.getAttribute('aria-pressed')).toBe('false');
+    expect(host.textContent).toContain('Reviewed amendment: law 83, implementationStrength, 1 → 1');
     expect(host.textContent).toContain('frozen civic package is not automatically applied');
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(1);
@@ -92,8 +101,12 @@ test('bounded request, cancellation, response identity and unsupported context n
   expect(host.textContent).toContain('exceeded the 45-second limit');
   expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
-  await act(async()=>getByRole(host,'button',{name:'Cancel run'}).click());
-  expect(host.textContent).toContain('Run canceled');
+  const staleResolve=resolve!;
+  await act(async()=>getByRole(host,'button',{name:'Reset local scenario'}).click());
+  await act(async()=>staleResolve(Response.json(receipt(1))));
+  expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  expect(host.textContent).not.toContain('45-second limit');
+  expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
   const mismatch=receipt(1);mismatch.manifest!.seed=43;
   await act(async()=>resolve!(Response.json(mismatch)));
