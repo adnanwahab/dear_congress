@@ -1089,3 +1089,12 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.civic-adventure { max-width: 760px; margin: 24px auto; padding: 24px; overflow-wrap: anywhere; }
+.civic-adventure nav, .adventure-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.civic-adventure button, .civic-adventure a { min-height: 44px; }
+.civic-adventure button { padding: 10px 14px; }
+.adventure-samples { display: flex; align-items: center; gap: 10px; margin: 16px 0; min-height: 44px; }
+.civic-adventure aside { border-inline-start: 3px solid currentColor; padding-inline-start: 16px; margin: 16px 0; }
+.civic-adventure [aria-current="step"] { outline: 2px solid currentColor; outline-offset: 2px; }
+@media (max-width: 600px) { .civic-adventure { margin: 12px; padding: 16px; } }
