@@ -1,4 +1,10 @@
 import type { DemoItem } from '../engine/demo';
+import { provenanceLines, type Provenance } from '../shared/provenance';
+import { ProvenanceBadge } from './ProvenanceBadge';
+
+export function scenarioProvenance(item: DemoItem): Provenance {
+  return { origin: 'demo-fiction', date: null, jurisdiction: item.jurisdiction, confidence: 'Illustrative only', limitations: 'Fictional scenario and seeded response counts; not a representative poll. Background link is context only, not evidence for the numeric claims.', link: sourceUrl(item) };
+}
 
 // References are editorial metadata, independent of demo activity and browser votes.
 export function sourceUrl(item: DemoItem): string | null {
@@ -16,7 +22,7 @@ export function freshness(item: DemoItem, now = Date.now()): string {
   return `Source checked ${checked}`;
 }
 export function provenanceText(item: DemoItem): string {
-  return `Sample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
+  return `${provenanceLines(scenarioProvenance(item)).join('\n')}\nSample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
 }
 export function ProposalProvenance({ item, compact = false }: { item: DemoItem; compact?: boolean }) {
   const url = sourceUrl(item);
@@ -28,6 +34,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
     <div>{freshness(item)}</div>
     <p>{item.background?.scope ?? 'Background scope not documented.'} Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
+    <ProvenanceBadge provenance={scenarioProvenance(item)} />
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
   return <details className="workflow-provenance workflow-provenance-compact" aria-label="Scenario and background source">
