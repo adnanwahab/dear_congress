@@ -33,7 +33,17 @@ try {
     await explore.waitFor({ state: 'visible' });
     assert.equal(await explore.getAttribute('href'), '/votes');
     assert.equal(await start.getByRole('link', { name: 'Tell us what needs fixing' }).getAttribute('href'), '/journal');
-    await page.locator('a[href="/privacy"]').first().waitFor({ state: 'visible' });
+    // The shared navigation exposes privacy through Participation & privacy.
+    // Mobile places that action in its visible More dialog.
+    const participation = page.locator('a[href="/account"]:visible').first();
+    let openedMore = false;
+    if (await participation.count() === 0) {
+      await page.getByRole('button', { name: 'More', exact: true }).click();
+      openedMore = true;
+    }
+    await participation.waitFor({ state: 'visible' });
+    assert.equal(await participation.getAttribute('href'), '/account');
+    if (openedMore) await page.getByRole('button', { name: 'Close more destinations', exact: true }).click();
     await explore.click();
     await page.waitForURL('**/votes');
     stage = `${viewport.width}:arguments`;
