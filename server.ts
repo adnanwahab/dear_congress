@@ -46,7 +46,26 @@ import {
 } from "./src/server/outcomes";
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
-const FRAME_ANCESTORS = (process.env.FRAME_ANCESTORS ?? "'self'").trim() || "'self'";
+
+function normalizeFrameAncestors(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => {
+      const lower = token.toLowerCase();
+      if (lower === "self" || lower === "'self'") return "'self'";
+      if (lower === "none" || lower === "'none'") return "'none'";
+      return token;
+    })
+    .join(" ");
+}
+
+const DEFAULT_DEV_FRAME_ANCESTORS = "'self' http://localhost:3000 http://127.0.0.1:3000 http://localhost:5173 http://127.0.0.1:5173 http://localhost:8000 http://127.0.0.1:8000";
+const FRAME_ANCESTORS = normalizeFrameAncestors(
+  (process.env.FRAME_ANCESTORS
+    ?? (process.env.NODE_ENV === "production" ? "'self'" : DEFAULT_DEV_FRAME_ANCESTORS)).trim(),
+) || "'self'";
 const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
 const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
