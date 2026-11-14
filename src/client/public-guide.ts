@@ -19,6 +19,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 ## What is fictional and what is verified?
 
+The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.
+
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.

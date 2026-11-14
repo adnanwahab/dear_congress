@@ -679,3 +679,14 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Daily curiosity mission
+
+The home dashboard offers a demo reading mission from the existing `/api/demo`
+fictional proposal lane. Chicago calendar days rotate equally across sorted topics,
+then rotate proposal IDs within each topic. Visitors may exclude one familiar topic,
+Shuffle, Skip, or open Learn more and confirm they read the sample text. No political
+profile, popularity signal, vote, actual bill, or model projection enters selection.
+Completion is self-reported reading and stays in page memory; reloading starts fresh.
+The separate daily advisory question retains its existing behavior. See
+[implementation and validation notes](docs/reviews/SHE-411.md).
