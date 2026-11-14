@@ -225,3 +225,14 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Personal learning notes (SHE-533)
+
+`/account` offers an explicitly saved browser-local learning log, with separate
+Topics, Drafts, Sandbox runs and Explicit votes note categories. Source screens offer explicit copies of saved drafts, proposal topics,
+current citizen advisory choices and completed synthetic model run metadata.
+It does not reconstruct past events or copy model actor frames. Each entry
+has a self-declared activity source and local saved date; neither proves civic
+eligibility or verified activity. JSON export, selective delete and confirmed
+reset affect only this log. Drafts, follows, public records and actual votes
+stay in their original stores. See [scope and validation](reviews/SHE-533.md).

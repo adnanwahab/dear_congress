@@ -99,3 +99,10 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.private-journey form, .private-journey label { display: grid; gap: .5rem; }
+.private-journey form { gap: 1rem; }
+.private-journey select, .private-journey textarea { width: 100%; max-width: 100%; min-width: 0; font: inherit; }
+.private-journey button, .private-journey select { min-height: 44px; }
+.private-journey-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.private-journey li { margin-bottom: 1.5rem; }
