@@ -679,3 +679,14 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Optional civic sound
+
+The shared header exposes **Sound Off** by default, with a browser-local on/off
+preference and explicit tests for three original quiet PCM cues. Navigation and
+read-only rule-sandbox actions use cues only during user activation. Enabling,
+loading, automated demos, voting and publication are silent. Reduced motion and
+motion-off suppress audio. Embedded waveforms need no network after page load;
+this is not whole-app offline support. Device media volume/mute behavior remains
+browser-dependent; Sound Off is the guaranteed application silence control.
+See [SHE-406 review and remaining checks](docs/reviews/SHE-406.md).

@@ -1089,3 +1089,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+/* Optional sound remains reachable on touch and narrow shared headers. */
+.sound-control { display: flex; align-items: center; gap: 8px; position: relative; }
+.sound-control button, .sound-control summary { min-height: 44px; min-width: 44px; cursor: pointer; }
+.sound-control details[open] { position: absolute; top: 100%; right: 0; z-index: 20; width: min(320px, 85vw); padding: 12px; background: var(--bg); color: var(--ink); border: 1px solid currentColor; border-radius: 12px; }
+.sound-control details[open] button { display: block; margin-top: 8px; }

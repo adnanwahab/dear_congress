@@ -35,7 +35,7 @@ for (const search of ['', '?proposal=sample%26one']) {
   assert.match(start.textContent!, /No account is needed/);
   assert.match(start.textContent!, /shared publicly/);
   assert(q().getAllByRole('alert').length >= 1);
-  const details = host.querySelector('details')!;
+  const details = host.querySelector('main details')!;
   assert.equal(details.open, false);
   assert.equal(details.querySelector('summary')!.textContent, 'How it works');
   assert.equal(details.querySelectorAll('li').length, 6);
