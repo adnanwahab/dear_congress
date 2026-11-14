@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+### Negotiation tabletop
+
+`/synth` includes a page-local fictional six-household tabletop above frozen policy
+comparisons. Drag/tap native sliders or use arrow keys to change annual budget,
+grant and income ceiling; Undo retains the last 100 changes and Reset restores
+the initial assumptions. Cost is qualifying households × grant. An over-budget
+draft does not select or deny households. Every tile discloses potential gains,
+losses and missing evidence. Export downloads an unsigned JSON draft with its
+fixture, assumptions and source identity; a copyable preview remains if download
+fails. No server API, legal text, recorded vote or stored plan is changed. This
+is demo activity, never verified civic participation. See docs/reviews/SHE-457.md.

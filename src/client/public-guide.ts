@@ -51,6 +51,7 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - Proposal: a suggested change, not an enacted law.
 - Jurisdiction: the place and level of government responsible for a subject.
 - Simulation: a model's example of what might happen, not a measured result.
+- The [negotiation tabletop](/synth) uses six fictional households to explore budget, grant and eligibility assumptions. Undo or reset concessions and export an unsigned draft. It changes no legal text or recorded votes and is never verified civic participation; each tile states possible gains, losses and missing evidence.
 - Source: the original record supporting a claim; check its date and exact version.
 - Revision: a particular version of text or code. Review of an older version does not approve a newer one.
 - Quorum: the minimum participation required by a stated decision rule; it does not make browser votes verified.
