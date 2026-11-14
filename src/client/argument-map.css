@@ -6,3 +6,10 @@
 .argument-map :is(a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .argument-map blockquote { margin: 1rem 0; }
 @media (max-width: 700px) { .argument-map-sides { grid-template-columns: minmax(0, 1fr); } }
+.fact-check-game { margin-block-start: 1.5rem; border-block-start: 1px solid var(--border, #bbb); padding-block-start: 1rem; }
+.fact-check-game fieldset { min-width: 0; margin: 1rem 0; }
+.fact-check-choices { display: flex; flex-wrap: wrap; gap: .75rem; }
+.fact-check-game button, .fact-check-game summary { min-height: 44px; padding: .65rem; touch-action: manipulation; }
+.fact-check-game :is(button, a, summary, h4):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.fact-check-game button[aria-pressed=true] { border: 3px solid currentColor; }
+/* No animated feedback: reduced-motion and ordinary practice use the same static reveal. */

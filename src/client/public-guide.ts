@@ -9,6 +9,10 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
+## Practice checking claims
+
+The [transit sample argument map](/votes?proposal=demo-transit) includes Fact-check detective. Classify four editorial examples about a separate historical bill, then reveal the original Congress.gov source, date and reasoning. Practice has no political score and saves nothing. It is not a vote or verified civic participation. The bundled excerpt works offline after the page loads; the full source link needs connectivity.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
