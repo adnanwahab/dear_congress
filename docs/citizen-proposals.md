@@ -225,3 +225,15 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Private civic duet (SHE-503)
+
+**Duet · propose an alternative** opens a page-memory copy on citizen details and
+sample Draft/Votes screens. Review the original attribution, unverified supporting
+information and Added/Removed comparison; explain how the alternate builds on the
+idea. **Keep private copy on this page** retains a snapshot and allows another
+copy with root and immediate-parent attribution. Copies never edit the original
+or carry its votes. They are lost on leaving/reloading; no storage or API is used.
+Do not include personal content without permission. Publishing is unavailable
+pending server permission and moderation safeguards. See
+[remaining acceptance and verification](reviews/SHE-503.md).
