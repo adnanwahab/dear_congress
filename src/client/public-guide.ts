@@ -23,6 +23,8 @@ Sample proposals, sample tallies, simulated residents, illustrative costs and fu
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
+In [Draft](/draft), open **Play legislative redline detective · Sandbox** to practice on three fictional clauses. Choose a guess, then reveal an explanation with links to the exact invented before/after words and unresolved edge cases. This unreviewed demo is not legal advice. Guesses stay in page memory, are lost on navigation or reload, and never become votes, private amendment versions or model projections. The same exercise appears beside amendment preparation on citizen proposal details; its invented text is independent of that proposal.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.

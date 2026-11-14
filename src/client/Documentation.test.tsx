@@ -40,6 +40,8 @@ test('public guide explains trust limits and keeps historical planning collapsed
   expect(appendix.querySelector('summary')!.textContent).toContain('November 12, 2026');
   appendix.innerHTML = '<summary>Historical appendix</summary>';
   const guide = document.querySelector('article')!;
+  expect(guide.textContent).toContain('Play legislative redline detective');
+  expect(guide.textContent).toContain('never become votes, private amendment versions or model projections');
   for (const text of ['not a government service', 'Will my journal be public?', 'Does my vote count?', 'What happens next?', 'no guaranteed deletion schedule', 'Human-reviewed Spanish']) expect(guide.textContent).toContain(text);
   for (const text of ['50 days', 'Jan 1', '9:00 AM', 'electorate is undefined']) expect(guide.textContent).not.toContain(text);
   for (const link of Array.from(document.querySelectorAll('a[href^="#"]'))) expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();

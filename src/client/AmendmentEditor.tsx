@@ -12,6 +12,45 @@ export function AmendmentComparison({ before, after }: { before: string; after: 
   </div>;
 }
 
+const DETECTIVE_CASES = [
+  { title: 'Permission or duty?', before: 'The fictional library may open a cooling room on heat-alert days.', after: 'The fictional library shall open a cooling room on heat-alert days.', choices: ['Opening becomes a duty on heat-alert days.', 'The room must open every day.', 'Opening is forbidden.'], answer: 0, explanation: '“May” becomes “shall”: the exercise changes permission into a duty, limited by “on heat-alert days”.', edge: 'The clause does not define who issues a heat alert, opening hours, funding or remedies. Those remain unresolved.' },
+  { title: 'Who qualifies?', before: 'Residents aged 65 or older may apply for a fictional travel pass.', after: 'Residents aged 60 or older may apply for a fictional travel pass.', choices: ['Every applicant is guaranteed a pass.', 'Residents aged 60–64 become eligible to apply.', 'Only residents aged exactly 60 qualify.'], answer: 1, explanation: 'The lower age threshold expands eligibility to apply to residents aged 60–64. “May apply” does not promise approval.', edge: 'Age 60 is included; age 59 is excluded by this clause. Fees, capacity and other eligibility rules are unspecified.' },
+  { title: 'Spot the ambiguity', before: 'The fictional permit office shall reply within 10 calendar days after receiving an application.', after: 'The fictional permit office shall reply promptly after receiving an application.', choices: ['Every application is approved automatically.', 'The deadline becomes exactly one day.', 'The fixed deadline becomes an undefined timing standard.'], answer: 2, explanation: '“Within 10 calendar days” is replaced by “promptly”. The revised clause supplies no numeric deadline; a reply is still required.', edge: 'Ambiguous simulated text: whether 11 days is prompt cannot be determined from this clause alone. A reply is not necessarily approval.' },
+] as const;
+
+/** Static fixtures only: no storage, votes, proposal text or model inputs. */
+export function RedlineDetective() {
+  const id = useId();
+  const [round, setRound] = useState(0);
+  const [guess, setGuess] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const item = DETECTIVE_CASES[round]!;
+  return <details className="redline-detective">
+    <summary>Play legislative redline detective · Sandbox</summary>
+    <p>Unreviewed demo · fictional clauses, not enacted law or legal advice. Explanations apply only to these invented words. Guesses stay on this page and never count as votes. No model projections are used.</p>
+    <h3 ref={heading} tabIndex={-1}>Case {round + 1} of {DETECTIVE_CASES.length}: {item.title}</h3>
+    <div className="amendment-comparison">
+      <section id={`${id}-before`}><h4>Fictional before · §1</h4><p>{item.before}</p></section>
+      <section id={`${id}-after`}><h4>Fictional after · §1 revised</h4><p>{item.after}</p></section>
+    </div>
+    <form onSubmit={event => { event.preventDefault(); if (guess !== null) setRevealed(true); }}>
+      <fieldset disabled={revealed}><legend>What legal effect changed in this fictional clause?</legend>
+        {item.choices.map((choice, index) => <label key={choice}><input type="radio" name={`${id}-guess`} checked={guess === index} onChange={() => setGuess(index)} required /> {choice}</label>)}
+      </fieldset>
+      <button type="submit" disabled={guess === null || revealed}>Reveal explanation</button>
+    </form>
+    {revealed && <section aria-label="Detective explanation">
+      <p role="status">{guess === item.answer ? 'You spotted it.' : 'Look again at the changed words.'} {item.choices[item.answer]}</p>
+      <AmendmentComparison before={item.before} after={item.after} />
+      <p>{item.explanation}</p>
+      <p><a className="pill info" href={`#${id}-before`}>Fictional source · §1 before</a> <a className="pill info" href={`#${id}-after`}>Fictional source · §1 revised</a></p>
+      <h4>Edge case / uncertainty</h4><p>{item.edge}</p>
+      <button type="button" onClick={() => { setRound((round + 1) % DETECTIVE_CASES.length); setGuess(null); setRevealed(false); heading.current?.focus(); }}>{round === DETECTIVE_CASES.length - 1 ? 'Play again' : 'Next case'}</button>
+    </section>}
+  </details>;
+}
+
 /** Caller keys by kind + ID, so a selection change never carries text across sources. */
 export default function AmendmentEditor({ source }: { source: AmendmentSource }) {
   const id = useId();
@@ -31,6 +70,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
   }
   function fail(e: unknown) { setError(message(e)); setStatus(''); window.setTimeout(() => errorRef.current?.focus(), 0); }
   return <section className="amendment-editor" aria-label="Private amendment preparation">
+    <RedlineDetective />
     <button type="button" aria-expanded={open} aria-controls={`${id}-editor`} onClick={show}>Suggest amendment</button>
     {open && <div id={`${id}-editor`}>
       <h2>Prepare a private amendment</h2>
