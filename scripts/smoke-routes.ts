@@ -30,6 +30,7 @@ try {
     assert.equal((await hub.json()).topic.id, topic);
   }
   assert.equal((await get('/topics/unknown')).status, 404);
+  assert.equal((await get('/bills/HFL-101')).status, 404);
   assert.equal((await get('/api/topics/unknown')).status, 404);
   const auditIndex = await get('/api/audit-samples');
   assert.equal(auditIndex.status, 200);
@@ -73,7 +74,7 @@ try {
   const headVersion = await fetch(new URL('/version', server!.url), { method: 'HEAD' });
   assert.equal(headVersion.status, 200);
   assert.equal(await headVersion.text(), '');
-  for (const path of ['/', '/account', '/journal', '/needs', '/vote', '/vote/happybearlandia', '/vote/happybearlandia/pr/282', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
+  for (const path of ['/bills', '/bills/HFL-051', '/bills?q=community&category=Friendship%2C+community%2C+and+belonging', '/', '/account', '/journal', '/needs', '/vote', '/vote/happybearlandia', '/vote/happybearlandia/pr/282', '/votes', '/feed', '/proposals/new', '/synth', '/embed', '/map', '/published', '/draft', '/sponsors', '/outcomes', '/documentation', '/map/']) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type') ?? '', /text\/html/, path);

@@ -1,3 +1,4 @@
+import { billCollection } from '../shared/bill-catalog';
 import { CIVIC_STAGES, STAGES } from '../shared/civic-stages';
 import { buildIdentity } from "./build-identity";
 import { PRIVACY_HTML } from "./privacy-page";
@@ -51,9 +52,10 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
   const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
-  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
-  const title = proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
-  const description = proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
+  const bill = billCollection.bills.find(b => path === `/bills/${b.id}`);
+  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
+  const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
+  const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
   let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
   if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
@@ -64,6 +66,6 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
 }
 
 export function sitemap(proposals: CitizenProposalRecord[]) {
-  const paths = [...Object.keys(PAGE_TITLES).filter((path) => path !== "/embed" && path !== "/proposals/new"), ...proposals.map((p) => `/proposals/${encodeURIComponent(p.id)}`)];
+  const paths = [...Object.keys(PAGE_TITLES).filter((path) => path !== "/embed" && path !== "/proposals/new"), ...billCollection.bills.map(b => `/bills/${b.id}`), ...proposals.map((p) => `/proposals/${encodeURIComponent(p.id)}`)];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((path) => `<url><loc>${escapeHTML(SITE_URL + path)}</loc></url>`).join("")}</urlset>`;
 }
