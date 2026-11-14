@@ -859,26 +859,26 @@ details[open] > summary::before { transform: rotate(135deg); }
 @media (prefers-reduced-motion: reduce) { .quick-switcher, .quick-switcher::backdrop { transition: none !important; } }
 
 /* Filtering snapshots retain card geometry while additions/removals fade and shrink. */
-html:active-view-transition-type(filter)::view-transition-old(root),
-html:active-view-transition-type(filter)::view-transition-new(root) { animation: none; }
-html:active-view-transition-type(filter)::view-transition-group(.proposal-card) {
-  animation-duration: 240ms; animation-timing-function: var(--ease-out);
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-old(root),
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-new(root) { animation: none; }
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-group(.proposal-card) {
+  animation-duration: calc(240ms * var(--motion-scale, 1)); animation-timing-function: var(--ease-out);
 }
-html:active-view-transition-type(filter)::view-transition-old(.proposal-card):only-child {
-  animation: filter-card-out 180ms ease-in both;
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-old(.proposal-card):only-child {
+  animation: filter-card-out calc(180ms * var(--motion-scale, 1)) ease-in both;
 }
-html:active-view-transition-type(filter)::view-transition-new(.proposal-card):only-child {
-  animation: filter-card-in 240ms var(--ease-out) both;
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-new(.proposal-card):only-child {
+  animation: filter-card-in calc(240ms * var(--motion-scale, 1)) var(--ease-out) both;
 }
 @keyframes filter-card-out { to { opacity: 0; transform: scale(.92); } }
 @keyframes filter-card-in { from { opacity: 0; transform: scale(.92); } }
 @media (prefers-reduced-motion: reduce) {
-  html:active-view-transition-type(filter)::view-transition-old(.proposal-card),
-  html:active-view-transition-type(filter)::view-transition-new(.proposal-card) { animation: none !important; }
+  html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-old(.proposal-card),
+  html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-new(.proposal-card) { animation: none !important; }
 }
-html:active-view-transition-type(filter)::view-transition { pointer-events: none; }
-html:active-view-transition-type(filter)::view-transition-old(.filter-control) { animation: none; opacity: 0; }
-html:active-view-transition-type(filter)::view-transition-new(.filter-control) { animation: none; }
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition { pointer-events: none; }
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-old(.filter-control) { animation: none; opacity: 0; }
+html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view-transition-new(.filter-control) { animation: none; }
 
 /* Tactile feedback. Shared tokens also let motion review modes adjust timing.
    Cards retain native child controls; :has forwards their keyboard/press state. */
@@ -1089,3 +1089,19 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+/* Row-major placement keeps visual, reading and keyboard order identical. */
+.gallery-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-block: 12px; }
+.gallery-controls label { display: grid; gap: 6px; }
+.gallery-controls [role="group"] { display: flex; flex-wrap: wrap; gap: 8px; }
+.gallery-controls [aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+.feed-panel:has(.proposal-gallery) { grid-column: 1 / -1; }
+.feed-panel .proposal-gallery { max-height: none; overflow: visible; padding: 0; }
+.proposal-gallery.gallery-mosaic { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.proposal-gallery.gallery-mosaic .entry-item { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface, Canvas); min-width: 0; }
+.proposal-gallery.gallery-mosaic .entry-item:nth-child(4n + 1) { grid-column: span 2; background: color-mix(in srgb, var(--accent, #537c68) 8%, var(--surface, Canvas)); }
+.proposal-gallery .entry-item { overflow-wrap: anywhere; }
+.proposal-gallery .entry-item:focus-within { outline: 2px solid currentColor; outline-offset: 3px; }
+.proposal-gallery button { min-height: 44px; }
+@media (max-width: 900px) { .proposal-gallery.gallery-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .proposal-gallery.gallery-mosaic { grid-template-columns: minmax(0, 1fr); } .proposal-gallery.gallery-mosaic .entry-item:nth-child(4n + 1) { grid-column: auto; } }

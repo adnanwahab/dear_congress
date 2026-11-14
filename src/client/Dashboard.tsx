@@ -7,7 +7,7 @@ import { AdvisoryVoteBars } from './AdvisoryVoteBars';
 import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
 import { CivicHeader } from "./CivicHeader";
-import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSearch';
+import { ProposalGallery } from './ProposalGallery';
 import { DailyQuestion } from './DailyQuestion';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
@@ -30,8 +30,6 @@ const dateLabel = (value: string) => new Date(value).toLocaleDateString(undefine
 export function Dashboard({ request }: { request: Request }) {
   const [data, setData] = useState<DemoPayload | null>(readProposalSnapshot);
   const [selected, setSelected] = useState<string | null>(() => new URLSearchParams(window.location.search).get('proposal'));
-  const [topic, setTopic] = useState('All topics');
-  const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState(0);
   const [error, setError] = useState('');
@@ -49,7 +47,6 @@ export function Dashboard({ request }: { request: Request }) {
   }, []);
   const items = data?.items ?? [];
   const item = items.find(i => i.id === selected) ?? items[0];
-  const filtered = filterProposals(items, query, topic);
   const total = item ? item.support + item.oppose + item.unsure : 0;
   const chosen = item ? data?.votes[item.id] : undefined;
   const tracked = item ? tracker.some(t => t.id === item.id) : false;
@@ -93,8 +90,7 @@ export function Dashboard({ request }: { request: Request }) {
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : <Skeleton kind="line" />}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <div className="triple-grid">
-        <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalSearch items={items} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!error} />
-          <div className="entry-list">{filtered.map(i => <article className={`entry-item ${item?.id === i.id ? 'entry-selected' : ''}`} key={i.id} style={proposalCardStyle("home", i.id)}><div className="entry-source">{i.source} <TopicChip linked topic={i.topic} /></div><h3>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className="outline" disabled={busy} onClick={() => select(i)}>View proposal</button></article>)}{!data && !error && <Skeleton kind="list" />}</div>
+        <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalGallery items={items} loaded={!!data} failed={!!error} selected={item?.id} busy={busy} onSelect={select} />
         </section>
         <section className="panel vote-panel" style={{ viewTransitionName: 'proposal-detail' }} ref={voteRef} tabIndex={-1} aria-labelledby="vote-title"><div className="panel-head"><h2 id="vote-title">Cast advisory vote</h2><span className="pill info">Non-binding</span></div>{item && <TopicChip linked topic={item.topic} />}<h3 className="vote-question" style={{ viewTransitionName: item ? proposalTitleName(item.id) : undefined }}>{item ? `Should we ${item.title.charAt(0).toLowerCase() + item.title.slice(1)}?` : <Skeleton kind="line" />}</h3><p className="vote-summary">{item?.summary}</p><p>Viewing a proposal does not cast a vote. Choose Support, Oppose, or Not sure below to save a non-binding advisory vote.</p>{!data && !error && <Skeleton kind="vote" />}{item && <AdvisoryVoteBars key={item.id} item={item} choice={chosen} busy={busy} confirmation={confirmation} onVote={vote} />}<div className="vote-foot"><p>{total.toLocaleString()} illustrative responses<br/>Demo voting window ends {data ? dateLabel(data.closesAt) : '—'}</p><p>One anonymous browser cookie tracks your advisory choice per proposal; it is not a verified voter identity. Sample counts are not verified residents or a representative public poll.</p>{item && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Official background reference ↗</a>}</div></section>
         <section className="panel patch-panel"><div className="panel-head"><h2>This week’s patch</h2><span>Sample draft</span></div>{item ? <><TopicChip linked topic={item.topic} /><PatchChange key={item.id} item={item} /></> : <Skeleton />}<h3 className="patch-label">Possible sponsor offices</h3><label className="sponsor-picker"><span className="sr">Choose a sponsor office</span><select value={office || item?.sponsors[0] || ''} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><div className="draft-actions"><button disabled={!item || tracked} onClick={prepare}>{tracked ? 'Added to tracker ✓' : 'Prepare sponsor draft'}</button><button className="outline" disabled={!item} onClick={download}>Download draft</button></div><p className="draft-caption">Demo preparation only. Nothing is sent to a public office.</p></section>
