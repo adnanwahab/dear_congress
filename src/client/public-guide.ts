@@ -15,6 +15,8 @@ An advisory vote records a preference inside this prototype. It does not cast an
 
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
+On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
+
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
 ## What is fictional and what is verified?

@@ -27,6 +27,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
       let settle: (() => void) | undefined;
       let fail = false;
       const request = async <T,>(path: string, body?: any): Promise<T> => {
+        if (path === '/api/state') return { needs: [], user: { allocation: {} } } as T;
         if (body) {
           writes.push(body);
           await new Promise<void>(resolve => { settle = resolve; });
