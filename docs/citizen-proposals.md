@@ -225,3 +225,24 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Phrase reading layers (SHE-393)
+
+Opening **Suggest amendment** on `/draft` or `/votes` exposes an exact-text reader.
+Explicitly authored phrases in known fictional drafts are native buttons that move
+an exact phrase snapshot into an adjacent unreviewed plain-English pane using the
+shared typed `clause-explain` transition. These are terminology aids, not official
+clause boundaries or a legal interpretation. The full original text stays visible.
+The pane records uncertainty, the exact draft locator and private revision; all
+unmapped text and legal effects remain explicitly uninterpreted. Background links
+are never represented as citations proving the sample wording is law.
+
+Mappings require the sample kind, ID and exact original text. Citizen text, edited
+revisions and unsupported samples receive an explicit unavailable explanation;
+there is no generated paraphrase or remote interpretation request. Saved private
+versions retain their existing immutable records. Reading never saves, publishes,
+changes votes or submits anything. Text-only reading disables the morph; reduced
+motion uses the shared immediate-update path. Native button semantics, retained
+source focus and return anchors support keyboard/touch use and long text. There
+is no separate asynchronous explanation loading state; the existing stage loader
+continues to own sample retrieval.

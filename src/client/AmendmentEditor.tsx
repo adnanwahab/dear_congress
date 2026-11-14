@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { readAmendments, redline, sameBase, saveAmendment, type AmendmentDraft, type AmendmentFields, type AmendmentSource } from './amendment-drafts';
 import './amendment-editor.css';
+import ClauseReader from './ClauseReader';
 const storage = { getItem: (key: string) => localStorage.getItem(key), setItem: (key: string, value: string) => localStorage.setItem(key, value) };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Could not save in this browser. Your editing text is still here.';
 
@@ -38,6 +39,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
       <p>{source.kind === 'sample' ? 'Fictional sample · not legal text' : 'Citizen-authored proposal · official status not verified'} · {source.title} · {source.jurisdiction}</p>
       <p>Origin: {source.origin} · {source.kind}:{source.id}. The whole proposed text is one editable section; clause boundaries are not inferred.</p>
       {conflict && <div role="alert"><p>The source has changed since this draft began. Review the current text below. Earlier versions stay unchanged; nothing is automatically rebased. Starting fresh replaces the unsaved editing fields below.</p><h3>Current source text</h3><p className="amendment-text">{source.text}</p><button type="button" onClick={() => { setBase({ ...source }); setFields({ replacement: source.text, rationale: '', impact: '', citation: '' }); setSelected(null); setError(''); setStatus('Started a fresh amendment against the current source.'); }}>Start fresh against current source</button></div>}
+      <ClauseReader key={JSON.stringify([base, fields.replacement, selected?.id])} source={{ ...base, text: fields.replacement }} revision={selected ? `saved private version ${selected.id}` : 'unsaved working copy against captured base'} />
       <form onSubmit={e => {
         e.preventDefault();
         try { const next = saveAmendment(storage, source, base, fields); setVersions(next); setSelected(next[next.length - 1]!); setError(''); setStatus('New private version saved in this browser. Not submitted or published.'); }
