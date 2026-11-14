@@ -1,3 +1,4 @@
+import { PlanRoom } from './PlanRoom';
 import { useState } from 'react';
 import type { PackageResult, Proposal } from '../engine/types';
 import { budgetAlternative, budgetMoney, budgetSummary, budgetUnits, planLedger } from '../shared/plan-budget';
@@ -44,5 +45,6 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
       </div>}</>}
     <p><a download={`plan-budget-v1-${lane}-${pkg.id}.json`} href={`data:application/json;charset=utf-8,${encodeURIComponent(exportText)}`}>Download shareable versioned budget summary</a></p>
     <p className="muted">This fiscal snapshot contains item titles, costs and assumptions only. It does not verify outcomes, enact policy, save votes or reproduce synthesis from changing private inputs.</p>
+    <PlanRoom seed={{ packageId: pkg.id, lane, budget: ledger.budget, rows: ledger.rows.map(({ id, title, jurisdiction, source, amount }) => ({ id, title, jurisdiction, source, amount })) }} />
   </section>;
 }

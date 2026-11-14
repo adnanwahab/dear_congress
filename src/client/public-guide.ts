@@ -41,7 +41,7 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
 - [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered.
-- [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative.
+- [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative. The Collaborative plan lab shares a frozen fiscal ledger with invited guests for one hour (or until server restart). Anyone with its invitation can join and see pseudonyms, presence and allocation suggestions. Keep invitations private. Suggestions never change synthesis, advisory votes or official decisions.
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 

@@ -1,3 +1,4 @@
+import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -877,11 +878,13 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+const planRoomsHandler = roomHandler(new PlanRooms(), req => publicSecurity.origin(req));
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/api/plan-rooms": { POST: planRoomsHandler },
     "/api/topics/:id": { GET: (req) => {
       const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
       return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });
