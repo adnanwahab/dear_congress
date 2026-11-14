@@ -39,3 +39,10 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+/* Native controls retain keyboard semantics and generous touch targets. */
+.civic-law-playback-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+.civic-law-playback-controls button,.civic-law-playback-controls select{min-height:44px;min-width:0;padding:8px}
+.civic-law-playback-controls input[type=range]{min-height:44px;margin-top:0}
+.civic-law-playback-controls button:disabled{opacity:.55;cursor:default}
+@media(max-width:740px){.civic-law-playback-controls{grid-template-columns:1fr}}

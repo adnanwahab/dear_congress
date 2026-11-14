@@ -10,7 +10,7 @@ const receipt=(strength:number):LawBehaviorReceipt=>({
   manifest:{modelVersion:'population.v1',seed:42,population:24,implementationStrength:strength,
     pairedInitialState:true,start:0,end:30,recordedCheckpoints:3,
     scope:'separate synthetic reviewed model; no citizen package applied'},
-  frames:[0,15,30].map((time,i)=>({
+  frames:[0,15.123456,30].map((time,i)=>({
     time,
     baseline:{metrics:{trips:i,meanCommuteMinutes:20},actors:[
       {id:'p0',label:'Resident 1',mode:'walk',activity:'home',x:time,z:1}]},
@@ -22,6 +22,16 @@ const receipt=(strength:number):LawBehaviorReceipt=>({
 
 test('native simulate → edit lever → rerun displays actual paired actor changes and retains original',async()=>{
   const browser=new Window({url:'https://civic-synthesis.fly.dev/synth'});
+  let motionChanged:(()=>void)|undefined;
+  const preference={matches:false,addEventListener:(_type:string,fn:()=>void)=>{motionChanged=fn;},removeEventListener:()=>{}};
+  browser.matchMedia=(()=>preference) as any;
+  let tick:(()=>void)|undefined;
+  let pacing=0;
+  const nativeTimeout=browser.setTimeout.bind(browser);
+  browser.setTimeout=((fn:any,ms:number,...args:any[])=>{
+    if(ms<=1300){tick=fn;pacing=ms;return 999 as any;}
+    return nativeTimeout(fn,ms,...args);
+  }) as any;
   const requests:{href:string;body:{lawId:number;seed:number;population:number;implementationStrength:number}}[]=[];
   const mockedFetch=(async(uri:string|URL,init?:RequestInit)=>{
     const body=JSON.parse(String(init?.body)) as {lawId:number;seed:number;population:number;implementationStrength:number};
@@ -56,6 +66,35 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const timeSlider=getByRole(host,'slider',{name:'Recorded simulation time'}) as HTMLInputElement;
     await act(async()=>fireEvent.change(timeSlider,{target:{value:'0'}}));
     expect(host.textContent).toContain('minute 0');
+    const button=(name:string)=>getByRole(host,'button',{name}) as HTMLButtonElement;
+    expect(button('Step back').disabled).toBe(true);
+    await act(async()=>button('Step forward').click());
+    expect(timeSlider.value).toBe('1');
+    expect(timeSlider.getAttribute('aria-valuetext')).toContain('minute 15.123456');
+    await act(async()=>button('Step back').click());
+    expect(timeSlider.value).toBe('0');
+    await act(async()=>button('Play recorded behavior').click());
+    expect(pacing).toBe(650);
+    await act(async()=>{preference.matches=true;motionChanged!();});
+    expect(host.textContent).toContain('Reduced motion is enabled');
+    expect(button('Play recorded behavior')).toBeDefined();
+    await act(async()=>button('Play recorded behavior').click());
+    await act(async()=>tick!());
+    expect(timeSlider.value).toBe('1');
+    await act(async()=>fireEvent.change(getByRole(host,'combobox',{name:'Playback speed'}),{target:{value:'2'}}));
+    expect(pacing).toBe(325);
+    await act(async()=>button('Pause recorded playback').click());
+    expect(host.textContent).toContain('Both worlds synchronized at minute 15');
+    await act(async()=>button('Play recorded behavior').click());
+    await act(async()=>tick!());
+    expect(timeSlider.value).toBe('2');
+    expect(host.textContent).toContain('Playback complete');
+    expect(button('Step forward').disabled).toBe(true);
+    await act(async()=>button('Play recorded behavior').click());
+    expect(timeSlider.value).toBe('0');
+    await act(async()=>button('Rewind to first checkpoint').click());
+    expect(timeSlider.value).toBe('0');
+    expect(button('Play recorded behavior').disabled).toBe(false);
     const strength=host.querySelector('.civic-law-controls input[type=range]') as HTMLInputElement;
     await act(async()=>fireEvent.change(strength,{target:{value:'50'}}));
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
