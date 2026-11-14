@@ -35,6 +35,8 @@ In the publishing browser, use Delete my entry in [Journal](/journal) to remove 
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
+On a sample Draft or published citizen proposal, **Design together** offers a same-device workshop for up to six people. Optional research, cost, fairness and implementation roles share a separate browser-local draft. A different editor reviews cited findings, reasoning and limitations before a role earns progress; political votes and popularity do not count. Names and editor/observer permissions are self-declared agreements, not authenticated access control. Anyone using the browser profile can read this unencrypted storage or select another name. Sources and reviews remain unverified. Save before leaving, and get everyone’s consent before exporting the collaboration log, which includes names, text and questions. Nothing is remotely shared or published.
+
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
 
 ## Sources and methodology
