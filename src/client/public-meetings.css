@@ -1,0 +1,6 @@
+.public-meetings { overflow-wrap: anywhere; }
+.public-meetings select, .public-meetings button { min-height: 44px; max-width: 100%; }
+.public-meetings > label { display: grid; gap: 8px; margin-block: 16px; }
+.meeting-card { border-top: 1px solid var(--line); padding-block: 16px; }
+.meeting-reminder { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 12px; }
+.meeting-reminder input { width: 24px; height: 24px; flex-shrink: 0; }

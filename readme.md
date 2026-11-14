@@ -679,3 +679,10 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Public meeting calendar
+
+Feed, Published and Sponsors show a separate operator-reviewed public-meeting lane.
+It defaults empty and never infers meetings from demo proposals. See
+[the meeting import contract](docs/public-meetings.md) for local snapshot ingestion,
+source review, explicit calendar/reminder consent and coverage limits.
