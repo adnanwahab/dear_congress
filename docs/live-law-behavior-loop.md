@@ -275,3 +275,24 @@ listeners with `EADDRINUSE` on port 0 in this restricted environment.
 `bun run test:routes` hit the same listener startup error. These required gates
 remain unverified and must pass in a listener-capable environment before review
 acceptance. No check or server binding was weakened to bypass this limitation.
+
+## SHE-431 recorded twin-world time controls
+
+The demo sandbox adds rewind, previous/next checkpoint, play/pause and
+0.5×/1×/2×/4× pacing. One checkpoint index drives both worlds, actor inspection,
+metrics and chart cursor. Rewind and manual seeking pause playback; Play at the
+end restarts at the first checkpoint. Completion pauses immediately. Speed changes
+only wall-clock delay between recorded checkpoints, including irregularly spaced
+model times; it never interpolates positions, counts, discrete events or clocks.
+Exact model timestamps use the receipt's numeric value without display rounding.
+
+Native buttons, select and range input support keyboard and touch, with 44px
+minimum control height, visible focus and narrow-screen stacking. The time slider
+announces the model unit, exact timestamp and checkpoint ordinal. Playback begins
+only on explicit request. Changing reduced-motion preferences or hiding the page
+pauses playback; reduced-motion users can still explicitly play or inspect one
+checkpoint at a time. Existing request deadline, cancel/retry, failed receipt and
+stale response handling remain in place. No source chips, civic navigation, API
+contract, votes, stored receipts or governance rules change.
+
+See docs/reviews/SHE-431.md for candidate validation and remaining browser checks.
