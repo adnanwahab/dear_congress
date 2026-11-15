@@ -68,7 +68,7 @@ test('deferred BFCache restoration does not steal a new keyboard target', async 
     const pageshow = new dom.Event('pageshow');
     Object.defineProperty(pageshow, 'persisted', { value: true });
     dom.dispatchEvent(pageshow);
-    const link = dom.document.querySelector('nav a')!;
+    const link = dom.document.querySelector('a')!;
     link.focus();
     expect(frame).toBeDefined();
     frame?.(0);
