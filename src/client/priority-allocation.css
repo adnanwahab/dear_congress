@@ -1,0 +1,10 @@
+.priority-allocation { margin-block: 1rem; }
+.priority-need { border-top: 1px solid var(--line); padding-block: .8rem; }
+.priority-need > label { font-weight: 700; }
+.priority-controls, .priority-actions { display: flex; gap: .6rem; align-items: center; margin-block: .6rem; }
+.priority-controls input { width: 6rem; min-height: 44px; }
+.priority-controls button, .priority-actions button { min-width: 44px; min-height: 44px; }
+.priority-tray { display: block; width: 100%; min-height: 48px; text-align: left; touch-action: none; background: var(--bg); color: var(--ink); border: 1px dashed var(--line); padding: .6rem; }
+.priority-tray:disabled { opacity: 1; cursor: default; }
+.priority-tokens { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: .4rem; pointer-events: none; }
+.priority-token { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid currentColor; background: var(--accent, #2f5d50); }
