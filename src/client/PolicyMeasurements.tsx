@@ -1,3 +1,4 @@
+import { EvidenceCalendar } from './EvidenceCalendar';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
@@ -24,5 +25,6 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
         </article>;
       })}
     </details>
+    <EvidenceCalendar asOf={asOf} />
   </section>;
 }

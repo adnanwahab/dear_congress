@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { OutcomeTimeline } from '../src/client/OutcomeTimeline';
+const dom = new Window({ url: 'http://localhost/outcomes?proposal=sample&topic=transport&motion=off' });
+for (const key of ['window', 'document', 'navigator']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+dom.document.documentElement.dataset.motion = 'off';
+const container = dom.document.createElement('div'); dom.document.body.append(container);
+const root = createRoot(container as any);
+await act(async () => root.render(<OutcomeTimeline />));
+const surface = container.querySelector('[tabindex]')!;
+const key = async (value: string) => act(async () => { surface.dispatchEvent(new dom.KeyboardEvent('keydown', { key: value, bubbles: true })); });
+await key('+'); assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'month');
+await key('+'); assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'day');
+const center = new URL(dom.location.href).searchParams.get('timeCenter');
+await key('ArrowRight'); assert.notEqual(new URL(dom.location.href).searchParams.get('timeCenter'), center);
+await key('Home');
+await act(async () => { const event = new dom.WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }); Object.defineProperty(event, 'ctrlKey', { value: true }); surface.dispatchEvent(event); });
+assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'decade');
+assert.match(container.textContent!, /Long-run scenario/);
+assert.match(container.textContent!, /No historical measurements supplied/);
+assert.equal(new URL(dom.location.href).searchParams.get('proposal'), 'sample');
+assert.equal(new URL(dom.location.href).searchParams.get('topic'), 'transport');
+await key('Home');
+async function pointer(type: string, id: number, x: number) {
+  await act(async () => { surface.dispatchEvent(new dom.PointerEvent(type, { pointerId: id, clientX: x, pointerType: 'touch', bubbles: true })); });
+}
+await pointer('pointerdown', 1, 0); await pointer('pointerdown', 2, 100);
+await pointer('pointermove', 2, 100); await pointer('pointermove', 2, 170);
+assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'month');
+await pointer('pointercancel', 2, 170);
+await pointer('pointermove', 1, 300);
+assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'month');
+dom.history.replaceState(null, '', '/outcomes?timeScale=day&timeCenter=2026-11-14T00%3A00%3A00.000Z');
+await act(async () => { dom.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert.match(container.textContent!, /day view/);
+// Supported APIs receive the typed range transition.
+dom.document.documentElement.dataset.motion = 'normal';
+let starts = 0;
+Object.defineProperty(dom.document, 'startViewTransition', { configurable: true, value: (options: any) => {
+  starts++; assert.deepEqual(options.types, ['time-zoom']); options.update();
+  return { skipTransition() {}, ready: Promise.resolve(), updateCallbackDone: Promise.resolve(), finished: Promise.resolve() };
+} });
+await key('-'); assert.equal(starts, 1);
+await key('+'); assert.equal(starts, 2);
+// Reduced motion must bypass snapshot APIs even when supported.
+dom.document.documentElement.dataset.motion = 'normal';
+Object.defineProperty(dom, 'matchMedia', { configurable: true, value: () => ({ matches: true }) });
+Object.defineProperty(dom.document, 'startViewTransition', { configurable: true, value: () => { throw Error('Reduced motion started a snapshot'); } });
+await key('-');
+assert.equal(new URL(dom.location.href).searchParams.get('timeScale'), 'month');
+await act(async () => root.render(<OutcomeTimeline loading />));
+assert.match(container.textContent!, /Loading timeline/);
+assert.equal(container.querySelector('[aria-busy]')!.getAttribute('aria-busy'), 'true');
+await act(async () => root.render(<OutcomeTimeline entries={[]} />));
+assert.equal(container.querySelectorAll('.time-lane').length, 3);
+assert.equal(container.querySelectorAll('.time-lane li').length, 0);
+await act(async () => root.unmount()); await dom.happyDOM.close();
+console.log('PASS timeline keyboard, wheel, touch, URL, loading and empty states');

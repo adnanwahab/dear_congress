@@ -5,23 +5,40 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 
 ## Choose a safe starting path
 
+Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game walkthrough](/?quest=1&walkthrough=1). Five skippable chapters explain journal → need → comparison → proposal → future. Fictional examples are optional. Only chapter progress and the sample preference stay in this browser; nothing is published or voted on.
+
 - Read: open the [proposal feed](/feed) or [published sources](/published). Check each item's source and sample label before relying on it.
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
 ## Does my vote count?
 
-An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
+An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
+
+Local sample filters, comparisons, sponsor-card moves, household presets and synthesis sliders offer **Undo local change** for 20 seconds. A new action replaces the previous Undo. Focus or hover pauses expiry; leaving gives another 20 seconds. Undo history clears on navigation or reload. Restoring synthesis settings creates an unsaved preview. Public posts and advisory votes use separate explicit workflows.
 
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
+The optional [private civic passport](/account) is a demo / sandbox awaiting review. Start it to record self-reported learning badges for evidence, jurisdictions and opposing views in this browser only. It is independent of verified identity and awards nothing for votes, posts or influence. Reset progress, export a JSON file or delete the passport and turn it off on the account page. People sharing your browser profile can read it; keep exported files private.
+
+
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
+
+Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
 
 ## What is fictional and what is verified?
 
+The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
+
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The home page’s My area’s civic challenges rail uses only your chosen browsing jurisdiction, never a street address or device location. This preference does not establish residency or voter eligibility. Its categorized prompts and policy examples are fictional; no verified local challenge feed is connected. Opening an example does not vote or contact an office.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
+
+## Listen or read before deciding
+
+The fictional transit sample offers an optional briefing of about two minutes, with a full transcript and cited chapters. Its synthetic browser voice reads a fixed editorial script by the Dear Congress prototype authors. Pause, resume, stop and speed controls are available when the browser supports speech. Voice processing depends on your browser or device speech service. The transcript remains available if audio fails. Reasons and concerns are unverified assertions; the agency link is background only. Listening records no vote and does not verify civic participation.
 
 ## Will my journal be public?
 
@@ -35,15 +52,25 @@ In the publishing browser, use Delete my entry in [Journal](/journal) to remove 
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
-The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
+The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
+
+## Explore connected issues
+
+[Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
 
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
-- [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered.
+- [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered. Selecting a need previews related aggregate geographic cells. Submitted accounts and simulated estimates stay separate, including in Both mode. Measured conditions appear separately below the map; journal counts are not measurements. If map tiles fail, use the searchable evidence list with the same selected need. Exploring evidence publishes nothing and casts no vote.
 - [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative.
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
+
+## Practice with civic trivia
+
+Try the [civic trivia arcade](/documentation#civic-trivia): five untimed Houston knowledge questions with a source for every explanation. Topics rotate between representation and public budgets. Answers and scores stay only in page memory, disappear when you leave or reload, and never affect votes, proposals, public opinion weights or merge authority. Following a source link visits an external official site.
+
+The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthly agenda and dated source ledger. It separates primary sources, editorial inference, user claims and synthetic estimates. Publication, observation and retrieval are distinct; unknown dates stay unknown. Review expiry means a review is due, not that an older source is false. Bundled examples work offline; they do not certify live source availability. Copy the JSON export or use browser Print to retain dates, limitations and pending human-review history.
 
 ## Simple glossary
 

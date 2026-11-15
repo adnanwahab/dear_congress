@@ -57,3 +57,13 @@
 .documentation-article details p { line-height: 1.8; overflow-wrap: anywhere; }
 .documentation-shell :is(a, button, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 .documentation-layout > * { min-width: 0; }
+
+.civic-trivia { border-top: 2px solid var(--line); margin-top: 32px; padding-top: 20px; overflow-wrap: anywhere; }
+.civic-trivia p { line-height: 1.7; }
+.civic-trivia fieldset { min-width: 0; margin: 20px 0; border: 1px solid var(--line); }
+.civic-trivia legend { font-weight: 700; padding: 8px; }
+.civic-trivia label { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px; cursor: pointer; }
+.civic-trivia input { flex: 0 0 auto; }
+.civic-trivia button { min-height: 44px; margin: 8px 12px 8px 0; white-space: normal; }
+.civic-trivia :is(input, h2):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Untimed and motion-free in all preferences, including reduced motion. */
