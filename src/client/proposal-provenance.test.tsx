@@ -31,7 +31,8 @@ test('missing, unsafe, stale and invalid references cannot acquire a current che
   for (const source of ['', 'javascript:alert(1)', 'https://user:password@example.com']) {
     const broken = { ...item, sourceUrl: source, background: undefined };
     const html = renderToStaticMarkup(<ProposalProvenance item={broken} />);
-    expect(html).not.toContain('<a ');
+    expect(html).not.toContain('target="_blank"');
+    expect(html).toContain('href="/outcomes#policy-measurements"');
     expect(html).toContain('Source not available');
   }
 });
@@ -56,6 +57,7 @@ test('compact cards keep sample status and safe source links in the disclosure s
     expect(html).toContain('Background only; does not establish');
   }
   const html = renderToStaticMarkup(<ProposalProvenance item={{ ...DEMO_ITEMS[0]!, sourceUrl: 'javascript:alert(1)', background: undefined }} compact />);
-  expect(html).not.toContain('<a ');
+  expect(html).not.toContain('target="_blank"');
+    expect(html).toContain('href="/outcomes#policy-measurements"');
   expect(html).toContain('Source not available');
 });

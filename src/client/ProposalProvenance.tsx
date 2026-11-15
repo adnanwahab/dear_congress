@@ -27,6 +27,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     <div>Publisher: {item.background?.publisher ?? 'Not available'}</div>
     {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
     <div>{freshness(item)}</div>
+    <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
     <p>{item.background?.scope ?? 'Background scope not documented.'} Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;

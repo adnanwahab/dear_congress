@@ -99,6 +99,16 @@ including mixed results, pinned baseline/source history and missing or stale dat
 The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+The evidence freshness calendar adds a monthly agenda and dated ledger with
+review reminders, unknown-date labels and copyable/printable provenance.
+Age never determines validity. Its sourced example establishes repository
+fixture contents only; mixed results remain synthetic.
+See [SHE-678 implementation and validation limits](docs/reviews/SHE-678.md).
+The Outcomes contradiction compass compares explicit fields within matching scope,
+period and claim kind. It keeps both revisions and human-review states, with no
+automatic truth selection. Bundled examples include a primary text citation, a
+synthetic conflict and a missing source. See [SHE-677 validation and remaining
+acceptance](docs/reviews/SHE-677.md).
 
 ## What's in it
 
@@ -733,6 +743,16 @@ private amendment saves. Reduced motion and hidden pages suppress requests.
 No voting, policy-setting sliders, automated playback, loading or progress
 notifications trigger feedback. Unsupported/denied APIs are safe no-ops; there
 is no polling or permission prompt. Blocked storage keeps a page-only preference.
+
+## Fictional facilitation practice
+
+The draft catalog and sample workflow offer **Read the room**, an opt-in,
+three-scene town-hall game. The guided demo links out to its catalog entry.
+All speakers, questions and slots are hypothetical. Feedback rewards fair turns,
+listening and accurate follow-up, never a political preference. Skip, Restart,
+Exit and a complete text explanation are available. State stays in page memory;
+no participation credit, advisory writes or stored scores are created.
+See [SHE-661 verification and limitations](docs/reviews/SHE-661.md).
 
 ### Fictional clause reveal
 
