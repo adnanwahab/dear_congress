@@ -1,3 +1,4 @@
+import { useLocalUndo } from "./LocalUndo";
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
@@ -1567,7 +1568,14 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     requestController.current?.abort();
     if (previewTimer.current !== null) clearTimeout(previewTimer.current);
   }
-  function changeSettings(change: () => void) {
+  const settingsUndo = useLocalUndo();
+  function changeSettings(change: () => void, restoring = false) {
+    if (!restoring) {
+      const previous = { weights, lambda, budget };
+      settingsUndo.record('synthesis weights, penalty and budget', () => changeSettings(() => {
+        setWeights(previous.weights); setLambda(previous.lambda); setBudget(previous.budget);
+      }, true));
+    }
     invalidateRequest();
     setBusy(false);
     setLivePreview(true);
@@ -1744,6 +1752,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
           <b className="num-s">${budget}B</b>
         </label>
+        {settingsUndo.control}
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
