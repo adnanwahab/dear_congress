@@ -2,6 +2,7 @@ import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {FuturePostcard} from './FuturePostcard';
 import {lawOutcomeTrace} from './law-outcome-trace';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
@@ -316,6 +317,11 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
       </WorldPortal>
       <p><a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      {frame&&receipt.manifest&&isFiniteNumber(baselineMetric)&&isFiniteNumber(editedMetric)&&<FuturePostcard
+        key={`${revision}:${frame.time}:${selectedMetric}`}
+        facts={{law:receipt.law.number,seed:receipt.manifest.seed,strength:receipt.manifest.implementationStrength*100,
+          revision,model:receipt.manifest.modelVersion||'unavailable',time:frame.time,clock:receipt.unit||'model time',
+          metric:METRICS[selectedMetric]!.label,unit,baseline:baselineMetric,edited:editedMetric}}/>}
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic
