@@ -1,8 +1,10 @@
+import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDisabled, motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
+import { CivicAdventure } from './CivicAdventure';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
@@ -13,6 +15,7 @@ import { JournalLiveProvider, useJournalLive } from "./JournalLive";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
+import { CoalitionQuest } from "./CoalitionQuest";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 import { MutationError } from './mutation-status';
 import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
@@ -154,6 +157,7 @@ const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
+  if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
@@ -1570,7 +1574,14 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     requestController.current?.abort();
     if (previewTimer.current !== null) clearTimeout(previewTimer.current);
   }
-  function changeSettings(change: () => void) {
+  const settingsUndo = useLocalUndo();
+  function changeSettings(change: () => void, restoring = false) {
+    if (!restoring) {
+      const previous = { weights, lambda, budget };
+      settingsUndo.record('synthesis weights, penalty and budget', () => changeSettings(() => {
+        setWeights(previous.weights); setLambda(previous.lambda); setBudget(previous.budget);
+      }, true));
+    }
     invalidateRequest();
     setBusy(false);
     setLivePreview(true);
@@ -1720,6 +1731,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
 
   return (
     <div className="stack">
+      <CoalitionQuest />
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">
@@ -1747,6 +1759,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
           <b className="num-s">${budget}B</b>
         </label>
+        {settingsUndo.control}
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
