@@ -54,3 +54,24 @@ test('blocked state writes leave native navigation available', () => {
   const target = { history: { state: {}, replaceState() { throw new Error('blocked'); } } } as unknown as Window;
   expect(() => writeJourney(entry(), target)).not.toThrow();
 });
+
+
+test('deferred BFCache restoration does not steal a new keyboard target', async () => {
+  const dom = new DOMWindow({ url: 'https://example.test/feed' });
+  const target = dom as unknown as Window;
+  try {
+    dom.document.body.innerHTML = '<nav aria-label="Main navigation"><a href="/votes">Votes</a></nav><main id="main-content" tabindex="-1"><button>Restored</button></main>';
+    writeJourney({ ...entry(), focus: '#main-content > button:nth-of-type(1)' }, target);
+    let frame: FrameRequestCallback | undefined;
+    target.requestAnimationFrame = callback => { frame = callback; return 1; };
+    installJourneyHistory(target);
+    const pageshow = new dom.Event('pageshow');
+    Object.defineProperty(pageshow, 'persisted', { value: true });
+    dom.dispatchEvent(pageshow);
+    const link = dom.document.querySelector('nav a') as HTMLAnchorElement;
+    link.focus();
+    expect(frame).toBeDefined();
+    frame?.(0);
+    expect(dom.document.activeElement).toBe(link);
+  } finally { await dom.happyDOM.close(); }
+});
