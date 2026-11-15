@@ -947,3 +947,13 @@ content awaiting human clue/source review. Play uses page memory only, requires
 no signup, and never writes participation data. The grid, hints and complete-text
 answers work offline after loading; institutional links need connectivity.
 See [SHE-665 validation and remaining review](docs/reviews/SHE-665.md).
+
+## Weekly civic discovery (SHE-538)
+
+The Dashboard reuses its typed `/api/demo` payload for a read-only sample
+walkthrough alongside weekly self-guided trivia and an evidence tour.
+All sessions are optional and available anytime; they record no participation
+and add no incentives or writes. Native disclosures support keyboard/touch;
+no new animation is used. Official external calendars and hypothetical gatherings
+are separately labeled. No hosted events or moderated public event discussion
+are operational. See [scope and validation](docs/reviews/SHE-538.md).
