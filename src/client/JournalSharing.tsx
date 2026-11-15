@@ -1,3 +1,4 @@
+import { StateFeedback } from './StateFeedback';
 import { useRef, useState } from 'react';
 import type { JournalEntry } from '../engine/types';
 
@@ -62,6 +63,6 @@ export default function JournalSharing({ request, onPublished, needs = [] }: { r
       <button type="button" disabled={!consent || busy} onClick={publish}>Share publicly</button>
       <button type="button" className="outline" onClick={invalidate}>Cancel sharing</button>
     </section>}
-    <p role="status">{status}</p>{error && <p role="alert">{error}</p>}
+    <p role="status"><StateFeedback state={busy ? 'syncing' : status ? 'updated' : 'draft'}>{busy ? 'Submitting your reviewed excerpt…' : status || 'Draft in this open page only · not saved or uploaded.'}</StateFeedback></p>{error && <p role="alert"><StateFeedback state="error">{error}</StateFeedback></p>}
   </section>;
 }

@@ -1,10 +1,14 @@
 import { useId, useRef, useState } from 'react';
+import { AudioBriefing } from './AudioBriefing';
 import type { DemoItem } from '../engine/demo';
 import './argument-map.css';
+import { ConsensusTerrain } from './ConsensusTerrain';
+import { EvidenceConditionCards } from './PolicyComparison';
+import { PILOT_TEXT, PILOT_SCOPE } from './evidence-conditions';
+export { PILOT_TEXT, PILOT_SCOPE } from './evidence-conditions';
 
-// Deliberately independent of the catalog: editing proposal text invalidates the map.
-export const PILOT_TEXT = 'Fund a twelve-month pilot of fifteen-minute service through 10 p.m. on three priority corridors, with quarterly public reporting.';
-export const PILOT_SCOPE = 'adnanwahab/dear_congress:fictional-demo:demo-transit:v1';
+// Pin editorial and provenance fields; changing any requires a new reviewed script.
+const original = JSON.stringify({ id: 'demo-transit', title: 'Run frequent buses on evenings and weekends', topic: 'Transit', jurisdiction: 'City', source: 'Transit planning', background: { name: 'METRO', publisher: 'Metropolitan Transit Authority of Harris County', scope: 'Regional transit agency background only; not a city bill', checkedAt: null }, sourceUrl: 'https://www.ridemetro.org/', summary: 'Pilot 15-minute bus service on three high-demand corridors until 10 p.m. Measure missed trips, access to jobs, and ridership before expanding.', currentText: 'Evening and weekend service follows the existing lower-frequency schedule.', proposedText: PILOT_TEXT, sponsors: ['Transit board', 'City mobility committee'] });
 const points = [
   { id: 'for', title: 'Reasons for', claim: 'More frequent evening service could reduce waiting for riders whose shifts end late.', limits: 'No corridor-specific ridership, staffing or travel-time study has been supplied.', condition: 'Evidence that the proposed schedule does not improve access for evening riders.', reply: 'Frequency alone may not help if connections or reliability remain poor.' },
   { id: 'concern', title: 'Concerns', claim: 'Extra service could divert limited operating funds from other routes.', limits: 'No operating budget or comparison with alternative service plans has been supplied.', condition: 'A funded operating plan showing additional service without reducing essential routes.', reply: 'A time-limited pilot with public reporting could reveal whether the added cost is justified.' },
@@ -15,12 +19,12 @@ type Side = typeof points[number]['id'];
 const initialOrder = (): Record<Side, CardId[]> => ({ for: ['claim', 'reply'], concern: ['claim', 'reply'] });
 
 /** Local editorial tabletop; no persistence, submissions or vote authority. */
-export function ArgumentMap({ item, namespace = 'fictional-demo' }: { item: DemoItem; namespace?: string }) {
+export function ArgumentMap({ item, namespace = 'fictional-demo', evidenceConditions = false }: { item: DemoItem; namespace?: string; evidenceConditions?: boolean }) {
   // A keyed child discards personal order and pending drag on every scope/revision change.
-  return <Tabletop key={JSON.stringify([namespace, item.id, item.proposedText])} item={item} namespace={namespace} />;
+  return <Tabletop key={JSON.stringify([namespace, item.id, item.proposedText])} item={item} namespace={namespace} evidenceConditions={evidenceConditions} />;
 }
 
-function Tabletop({ item, namespace }: { item: DemoItem; namespace: string }) {
+function Tabletop({ item, namespace, evidenceConditions }: { item: DemoItem; namespace: string; evidenceConditions: boolean }) {
   const available = namespace === 'fictional-demo' && item.id === 'demo-transit' && item.proposedText === PILOT_TEXT;
   const prefix = `argument-${useId()}`;
   const [order, setOrder] = useState(initialOrder);
@@ -64,7 +68,10 @@ function Tabletop({ item, namespace }: { item: DemoItem; namespace: string }) {
             onClick={() => { const target = order[point.id][index + (direction === 'up' ? -1 : 1)]; if (target) move(point.id, id, target); }}>Move {direction}</button>)}</div>
         </li>)}</ol>
       </section>)}</div>
+      {JSON.stringify(item, (key, value) => ['support', 'oppose', 'unsure'].includes(key) ? undefined : value) === original ? <AudioBriefing clauseId={`${prefix}-clause`} /> : <p>No briefing is available for this source revision.</p>}
+      <ConsensusTerrain scope={PILOT_SCOPE} />
       <p>Corrections and citation reports are not open in this fictional pilot. Human evidence review and argument moderation are required before public contributions.</p>
+      {evidenceConditions && <EvidenceConditionCards key={PILOT_SCOPE + item.proposedText} scope={PILOT_SCOPE} />}
     </> : <p>No reviewed arguments yet. No argument map is available for this proposal revision.</p>}
   </section>;
 }
