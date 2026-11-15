@@ -250,3 +250,58 @@ and touch. Controls have visible focus and at least 44px target height; narrow
 comparisons stack. No animation, timers or automatic progression are used, so
 reduced motion sees the same complete content. Human native-browser, zoom,
 touch and screen-reader review is still required before acceptance.
+
+## Phrase reading layers (SHE-393)
+
+Opening **Suggest amendment** on `/draft` or `/votes` exposes an exact-text reader.
+Explicitly authored phrases in known fictional drafts are native buttons that move
+an exact phrase snapshot into an adjacent unreviewed plain-English pane using the
+shared typed `clause-explain` transition. These are terminology aids, not official
+clause boundaries or a legal interpretation. The full original text stays visible.
+The pane records uncertainty, the exact draft locator and private revision; all
+unmapped text and legal effects remain explicitly uninterpreted. Background links
+are never represented as citations proving the sample wording is law.
+
+Mappings require the sample kind, ID and exact original text. Citizen text, edited
+revisions and unsupported samples receive an explicit unavailable explanation;
+there is no generated paraphrase or remote interpretation request. Saved private
+versions retain their existing immutable records. Reading never saves, publishes,
+changes votes or submits anything. Text-only reading disables the morph; reduced
+motion uses the shared immediate-update path. Native button semantics, retained
+source focus and return anchors support keyboard/touch use and long text. There
+is no separate asynchronous explanation loading state; the existing stage loader
+continues to own sample retrieval.
+
+## Private revision impact comparison (SHE-455)
+
+Every amendment redline now includes Before/After panels for scope, eligibility,
+cost, implementation and uncertainties. Explicit `Scope:`, `Eligibility:`,
+`Cost:`, `Implementation:` and `Uncertainties:` lines are quoted verbatim with
+local revision/line links. Unlabeled prose is never classified by keywords;
+missing evidence says Needs review. Even anchored author statements need review:
+a citation note is not verified evidence or a fiscal/legal assessment. This is a
+bounded evidence checklist, not automated legal interpretation or an official
+bill-revision service.
+
+After saving two private versions, choose their IDs in Compare saved revision
+IDs. Selection leaves editing fields and storage unchanged. Versions must share
+the exact original source snapshot (kind, ID, origin, title, jurisdiction and
+text). Live text is labeled unsaved; saved replacement text uses its private UUID.
+Base text remains a saved snapshot, without inventing an official revision ID.
+The existing local-storage and audit limitations above still apply. No API,
+publication, voting, navigation or source-record changes are involved.
+
+## Private amendment family tree (SHE-454)
+
+The editor records explicit parent revision, fork, compromise and merge events.
+Select a saved version before editing to make it the parent. Compromise and merge
+require another version from the exact same source snapshot; reconciliation is
+manual. Each branch exposes both parent links, exact-text comparisons, citation
+notes, save time and its unreviewed private state. Legacy versions retain unknown
+ancestry. Links preserve the current civic route and proposal selection and add
+source-kind/ID and revision parameters. They reopen only in a browser containing
+the records; a missing revision produces an explicit error, not a fabricated tree.
+Links do not publish, sync or transfer drafts. Proposal drafts are never enacted
+law, verified participation or approval evidence. There is no new API or loading
+request: reads are synchronous browser storage. See the SHE-454 review for checks
+and remaining native browser acceptance.
