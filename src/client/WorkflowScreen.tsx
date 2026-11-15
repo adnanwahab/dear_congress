@@ -1,3 +1,4 @@
+import { CivicTimeline } from './CivicTimeline';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -158,6 +159,11 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </section>}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
     {stage === 'outcomes' && <ProposalWatchlist />}
+    {stage === 'outcomes' && !loading && !loadError && item && <CivicTimeline key={item.id} points={[
+      { id: 'published', label: 'Published chapter', evidence: 'fictional', href: route('published', item.id) },
+      { id: 'reviewed', label: 'Review draft chapter', evidence: 'fictional', href: route('draft', item.id) },
+      { id: 'delivered', label: 'Sponsor walkthrough', evidence: 'fictional', href: route('sponsors', item.id) },
+    ]} />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
     {loading && !data && <WorkflowSkeleton stage={stage} />}
