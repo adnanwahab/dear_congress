@@ -35,6 +35,10 @@ Draft and Votes offer a read-only reveal slider for fictional current and propos
 
 The fictional transit sample includes two argument tracks with unreviewed claims and counterarguments. Drag within a track or use Move up and Move down to change your personal reading order. Each card discloses its source limits and quality status and expands Why this matters. This order lasts only while the map is open; it never changes public rankings or votes and is not verified participation. No claim-level citations have been supplied.
 
+## Try a fictional budget puzzle
+
+The [budget-balancing puzzle](/synth) offers five invented programs and a fixed $40B play budget. Compare who gains and which goals wait in more than one feasible plan. It is a demo awaiting review; costs and effects are game assumptions, not evidence or predictions. Choices stay in page memory, reset on leaving or reloading, and never become votes, public synthesis or simulator inputs.
+
 ## What is fictional and what is verified?
 
 The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.

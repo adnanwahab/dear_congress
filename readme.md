@@ -765,6 +765,23 @@ Completion is self-reported reading and stays in page memory; reloading starts f
 The separate daily advisory question retains its existing behavior. See
 [implementation and validation notes](docs/reviews/SHE-411.md).
 
+### Budget-balancing puzzle (SHE-412)
+
+`/synth` includes a clearly labeled demo puzzle independent of the synthesis
+packages and fiscal ledger in `PlanBudget.tsx`. Five bundled fictional programs
+share a fixed $40B annual play budget. Native checkboxes support keyboard and
+whole-card touch selection; totals, shortfalls and funded/deferred explanations
+are text, with no motion. Two editable feasible examples illustrate different
+priorities without scoring or recommending a stance. Unallocated money is allowed.
+
+The fixture loads synchronously: there is no puzzle network/loading state or
+remote failure. Invalid selections fail closed with a reset action. Over-budget
+choices remain editable, but cannot pass review. State is component-local and
+never enters votes, synthesis, persistence or the civic snapshot simulator API;
+that API binds real plan packages rather than fictional game programs. Existing
+stage navigation, source identities, ledger exports and simulation links remain
+unchanged. See `docs/reviews/SHE-412.md` for audit and verification limits.
+
 ## Civic discovery sampler
 
 Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy
