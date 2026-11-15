@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Choice, Feedback, PublicPull, PullDetail, PullList } from '../shared/hbl-governance';
 import './game-patches.css';
 import VoteBatch from './VoteBatch';
+import MergeRehearsal from './MergeRehearsal';
 import { attachedScreenshots } from './pr-screenshots';
 
 import { REPOSITORIES, votingRoute } from '../shared/repository-voting';
@@ -136,6 +137,7 @@ function RepositoryItems({route}:{route:NonNullable<ReturnType<typeof votingRout
     {error && <div role="alert" className="gp-error">{error}{list && <p>Previously loaded data is shown. Verified participation is paused until refresh succeeds; community votes remain available for displayed revisions.</p>}</div>}
     {!list && loading && <p role="status">Loading game patches…</p>}
     {viewer && <p className="gp-identity">{viewer.authenticated ? <>Signed in as <b>{viewer.alias ?? 'GitHub member'}</b> · {viewer.approved ? 'Approved voter' : 'Membership approval required'}</> : <span>Sign in with an approved GitHub roster account for verified ballots and public feedback.</span>}</p>}
+    {!isIssue && <MergeRehearsal list={list} api={api} loading={loading} error={error} />}
     {number ? <>
       <a href={`${BASE}?view=${isIssue?'issues':'prs'}`}>← All game patches</a>
       {loading && !detail && <p role="status">Loading patch #{number}…</p>}
