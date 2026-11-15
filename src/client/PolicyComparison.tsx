@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { EVIDENCE_QUESTIONS, PILOT_SCOPE, PILOT_TEXT, evidenceUpdateUrl } from "./evidence-conditions";
+import "./evidence-conditions.css";
 import type { PolicyComparison } from "../server/policy-comparison";
 
 export function PolicyComparisonPanel() {
@@ -56,4 +58,60 @@ export function ComparisonDetails({ comparison }: { comparison: PolicyComparison
       <p>Server-stored replay survives policy changes and restart on the same database. Export the JSON for your records; availability depends on that database being retained.</p>
     </details>
   </div>;
+}
+
+/** Private, page-memory sandbox. Intentionally has no API or voting dependency. */
+export function EvidenceConditionCards({ scope }: { scope: string }) {
+  // Key the editor by exact source identity even if a caller reuses the component.
+  return scope === PILOT_SCOPE ? <EvidenceConditionEditor key={scope} /> : null;
+}
+
+function EvidenceConditionEditor() {
+  const [cards, setCards] = useState<Record<string, { condition: string; title: string; url: string; locator: string; linked: boolean }>>({});
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const prefix = useId();
+  const patch = (id: string, values: Partial<(typeof cards)[string]>) => {
+    setCards(previous => ({ ...previous, [id]: { ...previous[id]!, ...values } }));
+    setMessage('Private edits kept on this page only.'); setError('');
+  };
+  return <section className="evidence-conditions" aria-label="Private evidence conditions">
+    <h4>What evidence would change my mind?</h4>
+    <p>Optional fictional sandbox. Name a threshold; you do not have to change your mind. Nothing here is verified civic participation, and no card changes any vote or creates a public political profile.</p>
+    <p>Private to this page, visible to anyone looking at this screen. Text is not sent or saved to browser storage. Leaving or reloading discards it. Avoid sensitive information.</p>
+    <details><summary>Try a private evidence card</summary>
+      <p>Questions from the sample proposal’s unresolved access and funding claims. No claim-level evidence has been supplied; these templates are prompts, not findings.</p>
+      <p className="evidence-scope">Source revision: {PILOT_SCOPE} · exact clause: {PILOT_TEXT}</p>
+      {EVIDENCE_QUESTIONS.map(question => {
+        const card = cards[question.id];
+        return <fieldset key={question.id}>
+          <legend>{question.question}</legend>
+          {!card ? <button type="button" onClick={() => {
+            setCards(previous => ({ ...previous, [question.id]: { condition: question.template, title: '', url: '', locator: '', linked: false } }));
+            setMessage('Template added privately. Replace bracketed prompts with your threshold.'); setError('');
+          }}>Use {question.id === 'access' ? 'access' : 'funding'} template</button> : <>
+            <label>My evidence threshold<textarea maxLength={2000} rows={5} value={card.condition} onChange={e => patch(question.id, { condition: e.target.value })} /></label>
+            <p>Specify a measure, baseline, minimum change, time period and whose experience matters. A threshold is your judgment, not a promise to vote.</p>
+            <label>Published update title<input maxLength={200} value={card.title} onChange={e => patch(question.id, { title: e.target.value, linked: false })} /></label>
+            <label>Published update URL<input type="url" inputMode="url" maxLength={2000} value={card.url} onChange={e => patch(question.id, { url: e.target.value, linked: false })} /></label>
+            <label>Publication date, passage or table locator<input maxLength={500} value={card.locator} onChange={e => patch(question.id, { locator: e.target.value, linked: false })} /></label>
+            <p>No update yet? Leave these fields blank and return when evidence is published. Links are not fetched, monitored or verified. You decide whether an update meets your threshold.</p>
+            <div className="evidence-actions"><button type="button" onClick={() => {
+              if (!card.title.trim() || !card.locator.trim() || !evidenceUpdateUrl(card.url)) {
+                setError('Enter an update title, an HTTP(S) URL without credentials, and a publication date or passage locator. Your edits are retained.'); setMessage(''); return;
+              }
+              patch(question.id, { linked: true }); setMessage('Published update linked privately. Evidence remains unverified; no vote changed.');
+            }}>Link published update privately</button>
+            <button type="button" onClick={() => {
+              setCards(previous => { const next = { ...previous }; delete next[question.id]; return next; });
+              setMessage('Private card discarded. No vote changed.'); setError('');
+            }}>Discard {question.id} card</button></div>
+            {card.linked && <p>Unverified evidence update: <a href={evidenceUpdateUrl(card.url)!} target="_blank" rel="noopener noreferrer">{card.title}</a> · {card.locator}. Opening this link visits the publisher; your condition is not included.</p>}
+          </>}
+        </fieldset>;
+      })}
+    </details>
+    <p id={`${prefix}-status`} role="status">{message}</p>
+    {error && <p role="alert">{error}</p>}
+  </section>;
 }

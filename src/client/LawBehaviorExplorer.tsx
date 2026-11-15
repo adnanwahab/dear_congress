@@ -1,6 +1,11 @@
+import { WorldPortal } from './WorldPortal';
+import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
-import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
+import {LawEnsemble} from './LawEnsemble';
+import {FuturePostcard} from './FuturePostcard';
+import {lawOutcomeTrace} from './law-outcome-trace';
+import {parseCivicLawContext,civicLawQuery,parseSimulationShare,simulationShareQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
 type Actor = {id:string;label?:string;x?:number;z?:number;[key:string]:string|number|boolean|null|undefined};
@@ -57,6 +62,9 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
   if(data.schemaVersion!=='hbl-law-behavior-receipt.v1'||!Array.isArray(data.frames)||
     !data.law||!Number.isInteger(data.law.number)||typeof data.law.title!=='string'||data.frames.length>100)
     throw Error('Unknown law behavior contract; model data not displayed.');
+  if(data.limitations!==undefined&&(!Array.isArray(data.limitations)||data.limitations.length>100||
+    data.limitations.some(text=>typeof text!=='string'||text.length>10000)))
+    throw Error('Invalid model limitations; model data not displayed.');
   if(data.status==='mechanism-unavailable')return data as LawBehaviorReceipt;
   if(data.status!=='completed'||!data.manifest?.pairedInitialState||
     !['population','city'].includes(data.engine||'')||
@@ -66,7 +74,7 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
     !Number.isInteger(data.manifest.population)||data.manifest.population<1||data.manifest.population>60||
     data.manifest.recordedCheckpoints!==data.frames.length||
     !isFiniteNumber(data.manifest.start)||!isFiniteNumber(data.manifest.end)||
-    data.manifest.start>data.manifest.end||typeof data.manifest.modelVersion!=='string'||!data.manifest.modelVersion||
+    data.manifest.start>data.manifest.end||typeof data.manifest.modelVersion!=='string'||!(/^[A-Za-z0-9._-]{1,80}$/).test(data.manifest.modelVersion)||
     !data.frames.length)throw Error('The model did not supply comparable recorded behavior.');
   for(let i=0;i<data.frames.length;i++){
     const frame=data.frames[i];
@@ -146,9 +154,9 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
 
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
 export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:string}){
-  const [imported]=useState(()=>typeof window==='undefined'?null:parseCivicLawContext(window.location.search));
+  const [imported]=useState(()=>typeof window==='undefined'?null:(new URLSearchParams(window.location.search).has('simulationShare')?parseSimulationShare(window.location.search):parseCivicLawContext(window.location.search)));
   const effectiveSeed=imported?.seed??seed;
-  const invalidContext=typeof window!=='undefined'&&new URLSearchParams(window.location.search).has('civicContext')&&!imported;
+  const invalidContext=typeof window!=='undefined'&&['civicContext','simulationShare'].some(key=>new URLSearchParams(window.location.search).has(key))&&!imported;
   const [lawId,setLawId]=useState(imported?.lawId??83);
   const [strength,setStrength]=useState((imported?.implementationStrength??1)*100);
   const [revision,setRevision]=useState(imported?.revision??1);
@@ -158,6 +166,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
+  const [speed,setSpeed]=useState(1);
+  const [reducedMotion,setReducedMotion]=useState(false);
+  const [traceOpen,setTraceOpen]=useState(false);
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
@@ -179,20 +190,36 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const baselineMetric=frame?.baseline.metrics[selectedMetric],editedMetric=frame?.edited.metrics[selectedMetric];
   const diff=isFiniteNumber(baselineMetric)&&isFiniteNumber(editedMetric)?editedMetric-baselineMetric:null;
   const originalAtTime=reference?.status==='completed'&&reference.engine===receipt?.engine&&
+    reference.law.number===receipt?.law.number&&reference.unit===receipt?.unit&&
+    reference.manifest?.modelVersion===receipt?.manifest?.modelVersion&&
+    reference.manifest?.population===receipt?.manifest?.population&&
     reference.manifest?.seed===receipt?.manifest?.seed?
     reference.frames.find(row=>row.time===frame?.time):undefined;
   const originalValue=originalAtTime?.edited.metrics[selectedMetric];
 
   useEffect(()=>()=>{controller.current?.abort();generation.current++;},[]);
   useEffect(()=>{
+    const preference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if(!preference)return;
+    const update=()=>{setReducedMotion(preference.matches);setPlaying(false);};
+    update();
+    preference.addEventListener?.('change',update);
+    const hide=()=>{if(document.hidden)setPlaying(false);};
+    document.addEventListener('visibilitychange',hide);
+    return()=>{preference.removeEventListener?.('change',update);document.removeEventListener('visibilitychange',hide);};
+  },[]);
+  useEffect(()=>{
     if(!playing||frames.length<2)return;
-    const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))));
-    const timer=window.setInterval(()=>setFrameIndex(old=>{if(old>=frames.length-1){setPlaying(false);return old;}return old+1;}),delay);
-    return()=>window.clearInterval(timer);
-  },[playing,receipt]);
+    if(frameIndex>=frames.length-1){setPlaying(false);return;}
+    // One exact recorded pair per tick; never invent in-between states or model time.
+    const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))))/speed;
+    const timer=window.setTimeout(()=>setFrameIndex(frameIndex+1),delay);
+    return()=>window.clearTimeout(timer);
+  },[playing,receipt,frameIndex,speed]);
+  function seek(index:number){setPlaying(false);setFrameIndex(Math.max(0,Math.min(frames.length-1,index)));}
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
-    setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
+    setReceipt(null);setTraceOpen(false);setError('');setDirty(true);setFrameIndex(0);
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
@@ -214,6 +241,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(!response.ok)throw Error(typeof payload?.error==='string'?payload.error:'Model request unavailable.');
       const parsed=parseLawBehaviorReceipt(payload);
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
+      if(parsed.status==='completed'&&(parsed.manifest?.start!==0||parsed.manifest?.end!==amendment.horizon||parsed.unit!==amendment.clock))throw Error('Model horizon changed. This scenario cannot be reproduced by this provider.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
@@ -230,7 +258,31 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
-    <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    {imported?.modelVersion&&<p role="status">Shared model version: {imported.modelVersion}. Inputs restored; run to check provider compatibility. Nothing runs automatically.</p>}
+    <p className="muted s">Shared links contain only reviewed model settings, seed, fixed horizon, population and model version. Journals, identities and unpublished proposals are excluded.</p>
+    <section className="civic-model-limits" aria-labelledby="model-limits-title">
+      <h4 id="model-limits-title">What this model cannot tell you</h4>
+      <p><strong>Demo / sandbox · awaiting review.</strong> Synthetic examples and model projections are separate from real votes. No arbitrary bill prose is implemented in HappyBearLandia.</p>
+      <h4>Reviewed mechanisms</h4>
+      <ul>{MODELED_LAWS.map(row=><li key={row.id}>{row.label}{row.editable?' · adjustable implementation strength':' · no partial-strength mapping'}</li>)}</ul>
+      <p>“Reviewed” identifies the allowlisted mapping, not empirical validation or approval of this demo. <a href={new URL('/world/constitution-city.html',hblOrigin).href} target="_blank" rel="noopener">Source: HappyBearLandia synthetic model</a>. A completed run supplies its model version and recorded checkpoints below.</p>
+      <h4>Unmodeled claims</h4>
+      <ul><li>Effects of your bill text or frozen civic package; neither is compiled into this model.</li><li>Real-world happiness, rights, budget feasibility, causal attribution and representative resident outcomes.</li><li>Enactment, public consent or verified vote authority. <a href="/votes">Read and give advisory views</a> separately.</li></ul>
+      <h4>Sensitivity parameters</h4>
+      <p>Move implementation strength from 100% to 50% while keeping seed {effectiveSeed}, population 24 and the same mechanism. Run each setting to inspect recorded differences. A smaller assumption need not produce a smaller effect. Transit covers 720 minutes; housing covers 12 months. Seed and short horizon also limit generalization.</p>
+      <fieldset disabled={busy||invalidContext} className="civic-sensitivity-examples">
+        <legend>Try an assumption (then Run two futures)</legend>
+        {[83,22,23].map(id=><button key={id} type="button" onClick={()=>changedInput(id,50)}>
+          {id===83?'Transit':id===22?'Construction cost':'Permit capacity'} at 50%
+        </button>)}
+        <button type="button" disabled={!law.editable} onClick={()=>changedInput(lawId,100)}>Restore 100% assumption</button>
+      </fieldset>
+      <h4>Failed assumptions and missing checks</h4>
+      <p>{error?'Run check failed: no comparable effects are displayed. See the error and retry below.':receipt?.status==='mechanism-unavailable'?'Mapping assumption failed: the provider has no reviewed behavior mechanism for this run.':receipt?.status==='completed'?'Receipt checks passed for this run; that does not validate real-world assumptions.':'No run checked yet. Paired starting state, request identity and model version are checked when data arrives.'}</p>
+      <p>The receipt cannot test whether implementation succeeds in practice or whether these synthetic actors represent your community. It supplies no validated causal explanation or project/event IDs. Missing evidence is not a passed assumption.</p>
+      {receipt?.status==='completed'&&<><h4>Provider-reported limitations</h4>{receipt.limitations?.length?<ul>{receipt.limitations.map((text,index)=><li key={index}>{text}</li>)}</ul>:<p>No additional limitations supplied; this does not mean none exist.</p>}</>}
+    </section>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
@@ -268,15 +320,27 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
             {metricKeys.map(key=><option key={key} value={key}>{METRICS[key]?.label||key}</option>)}
           </select>
         </label>
-        <label>Time: {receipt.unit} {formatted(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
-          <input type="range" min="0" max={frames.length-1} value={frameIndex}
-            onChange={e=>{setPlaying(false);setFrameIndex(Number(e.target.value));}}
+        <label>Time: {receipt.unit} {String(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
+          <input type="range" min="0" max={frames.length-1} step="1" value={frameIndex}
+            aria-valuetext={`${receipt.unit} ${String(frame?.time)}, checkpoint ${frameIndex+1} of ${frames.length}`}
+            onChange={e=>{const next=Number(e.target.value);if(next!==frameIndex)requestHaptic(e.nativeEvent);seek(next);}}
             aria-label="Recorded simulation time"/>
         </label>
+        <label>Playback speed
+          <select value={speed} onChange={e=>setSpeed(Number(e.target.value))}>
+            {[0.5,1,2,4].map(value=><option key={value} value={value}>{value}×</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={frameIndex===0&&!playing} onClick={()=>seek(0)}>Rewind to first checkpoint</button>
+        <button type="button" disabled={frameIndex===0} onClick={()=>seek(frameIndex-1)}>Step back</button>
+        <button type="button" disabled={frameIndex===frames.length-1} onClick={()=>seek(frameIndex+1)}>Step forward</button>
         <button type="button" disabled={frames.length<2} onClick={()=>{
           if(playing)setPlaying(false);else{if(frameIndex===frames.length-1)setFrameIndex(0);setPlaying(true);}
         }}>{playing?'Pause recorded playback':'Play recorded behavior'}</button>
       </div>
+      <p className="muted s" role="status">{playing?'Playing':frameIndex===frames.length-1?'Playback complete':'Paused'} · Both worlds synchronized at {receipt.unit} {String(frame?.time)}. Recorded range: {String(frames[0]?.time)}–{String(frames.at(-1)?.time)} {receipt.unit}s.</p>
+      <p className="muted s">Speed controls checkpoint pacing, not model time. Only recorded paired states are loaded; no intermediate events are invented. Use arrow keys on the time slider or the step buttons to inspect checkpoints.</p>
+      {reducedMotion&&<p className="muted s">Reduced motion is enabled. Playback stays paused until you explicitly press Play; stepping and scrubbing remain available.</p>}
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>
@@ -290,13 +354,34 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </section>
       </div>
       <p className="civic-law-difference">Recorded difference: {formatted(diff)} {unit} (edited minus current rules).</p>
+      <button type="button" aria-expanded={traceOpen} aria-controls="law-outcome-trace" onClick={()=>{setTraceOpen(old=>!old);setPlaying(false);}}>Inspect selected outcome evidence</button>
+      {traceOpen&&frame&&<section id="law-outcome-trace" aria-label="Selected outcome evidence">
+        <h4>{METRICS[selectedMetric]?.label||'Outcome unavailable'} · sandbox why-chain</h4>
+        <p><strong>Observed simulation correlation:</strong> {formatted(baselineMetric)} → {formatted(editedMetric)} {unit} at {receipt.unit} {frame.time}. These are paired recorded outputs, not real votes or measured policy effects.</p>
+        <p><strong>Model rule mapping:</strong> {law.label}; {amendment.parameterKey}: {amendment.originalValue} → {amendment.editedValue} {amendment.units}. This local mapping is not an executed mechanism receipt.</p>
+        <p><strong>Causal interpretation unavailable:</strong> the receipt does not supply project/event IDs or a validated causal explanation. Event timestamps and executed mechanism receipts are missing; checkpoint times must not be treated as event times.</p>
+        <p>Seed {receipt.manifest?.seed} · model version {receipt.manifest?.modelVersion} · code version unavailable. Model version alone does not establish a code revision.</p>
+        <a download={`law-${lawId}-${selectedMetric}-trace.json`} href={'data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(lawOutcomeTrace(receipt,context,selectedMetric,frameIndex,new URL(hblOrigin).origin),null,2))}>Export selected outcome trace (JSON)</a>
+        <p className="muted s">Export includes the full recorded receipt, selected checkpoint, scenario revision, parameter mapping, seed and explicit missing evidence.</p>
+      </section>}
       {reference&&strength!==100&&isFiniteNumber(originalValue)&&<p className="muted s">
         Original 100% setting at this checkpoint: {formatted(originalValue)} {unit}. The original run is retained.
       </p>}
+      <LawEnsemble key={`${lawId}:${strength}:${revision}`} lawId={lawId} strength={strength/100} seed={effectiveSeed} hblOrigin={hblOrigin} modelVersion={receipt.manifest?.modelVersion||undefined} metric={selectedMetric} unit={unit}/>
       <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
-      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      <p><a href={'/synth?'+simulationShareQuery(context)}>Reproducible scenario link</a></p>
+      <WorldPortal title={law.label} source={`${context.proposalId} · model recipe revision ${revision} · ${strength}% implementation · seed ${effectiveSeed}`}>
+        <p>Static cross-origin handoff. The external world opens in another tab; this exact source view stays here. Its loading status cannot be verified here. If unavailable, close that tab and return here to retry. This is a separate reviewed model, not your bill text.</p>
+        <a href={new URL('/world/constitution-city.html?'+civicLawQuery({...context,proposalId:undefined}),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
+      </WorldPortal>
+      <p><a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      {frame&&receipt.manifest&&isFiniteNumber(baselineMetric)&&isFiniteNumber(editedMetric)&&<FuturePostcard
+        key={`${revision}:${frame.time}:${selectedMetric}`}
+        facts={{law:receipt.law.number,seed:receipt.manifest.seed,strength:receipt.manifest.implementationStrength*100,
+          revision,model:receipt.manifest.modelVersion||'unavailable',time:frame.time,clock:receipt.unit||'model time',
+          metric:METRICS[selectedMetric]!.label,unit,baseline:baselineMetric,edited:editedMetric}}/>}
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic

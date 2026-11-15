@@ -1,3 +1,4 @@
+import { useLocalUndo } from "./LocalUndo";
 import { getTopic } from '../shared/topics';
 import { TopicChip, TopicHubLink } from './TopicChip';
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
@@ -31,11 +32,18 @@ export function ProposalSearch({ items, query, topic, setQuery, setTopic, loaded
     revision.current++;
     active.current?.skipTransition();
   }, []);
-  function update(nextQuery: string, nextTopic: string) {
+  const undo = useLocalUndo();
+  function update(nextQuery: string, nextTopic: string, restoring = false) {
     clearTimeout(timer.current);
     const current = ++revision.current;
     active.current?.skipTransition();
-    const commit = () => { if (current === revision.current) { setQuery(nextQuery); setTopic(nextTopic); } };
+    const commit = () => { if (current === revision.current) {
+      if (!restoring && (query !== nextQuery || topic !== nextTopic)) {
+        const previousQuery = query, previousTopic = topic;
+        undo.record('sample search and topic filters', () => { setText(previousQuery); update(previousQuery, previousTopic, true); });
+      }
+      setQuery(nextQuery); setTopic(nextTopic);
+    } };
     // The shared helper flushes the update and falls back to an instant change when motion is off.
     void runViewTransition(commit, 'filter', transition => { active.current = transition; });
   }
@@ -57,8 +65,9 @@ export function ProposalSearch({ items, query, topic, setQuery, setTopic, loaded
       <label>Filter by topic<select style={{ viewTransitionClass: 'filter-control', viewTransitionName: `proposal-topic-${identity}` }} value={topic} onChange={e => update(text, e.target.value)}>{topics.map(t => <option key={t}>{t}</option>)}</select></label>
       <button type="button" className="outline" disabled={!text && !query && topic === 'All topics'} onClick={reset}>Clear all filters</button>
     </form>
-    <div className="topic-filters" role="group" aria-label="Topic chips">{topics.map(t => <button type="button" key={t} aria-label={t} aria-pressed={topic === t} onClick={() => setTopic(t)}>{!getTopic(t) ? t : <TopicChip topic={t} />}</button>)}</div>
+    <div className="topic-filters" role="group" aria-label="Topic chips">{topics.map(t => <button type="button" key={t} aria-label={t} aria-pressed={topic === t} onClick={() => update(text, t)}>{!getTopic(t) ? t : <TopicChip topic={t} />}</button>)}</div>
     <div className="topic-filters" aria-label="Explore topic hubs">{topics.map(t => <TopicHubLink key={t} topic={t} />)}</div>
+    {undo.control}
     <p>Search titles, summaries, sources and jurisdictions in this sample list.</p>
     <p style={{ viewTransitionName: `proposal-count-${identity}` }} role="status" aria-live="polite">{loaded ? `Showing ${filtered.length} of ${items.length} proposals · Sample data` : failed ? 'Sample proposals unavailable. Use the retry control above.' : 'Loading sample proposals…'}</p>
     {loaded && !filtered.length && <div className="empty-feed"><p>{items.length ? 'No proposals match your search and topic. Try a broader term or reset filters.' : 'No sample proposals are available in the loaded list.'}</p><button type="button" className="outline" onClick={reset}>Reset filters</button></div>}
