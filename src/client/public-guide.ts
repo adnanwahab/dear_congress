@@ -70,6 +70,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 
 Try the [civic trivia arcade](/documentation#civic-trivia): five untimed Houston knowledge questions with a source for every explanation. Topics rotate between representation and public budgets. Answers and scores stay only in page memory, disappear when you leave or reload, and never affect votes, proposals, public opinion weights or merge authority. Following a source link visits an external official site.
 
+The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthly agenda and dated source ledger. It separates primary sources, editorial inference, user claims and synthetic estimates. Publication, observation and retrieval are distinct; unknown dates stay unknown. Review expiry means a review is due, not that an older source is false. Bundled examples work offline; they do not certify live source availability. Copy the JSON export or use browser Print to retain dates, limitations and pending human-review history.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.

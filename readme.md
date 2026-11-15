@@ -99,6 +99,11 @@ including mixed results, pinned baseline/source history and missing or stale dat
 The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+The evidence freshness calendar adds a monthly agenda and dated ledger with
+review reminders, unknown-date labels and copyable/printable provenance.
+Age never determines validity. Its sourced example establishes repository
+fixture contents only; mixed results remain synthetic.
+See [SHE-678 implementation and validation limits](docs/reviews/SHE-678.md).
 
 ## What's in it
 
