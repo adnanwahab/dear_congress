@@ -11,6 +11,10 @@ Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game wal
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
+## Optional sound
+
+The shared header starts with Sound Off. You can enable quiet navigation and sandbox cues for this browser and try each cue under Sound tests. Enabling sound itself is silent. Reduced motion and motion-off suppress cues. Sounds are generated locally and need no network download once the page has loaded; this does not make the whole application available offline. Use Sound Off for silence, including on devices whose mute switch does not silence browser media. All critical status stays visible as text. Voting and publication have no sound rewards.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
