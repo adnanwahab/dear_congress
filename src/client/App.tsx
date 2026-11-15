@@ -1,4 +1,5 @@
 import { TopicHubs, TopicReturn } from './TopicHubs';
+import { AssumptionDiagram } from './AssumptionDiagram';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
@@ -1553,6 +1554,8 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
   const [outcomesMode, setOutcomesMode] = useState<OutcomesMode>(state.outcomesMode ?? "shadow");
   const syntheticCount = state.entries.filter((e) => e.synthetic).length;
 
+  const [assumptionSource, setAssumptionSource] = useState<string | null>(null);
+  const [assumptionPending, setAssumptionPending] = useState(false);
   const [livePreview, setLivePreview] = useState(false);
   const [settingsRevision, setSettingsRevision] = useState(0);
   const requestVersion = useRef(0);
@@ -1565,7 +1568,10 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     requestController.current?.abort();
     if (previewTimer.current !== null) clearTimeout(previewTimer.current);
   }
-  function changeSettings(change: () => void) {
+  function changeSettings(change: () => void, source: string) {
+    setAssumptionSource(source);
+    setAssumptionPending(true);
+    setSynthError(null);
     invalidateRequest();
     setBusy(false);
     setLivePreview(true);
@@ -1585,6 +1591,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       await updatePlan(() => {
         // View Transition callbacks can run after a newer setting/request.
         if (version !== requestVersion.current) return;
+        setAssumptionPending(false);
         setPreviousPlans(visiblePlans.current);
         visiblePlans.current = { real: payload.real ?? [], blended: payload.blended ?? [] };
         setShowPlanChanges(true);
@@ -1596,8 +1603,10 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
         setLivePreview(preview);
       });
     } catch (error) {
-      if (version === requestVersion.current && !controller.signal.aborted)
+      if (version === requestVersion.current && !controller.signal.aborted) {
+        setAssumptionPending(false);
         setSynthError(error instanceof Error ? error.message : String(error));
+      }
     } finally { if (version === requestVersion.current) setBusy(false); }
   }
   useEffect(() => {
@@ -1727,21 +1736,22 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
           <label key={k} className="slider">
             <span>{WEIGHT_LABELS[k]}</span>
-            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setWeights({ ...weights, [k]: value })); }} />
+            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setWeights({ ...weights, [k]: value }), `${WEIGHT_LABELS[k]} = ${value.toFixed(2)}`); }} />
             <b className="num-s">{weights[k].toFixed(2)}</b>
           </label>
         ))}
         <hr />
         <label className="slider">
           <span>Institutional-change penalty</span>
-          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setLambda(value)); }} />
+          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setLambda(value), `Institutional-change penalty = ${value.toFixed(2)}`); }} />
           <b className="num-s">{lambda.toFixed(2)}</b>
         </label>
         <label className="slider">
           <span>Annual budget</span>
-          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
+          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value), `Annual budget = $${value}B`); }} />
           <b className="num-s">${budget}B</b>
         </label>
+        <AssumptionDiagram source={assumptionSource} pending={assumptionPending} error={synthError} previous={previousPlans} current={{ real: realPkgs ?? [], blended: blendedPkgs ?? [] }} />
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
