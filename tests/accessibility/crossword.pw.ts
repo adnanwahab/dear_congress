@@ -14,7 +14,7 @@ test('crossword keyboard-only full playthrough', async ({ page }) => {
   await page.keyboard.press('ArrowDown'); await page.keyboard.type('T');
   await page.keyboard.press('ArrowRight'); await page.keyboard.type('A');
   await page.keyboard.press('ArrowRight'); await page.keyboard.type('X');
-  await expect(page.getByRole('status')).toContainText('Puzzle complete');
+  await expect(page.locator('.civic-crossword [role="status"]')).toContainText('Puzzle complete');
   await page.keyboard.press('Escape');
   await expect(launch).toBeFocused();
 });
@@ -31,7 +31,7 @@ test('crossword touch playthrough offline, explanations and reset', async ({ bro
     const count = id === '1-across' ? 6 : id === '2-down' ? 2 : 2;
     for(let i=0;i<count;i++) await page.getByRole('button',{name:`Hint ${id}`,exact:true}).tap();
   }
-  await expect(page.getByRole('status')).toContainText('Puzzle complete');
+  await expect(page.locator('.civic-crossword [role="status"]')).toContainText('Puzzle complete');
   await page.getByText('Complete-text explanation and answers', {exact:true}).tap();
   await expect(page.getByRole('heading',{name:'1-across: SENATE'})).toBeVisible();
   await page.getByRole('button',{name:'Restart',exact:true}).tap();
