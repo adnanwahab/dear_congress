@@ -997,10 +997,10 @@ html:is(:active-view-transition-type(filter), [data-motion-type="filter"])::view
 html:active-view-transition .needs .need-fill { transition: none; }
 
 /* Theme snapshots include the chrome so the circle reveals the whole page. */
-html:active-view-transition-type(theme) * { view-transition-name: none !important; }
-html:active-view-transition-type(theme)::view-transition-old(root),
-html:active-view-transition-type(theme)::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-html:active-view-transition-type(theme)::view-transition-new(root) { z-index: 1;  animation: theme-reveal calc(400ms * var(--motion-scale, 1)) ease-out both; }
+html:is(:active-view-transition-type(theme), [data-motion-type="theme"]) * { view-transition-name: none !important; }
+html:is(:active-view-transition-type(theme), [data-motion-type="theme"])::view-transition-old(root),
+html:is(:active-view-transition-type(theme), [data-motion-type="theme"])::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html:is(:active-view-transition-type(theme), [data-motion-type="theme"])::view-transition-new(root) { z-index: 1;  animation: theme-reveal calc(400ms * var(--motion-scale, 1)) ease-out both; }
 @keyframes theme-reveal { from { clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%)); } to { clip-path: circle(var(--theme-r, 150vmax) at var(--theme-x, 50%) var(--theme-y, 50%)); } }
 .header-meta { flex-wrap: wrap; }
 .civic-shell button.theme-switch { display: inline-flex; align-items: center; gap: 7px; background: var(--card); color: var(--ink); border-color: var(--line); min-height: 44px; }

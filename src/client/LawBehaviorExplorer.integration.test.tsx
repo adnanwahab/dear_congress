@@ -59,6 +59,20 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Travel mode: walk → bus');
     expect(host.querySelectorAll('polyline').length).toBe(2);
     expect(host.textContent).toContain('minute 30');
+    expect(host.querySelector('.future-postcard img')).toBeNull();
+    await act(async()=>getByRole(host,'button',{name:'Preview future postcard'}).click());
+    const postcard=getByRole(host,'img',{name:/Synthetic scenario \/ not forecast/});
+    expect(postcard.getAttribute('alt')).toContain('Seed 42');
+    expect(postcard.getAttribute('alt')).toContain('20 → 14');
+    expect(host.querySelector('a[download]')?.getAttribute('href')).toStartWith('data:image/svg+xml');
+    Object.defineProperty(browser.navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied');}}});
+    await act(async()=>getByRole(host,'button',{name:'Copy description'}).click());
+    expect(host.textContent).toContain('Copy failed');
+    let copied='';
+    Object.defineProperty(browser.navigator,'clipboard',{configurable:true,value:{writeText:async(text:string)=>{copied=text;}}});
+    await act(async()=>getByRole(host,'button',{name:'Copy description'}).click());
+    expect(copied).toContain('Synthetic scenario / not forecast');
+    expect(copied).not.toContain('Resident 1');
     const inspect=getByRole(host,'button',{name:'Inspect selected outcome evidence'});
     await act(async()=>inspect.click());
     expect(inspect.getAttribute('aria-expanded')).toBe('true');
@@ -71,6 +85,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const timeSlider=getByRole(host,'slider',{name:'Recorded simulation time'}) as HTMLInputElement;
     await act(async()=>fireEvent.change(timeSlider,{target:{value:'0'}}));
     expect(host.textContent).toContain('minute 0');
+    expect(host.querySelector('.future-postcard img')).toBeNull();
     expect(exported().observation.time).toBe(0);
     await act(async()=>getByRole(host,'button',{name:'Transit at 50%'}).click());
     expect(host.querySelector('.civic-law-lanes')).toBeNull();

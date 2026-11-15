@@ -47,3 +47,11 @@
 .civic-law-behavior [aria-controls=law-outcome-trace]{min-height:44px;padding:8px 12px}
 #law-outcome-trace{margin-top:12px;padding:12px;border:1px solid #96b4c4;border-radius:8px;overflow-wrap:anywhere}
 #law-outcome-trace a[download]{display:inline-flex;align-items:center;min-height:44px}
+
+
+/* Static export: no motion, hover-only actions, network imagery or canvas. */
+.future-postcard { margin-block: 1.5rem; padding: 1rem; border: 1px solid currentColor; border-radius: 12px; min-width: 0; }
+.future-postcard img { display: block; width: 100%; height: auto; margin-block: 1rem; }
+.future-postcard textarea { display: block; width: 100%; box-sizing: border-box; }
+.future-postcard button, .future-postcard a { min-height: 44px; padding: .65rem; display: inline-block; }
+.future-postcard :is(button,a,textarea):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

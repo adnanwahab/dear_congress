@@ -68,6 +68,15 @@ export function installJourneyHistory(target: Window) {
     if (entry && activation?.from) writeJourney({ ...entry, direction: transitionDirection(activation.from.url, activation.entry.url) }, target);
   });
   target.addEventListener('pageshow', event => {
-    if (event.persisted) target.requestAnimationFrame(() => restoreJourney(target));
+    if (!event.persisted) return;
+    const focusedAtReveal = target.document.activeElement;
+    target.requestAnimationFrame(() => {
+      // BFCache restoration must not steal a visitor's new keyboard focus.
+      // A key press can arrive before the deferred restoration frame runs.
+      const currentFocus = target.document.activeElement;
+      if (currentFocus !== focusedAtReveal && currentFocus !== target.document.body
+        && currentFocus !== target.document.documentElement) return;
+      restoreJourney(target);
+    });
   });
 }

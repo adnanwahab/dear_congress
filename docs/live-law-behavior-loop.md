@@ -201,3 +201,43 @@ Cross-origin handoff is static, opens a separate tab and explicitly cannot verif
 external loading. No invented ready message, external breadcrumb parameter or
 unreviewed legal-text mapping is sent. See [SHE-389 review](reviews/SHE-389.md)
 for remaining full cross-app acceptance requirements.
+
+
+## Future postcard (SHE-449)
+
+A completed, validated receipt with a finite selected metric pair offers **Preview
+future postcard**. The local static SVG contains the selected checkpoint's current
+and edited values, signed difference, units, seed, law number, implementation
+strength, local revision and provider model version. These are measurements of a
+synthetic simulation, not measured real-world outcomes. The graphic, its accessible
+alt text and copied description all include **Synthetic scenario / not forecast**.
+The existing reproducible scenario and civic stage links remain unchanged.
+
+Preview does not publish or request an export API. Download saves an SVG; copying
+uses the clipboard only on explicit activation, with a selectable description if
+clipboard permission fails. An explicit aggregate-field allowlist excludes journals,
+actor identities and user data. The image has no external resources or animation.
+Changing metric/checkpoint/inputs clears the preview, so exported facts cannot be
+silently relabeled with a new scenario. Existing run loading, cancellation and
+failure states offer no postcard until comparable model data arrives.
+
+Checks: focused composition and DOM integration tests cover pairs, stamps,
+provenance, privacy, escaping, checkpoint invalidation and clipboard retry. Native
+buttons/links support touch and keyboard with 44px targets and visible focus;
+responsive image/textarea sizing and static rendering apply equally with reduced
+motion. Manual touch, screen-reader and real-browser keyboard/reflow acceptance
+remain pending; DOM tests do not establish those results.
+
+Governance is unchanged: configured approval/quorum/auth/check policies are not
+modified. Required main checks remain `bun test`, `bun run typecheck`, and `route
+smoke test`, with human approval and a human-published tagged release required by
+`launch-merge-policy.md`. No production writes, deploy, merge or external messages
+are part of this feature.
+
+SHE-449 worktree validation: `bun run typecheck` passed; focused postcard/explorer
+integration tests passed (4 tests, 64 assertions); `git diff --check` passed.
+`bun test` reported 477 pass / 26 fail: HTTP/server tests failed to start local
+listeners with `EADDRINUSE` on port 0 in this restricted environment.
+`bun run test:routes` hit the same listener startup error. These required gates
+remain unverified and must pass in a listener-capable environment before review
+acceptance. No check or server binding was weakened to bypass this limitation.
