@@ -70,3 +70,14 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## Code change microscope — SHE-613
+
+PR details include a read-only file-role guide grouped into UI, Model, Data, Tests
+and Operations, with documented ordered path heuristics, confidence and caveats.
+Added-line receipts pin the source repository and full head SHA. Deleted-line
+receipts require merge-base identity and are explicitly unavailable in the current
+payload; missing patches and renames likewise never fabricate line receipts.
+The guide exposes source/revision/loading/error/stale/permission states separately
+from governance and never submits a vote or approves a merge. See
+[scope, verification and remaining acceptance](reviews/SHE-613.md).
