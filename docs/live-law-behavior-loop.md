@@ -137,6 +137,49 @@ otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
 
+## SHE-436 · interactive uncertainty panel
+
+`LawBehaviorExplorer` now keeps **What this model cannot tell you** visible before
+and after runs, labeled **Demo / sandbox · awaiting review**. It lists allowlisted
+mechanisms, unmodeled claims, implementation-strength sensitivity, failed receipt
+checks and assumptions that this contract cannot test. “Reviewed” refers to the
+mapping, not empirical validation. Provider limitations are bounded, validated
+strings; missing limitations are explicitly missing evidence.
+
+Native buttons select 50% transit, construction-cost or permit-capacity assumptions,
+or restore the current mechanism to 100%. Selection clears stale results and
+increments the local discussion revision. It never runs automatically: use the
+existing Run two futures control at each setting, keeping the seed and population
+fixed, then read the paired numeric differences and retained 100% output. The
+retained reference must match law, engine, clock, seed, population and model version.
+No outcome is fabricated before the provider responds. Fixed upzoning has no
+partial-strength preset. The existing civic navigation and advisory vote flow remain
+separate; no proposal text, frozen package or vote is sent to the model API.
+
+Controls use native keyboard/button semantics and wrapping 44px touch targets.
+The panel introduces no motion or autoplay; existing reduced-motion styling and
+manual checkpoint navigation remain available. Busy/invalid-context fieldsets
+prevent new preset selection; existing cancel, timeout, failure and retry apply.
+
+Candidate verification (2026-11-14): focused receipt/interaction tests passed
+8/8 (76 assertions); `bun run typecheck` passed. `bun test` ran 502 tests:
+476 passed and 26 failed in this restricted workspace; server-based failures
+reported inability to listen on port 0 (`EADDRINUSE`). `bun run test:routes` failed
+to start its disposable server with the same error. These checks remain required
+in an environment that permits local listeners. No browser, physical touch or
+screen-reader acceptance is claimed for this increment.
+
+Audit: related Dear Congress PR #120 already defines the paired receipt contract
+and separate synthetic sandbox; no SHE-436 PR was returned by the connected GitHub
+search. Changes extend that consumer without modifying the provider repository.
+Governance policy remains as documented in `docs/launch-merge-policy.md`: disabled,
+dry-run defaults, quorum 10, kill switch active, human review and required checks;
+production configuration/protection was not verified or changed. No deployment,
+merge, release, external message, issue transition or production-data write ran.
+Human acceptance and passing required checks remain outstanding.
+
+Refs: https://linear.app/shel-bernstein/issue/SHE-436/joyworlds-what-this-model-cannot-tell-you-panel
+
 ### SHE-430 checkpoint evidence candidate
 
 The demo inspector now exposes selected outcome values, checkpoint time and the

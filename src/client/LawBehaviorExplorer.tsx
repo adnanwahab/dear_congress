@@ -61,6 +61,9 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
   if(data.schemaVersion!=='hbl-law-behavior-receipt.v1'||!Array.isArray(data.frames)||
     !data.law||!Number.isInteger(data.law.number)||typeof data.law.title!=='string'||data.frames.length>100)
     throw Error('Unknown law behavior contract; model data not displayed.');
+  if(data.limitations!==undefined&&(!Array.isArray(data.limitations)||data.limitations.length>100||
+    data.limitations.some(text=>typeof text!=='string'||text.length>10000)))
+    throw Error('Invalid model limitations; model data not displayed.');
   if(data.status==='mechanism-unavailable')return data as LawBehaviorReceipt;
   if(data.status!=='completed'||!data.manifest?.pairedInitialState||
     !['population','city'].includes(data.engine||'')||
@@ -184,6 +187,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const baselineMetric=frame?.baseline.metrics[selectedMetric],editedMetric=frame?.edited.metrics[selectedMetric];
   const diff=isFiniteNumber(baselineMetric)&&isFiniteNumber(editedMetric)?editedMetric-baselineMetric:null;
   const originalAtTime=reference?.status==='completed'&&reference.engine===receipt?.engine&&
+    reference.law.number===receipt?.law.number&&reference.unit===receipt?.unit&&
+    reference.manifest?.modelVersion===receipt?.manifest?.modelVersion&&
+    reference.manifest?.population===receipt?.manifest?.population&&
     reference.manifest?.seed===receipt?.manifest?.seed?
     reference.frames.find(row=>row.time===frame?.time):undefined;
   const originalValue=originalAtTime?.edited.metrics[selectedMetric];
@@ -236,6 +242,28 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <section className="civic-model-limits" aria-labelledby="model-limits-title">
+      <h4 id="model-limits-title">What this model cannot tell you</h4>
+      <p><strong>Demo / sandbox · awaiting review.</strong> Synthetic examples and model projections are separate from real votes. No arbitrary bill prose is implemented in HappyBearLandia.</p>
+      <h4>Reviewed mechanisms</h4>
+      <ul>{MODELED_LAWS.map(row=><li key={row.id}>{row.label}{row.editable?' · adjustable implementation strength':' · no partial-strength mapping'}</li>)}</ul>
+      <p>“Reviewed” identifies the allowlisted mapping, not empirical validation or approval of this demo. <a href={new URL('/world/constitution-city.html',hblOrigin).href} target="_blank" rel="noopener">Source: HappyBearLandia synthetic model</a>. A completed run supplies its model version and recorded checkpoints below.</p>
+      <h4>Unmodeled claims</h4>
+      <ul><li>Effects of your bill text or frozen civic package; neither is compiled into this model.</li><li>Real-world happiness, rights, budget feasibility, causal attribution and representative resident outcomes.</li><li>Enactment, public consent or verified vote authority. <a href="/votes">Read and give advisory views</a> separately.</li></ul>
+      <h4>Sensitivity parameters</h4>
+      <p>Move implementation strength from 100% to 50% while keeping seed {effectiveSeed}, population 24 and the same mechanism. Run each setting to inspect recorded differences. A smaller assumption need not produce a smaller effect. Transit covers 720 minutes; housing covers 12 months. Seed and short horizon also limit generalization.</p>
+      <fieldset disabled={busy||invalidContext} className="civic-sensitivity-examples">
+        <legend>Try an assumption (then Run two futures)</legend>
+        {[83,22,23].map(id=><button key={id} type="button" onClick={()=>changedInput(id,50)}>
+          {id===83?'Transit':id===22?'Construction cost':'Permit capacity'} at 50%
+        </button>)}
+        <button type="button" disabled={!law.editable} onClick={()=>changedInput(lawId,100)}>Restore 100% assumption</button>
+      </fieldset>
+      <h4>Failed assumptions and missing checks</h4>
+      <p>{error?'Run check failed: no comparable effects are displayed. See the error and retry below.':receipt?.status==='mechanism-unavailable'?'Mapping assumption failed: the provider has no reviewed behavior mechanism for this run.':receipt?.status==='completed'?'Receipt checks passed for this run; that does not validate real-world assumptions.':'No run checked yet. Paired starting state, request identity and model version are checked when data arrives.'}</p>
+      <p>The receipt cannot test whether implementation succeeds in practice or whether these synthetic actors represent your community. It supplies no validated causal explanation or project/event IDs. Missing evidence is not a passed assumption.</p>
+      {receipt?.status==='completed'&&<><h4>Provider-reported limitations</h4>{receipt.limitations?.length?<ul>{receipt.limitations.map((text,index)=><li key={index}>{text}</li>)}</ul>:<p>No additional limitations supplied; this does not mean none exist.</p>}</>}
+    </section>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
