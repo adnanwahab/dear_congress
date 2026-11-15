@@ -39,3 +39,26 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.civic-model-limits{margin:14px 0;padding:12px;border:1px solid currentColor;border-radius:9px;overflow-wrap:anywhere}
+.civic-model-limits ul{padding-left:22px}
+.civic-sensitivity-examples{display:flex;flex-wrap:wrap;gap:8px;min-width:0;border:1px solid currentColor;border-radius:8px;padding:10px}
+.civic-sensitivity-examples button{min-height:44px;max-width:100%;white-space:normal;padding:8px 12px;font:inherit}
+.civic-law-behavior [aria-controls=law-outcome-trace]{min-height:44px;padding:8px 12px}
+#law-outcome-trace{margin-top:12px;padding:12px;border:1px solid #96b4c4;border-radius:8px;overflow-wrap:anywhere}
+#law-outcome-trace a[download]{display:inline-flex;align-items:center;min-height:44px}
+
+
+/* Static export: no motion, hover-only actions, network imagery or canvas. */
+.future-postcard { margin-block: 1.5rem; padding: 1rem; border: 1px solid currentColor; border-radius: 12px; min-width: 0; }
+.future-postcard img { display: block; width: 100%; height: auto; margin-block: 1rem; }
+.future-postcard textarea { display: block; width: 100%; box-sizing: border-box; }
+.future-postcard button, .future-postcard a { min-height: 44px; padding: .65rem; display: inline-block; }
+.future-postcard :is(button,a,textarea):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+/* SHE-431: native, touch-sized recorded-world time controls. */
+.civic-law-playback-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+.civic-law-playback-controls button,.civic-law-playback-controls select{min-height:44px;min-width:0;padding:8px}
+.civic-law-playback-controls input[type=range]{min-height:44px;margin-top:0}
+.civic-law-playback-controls button:disabled{opacity:.55;cursor:default}
+@media(max-width:740px){.civic-law-playback-controls{grid-template-columns:1fr}}

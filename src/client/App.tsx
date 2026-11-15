@@ -1,8 +1,11 @@
+import { useLocalUndo } from "./LocalUndo";
+import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { BudgetPuzzle } from "./BudgetPuzzle";
-import { motionDuration } from "./motion";
+import { motionDisabled, motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
+import { CivicAdventure } from './CivicAdventure';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
@@ -13,6 +16,7 @@ import { JournalLiveProvider, useJournalLive } from "./JournalLive";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
+import { CoalitionQuest } from "./CoalitionQuest";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 import { MutationError } from './mutation-status';
 import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
@@ -154,6 +158,7 @@ const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
+  if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
@@ -342,23 +347,6 @@ function SplitLegend({ s }: { s: ProposalStats }) {
 
 const needLabel = (state: AppState, id: string) => state.needs.find((n) => n.id === id)?.label ?? id;
 
-const NEED_COLORS = ["#2f5d50", "#5b4b9a", "#b5523b", "#3f7d5c", "#946c3d", "#4f6a85", "#8b3f5c"];
-
-type GeoCell = {
-  lat: number;
-  lng: number;
-  real: { count: number; perNeed: { needId: string; count: number; demand: number }[] };
-  simulated: { count: number; perNeed: { needId: string; count: number; demand: number }[] };
-};
-
-function topNeedForCell(cell: GeoCell, mode: "real" | "simulated" | "both") {
-  const m = new Map<string, number>();
-  if (mode !== "simulated") for (const p of cell.real.perNeed) m.set(p.needId, (m.get(p.needId) ?? 0) + p.count);
-  if (mode !== "real") for (const p of cell.simulated.perNeed) m.set(p.needId, (m.get(p.needId) ?? 0) + p.count);
-  const arr = [...m.entries()].sort((a, b) => b[1] - a[1]);
-  return arr[0]?.[0] ?? null;
-}
-
 export function NeedsGeoMap({
   styleUrl,
   loadMap = loadMapLibre,
@@ -366,6 +354,7 @@ export function NeedsGeoMap({
   mode,
   needFilter,
   needs,
+  loading = false,
 }: {
   styleUrl?: string;
   loadMap?: typeof loadMapLibre;
@@ -373,48 +362,38 @@ export function NeedsGeoMap({
   mode: "real" | "simulated" | "both";
   needFilter: string | "all";
   needs: NeedDef[];
+  loading?: boolean;
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const availability = useMapAvailability(styleUrl);
-  const colorByNeed = useMemo(() => Object.fromEntries(needs.map((n, i) => [n.id, NEED_COLORS[i % NEED_COLORS.length]])), [needs]);
 
-  const features = useMemo(() => cells
-    .map((c) => {
-      const topNeed = topNeedForCell(c, mode);
-      if (needFilter !== "all" && topNeed !== needFilter) return null;
-      const count = mode === "real" ? c.real.count : mode === "simulated" ? c.simulated.count : c.real.count + c.simulated.count;
-      if (!count) return null;
-      return {
-        type: "Feature",
-        properties: {
-          count,
-          topNeed,
-          color: colorByNeed[topNeed ?? ""] ?? "#2f5d50",
-          hasSim: c.simulated.count > 0 ? 1 : 0,
-        },
-        geometry: { type: "Point", coordinates: [c.lng + 0.005, c.lat + 0.005] },
-      };
-    })
-    .filter(Boolean), [cells, mode, needFilter, colorByNeed]);
-
-  const simBoxes = useMemo(() => cells
-    .filter((c) => c.simulated.count > 0)
-    .map((c) => ({
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [c.lng, c.lat],
-          [c.lng + 0.01, c.lat],
-          [c.lng + 0.01, c.lat + 0.01],
-          [c.lng, c.lat + 0.01],
-          [c.lng, c.lat],
-        ]],
-      },
-    })), [cells]);
-
+  const [search, setSearch] = useState('');
+  const [selectedCell, setSelectedCell] = useState('');
+  const cameraNeed = useRef<string | null>(null);
+  const camera = useRef({ center: [-95.37, 29.76] as [number, number], zoom: 8 });
+  useEffect(() => { setSearch(''); setSelectedCell(''); }, [needFilter]);
+  const evidence = useMemo(() => needEvidence(cells, mode, needFilter), [cells, mode, needFilter]);
+  const features = useMemo(() => evidence.map(row => ({
+    type: 'Feature', properties: { count: row.count, source: row.label,
+      color: row.source === 'real' ? '#2f5d50' : '#946c3d', hasSim: row.source === 'simulated' ? 1 : 0 },
+    // Distinct positions within the aggregate grid; never individual locations.
+    geometry: { type: 'Point', coordinates: [row.lng + (row.source === 'real' ? .003 : .007), row.lat + .005] },
+  })), [evidence]);
+  const simBoxes = useMemo(() => evidence.filter(row => row.source === 'simulated').map(row => ({
+    type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[
+      [row.lng, row.lat], [row.lng + .01, row.lat], [row.lng + .01, row.lat + .01],
+      [row.lng, row.lat + .01], [row.lng, row.lat],
+    ]] },
+  })), [evidence]);
+  const preview = `${needs.find(n => n.id === needFilter)?.label ?? 'All needs'} geographic evidence`;
+  const matching = evidence.filter(row => `${row.lat.toFixed(2)}, ${row.lng.toFixed(2)} ${row.label}`.toLowerCase().includes(search.toLowerCase()));
+  function inspect(lat: number, lng: number) {
+    setSelectedCell(`${lat},${lng}`);
+    const map = mapRef.current;
+    map?.stop?.();
+    map?.flyTo?.({ center: [lng + .005, lat + .005], zoom: 11, duration: motionDuration(700), essential: false });
+  }
   useEffect(() => {
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
@@ -432,11 +411,15 @@ export function NeedsGeoMap({
       const map = new maplibre.Map({
         container: elRef.current,
         style: styleUrl,
-        center: [-95.37, 29.76],
-        zoom: 8,
+        center: camera.current.center,
+        zoom: camera.current.zoom,
       });
       mapRef.current = map;
       map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), "top-right");
+      map.on('moveend', () => {
+        const center = map.getCenter();
+        camera.current = { center: [center.lng, center.lat], zoom: map.getZoom() };
+      });
       map.on("error", () => attempt.fail('resource'));
       map.on("idle", () => attempt.ready());
       map.on("load", () => {
@@ -487,9 +470,30 @@ export function NeedsGeoMap({
     simSrc?.setData?.({ type: "FeatureCollection", features: simBoxes });
   }, [features, simBoxes, availability.status]);
 
+  useEffect(() => {
+    if (availability.status !== 'ready' || !evidence.length || cameraNeed.current === needFilter) return;
+    cameraNeed.current = needFilter;
+    setSelectedCell('');
+    const lat = evidence.reduce((sum, row) => sum + row.lat, 0) / evidence.length;
+    const lng = evidence.reduce((sum, row) => sum + row.lng, 0) / evidence.length;
+    const map = mapRef.current;
+    map?.stop?.();
+    map?.flyTo?.({ center: [lng + .005, lat + .005], zoom: 10, duration: motionDisabled() ? 0 : motionDuration(700), essential: false });
+  }, [needFilter, evidence, availability.status]);
+
   return <>
+    <h3>{preview}</h3>
+    <p className="muted s">Aggregate 0.01° cells, not household locations. Filled green: submitted accounts; outlined ochre: simulated estimates. Counts remain separate. Measured conditions appear separately below and are not map markers. Civic choices are advisory; exploring records no vote or publication.</p>
     <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+    <section aria-label="Searchable geographic evidence">
+      <label>Search geographic evidence<input type="search" value={search} placeholder="Grid coordinates or evidence source" onChange={event => setSearch(event.target.value)} /></label>
+      <p role="status">{preview}: {matching.length} source-specific aggregate cells. {loading ? 'Geographic evidence loading.' : !evidence.length ? 'No geographic evidence available for this need; missing locations or privacy suppression may limit coverage.' : ''}</p>
+      <ul style={{ maxHeight: 240, overflowY: 'auto' }} data-no-stage-swipe>{matching.map(row => <li key={`${row.lat},${row.lng},${row.source}`}><button type="button" className="ghost" style={{ minHeight: 44 }} aria-pressed={selectedCell === `${row.lat},${row.lng}`} onClick={() => inspect(row.lat, row.lng)}>
+        {row.label} · {row.count} · grid {row.lat.toFixed(2)}, {row.lng.toFixed(2)}
+      </button></li>)}</ul>
+      {!matching.length && evidence.length > 0 && <p>No matching cells. Clear the search to show this need’s evidence.</p>}
+    </section>
   </>;
 }
 
@@ -802,17 +806,22 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
     });
   };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
+  const [geoLoading, setGeoLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+    setGeoLoading(true);
+    setGeoCells([]);
     const run = async () => {
       try {
         const out = await api<{ cells: GeoCell[] }>(`/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=${geoMode}`);
-        setGeoCells(out.cells ?? []);
+        if (!cancelled) setGeoCells(out.cells ?? []);
       } catch {
-        setGeoCells([]);
-      }
+        if (!cancelled) setGeoCells([]);
+      } finally { if (!cancelled) setGeoLoading(false); }
     };
     void run();
+    return () => { cancelled = true; };
   }, [geoMode, state.entries.length]);
 
   useEffect(() => {
@@ -852,7 +861,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
           <button className={geoMode === "simulated" ? "" : "ghost"} aria-pressed={geoMode === "simulated"} onClick={() => switchMode("simulated")}>Simulated residents</button>
           <button className={geoMode === "both" ? "" : "ghost"} aria-pressed={geoMode === "both"} onClick={() => switchMode("both")}>Both</button>
         </div>
-        <NeedsGeoMap styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
+        <NeedsGeoMap loading={geoLoading} styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
           {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
             rank={i + 1} move={moves.get(n.id) ?? 0}
@@ -1566,7 +1575,14 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     requestController.current?.abort();
     if (previewTimer.current !== null) clearTimeout(previewTimer.current);
   }
-  function changeSettings(change: () => void) {
+  const settingsUndo = useLocalUndo();
+  function changeSettings(change: () => void, restoring = false) {
+    if (!restoring) {
+      const previous = { weights, lambda, budget };
+      settingsUndo.record('synthesis weights, penalty and budget', () => changeSettings(() => {
+        setWeights(previous.weights); setLambda(previous.lambda); setBudget(previous.budget);
+      }, true));
+    }
     invalidateRequest();
     setBusy(false);
     setLivePreview(true);
@@ -1716,6 +1732,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
 
   return (
     <div className="stack">
+      <CoalitionQuest />
       <BudgetPuzzle />
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
@@ -1744,6 +1761,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
           <b className="num-s">${budget}B</b>
         </label>
+        {settingsUndo.control}
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
       </section>
 
