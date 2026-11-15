@@ -69,6 +69,10 @@ On [Explore civic plans](/synth), optional synthetic stakeholder lenses offer fo
 
 In [Draft](/draft), open **Play legislative redline detective · Sandbox** to practice on three fictional clauses. Choose a guess, then reveal an explanation with links to the exact invented before/after words and unresolved edge cases. This unreviewed demo is not legal advice. Guesses stay in page memory, are lost on navigation or reload, and never become votes, private amendment versions or model projections. The same exercise appears beside amendment preparation on citizen proposal details; its invented text is independent of that proposal.
 
+## How do claim sources work?
+
+The [outcomes demonstration](/outcomes#policy-measurements) links claims to retained passages with source versions and section locators. Primary source, editorial inference, user claim and synthetic estimate are distinct labels. Missing sources and reported redirects remain visible. Source labels do not establish human verification. Retained passages work offline; external documents may be unavailable. Plain text export and printing preserve dates, limitations and review state.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.

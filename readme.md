@@ -934,3 +934,7 @@ open a separate tab, retaining the civic journey. These references do not verify
 scenario claims: original quotations and publication dates are unavailable and
 explicitly labeled; source check dates remain distinct from publication dates.
 
+The `/outcomes` measurement area also includes a local claim-to-source anchor
+candidate with versioned passages, missing/conflicting evidence and review labels.
+It demonstrates application-code and synthetic fixture provenance, not verified
+real policy effects. See [SHE-679 scope and remaining acceptance](docs/reviews/SHE-679.md).

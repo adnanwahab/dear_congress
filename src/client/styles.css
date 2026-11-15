@@ -1185,3 +1185,13 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 .budget-puzzle-program input { width: 24px; height: 24px; vertical-align: middle; }
 .budget-puzzle-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
 .budget-puzzle button { min-height: 44px; min-width: 44px; white-space: normal; }
+
+.claim-evidence { overflow-wrap: anywhere; }
+.claim-evidence a { display: inline-block; padding: .65rem .25rem; }
+.claim-evidence section:target { outline: 3px solid currentColor; outline-offset: 3px; }
+.claim-evidence a:focus-visible { outline: 3px solid currentColor; }
+@media print {
+  .policy-measurements details > :not(summary), .claim-evidence details > :not(summary) { display: block !important; }
+  .claim-evidence a[href^="https:"]::after { content: " (" attr(href) ")"; }
+  .claim-evidence mark { background: transparent; color: inherit; font-weight: bold; }
+}
