@@ -1089,3 +1089,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.claim-evidence { overflow-wrap: anywhere; }
+.claim-evidence a { display: inline-block; padding: .65rem .25rem; }
+.claim-evidence section:target { outline: 3px solid currentColor; outline-offset: 3px; }
+.claim-evidence a:focus-visible { outline: 3px solid currentColor; }
+@media print {
+  .policy-measurements details > :not(summary), .claim-evidence details > :not(summary) { display: block !important; }
+  .claim-evidence a[href^="https:"]::after { content: " (" attr(href) ")"; }
+  .claim-evidence mark { background: transparent; color: inherit; font-weight: bold; }
+}

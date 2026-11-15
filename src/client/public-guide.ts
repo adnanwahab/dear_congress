@@ -23,6 +23,10 @@ Sample proposals, sample tallies, simulated residents, illustrative costs and fu
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
+## How do claim sources work?
+
+The [outcomes demonstration](/outcomes#policy-measurements) links claims to retained passages with source versions and section locators. Primary source, editorial inference, user claim and synthetic estimate are distinct labels. Missing sources and reported redirects remain visible. Source labels do not establish human verification. Retained passages work offline; external documents may be unavailable. Plain text export and printing preserve dates, limitations and review state.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.

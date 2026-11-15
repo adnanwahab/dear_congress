@@ -679,3 +679,8 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+The `/outcomes` measurement area also includes a local claim-to-source anchor
+candidate with versioned passages, missing/conflicting evidence and review labels.
+It demonstrates application-code and synthetic fixture provenance, not verified
+real policy effects. See [SHE-679 scope and remaining acceptance](docs/reviews/SHE-679.md).
