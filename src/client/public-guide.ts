@@ -45,6 +45,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+The Outcomes study-quality matrix separates primary-source findings, editorial inference, illustrative user claims and synthetic estimates. Sort by study characteristics, inspect dated limitations and disclosures, and export or print the records with review history. All entries await human review; a citation is not approval and conflicting endpoints are not a political viewpoint score.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
