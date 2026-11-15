@@ -18,7 +18,9 @@ for (const failure of [false, true]) test(`native route handoff ${failure ? 'fai
   await expect(page).toHaveURL(/\/feed\?motion=slow$/);
   await page.goForward();
   await expect(page).toHaveURL(/\/votes$/);
+  await expect(page.locator('main h1')).toBeVisible();
   await page.locator('.bottom-destinations a[href="/draft"]').focus();
+  await expect(page.locator('.bottom-destinations a[href="/draft"]')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/draft(?:\?[^#]*)?$/);
   await expect(page.locator('main h1')).toBeVisible();
