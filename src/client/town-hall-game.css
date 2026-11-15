@@ -1,0 +1,7 @@
+.town-hall-game{margin-block:1.5rem;padding:1rem;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);overflow-wrap:anywhere}
+.town-hall-actions,.town-hall-choices{display:flex;flex-wrap:wrap;gap:.75rem;margin-block:1rem}
+.town-hall-game button,.town-hall-game summary{min-height:44px;white-space:normal;cursor:pointer}
+.town-hall-game button{max-width:100%;text-align:start;padding:.65rem 1rem}
+.town-hall-game :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.town-hall-game summary{padding-block:.75rem}
+.town-hall-game h3:focus{outline:2px solid var(--accent);outline-offset:3px}

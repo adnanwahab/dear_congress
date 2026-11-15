@@ -1,3 +1,4 @@
+import { PlanWorkbench } from './PlanWorkbench';
 import { useState } from 'react';
 import type { PackageResult, Proposal } from '../engine/types';
 import { budgetAlternative, budgetMoney, budgetSummary, budgetUnits, planLedger } from '../shared/plan-budget';
@@ -16,6 +17,7 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
   const rows = ledger.rows.filter(r => `${r.title} ${r.jurisdiction}`.toLowerCase().includes(filter.toLowerCase()));
   const exportText = budgetSummary(ledger, pkg.id, lane);
   return <section className="budget-ledger" aria-label="Plan budget ledger">
+    <PlanWorkbench proposals={proposals} lane={lane} />
     <h4>Where does the budget go?</h4>
     <p>USD billions per year, across the jurisdictions named below. All amounts are simulated model assumptions, not independently sourced estimates. One-time costs are not separately modeled.</p>
     <p>Program cost is the model’s annual allocation. Existing spending and net incremental spending are unknown. Contingency: $0 modeled reserve; real-world contingency and uncertainty ranges are unknown. Costs stay fixed in this ledger; the budget and synthesis weights are adjustable above.</p>
