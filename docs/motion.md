@@ -18,7 +18,7 @@ Tokens in styles.css (normal timing):
 | `--motion-plan` | 700 ms | Plan row movement/entry |
 | `--ease-out` | cubic-bezier(.2,.8,.2,1) | Navigation easing |
 
-In-page types: `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
+In-page types: `time-zoom` (outcome range changes), `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
 Cross-document types: `forward`, `backward`; other navigation retains the default
 crossfade. Sponsor movement disables only its own root crossfade. Plan exits use
 500 ms and entries/moves use 700 ms. Default navigation timings are unchanged.
@@ -46,6 +46,163 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+Six-stage native navigation stores presentation state under `history.state.civicJourney`.
+Each entry retains its stage, direction (when NavigationActivation is available),
+proposal, search/topic/outcome/jurisdiction filters, focus path and window scroll.
+Other history-state keys are preserved. Reloaded documents restore filters before
+render and focus/scroll after proposal loading settles; BFCache restores on pageshow.
+A removed focus target falls back to the main landmark. Restoration never clicks a
+control, submits a vote, prepares a sponsor card or publishes content. Native links,
+modified clicks, scrolling and unsupported-browser/no-motion fallbacks remain intact.
+
+The routing browser matrix is `journey.config.ts` under `tests/accessibility`:
+with that directory's dependencies installed, run
+`bunx playwright test --config journey.config.ts` there. WebKit is Safari engine
+coverage; actual Safari visual review remains a separate human check.
+
+## Activated proposal origins
+
+`object-navigation.ts` supplements native cross-document transitions on sample
+proposal links in Published, Feed, Votes, Draft and home. `data-motion-proposal`
+and `data-motion-revision` identify the displayed sample and title. The activated
+anchor owns `sample-navigation-object`; the incoming matching heading takes that
+name for the snapshot. Touch click and keyboard Enter use the same handler.
+Modified clicks, downloads and other targets retain ordinary browser behavior.
+
+A bounded, five-minute session record stores the source/destination navigation
+entry keys and full URLs, proposal ID/title, link ordinal/label and origin viewport
+rectangle. Entry pairs distinguish multiple routes to the same proposal. Returning
+through browser history resolves the original anchor after native scroll
+restoration. Geometry is captured for the origin record; the browser uses the
+live named element's geometry for interpolation. Stored rectangles never create
+placeholder content or force scrolling. No history state or scroll policy changes.
+
+Missing/offscreen/virtualized headings or origins, changed titles/links, expired
+records, blocked storage and missing lifecycle APIs keep the existing page
+transition. Reduced motion and motion off omit object capture. Temporary names
+are restored on completion and page restoration. This metadata contains only
+sample display identity and is never a participation receipt or voting authority.
+Topic badges and official legislative records keep their separate identities and
+navigation behavior; this helper only matches explicit sample proposal links.
+
+## Sample proposal mosaic (SHE-399)
+
+Dashboard discovery uses row-major responsive tiles with occasional wide cards.
+There is no dense packing, CSS ordering, randomness, dragging or perpetual motion.
+Original, title and topic sorts preserve source records; compact list uses the same
+cards, search, filters, sort and explicit View proposal actions. Choosing a layout
+or exploring never submits a vote or publishes content.
+
+The gallery defers result changes while a pointer is over it, a touch/press is
+active, or focus remains within it. It retains keyed DOM nodes and announces
+pending results until interaction leaves; background refreshes obey the same lock.
+Changes use the existing typed `filter` transition, with callback-only fallback
+selectors and scaled durations. Reduced motion, motion off and unsupported APIs
+commit immediately once the interaction lock is released. View selection retains
+the existing proposal-detail focus behavior and stage URLs.
+
+## Semantic status dictionary (SHE-408)
+
+`STATUS_MOTION` in `src/client/motion.ts` defines persistent text and icons:
+
+| State | Icon | Transition |
+| --- | --- | --- |
+| Saved | ✓ | 180 ms icon fade after acknowledged persistence |
+| Draft | ✎ | 150 ms icon fade when returning to editing |
+| Syncing | ↔ | 180 ms icon fade when an operation starts; never loops |
+| Updated | ✓ | 180 ms icon fade when new information arrives |
+| Cited | ※ | 150 ms icon fade when a citation is attached; not verification |
+| Unavailable | — | Immediate, still explanation |
+| Error | ! | Immediate, still explanation; no shake or celebration |
+
+`StateFeedback` animates only a changed state, never initial render, hover,
+focus, repeated renders or changed message text within the same state. Only its
+hidden icon fades; text stays visible. Unsupported WAAPI, off and reduced motion
+retain identical feedback. Slow mode scales the finite effect. Parent live
+regions retain announcement ownership; buttons retain native touch/keyboard
+activation and focus. These indicators never initiate requests or retries.
+
+Integrated in advisory mutation receipts, optional map loading/availability and
+consent-first journal draft/submission feedback. Journal drafts explicitly remain
+unsaved; moderation and uncertain publication outcomes retain their exact wording.
+Saved does not mean a binding civic vote. Cited is available to citation consumers,
+not inferred from arbitrary links. No data origins, revision bindings, governance
+settings or publication/consent requirements change. Existing configured merge
+policy remains as documented in `launch-merge-policy.md` (disabled/dry-run defaults,
+quorum 10, active kill switch and human review); live settings were not changed.
+
+## Visitor motion studio (SHE-409)
+
+The shared header’s Motion disclosure offers Playful (the existing slides and
+expressive details), Calm (150 ms route fades and still in-page details), and Off
+(immediate changes). Each previews the same illustrative Journal → Needs route,
+using the route’s incoming keyframes. The preview is decorative, isolated from
+real and synthetic civic data, and never navigates, publishes or votes. Native
+summary, radios, checkbox and replay button retain keyboard and touch semantics;
+Escape closes the disclosure and returns focus to its summary. Settings remain
+available in loading shells and do not depend on API data.
+
+OS `prefers-reduced-motion: reduce` overrides every preset, including previews and
+review modes, and follows live device changes. Playful is the default otherwise.
+Selecting a preset applies it immediately; only checking “Remember my choice in
+this browser” writes the validated preset to localStorage (`civic-motion`).
+Unchecking removes that saved choice. Without consent or when storage is blocked,
+choices last for the current document. Saved settings are installed before the
+initial React shell/incoming snapshot, using the existing module initializer.
+No new inline script or CSP exception is introduced.
+
+The existing session/query review modes remain available. A studio selection
+clears the session review override; OS reduction still wins. Calm and Off bypass
+in-page JS motion via the shared helper, disable CSS decoration, and keep scroll
+reveal and redline text readable. Route snapshots and the illustrative preview do
+not change live DOM order, focusability, source identities or participation state.
+
+Governance remains as documented in launch-merge-policy.md: no policy/default or
+production setting was changed. Review candidates require human acceptance and
+required main checks; this UI creates no verified merge authority.
+
+Route handoff keeps ordinary anchors and browser history authoritative. The
+cross-document lifecycle handler skips its previous snapshot on newer navigation,
+page hide or another reveal; rejected visual promises do not replay routes. Incoming
+activation focuses `#main-content` immediately when focus is still on the body,
+preserving hash targets and browser-restored focus. Reduced/off motion skips the
+snapshot. Navigation never invokes a submission action.
+
+`tests/accessibility/route-handoff.pw.ts` covers native navigation/history, keyboard
+activation, rapid links and rejected snapshot promises with a zero-write assertion.
+Run across the accessibility viewport/reduced-motion projects. Native touch,
+screen-reader announcements and throttled-device visual QA still require review.
+
+
+## Cross-browser adapter (SHE-541)
+
+The shared adapter detects `document.startViewTransition`; unavailable APIs and
+startup failures commit immediately with `flushSync`. Existing component CSS/JS
+motion remains available; no snapshot polyfill, click interception, history
+replacement, focus movement or network delay is introduced. Theme changes remain
+instant without native snapshots. Reduced motion and `motion=off` bypass snapshots.
+Update callback errors still reject and are never retried.
+
+Every native call exposes `data-motion-type` until completion, including engines
+that accept options but omit transition types. Callback-only APIs retry once with
+a callback; filter and theme snapshot CSS now uses the same attribute fallback as
+other typed transitions. Ownership prevents an interrupted older animation from
+clearing a newer animation's CSS scope. Rejected visual promises are observed
+without hiding update failures.
+
+Cross-document transitions stay a progressive enhancement of ordinary anchors:
+unsupported engines perform ordinary page loads with native history/focus behavior.
+Reviewed API guidance: [MDN ViewTransition](https://developer.mozilla.org/en-US/docs/Web/API/ViewTransition)
+and [Chrome cross-document guidance](https://developer.chrome.com/docs/modern-web-guidance/guides/ui-behaviors/cross-document-transitions).
+
+For isolated browser QA, start `bun --no-env-file scripts/accessibility-server.ts`,
+then `bun scripts/verify-motion-browser.mjs` with Playwright available. Set
+`PLAYWRIGHT_MODULE` to its module path if installed separately. The verifier tests
+Chromium, Firefox and WebKit with normal/reduced motion, forced missing APIs,
+keyboard/touch activation, back/forward, skip-link focus and interrupted navigation.
+Missing engines fail the command. WebKit automation does not establish Safari/iOS
+acceptance. See [SHE-541 evidence and remaining checks](reviews/SHE-541.md).
 
 ## Low-power budgets (SHE-540)
 
