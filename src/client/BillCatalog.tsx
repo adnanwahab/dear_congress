@@ -1,3 +1,5 @@
+import { TownHallGame } from './TownHallGame';
+import { BudgetShock } from './BudgetShock';
 import { MissingVoice } from './MissingVoice';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
@@ -37,8 +39,8 @@ export default function BillCatalog() {
   const bill = billCollection.bills.find(b => b.id === id);
   const results = searchBills(query, category);
   const back = `/bills${params.size ? '?' + params : ''}`;
-  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>
-    <MissingVoice /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
+  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><MissingVoice />
+    <p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
@@ -64,7 +66,9 @@ export default function BillCatalog() {
       <div className="bill-chips" role="group" aria-label="Filter by category"><button aria-pressed={!category} onClick={() => update(query, '')}>All categories</button>{billCollection.categories.map(c => <button key={c} aria-pressed={category === c} onClick={() => update(query, category === c ? '' : c)}>{c}</button>)}</div>
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
+      <TownHallGame />
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
+    {id && <TownHallGame />}
   </main></div>;
 }

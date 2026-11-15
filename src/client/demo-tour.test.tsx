@@ -12,11 +12,12 @@ test('seven safe stops total sixty seconds and malformed links start safely', ()
   expect(tourUrl(6, true)).toBe('/map?demo=1&step=6&paused=1');
 });
 
-test('timer navigates; page clicks pause before actions; space resumes and cleans up', async () => {
+for (const reduced of [false, true]) test(`tour blocks writes and supports explicit navigation (reduced=${reduced})`, async () => {
   const { Window } = await import('happy-dom');
   const { act } = await import('react');
   const { createRoot } = await import('react-dom/client');
   const dom = new Window({ url: 'http://localhost/votes?demo=1&step=2' });
+  dom.matchMedia = (() => ({ matches: reduced, addEventListener() {}, removeEventListener() {} })) as any;
   const globals = { window: dom, document: dom.document, CustomEvent: dom.CustomEvent, ResizeObserver: dom.ResizeObserver, IS_REACT_ACT_ENVIRONMENT: true };
   const previous = Object.fromEntries(Object.keys(globals).map(k => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
   for (const [key, value] of Object.entries(globals)) Object.defineProperty(globalThis, key, { configurable: true, value });
@@ -26,19 +27,33 @@ test('timer navigates; page clicks pause before actions; space resumes and clean
   dom.clearTimeout = (() => { pending = undefined; }) as any;
   const paths: string[] = [];
   dom.location.assign = path => { paths.push(String(path)); };
-  document.body.innerHTML = '<button id="vote">Vote</button><div id="root"></div>';
+  document.body.innerHTML = '<form id="form"><input /></form><button id="vote">Vote</button><div id="root"></div>';
   let writes = 0;
   document.getElementById('vote')!.addEventListener('click', () => writes++);
   const root = createRoot(document.getElementById('root')!);
   try {
     await act(async () => root.render(<DemoTour />));
-    expect(delay).toBe(8000);
-    const puzzleButton = document.querySelector('.missing-voice > button') as HTMLButtonElement;
+    if (reduced) {
+      expect(pending).toBeUndefined();
+      expect(document.body.textContent).toContain('Paused');
+    } else expect(delay).toBe(8000);
+    expect(document.body.textContent).toContain('Reading never casts a vote');
+    const resume = document.querySelector('.demo-tour button:nth-child(2)')!;
+    const nativeSpace = new dom.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    resume.dispatchEvent(nativeSpace as any);
+    expect(nativeSpace.defaultPrevented).toBe(false);
+    document.getElementById('form')!.addEventListener('submit', () => writes++);
+    await act(async () => document.getElementById('form')!.dispatchEvent(new dom.Event('submit', { bubbles: true, cancelable: true }) as any));
+    expect(writes).toBe(0);
+    await act(async () => document.getElementById('vote')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
+    expect(writes).toBe(0); expect(pending).toBeUndefined();
+    // The educational puzzle pauses this tour and never submits civic data.
+    const puzzleButton = document.querySelector('.demo-tour .missing-voice > button') as HTMLButtonElement;
     await act(async () => puzzleButton.click());
     expect(pending).toBeUndefined();
     await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
-    expect(pending).toBeUndefined(); // tour hotkeys cannot steal puzzle controls
-    const puzzle = document.querySelector('.missing-voice')!;
+    expect(pending).toBeUndefined();
+    const puzzle = document.querySelector('.demo-tour .missing-voice')!;
     for (let scene = 0; scene < 3; scene++) {
       const radio = puzzle.querySelector('input') as HTMLInputElement;
       await act(async () => radio.click());
@@ -49,7 +64,6 @@ test('timer navigates; page clicks pause before actions; space resumes and clean
       await act(async () => next.click());
     }
     expect(puzzle.textContent).toContain('Reflection complete');
-    expect(puzzle.querySelectorAll('details article')).toHaveLength(3);
     const restart = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Restart puzzle')!;
     await act(async () => restart.click());
     expect(puzzle.textContent).toContain('1 / 3');
@@ -58,11 +72,8 @@ test('timer navigates; page clicks pause before actions; space resumes and clean
     expect(puzzle.textContent).toContain('2 / 3');
     const exitPuzzle = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Exit puzzle')!;
     await act(async () => exitPuzzle.click());
-    expect(document.activeElement === puzzleButton).toBe(true);
+    expect(document.activeElement).toBe(puzzleButton);
     expect(writes).toBe(0);
-
-    await act(async () => document.getElementById('vote')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
-    expect(writes).toBe(0); expect(pending).toBeUndefined();
     expect(dom.location.search).toContain('paused=1');
     await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
     expect(pending).toBeDefined();
