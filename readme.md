@@ -734,6 +734,15 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+### Who decides? sandbox
+
+Expand **Who decides?** below the browse-jurisdiction picker to match four sourced
+Houston/Harris County/Texas/U.S. tasks to governmental levels. The selected broad
+jurisdiction comes first; changing it resets the round. Answers are page-local,
+with no scoring API, vote, location request or model projection. Explanations cover
+overlapping authority. This educational demo awaits civic-content and accessibility
+review; see [SHE-419 review notes](docs/reviews/SHE-419.md).
+
 ## Civic marble-run sandbox
 
 Draft includes an unreviewed educational federal-process marble run after sample

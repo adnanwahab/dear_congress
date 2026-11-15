@@ -4,6 +4,12 @@
 .jurisdiction-picker select { min-height: 44px; max-width: 100%; }
 .jurisdiction-picker button { min-height: 44px; white-space: normal; }
 .jurisdiction-picker p { margin: 10px 0 0; }
+.jurisdiction-quest { margin-top: 16px; }
+.jurisdiction-quest summary { cursor: pointer; padding: 12px 0; font-weight: 700; }
+.jurisdiction-quest fieldset { min-width: 0; margin: 16px 0; padding: 12px; border: 1px solid var(--line, #ccc); border-radius: 8px; }
+.jurisdiction-quest legend { white-space: normal; }
+.jurisdiction-quest a { overflow-wrap: anywhere; }
+.jurisdiction-quest :is(button, select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 
 .local-challenges { margin-block: 24px; }
 .local-category { display: flex; flex-direction: column; gap: 6px; }
