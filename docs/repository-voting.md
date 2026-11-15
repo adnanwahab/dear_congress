@@ -39,7 +39,7 @@ Exact allowlist: Dear Congress (`adnanwahab/dear_congress`), HappyBearLandia (`a
 
 - `/vote` preserves the existing civic voting screen; repository voting is available through direct tester links. `/vote/:repoKey?view=prs|issues` selects a list.
 - `/vote/:repoKey/pr/:number` and `/vote/:repoKey/issue/:number` select details. Existing HBL PR links are preserved.
-- `/api/hbl/repos/:repoKey/pulls` and `/api/hbl/repos/:repoKey/issues`, optionally followed by `/:number`, serve the selected source. Lists retain the additive `hbl-governance.v1` `pulls` array field for compatibility; `kind` identifies the actual item type. Issues are never PR merge candidates.
+- `/api/hbl/repos/:repoKey/pulls` and `/api/hbl/repos/:repoKey/issues`, optionally followed by `/:number`, serve the selected source. Lists retain the additive `hbl-governance.v2` `pulls` array field for compatibility; `kind` identifies the actual item type. Issues are never PR merge candidates.
 - `/:number/ballot` (PUT) and `/:number/feedback` (POST) use the existing authenticated approved-roster, origin, CSRF, input bounds and idempotency protections. Ballots bind PR head SHA and base. Issue priorities bind stable repository ID + issue number and survive description updates.
 - `/api/hbl/pulls/...`, `/api/hbl/auth/...`, the existing batch and HBL webhook endpoints remain compatible. Existing browser community votes remain advisory and separate from verified ballots. New scopes require verified roster identity.
 

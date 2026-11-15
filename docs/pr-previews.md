@@ -18,3 +18,32 @@ Review and remove obsolete Fly preview apps and their dedicated volumes when the
 ## PR attachment pairs
 
 List and detail cards show the first two unique raster images embedded in the PR description, side by side at desktop and mobile widths. Markdown and HTML image attachments must use immutable full-SHA GitHub blob/raw URLs in that PR's configured repository. Captions identify the image source commit; attachments are not treated as verified deployments. Unsupported hosts, mutable refs, cross-repository paths and SVGs are excluded. Images load lazily without a referrer and can be opened at full size. Browsing never downloads or builds a version. The operator registry remains the authority for exact-head Explore links and the fallback when attachments are absent.
+
+## Verified build filmstrip (SHE-609)
+
+The v2 public contract adds an optional `beforePreview` operator receipt. The
+server resolves it using the current GitHub evidence's base SHA and the same PR
+number; current receipts still require the exact head. Registry records remain
+HBL-scoped. Other repositories honestly show capture unavailable until a scoped
+capture provider exists; no cross-repository registry fallback is permitted.
+
+Before/current frames require full SHA, capture time, image endpoint, exact
+head-specific preview host/route and deployment verification time. Missing
+receipts are **unavailable**, not a claim that a capture job is running. Partial
+receipts are verification pending. Image requests have loading, failure and
+keyboard-accessible retry states. Refresh source reads existing receipts; it
+does not queue captures or deployments. No new captures or deployments were
+performed for this change.
+
+Contributor attachments remain in a separate disclosure labeled unverified.
+Their immutable image-file commit does not establish the captured application's
+revision. A build screenshot never falls back to these images. Frames stack on
+mobile, use ordinary links/buttons and introduce no animation or swipe handlers.
+Preview-host permission errors cannot be inferred from an image load failure;
+the failure copy says access *may* be restricted rather than asserting denial.
+
+LiveRound holds temporary civic proposal rounds, with no PR/revision identity;
+it intentionally does not consume this PR gallery or change its vote handlers.
+Governance remains as documented in launch-merge-policy.md: disabled/dry-run
+source defaults, quorum 10, 24-hour exposure, current-head approval/check gates,
+active kill switch, and separate browser advisory ballots. No policy is changed.
