@@ -72,3 +72,27 @@ test('missing or hidden navigation URLs safely omit optional transition',()=>{
  expect(transitionDirection('',url('/synth'))).toBeNull();
  expect(transitionDirection(url('/synth'),'')).toBeNull();
 });
+
+test('rapid native navigations skip obsolete visuals and focus the committed page even on snapshot failure', async () => {
+  const { Window } = await import('happy-dom');
+  const win = new Window({ url: url('/votes') });
+  const main = win.document.createElement('main');
+  main.id = 'main-content'; main.tabIndex = -1; win.document.body.append(main);
+  installViewTransitions(win as unknown as Window);
+  let skipped = 0;
+  const transition = () => ({ types: new Set<string>(), skipTransition() { skipped++; },
+    ready: Promise.reject(new Error('snapshot failed')), finished: Promise.reject(new Error('interrupted')) });
+  const reveal = () => win.dispatchEvent(Object.assign(new win.Event('pagereveal'), {
+    activation: { from: { url: url('/feed') }, entry: { url: url('/votes') } }, viewTransition: transition(),
+  }));
+  reveal();
+  expect(win.document.activeElement).toBe(main);
+  const a = win.document.createElement('a'); a.href = '/draft'; win.document.body.append(a);
+  a.dispatchEvent(new win.MouseEvent('click', { bubbles: true, button: 0 }));
+  expect(skipped).toBe(1);
+  reveal(); reveal();
+  expect(skipped).toBe(2);
+  await Promise.resolve(); await Promise.resolve();
+  expect(win.location.pathname).toBe('/draft');
+  await win.happyDOM.close();
+});
