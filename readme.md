@@ -734,6 +734,14 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Goal overlap preview (SHE-453)
+
+The exact-text-bound fictional transit ArgumentMap includes a read-only overlap
+preview on the existing source, voting and comparison surfaces. Counts are wholly
+synthetic, separate from browser votes, and expose subgroup denominators and two
+aggregation methods. No consented real sample is connected. Small groups and rare
+cells are suppressed; see [scope and acceptance](docs/reviews/SHE-453.md).
+
 ## Personal priority points
 
 The active `/votes` and `/vote` workflow includes a personal 100-point allocation.

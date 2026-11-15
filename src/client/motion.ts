@@ -80,27 +80,32 @@ export async function runViewTransition(update: () => void, type: MotionType, on
   const commit = () => { if (!called) { called = true; flushSync(update); } };
   let transition: ViewTransition;
   const owner = Symbol(type);
-  let fallback = false;
+  // Keep CSS isolation even when options are accepted but transition types are ignored.
+  if (root) { root.dataset.motionType = type; fallbackOwners.set(root, owner); }
+  const cleanup = () => {
+    if (root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
+  };
   try {
     transition = document.startViewTransition({ update: commit, types: [type] });
   } catch (error) {
-    if (called || !(error instanceof TypeError)) throw error;
-    fallback = true;
-    if (root) { root.dataset.motionType = type; fallbackOwners.set(root, owner); }
+    if (called) { cleanup(); throw error; }
+    if (!(error instanceof TypeError)) { cleanup(); commit(); return; }
     try { transition = document.startViewTransition(commit); }
     catch (error) {
-      if (root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
-      throw error;
+      cleanup();
+      if (called) throw error;
+      commit(); return;
     }
   }
-  onStart?.(transition);
+  // A rejected snapshot is visual failure; a rejected update remains observable.
   void transition.ready?.catch(() => {});
   const finished = transition.finished?.catch(() => {});
   try {
+    onStart?.(transition);
     await transition.updateCallbackDone;
     await finished;
   } finally {
-    if (fallback && root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
+    cleanup();
   }
 }
 
