@@ -22,6 +22,15 @@ test('reality lens works by keyboard across routes without writes', async ({ pag
     const layout = await page.evaluate(() => ({
       width: innerWidth,
       scrollWidth: document.documentElement.scrollWidth,
+      selectLayout: [...document.querySelectorAll('.panel-head select')].map(select => {
+        const chain: Element[] = [];
+        for (let el: Element | null = select; el && chain.length < 8; el = el.parentElement) chain.push(el);
+        return chain.map(el => {
+          const rect = el.getBoundingClientRect();
+          const css = getComputedStyle(el);
+          return { tag: el.tagName, cls: String(el.className).slice(0, 80), left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width), scroll: el.scrollWidth, minWidth: css.minWidth, maxWidth: css.maxWidth, display: css.display, boxSizing: css.boxSizing, flex: css.flex };
+        });
+      }),
       overflowing: [...document.querySelectorAll('*')].filter(element => {
         const box = element.getBoundingClientRect();
         return box.right > innerWidth + 1 && box.left < innerWidth && box.width > 1;
