@@ -106,3 +106,15 @@ not change live DOM order, focusability, source identities or participation stat
 Governance remains as documented in launch-merge-policy.md: no policy/default or
 production setting was changed. Review candidates require human acceptance and
 required main checks; this UI creates no verified merge authority.
+
+Route handoff keeps ordinary anchors and browser history authoritative. The
+cross-document lifecycle handler skips its previous snapshot on newer navigation,
+page hide or another reveal; rejected visual promises do not replay routes. Incoming
+activation focuses `#main-content` immediately when focus is still on the body,
+preserving hash targets and browser-restored focus. Reduced/off motion skips the
+snapshot. Navigation never invokes a submission action.
+
+`tests/accessibility/route-handoff.pw.ts` covers native navigation/history, keyboard
+activation, rapid links and rejected snapshot promises with a zero-write assertion.
+Run across the accessibility viewport/reduced-motion projects. Native touch,
+screen-reader announcements and throttled-device visual QA still require review.
