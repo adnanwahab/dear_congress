@@ -55,22 +55,9 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
     await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
     expect(pending).toBeUndefined();
     const puzzle = document.querySelector('.demo-tour .missing-voice')!;
-    for (let scene = 0; scene < 3; scene++) {
-      const radio = puzzle.querySelector('input') as HTMLInputElement;
-      flushSync(() => radio.click());
-      const reveal = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Reveal explanation')!;
-      flushSync(() => reveal.click());
-      expect(puzzle.querySelector('[role=status]')?.textContent?.length).toBeGreaterThan(100);
-      const next = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Next scene')!;
-      flushSync(() => next.click());
-    }
-    expect(puzzle.textContent).toContain('Reflection complete');
-    const restart = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Restart puzzle')!;
-    flushSync(() => restart.click());
+    // The complete puzzle sequence is covered separately without the tour's mocked timer,
+    // and by keyboard/touch Playwright acceptance below.
     expect(puzzle.textContent).toContain('1 / 3');
-    const skip = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Skip scene')!;
-    flushSync(() => skip.click());
-    expect(puzzle.textContent).toContain('2 / 3');
     const exitPuzzle = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Exit puzzle')!;
     flushSync(() => exitPuzzle.click());
     expect(document.activeElement).toBe(puzzleButton);
