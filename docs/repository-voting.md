@@ -89,3 +89,22 @@ are observations, never merge authorization. Native stop expansion has no write
 handler. Existing ballots, revision isolation and governance are unchanged:
 quorum 10 and 24-hour exposure defaults, protected-base/current-head evidence,
 required reviews/checks and the automatic-merge pilot lock remain in force.
+
+## Source flip cards — SHE-603
+
+PR list cards expose a read-only source back through a native button (Enter/Space
+and touch), with expanded state, an accessible file index, focusable scrolling
+patches and a reduced-motion fallback. The title/detail link and ballot remain
+outside the flipping content. Issues and live civic rounds retain their existing
+interfaces. Source backs load the existing detail GET lazily and reject a response
+whose repository ID, item number/kind, version, head, base or canonical URL differs
+from the displayed PR. Missing file summaries, partial patches, inaccessible
+protection evidence, loading, denied access and retryable errors are explicit.
+Checks display their reported commit; absent or mismatched evidence is unverified.
+A completed check receipt still requires human review and never authorizes merging.
+
+The advisory lock, configured quorum 10 / 24-hour exposure defaults, protected-base
+and current-head review requirements, repository/kind isolation, existing ballots,
+receipts and records are unchanged. Runtime configuration and GitHub protections
+were not changed or verified. Desktop/mobile visual and real-browser keyboard QA
+remain required before acceptance.
