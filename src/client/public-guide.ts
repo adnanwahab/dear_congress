@@ -45,6 +45,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+The [public-data gaps atlas](/outcomes#data-gaps-atlas) lists a sourced metric definition and clearly labeled fictional conflicting and missing-source research cases. Missing evidence means unknown, never good outcomes. Filter by jurisdiction, topic, category or metric; export visible cases with dates, limitations and pending human-review history, or use the text/print fallback. Source inspection dates are not measurement dates. The bundled inventory remains readable after loading while offline; linked agencies and sources require a connection.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.

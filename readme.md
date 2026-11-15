@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+### Public-data gaps atlas
+
+`/outcomes#data-gaps-atlas` includes a bundled, read-only research inventory with
+jurisdiction/topic/category filters and metric/question search. It distinguishes
+primary-source metadata, editorial inference, illustrative user claims and
+synthetic estimates. No numeric public observation or verified policy effect is
+registered. Missing evidence means unknown. Exported JSON and the copy/print
+fallback retain dates, limitations, sources, research questions and pending review
+history. See [SHE-684 validation and limits](docs/reviews/SHE-684.md).
