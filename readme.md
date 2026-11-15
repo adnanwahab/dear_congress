@@ -679,3 +679,10 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+The `/outcomes#source-health` console reads the existing outcome snapshot, exposing
+recorded fetch dates, missing sources, conflicts and retained-data fetch incidents.
+It does not probe providers or certify starter fixture values. Schema monitoring
+and human-review history are currently unrecorded. A 30-day freshness warning is
+an editorial threshold, not a provider SLA. Copyable JSON provides an export/print
+fallback. See [SHE-688 scope and remaining acceptance](docs/reviews/SHE-688.md).

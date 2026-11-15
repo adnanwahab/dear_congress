@@ -26,7 +26,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     <div>Background source: {item.background?.name ?? 'Source not available'}</div>
     <div>Publisher: {item.background?.publisher ?? 'Not available'}</div>
     {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
-    <div>{freshness(item)}</div>
+    <div role="status">{freshness(item)} · Editorial background; successful fetch and schema monitoring are not recorded.</div>
     <p>{item.background?.scope ?? 'Background scope not documented.'} Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
