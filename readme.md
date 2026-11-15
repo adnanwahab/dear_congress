@@ -580,6 +580,19 @@ A fabricated tally and aggregate score can be replayed offline and downloaded
 through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
 for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.
 
+## First-visit learning
+
+Choose **Five-minute civic adventure** on the home page, or open `/?quest=1`.
+Five untimed, skippable chapters follow journal → need → comparison → proposal →
+future. Optional fictional examples stay inside the guide, separate from live
+records. No data fetch, vote, public post or identity disclosure is required.
+Chapter, completion and sample preference resume via `civic_adventure_v1` in local
+storage; blocked storage allows page-only use with a notice. Restart resets that
+learning progress. `/?quest=1&walkthrough=1` presents equivalent content at once.
+Ordinary stage links appear after completion or in the walkthrough and explicitly
+leave the guide. No automatic advancement or animation is used.
+See [SHE-410 review notes](docs/reviews/SHE-410.md) for validation limits.
+
 ## Guided demo
 
 Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only

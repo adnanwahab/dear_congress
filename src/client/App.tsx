@@ -2,6 +2,7 @@ import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
+import { CivicAdventure } from './CivicAdventure';
 import { DemoTour } from './DemoTour';
 import { tourState } from './demo-tour';
 import { onPageActivation } from './page-activation';
@@ -153,6 +154,7 @@ const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
+  if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
