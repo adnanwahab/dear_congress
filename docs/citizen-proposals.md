@@ -225,3 +225,22 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Private revision impact comparison (SHE-455)
+
+Every amendment redline now includes Before/After panels for scope, eligibility,
+cost, implementation and uncertainties. Explicit `Scope:`, `Eligibility:`,
+`Cost:`, `Implementation:` and `Uncertainties:` lines are quoted verbatim with
+local revision/line links. Unlabeled prose is never classified by keywords;
+missing evidence says Needs review. Even anchored author statements need review:
+a citation note is not verified evidence or a fiscal/legal assessment. This is a
+bounded evidence checklist, not automated legal interpretation or an official
+bill-revision service.
+
+After saving two private versions, choose their IDs in Compare saved revision
+IDs. Selection leaves editing fields and storage unchanged. Versions must share
+the exact original source snapshot (kind, ID, origin, title, jurisdiction and
+text). Live text is labeled unsaved; saved replacement text uses its private UUID.
+Base text remains a saved snapshot, without inventing an official revision ID.
+The existing local-storage and audit limitations above still apply. No API,
+publication, voting, navigation or source-record changes are involved.

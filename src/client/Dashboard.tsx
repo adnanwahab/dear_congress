@@ -1,3 +1,4 @@
+import { LocalChallenges } from './LocalChallenges';
 import { TopicChip } from './TopicChip';
 import { Skeleton } from './LoadingSkeleton';
 import type { CSSProperties } from 'react';
@@ -35,14 +36,15 @@ export function Dashboard({ request }: { request: Request }) {
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState(0);
   const [error, setError] = useState('');
+  const [sampleLoadFailed, setSampleLoadFailed] = useState(false);
   const [notice, setNotice] = useState('');
   const [tracker, setTracker] = useState<Tracked[]>(initialTracker);
   const [office, setOffice] = useState('');
   const voteRef = useRef<HTMLElement>(null);
-  const load = async () => { const next = await request<DemoPayload>('/api/demo'); saveProposalSnapshot(next); setData(next); };
+  const load = async () => { const next = await request<DemoPayload>('/api/demo'); saveProposalSnapshot(next); setData(next); setSampleLoadFailed(false); };
   useEffect(() => {
     let active = true;
-    const refresh = () => request<DemoPayload>('/api/demo').then(next => { if (active) { saveProposalSnapshot(next); setData(next); setError(''); } }).catch(() => { if (active) setError('Could not load or refresh sample proposals. Previously loaded proposals, if any, remain available.'); });
+    const refresh = () => request<DemoPayload>('/api/demo').then(next => { if (active) { saveProposalSnapshot(next); setData(next); setSampleLoadFailed(false); setError(''); } }).catch(() => { if (active) { setSampleLoadFailed(true); setError('Could not load or refresh sample proposals. Previously loaded proposals, if any, remain available.'); } });
     refresh();
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 60_000);
     return () => { active = false; clearInterval(timer); };
@@ -89,9 +91,10 @@ export function Dashboard({ request }: { request: Request }) {
         </div>
         <p>No account is needed: participation is advisory, not an official election or government decision, and sample proposals and counts are illustrative. Journal entries you publish are shared publicly, so leave out names, addresses, contact details and other private information.</p>
       </section>
-      <p>Civic Synthesis is an independent public beta for exploring policy proposals and expressing non-binding advisory preferences; it is not an official government ballot.</p><DailyQuestion request={request} /><section className="hero"><a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h2>One proposal, from published change to sponsor</h2><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><details className="home-how"><summary>How it works</summary><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h3>{title}</h3><p>{description}</p></a></li>)}</ol></details></section>
+      <p>Civic Synthesis is an independent public beta for exploring policy proposals and expressing non-binding advisory preferences; it is not an official government ballot.</p><DailyQuestion request={request} /><section className="hero"><a className="dashboard-button" href="/?quest=1">Five-minute civic adventure</a> <a href="/?quest=1&walkthrough=1">Non-game walkthrough</a> <a className="dashboard-button" href="/?demo=1">▶ Play the demo</a><h2>One proposal, from published change to sponsor</h2><p>Understand a change. Add your voice. Turn a shared need into a draft someone can act on.</p><p><a className="dashboard-button" href={stageRoute('votes', item?.id)}>Read a proposal & vote →</a></p><details className="home-how"><summary>How it works</summary><ol className="stage-grid">{CIVIC_STAGES.map(({title,time,description,n,route}) => <li className="stage-card" key={title} style={{ '--i': n - 1 } as CSSProperties}><a className="stage-link" href={`${route}${item?.id || selected ? `?proposal=${encodeURIComponent(item?.id ?? selected!)}` : ''}`} onClick={event => prepareStageMorph(event, n)}><div className="stage-top"><span>{n}</span><small>{time}</small></div><h3>{title}</h3><p>{description}</p></a></li>)}</ol></details></section>
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : <Skeleton kind="line" />}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
+      <LocalChallenges items={items} loading={!data && !error} failed={sampleLoadFailed} />
       <div className="triple-grid">
         <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalSearch items={items} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!error} />
           <div className="entry-list">{filtered.map(i => <article className={`entry-item ${item?.id === i.id ? 'entry-selected' : ''}`} key={i.id} style={proposalCardStyle("home", i.id)}><div className="entry-source">{i.source} <TopicChip linked topic={i.topic} /></div><h3>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className="outline" disabled={busy} onClick={() => select(i)}>View proposal</button></article>)}{!data && !error && <Skeleton kind="list" />}</div>

@@ -37,7 +37,7 @@ test('pinned baseline survives appended corrections; incompatible or unversioned
 test('visible cards retain missing and stale values, source history, and synthetic/causality labels', () => {
   const html = renderToStaticMarkup(<PolicyMeasurements asOf={at} />);
   for (const text of ['No verified implemented policy', 'activity, not evidence', 'synthetic data only', 'Improved', 'Worsened', 'Missing: no observation', 'Outdated measurement', 'wait-2024', 'synthetic-fixture-v1/wait-2025', 'Causal attribution not established', 'No uncertainty estimates']) expect(html).toContain(text);
-  expect(html.match(/class="card policy-measurement"/g)).toHaveLength(3);
+  expect(html.match(/<article[^>]*class="card policy-measurement"/g)).toHaveLength(3);
   expect(html).toContain('aria-labelledby="policy-measurements-title"');
   expect(html).toContain('<summary>Baseline and source version history');
 });

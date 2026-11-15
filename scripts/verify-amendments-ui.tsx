@@ -36,6 +36,13 @@ try {
   assert(q().getByText(/Publication permission: not requested/));
   await edit('Suggested replacement text', 'The pilot shall run for 24 months.');
   await click('Save new private version');
+  const storageBeforeComparison = localStorage.getItem('civic_amendments_v1:citizen:pilot');
+  const snapshots = JSON.parse(storageBeforeComparison!);
+  await edit('Before revision ID', snapshots[0].id);
+  await edit('After revision ID', snapshots[1].id);
+  assert(q().getByRole('region', { name: 'Compare saved revision IDs' }).textContent?.includes(snapshots[0].id));
+  assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 24 months.');
+  assert.equal(localStorage.getItem('civic_amendments_v1:citizen:pilot'), storageBeforeComparison);
   await click('View version 1');
   assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 18 months.');
   await act(async () => { root.unmount(); });
