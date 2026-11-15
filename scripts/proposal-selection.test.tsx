@@ -63,7 +63,8 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         await act(async () => { fireEvent.click(support()); });
         await act(async () => { settle!(); });
         expect(support().getAttribute('aria-pressed')).toBe('true');
-        expect(support().classList.contains('vote-confirmed')).toBe(true);
+        if (page === '/votes') expect(document.querySelector('.advisory-receipt')?.textContent).toContain('choice: Support');
+        else expect(support().classList.contains('vote-confirmed')).toBe(true);
         expect(support().getAttribute('aria-label')).toMatch(/responses, [0-9.]+%/);
         expect(document.querySelectorAll('.advisory-track')).toHaveLength(3);
         expect(document.body.textContent).toContain('Illustrative responses, not a representative poll.');
