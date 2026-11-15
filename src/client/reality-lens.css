@@ -23,3 +23,19 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* Outcomes places its native filter in a flex heading, not .workflow-select. */
+@media (max-width: 680px) {
+  .workflow-shell .panel-head > label:has(> select) {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .workflow-shell .panel-head > label > select {
+    display: block;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
