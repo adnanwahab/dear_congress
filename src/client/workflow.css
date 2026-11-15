@@ -99,3 +99,12 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+/* Retained revision records remain readable on narrow screens and in print. */
+.source-revision-alert { min-width: 0; overflow-wrap: anywhere; }
+.source-revision-alert button { min-height: 44px; }
+.source-revision-print { display: none; }
+@media print {
+  .source-revision-alert button { display: none; }
+  .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+}
