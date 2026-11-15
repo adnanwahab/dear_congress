@@ -679,3 +679,11 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Ask a civic question
+
+Dashboard, Bills and Topic Hubs offer an expandable cross-source keyword search.
+Question/type URLs are shareable; native controls work without animation. Results
+link to source records and label hypothetical content, stale metadata and missing
+coverage rather than generating answers. Private drafts, journals and citizen
+submissions are excluded from this initial index. See [scope and review limits](docs/reviews/SHE-722.md).

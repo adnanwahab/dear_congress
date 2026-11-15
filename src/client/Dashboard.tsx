@@ -1,3 +1,4 @@
+import { CivicQuestionSearch } from './CivicQuestionSearch';
 import { TopicChip } from './TopicChip';
 import { Skeleton } from './LoadingSkeleton';
 import type { CSSProperties } from 'react';
@@ -81,6 +82,7 @@ export function Dashboard({ request }: { request: Request }) {
   return <div className="civic-shell">
     <CivicHeader stage="Live demo" />
     <main id="main-content" tabIndex={-1} className="civic-main">
+    <CivicQuestionSearch />
       <section className="home-start" aria-labelledby="home-start-title">
         <h1 id="home-start-title">Where would you like to start?</h1>
         <div className="home-start-choices">
