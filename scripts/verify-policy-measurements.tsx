@@ -27,7 +27,7 @@ assert.match(container.textContent!, /Outreach activity · simulated/);
 const summary = measurements.querySelector('summary')!;
 await act(async () => { (summary as any).click(); });
 assert(measurements.querySelector('details')!.open);
-assert.equal(measurements.querySelectorAll('article').length, 3);
+assert.equal(measurements.querySelectorAll('article.card').length, 3);
 await act(async () => { root.unmount(); });
 await dom.happyDOM.close();
 console.log('PASS isolated activity, offline measurements and expandable history');
