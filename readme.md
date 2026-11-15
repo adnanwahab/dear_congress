@@ -43,6 +43,16 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+## Priority history
+
+The `/needs` Priority time machine reads `/api/priority-history`. Starting with
+this version, database saves capture changed shared-need model ranks and source
+counts, retaining the latest 365 changes. Startup records today's baseline only;
+there is no historical backfill. Date windows without records show unavailable,
+and one sample cannot establish change. The ranking keeps the existing simulated
+priors and optional measured-outcome contribution, explicitly labeled per sample.
+The viewer only reads; it never submits journals, allocations or votes.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS

@@ -1089,3 +1089,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.priority-history { margin-block: 1rem; }
+.priority-history select { max-width: 100%; }
+.priority-history table { width: 100%; }
+html:is(:active-view-transition-type(priority-history), [data-motion-type="priority-history"])::view-transition-group(*) {
+  animation-duration: calc(260ms * var(--motion-scale, 1));
+}

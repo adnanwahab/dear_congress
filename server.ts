@@ -1,3 +1,4 @@
+import { recordPriorities } from "./src/server/priority-history";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -404,6 +405,7 @@ let demoCache: { day: string; payload: DemoPayload } | null = null;
 let saveQueue: Promise<unknown> = Promise.resolve();
 const save = () => {
   demoCache = null;
+  recordPriorities(db, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
   const snapshot = JSON.stringify(db, null, 2);
   const write = saveQueue.then(async () => {
     await mkdir(dirname(DB_PATH), { recursive: true });
@@ -956,6 +958,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
+    },
+    "/api/priority-history": {
+      GET: () => Response.json({ samples: db.priorityHistory ?? [] }, { headers: { "cache-control": "no-store" } }),
     },
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
