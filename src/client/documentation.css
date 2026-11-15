@@ -67,3 +67,11 @@
 .civic-trivia button { min-height: 44px; margin: 8px 12px 8px 0; white-space: normal; }
 .civic-trivia :is(input, h2):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 /* Untimed and motion-free in all preferences, including reduced motion. */
+
+.source-hunt { overflow-wrap: anywhere; }
+.source-hunt p { line-height: 1.7; }
+.source-hunt ol { padding-left: 24px; }
+.source-hunt li { border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+.source-hunt .hunt-control { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 0; }
+.source-hunt input { min-width: 24px; min-height: 24px; accent-color: var(--accent); }
+.documentation-shell input:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
