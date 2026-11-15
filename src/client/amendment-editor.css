@@ -11,6 +11,15 @@
 .amendment-comparison ins { color: var(--good-ink); background: var(--good-bg); }
 .amendment-marker { font-weight: bold; }
 @media (max-width: 700px) { .amendment-comparison { grid-template-columns: minmax(0,1fr); } }
+.clause-reader { margin-block: 1rem; }
+.clause-source { white-space: pre-wrap; }
+.clause-reader .clause-source button { display: inline; min-height: 44px; margin: 0; padding: .15rem .25rem; font: inherit; text-align: start; color: var(--ink); background: var(--card); border: 1px solid var(--line); text-decoration: underline; text-underline-offset: .2em; }
+.clause-reader .clause-source button[aria-pressed="true"] { border-color: var(--accent); }
+html:active-view-transition-type(clause-explain)::view-transition-group(*) { animation-duration: 350ms; }
+html[data-motion="slow"]:active-view-transition-type(clause-explain)::view-transition-group(*) { animation-duration: 1750ms; }
+@media (prefers-reduced-motion: reduce) {
+  html:active-view-transition-type(clause-explain)::view-transition-group(*) { animation: none; }
+}
 .amendment-editor select { display: block; width: 100%; min-height: 44px; font: inherit; color: var(--ink); background: var(--card); }
 .amendment-editor button { min-height: 44px; }
 .amendment-editor h5, .amendment-editor h6 { font-size: 1rem; margin: .8rem 0; }
