@@ -33,6 +33,34 @@ test('timer navigates; page clicks pause before actions; space resumes and clean
   try {
     await act(async () => root.render(<DemoTour />));
     expect(delay).toBe(8000);
+    const puzzleButton = document.querySelector('.missing-voice > button') as HTMLButtonElement;
+    await act(async () => puzzleButton.click());
+    expect(pending).toBeUndefined();
+    await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
+    expect(pending).toBeUndefined(); // tour hotkeys cannot steal puzzle controls
+    const puzzle = document.querySelector('.missing-voice')!;
+    for (let scene = 0; scene < 3; scene++) {
+      const radio = puzzle.querySelector('input') as HTMLInputElement;
+      await act(async () => radio.click());
+      const reveal = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Reveal explanation')!;
+      await act(async () => reveal.click());
+      expect(puzzle.querySelector('[role=status]')?.textContent?.length).toBeGreaterThan(100);
+      const next = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Next scene')!;
+      await act(async () => next.click());
+    }
+    expect(puzzle.textContent).toContain('Reflection complete');
+    expect(puzzle.querySelectorAll('details article')).toHaveLength(3);
+    const restart = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Restart puzzle')!;
+    await act(async () => restart.click());
+    expect(puzzle.textContent).toContain('1 / 3');
+    const skip = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Skip scene')!;
+    await act(async () => skip.click());
+    expect(puzzle.textContent).toContain('2 / 3');
+    const exitPuzzle = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Exit puzzle')!;
+    await act(async () => exitPuzzle.click());
+    expect(document.activeElement === puzzleButton).toBe(true);
+    expect(writes).toBe(0);
+
     await act(async () => document.getElementById('vote')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
     expect(writes).toBe(0); expect(pending).toBeUndefined();
     expect(dom.location.search).toContain('paused=1');
