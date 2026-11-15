@@ -45,6 +45,10 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+## Contesting evidence
+
+The [evidence challenge docket](/outcomes#evidence-docket) demonstrates sourced, conflicting and missing-source cases. Prepare a local draft tied to an exact claim revision and source; include new evidence, dates, limitations and the requested correction. The prototype sends nothing and loses drafts on reload. Export before leaving. Example decisions are not verified human reviews. A live private intake, moderator review and independent appeal service remain unavailable. Never include personal details in public evidence.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
