@@ -1,3 +1,5 @@
+import { WorldPortal } from './WorldPortal';
+import { LawBehaviorExplorer } from './LawBehaviorExplorer';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -136,7 +138,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   }
   const filterControls = <ProposalSearch items={scoped} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!loadError} />;
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
-  const draftDetail = item && <><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
+  const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
