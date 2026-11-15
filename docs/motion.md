@@ -46,3 +46,33 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Semantic status dictionary (SHE-408)
+
+`STATUS_MOTION` in `src/client/motion.ts` defines persistent text and icons:
+
+| State | Icon | Transition |
+| --- | --- | --- |
+| Saved | ✓ | 180 ms icon fade after acknowledged persistence |
+| Draft | ✎ | 150 ms icon fade when returning to editing |
+| Syncing | ↔ | 180 ms icon fade when an operation starts; never loops |
+| Updated | ✓ | 180 ms icon fade when new information arrives |
+| Cited | ※ | 150 ms icon fade when a citation is attached; not verification |
+| Unavailable | — | Immediate, still explanation |
+| Error | ! | Immediate, still explanation; no shake or celebration |
+
+`StateFeedback` animates only a changed state, never initial render, hover,
+focus, repeated renders or changed message text within the same state. Only its
+hidden icon fades; text stays visible. Unsupported WAAPI, off and reduced motion
+retain identical feedback. Slow mode scales the finite effect. Parent live
+regions retain announcement ownership; buttons retain native touch/keyboard
+activation and focus. These indicators never initiate requests or retries.
+
+Integrated in advisory mutation receipts, optional map loading/availability and
+consent-first journal draft/submission feedback. Journal drafts explicitly remain
+unsaved; moderation and uncertain publication outcomes retain their exact wording.
+Saved does not mean a binding civic vote. Cited is available to citation consumers,
+not inferred from arbitrary links. No data origins, revision bindings, governance
+settings or publication/consent requirements change. Existing configured merge
+policy remains as documented in `launch-merge-policy.md` (disabled/dry-run defaults,
+quorum 10, active kill switch and human review); live settings were not changed.

@@ -62,3 +62,15 @@ export async function runViewTransition(update: () => void, type: MotionType, on
     if (fallback && root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
   }
 }
+
+/** Labels describe evidence, never confer publication or participation authority. */
+export const STATUS_MOTION = {
+  saved: { label: 'Saved', icon: '✓', duration: 180 },
+  draft: { label: 'Draft', icon: '✎', duration: 150 },
+  syncing: { label: 'Syncing', icon: '↔', duration: 180 },
+  updated: { label: 'Updated', icon: '✓', duration: 180 },
+  cited: { label: 'Cited', icon: '※', duration: 150 },
+  unavailable: { label: 'Unavailable', icon: '—', duration: 0 },
+  error: { label: 'Error', icon: '!', duration: 0 },
+} as const;
+export type StatusKind = keyof typeof STATUS_MOTION;
