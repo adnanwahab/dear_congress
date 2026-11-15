@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LiveSnapshot } from '../server/live-rounds';
 import { AdvisoryVoteBars } from './AdvisoryVoteBars';
 import './workflow.css';
+import { AdvisorySafetyGate } from './SafetyGates';
 
 export function LiveRound({code, presenter}: {code:string; presenter:boolean}) {
   const [round,setRound]=useState<LiveSnapshot>();
@@ -25,6 +26,7 @@ export function LiveRound({code, presenter}: {code:string; presenter:boolean}) {
   }
   const link=window.location.origin+'/live/'+code;
   return <div className="civic-shell"><main className="workflow-main"><a href="/votes">← Votes</a><section className="panel"><p>Live round · advisory · not a poll</p>{error&&<p role="alert">{error}</p>}{round?<>
+    <AdvisorySafetyGate />
     <h1>Should we {round.item.title.charAt(0).toLowerCase()+round.item.title.slice(1)}?</h1>
     {presenter&&<div className="live-join"><img width="320" height="320" src={`/api/live/${code}/qr`} alt="Scan to vote in this live round"/><p><a href={link}>{link}</a></p></div>}
     <p aria-live="polite">{round.total} {round.total===1?'voter':'voters'} · {round.endedAt?'Round ended · results frozen':status}</p>
