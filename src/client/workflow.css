@@ -114,3 +114,9 @@
   .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: .85rem; }
   .journey-ribbon { padding: .85rem; }
 }
+.council-roleplay { overflow-wrap: anywhere; }
+.council-roleplay details { margin-block: 1rem; }
+.council-roleplay summary { cursor: pointer; padding-block: .75rem; }
+.council-choice { display: block; padding: .75rem; min-height: 44px; }
+.council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.council-controls button { min-height: 44px; }

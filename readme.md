@@ -734,6 +734,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Fictional council practice
+
+`/votes` includes a skippable five-minute council sandbox, pending human review.
+Chair, budget officer, parent and transit user dialogue and costs are explicitly
+fictional. Five one-minute rounds can be paused, advanced, revisited or restarted;
+selecting a practice response pauses for reflection. Full script and all options
+remain available after skipping. Native buttons, radio groups and disclosures
+support keyboard and touch; the exercise adds no motion, audio, account, storage
+or network dependency. It does not submit votes or run policy projections.
+See [SHE-413 review notes](docs/reviews/SHE-413.md) for validation limits.
+
 ## Steelman challenge sandbox
 
 The exact-revision fictional transit argument map on Published, Votes and proposal
