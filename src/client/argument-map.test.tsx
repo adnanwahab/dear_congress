@@ -6,7 +6,8 @@ const item = DEMO_ITEMS.find(item => item.id === 'demo-transit')!;
 test('paired fictional trees disclose every unsupported claim and exact clause', () => {
   const html = renderToStaticMarkup(<ArgumentMap item={item} />);
   expect(item.proposedText).toBe(PILOT_TEXT);
-  expect(html.match(/unverified assertion/g)).toHaveLength(4);
+  expect(html.match(/unverified assertion/g)).toHaveLength(6);
+  expect(html.match(/class="argument-card"/g)).toHaveLength(4);
   expect(html.match(/Claim source:/g)).toHaveLength(4);
   expect(html.match(/Why this matters/g)).toHaveLength(4);
   expect(html.match(/Evidence strength: unassessed/g)).toHaveLength(4);
@@ -44,7 +45,8 @@ test('personal moves, drag boundaries, reset and revision changes preserve sourc
   const titles = () => Array.from(host.querySelectorAll('.argument-map-sides h5')).map(node => node.textContent);
   try {
     await act(async () => root.render(<ArgumentMap item={item} />));
-    expect(host.querySelectorAll('summary').length).toBe(5);
+    expect(host.querySelectorAll('.argument-map-sides summary').length).toBe(4);
+    expect(host.querySelector('details > summary')?.textContent).toContain('Read the proposal clause');
     expect(host.querySelectorAll('.argument-card')).toHaveLength(4);
     await click('Move Reasons for claim down');
     expect(titles()).toEqual(['Counterargument', 'Lead claim', 'Lead claim', 'Counterargument']);

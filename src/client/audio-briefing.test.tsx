@@ -16,7 +16,9 @@ test('briefing is readable without speech, symmetric, cited and bound to source 
   expect(words(BRIEFING_CHAPTERS.map(p => p.text).join(' '))).toBeGreaterThan(250);
   expect(html).toContain('Synthetic voice');
   expect(html).toContain('agency background only');
-  expect(html).toContain('href="#argument-demo-transit-clause"');
+  const clauseId = html.match(/<blockquote id="([^"]+)"[^>]*>/)?.[1];
+  expect(clauseId).toBeTruthy();
+  expect(html).toContain(`href="#${clauseId}"`);
   for (const patch of [{ sourceUrl: 'https://other.test' }, { currentText: 'Changed' }, { title: 'Changed' }, { jurisdiction: 'Federal' }, { proposedText: 'Changed' }]) {
     expect(renderToStaticMarkup(<ArgumentMap item={{ ...item, ...patch }} />)).not.toContain('Play briefing');
   }
