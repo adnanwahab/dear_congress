@@ -35,12 +35,13 @@ test('public guide explains trust limits and keeps historical planning collapsed
   const window = new Window();
   const document = window.document;
   document.body.innerHTML = renderToStaticMarkup(<Documentation />);
-  const appendix = document.querySelector('details')!;
+  const appendix = document.querySelector('#historical-appendix')!;
   expect(appendix.hasAttribute('open')).toBe(false);
   expect(appendix.querySelector('summary')!.textContent).toContain('November 12, 2026');
   appendix.innerHTML = '<summary>Historical appendix</summary>';
   const guide = document.querySelector('article')!;
-  for (const text of ['not a government service', 'Will my journal be public?', 'Does my vote count?', 'What happens next?', 'no guaranteed deletion schedule', 'Human-reviewed Spanish']) expect(guide.textContent).toContain(text);
+  for (const text of ['four invented household scenarios', 'unvalidated extrapolation', 'not a vote or verified civic participation', 'not saved or sent to a simulation']) expect(guide.textContent).toContain(text);
+  for (const text of ['not a government service', 'Will my journal be public?', 'Does my vote count?', 'What happens next?', 'no guaranteed deletion schedule', 'Human-reviewed Spanish', 'All its sample counts are invented', 'no consented real sample is connected', 'Small groups and rare cells are withheld', 'private evidence-condition cards', 'discarded when you leave or reload', 'Linked evidence remains unverified']) expect(guide.textContent).toContain(text);
   for (const text of ['50 days', 'Jan 1', '9:00 AM', 'electorate is undefined']) expect(guide.textContent).not.toContain(text);
   for (const link of Array.from(document.querySelectorAll('a[href^="#"]'))) expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
   for (const link of Array.from(guide.querySelectorAll('a[href^="/"]'))) {
