@@ -39,3 +39,6 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+.civic-law-behavior [aria-controls=law-outcome-trace]{min-height:44px;padding:8px 12px}
+#law-outcome-trace{margin-top:12px;padding:12px;border:1px solid #96b4c4;border-radius:8px;overflow-wrap:anywhere}
+#law-outcome-trace a[download]{display:inline-flex;align-items:center;min-height:44px}

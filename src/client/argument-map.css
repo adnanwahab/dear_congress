@@ -6,3 +6,8 @@
 .argument-map :is(a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .argument-map blockquote { margin: 1rem 0; }
 @media (max-width: 700px) { .argument-map-sides { grid-template-columns: minmax(0, 1fr); } }
+.audio-briefing { border-block-start: 1px solid var(--border, #bbb); margin-block-start: 1rem; padding-block-start: 1rem; }
+.briefing-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.audio-briefing :is(button, select) { min-height: 44px; min-width: 44px; max-width: 100%; }
+.audio-briefing :is(button, select):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.audio-briefing h6 { font-size: 1rem; margin-block: 1rem .5rem; }
