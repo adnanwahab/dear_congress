@@ -1,10 +1,12 @@
 import { BudgetShock } from './BudgetShock';
+import { MissingVoice } from './MissingVoice';
 import { useEffect, useRef, useState } from 'react';
 import { TOUR_STOPS, tourState, tourUrl } from './demo-tour';
 
 export function DemoTour() {
   const initial = tourState(new URL(window.location.href));
   const [paused, setPaused] = useState(() => (initial?.paused ?? false) || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  const [puzzleOpen, setPuzzleOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const overlay = useRef<HTMLElement>(null);
   const remaining = useRef(initial ? TOUR_STOPS[initial.step]!.duration : 0);
@@ -25,23 +27,25 @@ export function DemoTour() {
     if (paused) url.searchParams.set('paused', '1'); else url.searchParams.delete('paused');
     window.history.replaceState(null, '', url);
     window.dispatchEvent(new CustomEvent('demo:paused', { detail: paused }));
-    if (paused || finished) return;
+    if (paused || finished || puzzleOpen) return;
     const start = performance.now();
     const timer = window.setTimeout(() => {
       if (step < TOUR_STOPS.length - 1) window.location.assign(tourUrl(step + 1));
       else { setFinished(true); setPaused(true); }
     }, remaining.current);
     return () => { window.clearTimeout(timer); remaining.current = Math.max(0, remaining.current - (performance.now() - start)); };
-  }, [active, paused, finished, step]);
+  }, [active, paused, finished, step, puzzleOpen]);
   useEffect(() => {
     if (!active) return;
-    overlay.current?.focus();
+    // Preserve focus after a puzzle closes or the visitor changes controls.
+    // Initial entry still focuses the tour when focus is outside the overlay.
+    if (!overlay.current?.contains(document.activeElement)) overlay.current?.focus();
     const click = (e: Event) => {
       if (overlay.current?.contains(e.target as Node)) return;
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
-      if ((e.target as Element)?.closest?.('.budget-shock')) return;
+      if (puzzleOpen || (e.target as Element)?.closest?.('.budget-shock, .missing-voice')) return;
       if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
       // Let native tour buttons handle Space/Enter exactly once.
       if ([' ', 'Enter'].includes(e.key) && overlay.current?.contains(e.target as Node) && (e.target as Element).closest?.('button')) return;
@@ -67,13 +71,13 @@ export function DemoTour() {
     const observer = new ResizeObserver(resize);
     if (bar) observer.observe(bar);
     return () => { window.removeEventListener('click', click, true); window.removeEventListener('submit', click, true); media?.removeEventListener('change', reduce); window.removeEventListener('keydown', key, true); document.removeEventListener('visibilitychange', visibility); observer.disconnect(); };
-  }, [active, paused, finished, step]);
+  }, [active, paused, finished, step, puzzleOpen]);
   if (!active) return null;
   return <section className="demo-tour" ref={overlay} tabIndex={-1} aria-label="Guided demo controls">
     <p aria-live="polite"><strong>{finished ? 'Demo complete' : `${step + 1} / ${TOUR_STOPS.length} · ${stop.title} · ${paused ? 'Paused' : 'Playing'}`}</strong><br />{stop.caption}</p>
     <p>Reading never casts a vote. Saving a draft does not publish it or cast a vote. Exit this tour to make an explicit advisory choice.</p>
     <p><a href="/bills#townhall">Exit demo and explore fictional town-hall practice</a></p>
-    <BudgetShock onStart={() => setPaused(true)} /><small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
+    <BudgetShock onStart={() => setPaused(true)} /><MissingVoice onOpenChange={value => { setPuzzleOpen(value); if (value) setPaused(true); }} /><small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
     <div><button disabled={step === 0} onClick={() => go(step - 1)}>← Back</button><button disabled={finished} onClick={() => setPaused(p => !p)}>{paused ? '▶ Resume' : 'Pause'}</button><button disabled={step === TOUR_STOPS.length - 1} onClick={() => go(step + 1)}>Next →</button><button onClick={exit}>Exit demo</button></div>
   </section>;
 }
