@@ -152,6 +152,7 @@ const JournalScreen = lazy(() => import("./JournalScreen"));
 const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
+const CivicHouse = lazy(() => import("./CivicHouse"));
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
@@ -167,6 +168,7 @@ export function App() {
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
+    : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
   return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }

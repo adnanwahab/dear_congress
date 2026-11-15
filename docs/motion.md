@@ -46,3 +46,16 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
+view switch and `prepareStageMorph` for ordinary chapter links. The flat default
+uses no 3D transforms. Orbit is an explicit range input, with no autonomous
+animation, render loop, WebGL dependency or navigation interception. Reduced
+motion, motion-off and forced colors remove transforms. Failed snapshots cannot
+block the view switch or stage navigation. See the README for storage/focus limits.
+
+Existing merge policy is unchanged: disabled/dry-run defaults, quorum 10,
+24-hour exposure, current-head checks and approval, protected-base evidence,
+active default kill switch and human review. Browser choices are advisory;
+production requires a human-published tagged release. This implementation does
+not inspect or attest live protection/environment configuration.
