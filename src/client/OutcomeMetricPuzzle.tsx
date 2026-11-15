@@ -31,8 +31,12 @@ export function OutcomeMetricPuzzle({ onActiveChange }: { onActiveChange?: (acti
   const [choices, setChoices] = useState<(number | null)[]>(Array(5).fill(null));
   const heading = useRef<HTMLHeadingElement>(null);
   const launch = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (active) heading.current?.focus(); }, [active, step]);
-  function close() { setActive(false); setStep(0); setChoices(Array(5).fill(null)); onActiveChange?.(false); launch.current?.focus(); }
+  const hasOpened = useRef(false);
+  useEffect(() => {
+    if (active) { hasOpened.current = true; heading.current?.focus(); }
+    else if (hasOpened.current) launch.current?.focus();
+  }, [active, step]);
+  function close() { setActive(false); setStep(0); setChoices(Array(5).fill(null)); onActiveChange?.(false); }
   const scene = METRIC_STEPS[step];
   return <section className="outcome-metric-puzzle" aria-label="Outcome metric learning puzzle">
     <span className="workflow-source-status">Fictional / hypothetical · Local-only learning</span>

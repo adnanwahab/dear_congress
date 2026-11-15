@@ -56,12 +56,13 @@ test('workflow and tour entry points retain local isolation', async ({ page }) =
   await page.getByRole('button', { name: 'Try the metric puzzle', exact: true }).click();
   await expect(page.locator('[data-metric-choice]')).toBeVisible();
   await page.goto('/votes?demo=1&step=2&paused=1');
-  await page.getByRole('button', { name: 'Try the metric puzzle', exact: true }).click();
+  const tour = page.getByLabel('Guided demo controls');
+  await tour.getByRole('button', { name: 'Try the metric puzzle', exact: true }).click();
   await expect(page.getByRole('button', { name: '▶ Resume', exact: true })).toBeDisabled();
-  await page.locator('[data-metric-choice]').focus();
+  await tour.locator('[data-metric-choice]').focus();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/step=2/);
-  await page.getByRole('button', { name: 'Exit puzzle', exact: true }).click();
+  await tour.getByRole('button', { name: 'Exit puzzle', exact: true }).click();
   await expect(page.getByRole('button', { name: '▶ Resume', exact: true })).toBeEnabled();
 });
