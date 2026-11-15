@@ -1,6 +1,6 @@
-.uncertainty-stack { margin-block: 1.5rem; overflow-wrap: anywhere; }
+.uncertainty-stack { margin-block: 1.5rem; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .uncertainty-stack label { display: grid; gap: .5rem; margin-block: 1rem; }
-.uncertainty-stack select, .uncertainty-stack textarea { width: 100%; max-width: 100%; min-width: 0; font: inherit; }
+.uncertainty-stack select, .uncertainty-stack textarea { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; font: inherit; }
 .uncertainty-stack select, .uncertainty-export { min-height: 44px; }
 .uncertainty-layers { padding-left: 1.5rem; }
 .uncertainty-layers li { border-left: 4px solid currentColor; padding: .5rem 1rem; margin-block: .75rem; }

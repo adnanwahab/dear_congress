@@ -100,6 +100,11 @@
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
 
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }
+
 .civic-sampler { margin-block: 1rem; }
 .sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
 .sampler-actions button, .sampler-actions a { min-height: 44px; }
@@ -120,3 +125,13 @@
 .council-choice { display: block; padding: .75rem; min-height: 44px; }
 .council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
 .council-controls button { min-height: 44px; }
+
+/* Keep the outcomes filter within the 390px viewport while preserving native controls. */
+@media (max-width: 680px) {
+  .workflow-shell .workflow-select { grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; }
+  .workflow-shell .workflow-select select { display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head:has(> label > select) { flex-wrap: wrap; min-width: 0; }
+  .workflow-shell .panel-head:has(> label > select) > * { min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head > label:has(> select) { flex: 1 1 100%; min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head > label > select { display: block; box-sizing: border-box; min-width: 0; width: 100%; max-width: 100%; }
+}
