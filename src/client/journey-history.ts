@@ -26,15 +26,19 @@ export function writeJourney(value: JourneyEntry, target: Window = window) {
 }
 function focusPath(target: Window): string | null {
   const main = target.document.getElementById('main-content');
+  const navigation = target.document.querySelector('nav[aria-label="Main navigation"]');
   let node = target.document.activeElement;
-  if (!main || !node || !main.contains(node)) return null;
+  // Main navigation lives in the header, outside #main-content.
+  // Keep restoration bounded to stable controls; never focus arbitrary page text.
+  const root = main?.contains(node) ? main : navigation?.contains(node) ? navigation : null;
+  if (!root || !node) return null;
   const parts: string[] = [];
-  while (node !== main && node.parentElement) {
+  while (node !== root && node.parentElement) {
     const siblings = Array.from(node.parentElement.children).filter(s => s.tagName === node!.tagName);
     parts.unshift(`${node.tagName.toLowerCase()}:nth-of-type(${siblings.indexOf(node) + 1})`);
     node = node.parentElement;
   }
-  return '#main-content' + (parts.length ? ' > ' + parts.join(' > ') : '');
+  return (root === main ? '#main-content' : 'nav[aria-label="Main navigation"]') + (parts.length ? ' > ' + parts.join(' > ') : '');
 }
 export function captureJourney(target: Window = window) {
   const entry = readJourney(target);
