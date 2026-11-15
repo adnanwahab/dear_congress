@@ -52,6 +52,10 @@ Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft
 
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
 
+## Explore connected issues
+
+[Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
