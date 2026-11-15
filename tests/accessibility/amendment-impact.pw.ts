@@ -34,7 +34,8 @@ test('private impact comparison keyboard, touch-sized controls and reduced motio
   await expect(target).toBeFocused();
   for (const control of [before, after, save]) {
     const box = await control.boundingBox();
-    expect(box!.height).toBeGreaterThanOrEqual(44);
+    // Chromium can return 43.99994 for a CSS minimum height of 44 px.
+    expect(box!.height).toBeGreaterThanOrEqual(43.99);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   if (await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)) {
