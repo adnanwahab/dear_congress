@@ -1,0 +1,12 @@
+.chart-challenge{margin:1rem 0;color:var(--ink);background:var(--paper,var(--bg));border:1px solid var(--line);border-radius:12px;padding:1rem;max-width:100%;overflow-wrap:anywhere;font:normal 1rem/1.6 var(--sans, sans-serif)}
+.chart-challenge button{min-height:44px;white-space:normal;margin:.25rem;max-width:100%}
+.chart-challenge h2:focus,.chart-challenge :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.chart-challenge fieldset{border:1px solid var(--line);margin:1rem 0;min-width:0}
+.chart-challenge button[aria-pressed=true]{outline:3px solid var(--accent);outline-offset:2px}
+.chart-challenge table{width:100%;border-collapse:collapse;font-size:.9rem}
+.chart-challenge th,.chart-challenge td{padding:.5rem .2rem;border-bottom:1px solid var(--line);text-align:left;white-space:normal}
+.chart-challenge summary{cursor:pointer;min-height:44px;padding:.5rem 0}
+.chart-challenge-bars{padding:1rem 0}.chart-challenge-track{height:20px;border:1px solid var(--line);margin:.3rem 0 1rem}.chart-challenge-track>div{height:100%;background:var(--accent)}
+.chart-challenge-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+.demo-tour:has(.chart-challenge [id]){max-height:75vh;overflow-y:auto}
+@media(forced-colors:active){.chart-challenge-track>div{background:Highlight}}

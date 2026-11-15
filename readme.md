@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+### Catch the misleading chart
+
+The optional chart challenge is available in the draft catalog, workflow screens
+and guided demo controls. Three explicitly fictional scenes cover truncated axes,
+denominator shifts and selection bias, with corrected charts, numerical tables
+and complete text explanations. Skip, Restart and Exit affect only mounted local
+practice state; no votes, rewards, records or storage writes are involved. Opening
+it pauses the guided tour. See [SHE-656 verification](docs/reviews/SHE-656.md) for
+browser acceptance limits and the preserved merge policy.
