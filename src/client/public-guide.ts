@@ -50,6 +50,7 @@ The fictional transit sample offers an optional briefing of about two minutes, w
 ## Optional stakeholder lenses
 
 On [Explore civic plans](/synth), optional synthetic stakeholder lenses offer four invented household scenarios with assumptions, metrics and conditional tradeoffs. Each separates unavailable direct household evidence, unvalidated extrapolation and fictional narrative. They do not predict package effects or describe you. Selection stays in page memory, can be reset, and is not saved or sent to a simulation. Selecting a lens is not a vote or verified civic participation.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.
