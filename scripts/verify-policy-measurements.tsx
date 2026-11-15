@@ -28,6 +28,28 @@ const summary = measurements.querySelector('summary')!;
 await act(async () => { (summary as any).click(); });
 assert(measurements.querySelector('details')!.open);
 assert.equal(measurements.querySelectorAll('article').length, 3);
+const capsule = container.querySelector('#time-capsule')!;
+assert(capsule);
+const selects = capsule.querySelectorAll('select');
+await act(async () => {
+  selects[0]!.value = 'wait';
+  selects[0]!.dispatchEvent(new dom.Event('change', { bubbles: true }));
+  selects[1]!.value = 'Fictional transit pilot';
+  selects[1]!.dispatchEvent(new dom.Event('change', { bubbles: true }));
+});
+// Drive React's value tracking through the native control setter.
+for (const [selector, value] of [['input[type=date]', '2099-12-31'], ['input[type=number]', '12'], ['textarea', 'Wait will be at most twelve minutes.']]) {
+  const control = capsule.querySelector(selector!)!;
+  const prototype = selector === 'textarea' ? dom.HTMLTextAreaElement.prototype : dom.HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(control, value);
+  await act(async () => { control.dispatchEvent(new dom.Event('input', { bubbles: true })); control.dispatchEvent(new dom.Event('change', { bubbles: true })); });
+}
+await act(async () => { capsule.querySelector('form')!.dispatchEvent(new dom.Event('submit', { bubbles: true, cancelable: true })); });
+assert.match(capsule.textContent!, /Session forecast frozen/);
+assert.match(capsule.textContent!, /Result unavailable/);
+assert.match(capsule.textContent!, /synthetic-fixture-v1\/wait-2024/);
+assert.equal(capsule.querySelector('form'), null, 'Frozen forecast has no edit control');
+assert.equal(dom.localStorage.getItem('civic_demo_tracker_v1'), saved);
 await act(async () => { root.unmount(); });
 await dom.happyDOM.close();
 console.log('PASS isolated activity, offline measurements and expandable history');

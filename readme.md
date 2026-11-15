@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Civic Time Capsule rehearsal
+
+`/outcomes#time-capsule` offers a private, page-memory forecast using the existing
+synthetic measurement fixtures. Select a metric and fictional jurisdiction, inspect
+the pinned baseline, enter a future UTC date, threshold and explicit prediction,
+then freeze the session receipt. It has no edit control and never writes a vote,
+model request or stored record. Leaving/reloading loses it. The device timestamp
+is not trusted sealing evidence. No public sharing or observed-result comparison
+is connected. See [SHE-767 scope and release gates](docs/reviews/SHE-767.md).
