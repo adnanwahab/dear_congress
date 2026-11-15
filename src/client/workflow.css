@@ -30,8 +30,8 @@
 .workflow-detail-meta span { padding: 3px 10px; background: var(--bg); border-radius: 20px; }
 .workflow-reference { display: block; margin-top: 18px; font-size: 14px; font-weight: 600; }
 .workflow-two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
-.workflow-select { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
-.workflow-select select { font-size: 15px; font-weight: 400; }
+.workflow-select { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
+.workflow-select select { min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 15px; font-weight: 400; }
 .workflow-body-muted { color: var(--muted); margin-top: 12px !important; }
 .workflow-action-stack { display: grid; gap: 12px; }
 .workflow-action-stack a { font-size: 14px; font-weight: 700; }
