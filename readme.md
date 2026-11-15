@@ -104,6 +104,11 @@ review reminders, unknown-date labels and copyable/printable provenance.
 Age never determines validity. Its sourced example establishes repository
 fixture contents only; mixed results remain synthetic.
 See [SHE-678 implementation and validation limits](docs/reviews/SHE-678.md).
+The Outcomes contradiction compass compares explicit fields within matching scope,
+period and claim kind. It keeps both revisions and human-review states, with no
+automatic truth selection. Bundled examples include a primary text citation, a
+synthetic conflict and a missing source. See [SHE-677 validation and remaining
+acceptance](docs/reviews/SHE-677.md).
 
 ## What's in it
 

@@ -1096,6 +1096,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
 
+.compass-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 1rem; }
+.compass-sources section { min-width: 0; border: 1px solid currentColor; border-radius: .5rem; padding: 1rem; overflow-wrap: anywhere; }
+.compass-case summary, .compass-download { min-height: 44px; padding: .65rem; cursor: pointer; }
+.compass-export pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media print {
+  .compass-download, .compass-export { display: none; }
+  .compass-history::details-content { content-visibility: visible; }
+  .compass-sources { display: block; }
+  .compass-sources a::after { content: ' (' attr(href) ')'; }
+}
+
 .civic-adventure { max-width: 760px; margin: 24px auto; padding: 24px; overflow-wrap: anywhere; }
 .civic-adventure nav, .adventure-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .civic-adventure button, .civic-adventure a { min-height: 44px; }

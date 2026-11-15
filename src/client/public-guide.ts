@@ -72,6 +72,10 @@ Try the [civic trivia arcade](/documentation#civic-trivia): five untimed Houston
 
 The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthly agenda and dated source ledger. It separates primary sources, editorial inference, user claims and synthetic estimates. Publication, observation and retrieval are distinct; unknown dates stay unknown. Review expiry means a review is due, not that an older source is false. Bundled examples work offline; they do not certify live source availability. Copy the JSON export or use browser Print to retain dates, limitations and pending human-review history.
 
+## Conflicting sources
+
+The Outcomes contradiction compass compares explicit fields only when scope, period and claim kind match. It preserves both revisions and their pending human-review state; no AI chooses which source is true. Examples include a constitutional text citation, clearly synthetic conflicting reports and a missing-source user claim. External documents require connectivity. Copyable JSON and page printing preserve dates, limitations and review history if downloads fail. Editorial inference is interpretation, not primary evidence.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.

@@ -1,15 +1,16 @@
 import { EvidenceCalendar } from './EvidenceCalendar';
+import { ContradictionCompass } from './ContradictionCompass';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
-  return <section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
+  return <><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
     <p>No verified implemented policy or measured policy effects are registered. Replies and committee milestones are activity, not evidence of policy benefit.</p>
     <details><summary>Explore synthetic measurement prototype</summary>
       <p>Fictional transit pilot · synthetic data only · assessed as of {asOf}. These values do not describe a real policy or enter synthesis.</p>
       {SYNTHETIC_METRICS.map(metric => {
         const result = assessMetric(metric, asOf);
-        return <article key={metric.id} className="card">
+        return <article key={metric.id} className="card policy-measurement">
           <h3>{metric.label} · synthetic</h3>
           <p><strong>{result.movement}</strong> · {result.freshness} · {result.target}</p>
           <dl>
@@ -26,5 +27,5 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
       })}
     </details>
     <EvidenceCalendar asOf={asOf} />
-  </section>;
+  </section></>;
 }
