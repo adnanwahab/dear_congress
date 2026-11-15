@@ -70,3 +70,22 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## Merge-train diorama (SHE-605)
+
+PR list and detail cards render a stationary, read-only railway with typed stops
+for the actual base branch, checks, reviews, merge queue and hold/safety gate.
+Native disclosure controls support keyboard inspection; five desktop columns
+stack vertically on mobile. No motion is used, including under reduced motion.
+Source status, last sync, stale/loading/error, repository ID, full head/version,
+base SHA and viewer permissions accompany the stops. Existing trusted issue links
+remain beside the diorama and its GitHub receipt link binds the selected repository
+and PR number. Issue cards and advisory civic LiveRound votes have no merge train.
+
+Checks and approvals are distinguished by current head. Missing detail evidence
+is unknown; open PR details to fetch it. The existing API has no queue receipt,
+so membership and position explicitly remain unknown. Reported checks/reviews
+are observations, never merge authorization. Native stop expansion has no write
+handler. Existing ballots, revision isolation and governance are unchanged:
+quorum 10 and 24-hour exposure defaults, protected-base/current-head evidence,
+required reviews/checks and the automatic-merge pilot lock remain in force.
