@@ -44,6 +44,12 @@
 
 /* Outcomes places its native filter in a flex heading, not .workflow-select. */
 @media (max-width: 680px) {
+  /* The outcomes heading must wrap before its select consumes an extra flex row. */
+  .workflow-shell .panel-head:has(> label > select) {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .workflow-shell .panel-head:has(> label > select) > * { min-width: 0; }
   .workflow-shell .panel-head > label:has(> select) {
     flex: 1 1 100%;
     min-width: 0;
