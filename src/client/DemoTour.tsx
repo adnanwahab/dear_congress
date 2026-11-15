@@ -37,7 +37,9 @@ export function DemoTour() {
   }, [active, paused, finished, step, puzzleOpen]);
   useEffect(() => {
     if (!active) return;
-    overlay.current?.focus();
+    // Preserve focus after a puzzle closes or the visitor changes controls.
+    // Initial entry still focuses the tour when focus is outside the overlay.
+    if (!overlay.current?.contains(document.activeElement)) overlay.current?.focus();
     const click = (e: Event) => {
       if (overlay.current?.contains(e.target as Node)) return;
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
