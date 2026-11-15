@@ -1,5 +1,6 @@
 import { BudgetShock } from './BudgetShock';
 import { MissingVoice } from './MissingVoice';
+import { PolicyPinball } from './PolicyPinball';
 import { useEffect, useRef, useState } from 'react';
 import { TOUR_STOPS, tourState, tourUrl } from './demo-tour';
 
@@ -45,7 +46,7 @@ export function DemoTour() {
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
-      if (puzzleOpen || (e.target as Element)?.closest?.('.budget-shock, .missing-voice')) return;
+      if (puzzleOpen || (e.target as Element)?.closest?.('.budget-shock, .missing-voice, .policy-pinball')) return;
       if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
       // Let native tour buttons handle Space/Enter exactly once.
       if ([' ', 'Enter'].includes(e.key) && overlay.current?.contains(e.target as Node) && (e.target as Element).closest?.('button')) return;
@@ -77,7 +78,7 @@ export function DemoTour() {
     <p aria-live="polite"><strong>{finished ? 'Demo complete' : `${step + 1} / ${TOUR_STOPS.length} · ${stop.title} · ${paused ? 'Paused' : 'Playing'}`}</strong><br />{stop.caption}</p>
     <p>Reading never casts a vote. Saving a draft does not publish it or cast a vote. Exit this tour to make an explicit advisory choice.</p>
     <p><a href="/bills#townhall">Exit demo and explore fictional town-hall practice</a></p>
-    <BudgetShock onStart={() => setPaused(true)} /><MissingVoice onOpenChange={value => { setPuzzleOpen(value); if (value) setPaused(true); }} /><small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
+    <BudgetShock onStart={() => setPaused(true)} /><MissingVoice onOpenChange={value => { setPuzzleOpen(value); if (value) setPaused(true); }} /><PolicyPinball onOpen={() => setPaused(true)} /><small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
     <div><button disabled={step === 0} onClick={() => go(step - 1)}>← Back</button><button disabled={finished} onClick={() => setPaused(p => !p)}>{paused ? '▶ Resume' : 'Pause'}</button><button disabled={step === TOUR_STOPS.length - 1} onClick={() => go(step + 1)}>Next →</button><button onClick={exit}>Exit demo</button></div>
   </section>;
 }
