@@ -27,6 +27,8 @@ A signed browser cookie lets you change your saved choice. Clearing cookies or u
 The optional [private civic passport](/account) is a demo / sandbox awaiting review. Start it to record self-reported learning badges for evidence, jurisdictions and opposing views in this browser only. It is independent of verified identity and awards nothing for votes, posts or influence. Reset progress, export a JSON file or delete the passport and turn it off on the account page. People sharing your browser profile can read it; keep exported files private.
 
 
+On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
+
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
