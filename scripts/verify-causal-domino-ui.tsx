@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+const dom = new Window({ url: 'http://localhost/bills' });
+for (const key of ['window', 'document', 'navigator']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { createRoot } = await import('react-dom/client');
+const { CausalDominoLab, DOMINO_CHAINS } = await import('../src/client/CausalDominoLab');
+const container = document.createElement('div'); document.body.append(container);
+const root = createRoot(container);
+globalThis.fetch = async () => { throw new Error('No lab requests allowed'); };
+await act(async () => root.render(<CausalDominoLab />));
+const button = (text: string) => [...container.querySelectorAll('button')].find(b => b.textContent === text)!;
+const click = async (text: string) => { await act(async () => button(text).click()); };
+await click('Causal domino laboratory');
+await click(DOMINO_CHAINS[0].cards[2]);
+assert(button('Trigger chain').disabled);
+await click('Restart');
+for (const chain of DOMINO_CHAINS) {
+  await click(chain.title);
+  for (const card of chain.cards) await click(card);
+  assert(!button('Trigger chain').disabled);
+  await click('Trigger chain');
+  assert.match(container.querySelector('[role=status]')!.textContent!, /Hypothetical chain played/);
+  assert(container.querySelector('.domino-played'));
+}
+assert.match(container.querySelector('details')!.textContent!, /no empirical sources/);
+await click('Exit');
+assert.equal(document.activeElement, button('Causal domino laboratory'));
+await click('Causal domino laboratory');
+assert.equal(container.querySelectorAll('.domino-chain li').length, 0);
+await click('Skip');
+assert.equal(container.querySelector('details'), null);
+await act(async () => root.unmount());
+await dom.happyDOM.close();
+console.log('PASS domino: competing chains, blocked links, restart, exit, skip and no requests');

@@ -679,3 +679,11 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Causal domino laboratory
+
+An optional fictional learning lab is available in the draft catalog, workflow
+screens and guided demo controls. Arrange mechanisms and compare two hypothetical
+secondary-effect chains; no link is presented as validated causal proof. Complete
+text, Skip, Restart and Exit are available. Game state stays in page memory and
+never changes participation. See [SHE-654 validation and remaining acceptance](docs/reviews/SHE-654.md).

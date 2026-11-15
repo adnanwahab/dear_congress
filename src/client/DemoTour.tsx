@@ -1,3 +1,4 @@
+import { CausalDominoLab } from './CausalDominoLab';
 import { useEffect, useRef, useState } from 'react';
 import { TOUR_STOPS, tourState, tourUrl } from './demo-tour';
 
@@ -40,6 +41,7 @@ export function DemoTour() {
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('.domino-lab')) return;
       if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
       if (![' ', 'ArrowLeft', 'ArrowRight', 'Escape'].includes(e.key)) return;
       e.preventDefault(); e.stopImmediatePropagation();
@@ -61,6 +63,7 @@ export function DemoTour() {
   }, [active, paused, finished, step]);
   if (!active) return null;
   return <section className="demo-tour" ref={overlay} tabIndex={-1} aria-label="Guided demo controls">
+    <CausalDominoLab onOpen={() => setPaused(true)} />
     <p aria-live="polite"><strong>{finished ? 'Demo complete' : `${step + 1} / ${TOUR_STOPS.length} · ${stop.title} · ${paused ? 'Paused' : 'Playing'}`}</strong><br />{stop.caption}</p>
     <small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
     <div><button disabled={step === 0} onClick={() => go(step - 1)}>← Back</button><button disabled={finished} onClick={() => setPaused(p => !p)}>{paused ? '▶ Resume' : 'Pause'}</button><button disabled={step === TOUR_STOPS.length - 1} onClick={() => go(step + 1)}>Next →</button><button onClick={exit}>Exit demo</button></div>

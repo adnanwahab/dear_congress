@@ -1,0 +1,14 @@
+.domino-lab { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-block: 16px; background: var(--card); color: var(--ink); overflow-wrap: anywhere; }
+.domino-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.domino-lab button, .domino-lab summary { min-height: 44px; padding: 10px 14px; cursor: pointer; }
+.domino-lab button { color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 8px; white-space: normal; }
+.domino-lab button[aria-pressed=true] { border-color: var(--accent); text-decoration: underline; }
+.domino-lab button:disabled { opacity: .55; cursor: default; }
+.domino-lab :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.domino-chain li { padding: 12px; margin-block: 8px; border-left: 3px solid var(--accent); background: var(--accent-soft); }
+.domino-lab .source-chip { font-size: .85em; border: 1px solid var(--line); border-radius: 8px; padding: 3px 6px; display: inline-block; }
+.domino-played li { animation: domino-reveal calc(600ms * var(--motion-scale, 1)) both; }
+@keyframes domino-reveal { from { transform: translateY(-6px); opacity: .4; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .domino-played li { animation: none; } }
+html[data-motion=off] .domino-played li { animation: none; }
+.demo-tour:has(.domino-lab button[aria-expanded=true]) { max-height: 70dvh; overflow-y: auto; }
