@@ -1,6 +1,38 @@
 import { flushSync } from 'react-dom';
 
-export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme';
+export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme' | 'time-zoom' | 'clause-explain';
+export type MotionPreset = 'playful' | 'calm' | 'off';
+export const MOTION_STORAGE_KEY = 'civic-motion';
+export function motionPreset(target: Window): MotionPreset {
+  const value = target?.document?.documentElement?.dataset.motionPreference;
+  return value === 'calm' || value === 'off' ? value : 'playful';
+}
+export function setMotionPreset(target: Window, preset: MotionPreset, remember: boolean) {
+  target.document.documentElement.dataset.motionPreference = preset;
+  delete target.document.documentElement.dataset.motionReview;
+  try { target.sessionStorage.removeItem('motion'); } catch {}
+  try {
+    if (remember) target.localStorage.setItem(MOTION_STORAGE_KEY, preset);
+    else target.localStorage.removeItem(MOTION_STORAGE_KEY);
+  } catch {}
+  applyMotion(target);
+}
+function applyMotion(target: Window) {
+  const review = target.document.documentElement.dataset.motionReview;
+  const reduced = target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  const preset = motionPreset(target);
+  target.document.documentElement.dataset.motion = reduced ? 'off' : review ?? (preset === 'playful' ? 'normal' : preset);
+  // Settle existing WAAPI/FLIP effects too when a visitor stops motion mid-flight.
+  if (['off', 'calm'].includes(target.document.documentElement.dataset.motion)) {
+    for (const animation of target.document.getAnimations?.() ?? []) {
+      try { animation.finish(); } catch { animation.cancel(); }
+    }
+  }
+  const event = target.document.createEvent('Event');
+  event.initEvent('motionchange', false, false);
+  target.dispatchEvent(event);
+}
+
 export type MotionMode = 'normal' | 'slow' | 'off';
 
 /** Apply before rendering/capturing the incoming page. Storage may be unavailable. */
@@ -15,10 +47,19 @@ export function installMotion(target: Window) {
       target.sessionStorage.setItem('motion', mode);
     }
   } catch { if (requested === 'slow' || requested === 'off') mode = requested; }
-  target.document.documentElement.dataset.motion = mode;
+  try {
+    const saved = target.localStorage.getItem(MOTION_STORAGE_KEY);
+    if (saved === 'playful' || saved === 'calm' || saved === 'off') target.document.documentElement.dataset.motionPreference = saved;
+  } catch {}
+  if (mode === 'normal') delete target.document.documentElement.dataset.motionReview;
+  else target.document.documentElement.dataset.motionReview = mode;
+  applyMotion(target);
+  const changed = () => applyMotion(target);
+  target.matchMedia?.('(prefers-reduced-motion: reduce)')?.addEventListener?.('change', changed);
+  return () => target.matchMedia?.('(prefers-reduced-motion: reduce)')?.removeEventListener?.('change', changed);
 }
 export function motionDisabled() {
-  return (typeof document !== 'undefined' && document.documentElement?.dataset.motion === 'off') ||
+  return (typeof document !== 'undefined' && ['off', 'calm'].includes(document.documentElement?.dataset.motion ?? '')) ||
     (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 }
 export function motionDuration(ms: number) {
@@ -62,3 +103,15 @@ export async function runViewTransition(update: () => void, type: MotionType, on
     if (fallback && root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
   }
 }
+
+/** Labels describe evidence, never confer publication or participation authority. */
+export const STATUS_MOTION = {
+  saved: { label: 'Saved', icon: '✓', duration: 180 },
+  draft: { label: 'Draft', icon: '✎', duration: 150 },
+  syncing: { label: 'Syncing', icon: '↔', duration: 180 },
+  updated: { label: 'Updated', icon: '✓', duration: 180 },
+  cited: { label: 'Cited', icon: '※', duration: 150 },
+  unavailable: { label: 'Unavailable', icon: '—', duration: 0 },
+  error: { label: 'Error', icon: '!', duration: 0 },
+} as const;
+export type StatusKind = keyof typeof STATUS_MOTION;

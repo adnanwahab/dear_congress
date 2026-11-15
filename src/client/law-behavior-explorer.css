@@ -44,3 +44,6 @@
 .civic-model-limits ul{padding-left:22px}
 .civic-sensitivity-examples{display:flex;flex-wrap:wrap;gap:8px;min-width:0;border:1px solid currentColor;border-radius:8px;padding:10px}
 .civic-sensitivity-examples button{min-height:44px;max-width:100%;white-space:normal;padding:8px 12px;font:inherit}
+.civic-law-behavior [aria-controls=law-outcome-trace]{min-height:44px;padding:8px 12px}
+#law-outcome-trace{margin-top:12px;padding:12px;border:1px solid #96b4c4;border-radius:8px;overflow-wrap:anywhere}
+#law-outcome-trace a[download]{display:inline-flex;align-items:center;min-height:44px}

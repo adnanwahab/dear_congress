@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
-import { installMotion, motionDisabled, motionDuration, runViewTransition } from './motion';
+import { installMotion, setMotionPreset, motionDisabled, motionDuration, runViewTransition } from './motion';
 
 async function withWindow(run: (win: Window) => Promise<void> | void) {
   const win = new Window({ url: 'https://example.com/?motion=slow' });
@@ -92,3 +92,20 @@ test('snapshot selectors outside the central motion section always declare a typ
     if (file !== 'src/client/motion.ts') expect(source).not.toMatch(/\.startViewTransition\s*\(/);
   }
 });
+
+
+test('switching to still presets settles in-flight effects, even with blocked session storage', () => withWindow(win => {
+  let finished = 0, cancelled = 0;
+  document.getAnimations = (() => [
+    { finish() { finished++; } },
+    { finish() { throw Error('infinite effect'); }, cancel() { cancelled++; } },
+  ]) as unknown as typeof document.getAnimations;
+  Object.defineProperty(win, 'sessionStorage', { get() { throw Error('blocked'); } });
+  setMotionPreset(win as unknown as globalThis.Window, 'off', true);
+  expect(finished).toBe(1); expect(cancelled).toBe(1);
+  expect(win.localStorage.getItem('civic-motion')).toBe('off');
+  expect(motionDisabled()).toBe(true);
+  setMotionPreset(win as unknown as globalThis.Window, 'calm', false);
+  expect(finished).toBe(2); expect(cancelled).toBe(2);
+  expect(win.localStorage.getItem('civic-motion')).toBeNull();
+}));

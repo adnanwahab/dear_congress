@@ -1,5 +1,8 @@
+import { WorldPortal } from './WorldPortal';
+import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {lawOutcomeTrace} from './law-outcome-trace';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -161,6 +164,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
+  const [traceOpen,setTraceOpen]=useState(false);
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
@@ -198,7 +202,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   },[playing,receipt]);
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
-    setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
+    setReceipt(null);setTraceOpen(false);setError('');setDirty(true);setFrameIndex(0);
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
@@ -236,7 +240,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
-    <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     <section className="civic-model-limits" aria-labelledby="model-limits-title">
       <h4 id="model-limits-title">What this model cannot tell you</h4>
       <p><strong>Demo / sandbox · awaiting review.</strong> Synthetic examples and model projections are separate from real votes. No arbitrary bill prose is implemented in HappyBearLandia.</p>
@@ -298,7 +302,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </label>
         <label>Time: {receipt.unit} {formatted(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
           <input type="range" min="0" max={frames.length-1} value={frameIndex}
-            onChange={e=>{setPlaying(false);setFrameIndex(Number(e.target.value));}}
+            onChange={e=>{const next = Number(e.target.value); if (next !== frameIndex) requestHaptic(e.nativeEvent); setPlaying(false);setFrameIndex(next);}}
             aria-label="Recorded simulation time"/>
         </label>
         <button type="button" disabled={frames.length<2} onClick={()=>{
@@ -318,13 +322,28 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </section>
       </div>
       <p className="civic-law-difference">Recorded difference: {formatted(diff)} {unit} (edited minus current rules).</p>
+      <button type="button" aria-expanded={traceOpen} aria-controls="law-outcome-trace" onClick={()=>{setTraceOpen(old=>!old);setPlaying(false);}}>Inspect selected outcome evidence</button>
+      {traceOpen&&frame&&<section id="law-outcome-trace" aria-label="Selected outcome evidence">
+        <h4>{METRICS[selectedMetric]?.label||'Outcome unavailable'} · sandbox why-chain</h4>
+        <p><strong>Observed simulation correlation:</strong> {formatted(baselineMetric)} → {formatted(editedMetric)} {unit} at {receipt.unit} {frame.time}. These are paired recorded outputs, not real votes or measured policy effects.</p>
+        <p><strong>Model rule mapping:</strong> {law.label}; {amendment.parameterKey}: {amendment.originalValue} → {amendment.editedValue} {amendment.units}. This local mapping is not an executed mechanism receipt.</p>
+        <p><strong>Causal interpretation unavailable:</strong> the receipt does not supply project/event IDs or a validated causal explanation. Event timestamps and executed mechanism receipts are missing; checkpoint times must not be treated as event times.</p>
+        <p>Seed {receipt.manifest?.seed} · model version {receipt.manifest?.modelVersion} · code version unavailable. Model version alone does not establish a code revision.</p>
+        <a download={`law-${lawId}-${selectedMetric}-trace.json`} href={'data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(lawOutcomeTrace(receipt,context,selectedMetric,frameIndex,new URL(hblOrigin).origin),null,2))}>Export selected outcome trace (JSON)</a>
+        <p className="muted s">Export includes the full recorded receipt, selected checkpoint, scenario revision, parameter mapping, seed and explicit missing evidence.</p>
+      </section>}
       {reference&&strength!==100&&isFiniteNumber(originalValue)&&<p className="muted s">
         Original 100% setting at this checkpoint: {formatted(originalValue)} {unit}. The original run is retained.
       </p>}
       <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
-      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a></p>
+      <WorldPortal title={law.label} source={`${context.proposalId} · model recipe revision ${revision} · ${strength}% implementation · seed ${effectiveSeed}`}>
+        <p>Static cross-origin handoff. The external world opens in another tab; this exact source view stays here. Its loading status cannot be verified here. If unavailable, close that tab and return here to retry. This is a separate reviewed model, not your bill text.</p>
+        <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
+      </WorldPortal>
+      <p><a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic
