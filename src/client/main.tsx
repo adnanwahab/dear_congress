@@ -1,3 +1,4 @@
+import { installJourneyHistory } from "./journey-history";
 import { installMotion } from "./motion";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -10,6 +11,7 @@ installMotion(window);
 import { installScrollReveals } from "./scroll-motion";
 
 installViewTransitions(window);
+installJourneyHistory(window);
 installObjectNavigation(window);
 installStageSwipe(window);
 // Commit the shell before the render-blocking module releases the incoming snapshot.

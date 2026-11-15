@@ -7,8 +7,9 @@ export const JURISDICTION_KEY = 'civic_browse_jurisdiction_v1';
 export function validJurisdiction(value: string | null): value is Jurisdiction {
   return value === '' || JURISDICTIONS.some(j => j === value);
 }
-export function useJurisdiction() {
+export function useJurisdiction(entryValue?: string) {
   const [preference, setPreference] = useState(() => {
+    if (entryValue !== undefined && validJurisdiction(entryValue)) return { value: entryValue, notice: '' };
     try {
       const saved = localStorage.getItem(JURISDICTION_KEY);
       return saved === null || validJurisdiction(saved)

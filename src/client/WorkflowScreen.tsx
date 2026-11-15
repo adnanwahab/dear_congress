@@ -4,6 +4,7 @@ import { TownHallGame } from './TownHallGame';
 import { BudgetShock } from './BudgetShock';
 import { PersonalPriorities } from './PriorityAllocation';
 import { JourneyRibbon } from './JourneyRibbon';
+import { readJourney, restoreJourney, writeJourney } from "./journey-history";
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -45,6 +46,8 @@ const SELECTION_KEY = 'civic_demo_selection_v1';
 function initialSelection() {
   const explicit = new URLSearchParams(window.location.search).get('proposal');
   if (explicit) return explicit;
+  const entry = readJourney();
+  if (entry) return entry.proposal;
   if ((new URLSearchParams(window.location.search).get('demo') === '1')) return null;
   try { return sessionStorage.getItem(SELECTION_KEY); } catch { return null; }
 }
@@ -67,11 +70,12 @@ const count = (item: DemoItem) => item.support + item.oppose + item.unsure;
 
 
 export default function WorkflowScreen({ stage, request }: { stage: Stage; request: Request }) {
-  const jurisdiction = useJurisdiction();
+  const jurisdiction = useJurisdiction(readJourney()?.filters.jurisdiction);
   const [data, setData] = useState<DemoPayload | null>(readProposalSnapshot);
   const [selected, setSelected] = useState(initialSelection);
-  const [topic, setTopic] = useState('All topics');
-  const [query, setQuery] = useState('');
+  const [journey] = useState(() => readJourney());
+  const [topic, setTopic] = useState(journey?.filters.topic ?? 'All topics');
+  const [query, setQuery] = useState(journey?.filters.query ?? '');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
@@ -84,7 +88,18 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const [startingRound, setStartingRound] = useState(false);
   const [office, setOffice] = useState('');
   const [tracker, setTracker] = useState<Tracked[]>(readTracker);
-  const [outcomeFilter, setOutcomeFilter] = useState('All outcomes');
+  const [outcomeFilter, setOutcomeFilter] = useState(journey?.filters.outcomes ?? 'All outcomes');
+  useEffect(() => {
+    const previous = readJourney();
+    writeJourney({ version: 1, stage: window.location.pathname, direction: previous?.direction ?? null,
+      proposal: selected, filters: { query, topic, outcomes: outcomeFilter, jurisdiction: jurisdiction.value },
+      scroll: previous?.scroll ?? [0, 0], focus: previous?.focus ?? null });
+  }, [selected, query, topic, outcomeFilter, jurisdiction.value]);
+  useEffect(() => {
+    if (loading || !journey) return;
+    const frame = window.requestAnimationFrame(() => restoreJourney());
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, journey]);
   const meta = STAGES[stage];
   const load = () => request<DemoPayload>('/api/demo').then(value => { saveProposalSnapshot(value); setData(value); });
   const [attempt, setAttempt] = useState(0);
@@ -115,13 +130,13 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     if (deepStage) {
       const url = new URL(window.location.href);
       url.searchParams.set('proposal', item.id);
-      window.history.replaceState(null, '', url);
+      window.history.replaceState(window.history.state, '', url);
     }
   }, [item?.id, stage]);
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
-  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(null, '', route(stage,id)); }); }
+  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); }); }
   function saveTracker(next: Tracked[]) { try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; } catch { setError('Could not save the walkthrough in this browser. Enable local storage and try again.'); return false; } }
   async function submitVote(stance?: number) {
     if (mutation.pending || (stance !== undefined && !item)) return;

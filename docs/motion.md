@@ -47,6 +47,20 @@ Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
 
+Six-stage native navigation stores presentation state under `history.state.civicJourney`.
+Each entry retains its stage, direction (when NavigationActivation is available),
+proposal, search/topic/outcome/jurisdiction filters, focus path and window scroll.
+Other history-state keys are preserved. Reloaded documents restore filters before
+render and focus/scroll after proposal loading settles; BFCache restores on pageshow.
+A removed focus target falls back to the main landmark. Restoration never clicks a
+control, submits a vote, prepares a sponsor card or publishes content. Native links,
+modified clicks, scrolling and unsupported-browser/no-motion fallbacks remain intact.
+
+The routing browser matrix is `journey.config.ts` under `tests/accessibility`:
+with that directory's dependencies installed, run
+`bunx playwright test --config journey.config.ts` there. WebKit is Safari engine
+coverage; actual Safari visual review remains a separate human check.
+
 ## Activated proposal origins
 
 `object-navigation.ts` supplements native cross-document transitions on sample
