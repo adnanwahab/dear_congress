@@ -1,3 +1,5 @@
+import { WorldPortal } from './WorldPortal';
+import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
@@ -270,7 +272,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </label>
         <label>Time: {receipt.unit} {formatted(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
           <input type="range" min="0" max={frames.length-1} value={frameIndex}
-            onChange={e=>{setPlaying(false);setFrameIndex(Number(e.target.value));}}
+            onChange={e=>{const next = Number(e.target.value); if (next !== frameIndex) requestHaptic(e.nativeEvent); setPlaying(false);setFrameIndex(next);}}
             aria-label="Recorded simulation time"/>
         </label>
         <button type="button" disabled={frames.length<2} onClick={()=>{
@@ -296,7 +298,12 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
-      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a></p>
+      <WorldPortal title={law.label} source={`${context.proposalId} · model recipe revision ${revision} · ${strength}% implementation · seed ${effectiveSeed}`}>
+        <p>Static cross-origin handoff. The external world opens in another tab; this exact source view stays here. Its loading status cannot be verified here. If unavailable, close that tab and return here to retry. This is a separate reviewed model, not your bill text.</p>
+        <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
+      </WorldPortal>
+      <p><a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic
