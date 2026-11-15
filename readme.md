@@ -734,6 +734,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Synthetic household story sandbox
+
+The optional **Open household demo** control in `/synth` package household panels
+compares three months of local budget events for one deterministic synthetic ID.
+Both columns expose the population, seed, versioned assumptions, starting balance
+and event source IDs. Only a hypothetical monthly credit differs. This is an
+unreviewed teaching fixture, independent of selected packages and real votes.
+The snapshot handoff API has no household event-log response; external runner
+integration and calibrated policy effects remain unavailable. No resident data,
+storage or snapshot writes are used. See [SHE-428 review](docs/reviews/SHE-428.md).
+
 ### Who decides? sandbox
 
 Expand **Who decides?** below the browse-jurisdiction picker to match four sourced
