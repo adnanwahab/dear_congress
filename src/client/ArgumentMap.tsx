@@ -1,6 +1,7 @@
 import { AudioBriefing } from './AudioBriefing';
 import type { DemoItem } from '../engine/demo';
 import './argument-map.css';
+import { ConsensusTerrain } from './ConsensusTerrain';
 
 // Deliberately independent of the catalog: editing proposal text invalidates the map.
 export const PILOT_TEXT = 'Fund a twelve-month pilot of fifteen-minute service through 10 p.m. on three priority corridors, with quarterly public reporting.';
@@ -31,6 +32,7 @@ export function ArgumentMap({ item, namespace = 'fictional-demo' }: { item: Demo
         </li></ul>
       </section>)}</div>
       {JSON.stringify(item, (key, value) => ['support', 'oppose', 'unsure'].includes(key) ? undefined : value) === original ? <AudioBriefing clauseId={`${prefix}-clause`} /> : <p>No briefing is available for this source revision.</p>}
+      <ConsensusTerrain scope={PILOT_SCOPE} />
       <p>Corrections and citation reports are not open in this read-only pilot. Human evidence review and argument moderation are required before public contributions.</p>
     </> : <p>No reviewed arguments yet. No argument map is available for this proposal revision.</p>}
   </section>;
