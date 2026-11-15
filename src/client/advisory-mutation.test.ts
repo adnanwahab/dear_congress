@@ -71,3 +71,15 @@ test('lost response after acceptance retries an upsert without creating another 
   expect(await reload.submit()).toBe(true);
   expect(ballots.size).toBe(1); expect(ballots.get(draft.proposalId)).toBe(1);
 });
+test('acknowledged receipt retains exact submitted choice and viewed revision; getter cannot mutate stored receipt', async () => {
+  const pending = deferred();
+  const mutation = advisoryMutation((async () => pending.promise) as VoteRequest, storage(), () => {});
+  const input = { ...draft, revision: 'text-original' };
+  const save = mutation.submit(input);
+  expect(mutation.confirmedDraft).toBeUndefined();
+  input.stance = -1; input.revision = 'text-new';
+  pending.resolve({ ok: true }); await save;
+  expect(mutation.confirmedDraft).toEqual({ ...draft, revision: 'text-original' });
+  mutation.confirmedDraft!.stance = 0;
+  expect(mutation.confirmedDraft!.stance).toBe(1);
+});
