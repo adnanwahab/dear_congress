@@ -754,6 +754,17 @@ is off; no automated truth or fairness assessment is claimed. Skip/clear is alwa
 available. Responses stay in page memory and never alter stored votes or model
 projections. See [SHE-414 review](docs/reviews/SHE-414.md) for limits and checks.
 
+## Daily curiosity mission
+
+The home dashboard offers a demo reading mission from the existing `/api/demo`
+fictional proposal lane. Chicago calendar days rotate equally across sorted topics,
+then rotate proposal IDs within each topic. Visitors may exclude one familiar topic,
+Shuffle, Skip, or open Learn more and confirm they read the sample text. No political
+profile, popularity signal, vote, actual bill, or model projection enters selection.
+Completion is self-reported reading and stays in page memory; reloading starts fresh.
+The separate daily advisory question retains its existing behavior. See
+[implementation and validation notes](docs/reviews/SHE-411.md).
+
 ## Civic discovery sampler
 
 Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy

@@ -37,6 +37,8 @@ The fictional transit sample includes two argument tracks with unreviewed claims
 
 ## What is fictional and what is verified?
 
+The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.
+
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
