@@ -80,3 +80,41 @@ the existing read API to fetch evidence; lists do not eagerly fetch every PR.
 Source sync time does not establish evidence freshness. Filter changes and clear
 only change local discovery state. They never submit a vote, merge or review.
 See [SHE-624 implementation and validation](reviews/SHE-624.md).
+
+## Merge-train diorama (SHE-605)
+
+PR list and detail cards render a stationary, read-only railway with typed stops
+for the actual base branch, checks, reviews, merge queue and hold/safety gate.
+Native disclosure controls support keyboard inspection; five desktop columns
+stack vertically on mobile. No motion is used, including under reduced motion.
+Source status, last sync, stale/loading/error, repository ID, full head/version,
+base SHA and viewer permissions accompany the stops. Existing trusted issue links
+remain beside the diorama and its GitHub receipt link binds the selected repository
+and PR number. Issue cards and advisory civic LiveRound votes have no merge train.
+
+Checks and approvals are distinguished by current head. Missing detail evidence
+is unknown; open PR details to fetch it. The existing API has no queue receipt,
+so membership and position explicitly remain unknown. Reported checks/reviews
+are observations, never merge authorization. Native stop expansion has no write
+handler. Existing ballots, revision isolation and governance are unchanged:
+quorum 10 and 24-hour exposure defaults, protected-base/current-head evidence,
+required reviews/checks and the automatic-merge pilot lock remain in force.
+
+## Source flip cards — SHE-603
+
+PR list cards expose a read-only source back through a native button (Enter/Space
+and touch), with expanded state, an accessible file index, focusable scrolling
+patches and a reduced-motion fallback. The title/detail link and ballot remain
+outside the flipping content. Issues and live civic rounds retain their existing
+interfaces. Source backs load the existing detail GET lazily and reject a response
+whose repository ID, item number/kind, version, head, base or canonical URL differs
+from the displayed PR. Missing file summaries, partial patches, inaccessible
+protection evidence, loading, denied access and retryable errors are explicit.
+Checks display their reported commit; absent or mismatched evidence is unverified.
+A completed check receipt still requires human review and never authorizes merging.
+
+The advisory lock, configured quorum 10 / 24-hour exposure defaults, protected-base
+and current-head review requirements, repository/kind isolation, existing ballots,
+receipts and records are unchanged. Runtime configuration and GitHub protections
+were not changed or verified. Desktop/mobile visual and real-browser keyboard QA
+remain required before acceptance.
