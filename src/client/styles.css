@@ -1155,3 +1155,24 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
   white-space: normal;
 }
 .bottom-bar .bottom-app-links a { overflow-wrap: anywhere; }
+
+
+/* At 200% zoom the usable CSS width is tablet-sized; keep utilities in More. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .bottom-bar { padding-inline: 8px; }
+  .bottom-bar .desktop-utilities,
+  .bottom-bar .bottom-destinations .secondary-destination { display: none; }
+  .bottom-bar .bottom-destinations { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .bottom-bar .bottom-destinations .bottom-more {
+    display: flex;
+    min-width: 0;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    background: transparent;
+    border: 0;
+    font: 700 11px/1.2 var(--sans);
+  }
+}
