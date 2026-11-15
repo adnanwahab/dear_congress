@@ -8,9 +8,9 @@ const receipt=(strength:number):LawBehaviorReceipt=>({
   schemaVersion:'hbl-law-behavior-receipt.v1',status:'completed',
   law:{id:'law-83',number:83,title:'Transit frequency'},engine:'population',unit:'minute',
   manifest:{modelVersion:'population.v1',seed:42,population:24,implementationStrength:strength,
-    pairedInitialState:true,start:0,end:30,recordedCheckpoints:3,
+    pairedInitialState:true,start:0,end:720,recordedCheckpoints:3,
     scope:'separate synthetic reviewed model; no citizen package applied'},
-  frames:[0,15,30].map((time,i)=>({
+  frames:[0,360,720].map((time,i)=>({
     time,
     baseline:{metrics:{trips:i,meanCommuteMinutes:20},actors:[
       {id:'p0',label:'Resident 1',mode:'walk',activity:'home',x:time,z:1}]},
@@ -50,6 +50,11 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
+    const share=getByRole(host,'link',{name:'Reproducible scenario link'}) as HTMLAnchorElement;
+    expect(share.search).toContain('simulationShare=1');
+    expect(share.search).toContain('horizon=720');
+    expect(share.search).toContain('modelVersion=population.v1');
+    expect(share.search).not.toContain('proposalId');
     expect(host.textContent).toContain('Receipt checks passed');
     expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
@@ -58,7 +63,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Resident 1');
     expect(host.textContent).toContain('Travel mode: walk → bus');
     expect(host.querySelectorAll('polyline').length).toBe(2);
-    expect(host.textContent).toContain('minute 30');
+    expect(host.textContent).toContain('minute 720');
     expect(host.querySelector('.future-postcard img')).toBeNull();
     await act(async()=>getByRole(host,'button',{name:'Preview future postcard'}).click());
     const postcard=getByRole(host,'img',{name:/Synthetic scenario \/ not forecast/});
@@ -78,7 +83,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(inspect.getAttribute('aria-expanded')).toBe('true');
     expect(host.textContent).toContain('Causal interpretation unavailable');
     const exported=()=>JSON.parse(decodeURIComponent((getByRole(host,'link',{name:'Export selected outcome trace (JSON)'}) as HTMLAnchorElement).href.split(',').slice(1).join(',')));
-    expect(exported().observation).toMatchObject({metric:'meanCommuteMinutes',time:30,baseline:20,edited:14,difference:-6});
+    expect(exported().observation).toMatchObject({metric:'meanCommuteMinutes',time:720,baseline:20,edited:14,difference:-6});
     expect(exported().provenance).toEqual({seed:42,modelVersion:'population.v1',codeVersion:null});
     expect(exported().events).toBeNull();
     expect(exported().receipt).toEqual(receipt(1));
@@ -140,6 +145,22 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>resolve!(Response.json(mismatch)));
   expect(host.textContent).toContain('does not match this request');
   expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  browser.location.href='https://civic-synthesis.fly.dev/synth?civicContext=1&simulationShare=1&lawId=83&implementationStrength=1&seed=42&population=24&revision=1&modelVersion=old.v1&parameter=implementationStrength&horizon=720&clock=minute';
+  await act(async()=>root.render(<LawBehaviorExplorer key="shared" seed={99} hblOrigin="https://happybearlandia.fly.dev"/>));
+  expect(host.textContent).toContain('Shared model version: old.v1');
+  expect(host.textContent).toContain('Nothing runs automatically');
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  await act(async()=>resolve!(Response.json(receipt(1))));
+  expect(host.textContent).toContain('Model version mismatch');
+  expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  const changedHorizon=receipt(1);changedHorizon.manifest!.end=730;
+  await act(async()=>resolve!(Response.json(changedHorizon)));
+  expect(host.textContent).toContain('Model horizon changed');
+  browser.location.href+='&horizon=12';
+  await act(async()=>root.render(<LawBehaviorExplorer key="invalid" seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
+  expect(host.textContent).toContain('invalid or unsupported context');
+  expect((host.querySelector('.civic-law-controls') as HTMLFieldSetElement).disabled).toBe(true);
  }finally{
   await act(async()=>root.unmount());host.remove();
   for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}
