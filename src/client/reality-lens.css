@@ -24,6 +24,24 @@
   }
 }
 
+/* Keep the proposal picker grid from expanding to the longest option text.
+   On /outcomes at 390px, its intrinsic min-content width caused 30px overflow. */
+.workflow-shell .workflow-select {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.workflow-shell .workflow-select select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Outcomes places its native filter in a flex heading, not .workflow-select. */
 @media (max-width: 680px) {
   .workflow-shell .panel-head > label:has(> select) {
