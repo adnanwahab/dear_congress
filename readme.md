@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Policy Holodeck tabletop (SHE-766)
+
+`/synth#policy-tabletop` offers an opt-in, low-power 2D discussion board beside
+existing reviewed model controls. Drag or select/place one housing or transit
+mechanism, then explicitly run it; placement clears prior results and never
+starts a request or records a vote. `/map` links to this separate sandbox.
+Placement does not represent geographic model inputs. Drainage, combined effects,
+costs and calibrated uncertainty are unavailable. Actual synthetic consequences
+still require the existing validated paired HBL receipt. Browser receipt time is
+labeled separately from unavailable real-world observation dates.
+See [scope, demo and pending release gates](docs/reviews/SHE-766.md).

@@ -39,3 +39,10 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.policy-tabletop{border:1px solid currentColor;padding:12px;margin:14px 0;border-radius:8px;overflow-wrap:anywhere}
+.policy-tabletop fieldset{min-width:0;margin-top:12px}
+.tabletop-action{display:block;padding:10px;cursor:grab}
+.tabletop-action input{margin-right:8px}
+.tabletop-slot{border:2px dashed currentColor;padding:12px;margin:12px 0}
+.policy-tabletop button{min-height:44px;max-width:100%;white-space:normal}

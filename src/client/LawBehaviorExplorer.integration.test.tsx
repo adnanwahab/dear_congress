@@ -42,6 +42,11 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
     expect(host.querySelector('iframe')).toBeNull();
     expect(host.textContent).toContain('frozen civic package is not automatically applied');
+    await act(async()=>getByRole(host,'button',{name:'Open tabletop'}).click());
+    expect(host.textContent).toContain('Drainage unavailable');
+    await act(async()=>getByRole(host,'button',{name:'Place selected intervention'}).click());
+    expect(requests).toHaveLength(0);
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
@@ -65,6 +70,19 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[1]?.body.implementationStrength).toBe(.5);
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
+    expect(host.textContent).toContain('Received by this browser:');
+    await act(async()=>getByRole(host,'radio',{name:'22 · Housing construction cost'}).click());
+    await act(async()=>getByRole(host,'button',{name:'Place selected intervention'}).click());
+    expect(requests).toHaveLength(2);
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).value).toBe('22');
+    const slot=host.querySelector('.tabletop-slot')!;
+    await act(async()=>fireEvent.drop(slot,{dataTransfer:{getData:()=> '999'}}));
+    expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).value).toBe('22');
+    await act(async()=>fireEvent.drop(slot,{dataTransfer:{getData:()=> '21'}}));
+    expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).value).toBe('21');
+    expect((host.querySelector('.civic-law-controls input[type=range]') as HTMLInputElement).disabled).toBe(true);
+    expect(requests).toHaveLength(2);
     expect(host.querySelector('iframe')).toBeNull();
   }finally{
     await act(async()=>root.unmount());host.remove();

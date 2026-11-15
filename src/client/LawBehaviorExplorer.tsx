@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {PolicyTabletop} from './PolicyTabletop';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -154,6 +155,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [revision,setRevision]=useState(imported?.revision??1);
   const [selectedActor,setSelectedActor]=useState('');
   const [receipt,setReceipt]=useState<LawBehaviorReceipt|null>(null);
+  const [receivedAt,setReceivedAt]=useState<string|null>(null);
   const [reference,setReference]=useState<LawBehaviorReceipt|null>(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
@@ -216,7 +218,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
-      setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
+      setReceipt(parsed);setReceivedAt(new Date().toISOString());setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
       setMetric(defaultMetric(parsed.frames,keys));
       if(parsed.status==='completed'&&strength===100)setReference(old=>old&&old.law.number===lawId?old:parsed);
@@ -229,6 +231,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   }
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
+    <p className="civic-law-provenance"><strong>Simulation not forecast</strong></p>
+    <PolicyTabletop actions={MODELED_LAWS} disabled={busy||invalidContext} onPlace={id=>changedInput(id,100)}/>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
@@ -256,7 +260,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     {error&&<p role="alert" className="note warn">Model data unavailable: {error}. The paired snapshot links above remain available.</p>}
     {receipt?.status==='mechanism-unavailable'&&<p role="status">No reviewed behavior mapping: {receipt.reason||'Effects unavailable.'}</p>}
     {receipt?.status==='completed'&&frames.length>0&&<>
-      <p className="civic-law-provenance" role="status">Recorded model: {receipt.manifest?.modelVersion||'version unavailable'}
+      <p className="civic-law-provenance" role="status">Received by this browser: {receivedAt||'unavailable'} (local clock; not a source observation timestamp). Uncertainty: synthetic scenario only; no calibrated forecast interval. Recorded model: {receipt.manifest?.modelVersion||'version unavailable'}
         {' · '}seed {formatted(receipt.manifest?.seed)}
         {' · '}{receipt.manifest?.population} synthetic actors
         {' · '}{strength}% reviewed parameter
