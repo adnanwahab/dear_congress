@@ -6,8 +6,35 @@
 .argument-map :is(a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .argument-map blockquote { margin: 1rem 0; }
 @media (max-width: 700px) { .argument-map-sides { grid-template-columns: minmax(0, 1fr); } }
+.consensus-terrain { margin-block-start: 1.5rem; border-block-start: 1px solid var(--border, #bbb); padding-block-start: 1rem; }
+.terrain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin-block: 1rem; }
+.terrain-grid article { min-width: 0; border: 1px solid var(--border, #bbb); border-radius: .5rem; padding: 1rem; }
+.terrain-grid h5 { font-size: 1rem; margin-block: 0 1rem; }
+.terrain-meter { height: .75rem; border: 1px solid currentColor; }
+.terrain-meter span { display: block; height: 100%; background: currentColor; }
+.consensus-terrain select { max-width: 100%; min-height: 44px; display: block; }
+.consensus-terrain summary { min-height: 44px; padding-block: .5rem; }
+.consensus-terrain :is(select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .audio-briefing { border-block-start: 1px solid var(--border, #bbb); margin-block-start: 1rem; padding-block-start: 1rem; }
 .briefing-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .audio-briefing :is(button, select) { min-height: 44px; min-width: 44px; max-width: 100%; }
 .audio-briefing :is(button, select):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .audio-briefing h6 { font-size: 1rem; margin-block: 1rem .5rem; }
+
+.argument-map ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.argument-map-sides > section { padding: .75rem; border: 1px solid var(--border, #bbb); border-radius: .75rem; }
+.argument-card { padding: 1rem; border: 1px solid var(--border, #bbb); border-radius: .5rem; background: var(--panel, Canvas); }
+.argument-card h5 { margin-block: 0 .5rem; font-size: 1rem; }
+.argument-map button { min-height: 44px; padding: .5rem .75rem; white-space: normal; }
+.argument-card-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.argument-map button[aria-disabled="true"] { opacity: .6; }
+.argument-map :is(button, a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.argument-drag { cursor: grab; }
+.argument-drag:active { cursor: grabbing; }
+/* Reordering is immediate, including under reduced motion; no movement animation. */
+.steelman-challenge { border-block-start: 1px solid var(--border, #bbb); margin-block-start: 1rem; padding-block-start: 1rem; }
+.steelman-challenge textarea { display: block; box-sizing: border-box; width: 100%; min-height: 6rem; margin-block: .5rem 1rem; font: inherit; }
+.steelman-challenge fieldset { min-width: 0; margin-block: 1rem; }
+.steelman-challenge fieldset label { display: block; margin-block: .75rem; }
+.steelman-challenge button { min-height: 44px; margin-block: .25rem; white-space: normal; }
+.steelman-challenge :is(button, textarea, input):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

@@ -84,6 +84,12 @@ test('simulation first-load shows native accessible controls with explicit separ
  }
  });
 
+ test('provider limitations must be bounded displayable text',()=>{
+  for(const limitations of [null,{},[{}],Array(101).fill('limit'),['x'.repeat(10001)]]){
+    expect(()=>parseLawBehaviorReceipt({...realShape,limitations})).toThrow();
+  }
+ });
+
 test('outcome trace rejects mismatched scenario and preserves missing outcome evidence',async()=>{
   const {lawOutcomeTrace}=await import('./law-outcome-trace');
   const context={lawId:83,seed:42,population:24 as const,implementationStrength:.5,revision:2};

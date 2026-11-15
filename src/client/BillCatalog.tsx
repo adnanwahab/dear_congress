@@ -1,6 +1,8 @@
-import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
 import { TownHallGame } from './TownHallGame';
 import { BudgetShock } from './BudgetShock';
+import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
+import { MissingVoice } from './MissingVoice';
+import { PolicyPinball } from './PolicyPinball';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
@@ -39,7 +41,7 @@ export default function BillCatalog() {
   const bill = billCollection.bills.find(b => b.id === id);
   const results = searchBills(query, category);
   const back = `/bills${params.size ? '?' + params : ''}`;
-  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle />
+  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
     <p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
