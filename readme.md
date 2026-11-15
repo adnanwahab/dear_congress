@@ -43,6 +43,10 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+Game-loop neutrality and consent review, regression coverage, and pending human
+privacy/minors/accessibility checks are tracked in [SHE-544](docs/reviews/SHE-544.md).
+New rewards must extend that checklist and its stance-parity tests.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
@@ -56,6 +60,15 @@ A pre-paint script sets `html[data-theme]`; its exact CSP hash is verified again
 both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
+
+## Local discovery
+
+Home includes My area’s civic challenges: choose a browsing jurisdiction and policy
+category without an address or device location. Prompts and policy examples are
+explicitly fictional; no verified local challenge feed is connected. Each example
+retains its sample ID, background-source provenance and link into Feed. Browsing
+preferences do not establish residency or voting eligibility. See
+[the SHE-460 review](docs/reviews/SHE-460.md) for validation and remaining acceptance.
 
 ## Measured outcomes (Harris County / Houston)
 
@@ -83,8 +96,19 @@ Notes:
 The `/outcomes` page separates simulated outreach activity from policy measurements.
 Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
+The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+The evidence freshness calendar adds a monthly agenda and dated ledger with
+review reminders, unknown-date labels and copyable/printable provenance.
+Age never determines validity. Its sourced example establishes repository
+fixture contents only; mixed results remain synthetic.
+See [SHE-678 implementation and validation limits](docs/reviews/SHE-678.md).
+The Outcomes contradiction compass compares explicit fields within matching scope,
+period and claim kind. It keeps both revisions and human-review states, with no
+automatic truth selection. Bundled examples include a primary text citation, a
+synthetic conflict and a missing source. See [SHE-677 validation and remaining
+acceptance](docs/reviews/SHE-677.md).
 
 ## What's in it
 
@@ -254,6 +278,16 @@ src/client/styles.css
 - `POST /api/emergent/:id/variant` `{ variant: "full" | "targeted" | "phased" | "grant" | "pilot" }`
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
+
+### Local sandbox Undo
+
+Sample proposal filters, comparison selection/order, sponsor-card moves, household
+presets and synthesis sliders offer one-step **Undo local change** for 20 seconds.
+Each new action replaces the previous Undo; focus or hover pauses expiry and
+leaving gives another 20 seconds. Restoration is announced in place. History stays
+in page memory and clears on navigation/reload. Synthesis restoration requests
+only an unsaved preview. Public posts, advisory votes and saved synthesis commits
+retain their separate explicit workflows.
 
 ### Scoring rule sandbox
 
@@ -580,6 +614,19 @@ A fabricated tally and aggregate score can be replayed offline and downloaded
 through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
 for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.
 
+## First-visit learning
+
+Choose **Five-minute civic adventure** on the home page, or open `/?quest=1`.
+Five untimed, skippable chapters follow journal → need → comparison → proposal →
+future. Optional fictional examples stay inside the guide, separate from live
+records. No data fetch, vote, public post or identity disclosure is required.
+Chapter, completion and sample preference resume via `civic_adventure_v1` in local
+storage; blocked storage allows page-only use with a notice. Restart resets that
+learning progress. `/?quest=1&walkthrough=1` presents equivalent content at once.
+Ordinary stage links appear after completion or in the walkthrough and explicitly
+leave the guide. No automatic advancement or animation is used.
+See [SHE-410 review notes](docs/reviews/SHE-410.md) for validation limits.
+
 ## Guided demo
 
 Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only
@@ -636,6 +683,13 @@ Official legislative observations have no reviewed topic binding, so hubs show
 that stage as not yet available rather than matching bill titles by keyword.
 See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).
 
+Topic hubs also include a zoomable, scrollable curiosity constellation with an
+equivalent list and source/next-step previews. It projects the same typed hub
+data without new inference or writes. Solid sample-lineage edges and dashed
+illustrative catalog edges remain separate; metric nodes are targets only.
+Official bills and verified measurements remain unavailable until reviewed source
+bindings exist. See [SHE-531 review](docs/reviews/SHE-531.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
@@ -690,3 +744,155 @@ remain available after skipping. Native buttons, radio groups and disclosures
 support keyboard and touch; the exercise adds no motion, audio, account, storage
 or network dependency. It does not submit votes or run policy projections.
 See [SHE-413 review notes](docs/reviews/SHE-413.md) for validation limits.
+
+## Steelman challenge sandbox
+
+The exact-revision fictional transit argument map on Published, Votes and proposal
+comparison offers optional source-backed counterargument practice. Feedback uses
+an explicit self-review rubric for fidelity, evidence and completeness. AI scoring
+is off; no automated truth or fairness assessment is claimed. Skip/clear is always
+available. Responses stay in page memory and never alter stored votes or model
+projections. See [SHE-414 review](docs/reviews/SHE-414.md) for limits and checks.
+
+## Civic discovery sampler
+
+Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy
+concepts across housing, childcare, transit, flood resilience and health. Both swipe
+directions skip; native buttons provide the same action without gestures. Cards
+change immediately with no motion dependency or countdown. Reading-list saves reuse
+the browser watchlist with `sample` identities; Open context uses the existing draft
+stage. The sampler uses `/api/demo` and never requests vote or simulation writes.
+Its editorial benefit/trade-off summaries are not verified impact projections.
+See [SHE-416 review notes](docs/reviews/SHE-416.md) for validation limits.
+
+## Synthetic household story sandbox
+
+The optional **Open household demo** control in `/synth` package household panels
+compares three months of local budget events for one deterministic synthetic ID.
+Both columns expose the population, seed, versioned assumptions, starting balance
+and event source IDs. Only a hypothetical monthly credit differs. This is an
+unreviewed teaching fixture, independent of selected packages and real votes.
+The snapshot handoff API has no household event-log response; external runner
+integration and calibrated policy effects remain unavailable. No resident data,
+storage or snapshot writes are used. See [SHE-428 review](docs/reviews/SHE-428.md).
+
+### Who decides? sandbox
+
+Expand **Who decides?** below the browse-jurisdiction picker to match four sourced
+Houston/Harris County/Texas/U.S. tasks to governmental levels. The selected broad
+jurisdiction comes first; changing it resets the round. Answers are page-local,
+with no scoring API, vote, location request or model projection. Explanations cover
+overlapping authority. This educational demo awaits civic-content and accessibility
+review; see [SHE-419 review notes](docs/reviews/SHE-419.md).
+
+## Civic marble-run sandbox
+
+Draft includes an unreviewed educational federal-process marble run after sample
+proposal loading succeeds. Play/pause, previous/next and reset use native keyboard
+and touch controls. Reduced motion and motion-off use manual steps; the static
+all-branches decision diagram stays visible. Committee revision, failed chamber
+support and delivery capacity are invented constraints, independent of sample
+counts, advisory votes, official bill records and model projections. Changing the
+proposal resets the run. Loading/failure/empty states use the existing proposal
+loader and retry controls rather than substituting a different source.
+
+The existing snapshot simulator models policy effects, not institutional passage;
+this sandbox makes no simulator requests and links to Synthesize separately.
+Process references are Congress.gov and USA.gov. This simplified path assumes
+identical chamber text and presidential signature, and omits veto/override paths.
+Governance remains as documented in docs/launch-merge-policy.md: disabled/dry-run
+automation, quorum 10 and active kill switch by default; human review and tagged
+release requirements are unchanged. No live configuration was inspected or changed.
+
+## County event heatmap sandbox
+
+`/map` includes a demo event heatmap sourced only from the existing local
+`county-fips-v1` model. Improve the plan, then play or scrub completed revisions.
+An event means one county model changed status during that revision; intensity
+is 0 or 1 events per county per revision, not people, votes or measured impacts.
+Separate controls show Census 2023 boundary evidence and synthetic transitions.
+Every event has an inspectable model/revision/FIPS ID and selects its county.
+The full selected-bucket table remains available without SVG or WebGL; reduced
+motion advances manually. Restart clears the local replay. There is no network
+loading or provider failure state because this view uses bundled shapes and the
+local model. External simulator receipts have no reviewed county/event binding
+and are not geocoded. See [SHE-435 review notes](docs/reviews/SHE-435.md).
+
+## Goal overlap preview (SHE-453)
+
+The exact-text-bound fictional transit ArgumentMap includes a read-only overlap
+preview on the existing source, voting and comparison surfaces. Counts are wholly
+synthetic, separate from browser votes, and expose subgroup denominators and two
+aggregation methods. No consented real sample is connected. Small groups and rare
+cells are suppressed; see [scope and acceptance](docs/reviews/SHE-453.md).
+
+## Personal priority points
+
+The active `/votes` and `/vote` workflow includes a personal 100-point allocation.
+Drag one point between trays with mouse, pen or touch, or use labeled numeric
+inputs and plus/minus buttons. Totals update immediately and cap at 100; Undo
+reverses draft changes. Only **Save priorities** writes an allocation to the
+existing cookie-bound `/api/votes` storage, without proposal votes or publication.
+Refresh restores saved values; unsaved edits stay in page memory. Loading/error
+and empty-need states do not submit. Personal priorities remain separate from
+synthetic proposal responses. The token display uses no animation.
+
+### Build-a-plan workbench
+
+Each synthesis lane has a separate, initially empty $40B advisory construction kit.
+Drag policies between Available and Workbench or use native Add/Remove buttons
+with touch or keyboard. Costs use integer millions; over-budget selections remain
+visible with a deterministic shortfall explanation. Rights-blocked and unknown or
+invalid-cost policies cannot be added. Other policy interactions are not modeled.
+Source IDs, jurisdictions and estimate caveats stay visible, with an ordered local
+change log. Changes live only in component memory, reset with the package/lane,
+and never call a voting, publication or synthesis write endpoint. Existing ledger
+exports still describe the ledger, independently of this experiment. Motion uses
+the existing typed plan transition helper and respects reduced motion.
+
+## Optional civic sound
+
+The shared header exposes **Sound Off** by default, with a browser-local on/off
+preference and explicit tests for three original quiet PCM cues. Navigation and
+read-only rule-sandbox actions use cues only during user activation. Enabling,
+loading, automated demos, voting and publication are silent. Reduced motion and
+motion-off suppress audio. Embedded waveforms need no network after page load;
+this is not whole-app offline support. Device media volume/mute behavior remains
+browser-dependent; Sound Off is the guaranteed application silence control.
+See [SHE-406 review and remaining checks](docs/reviews/SHE-406.md).
+
+## Optional haptics
+
+Page actions (More on mobile) offers disabled-by-default browser-local haptics.
+Supported Vibration API devices receive one 8 ms pulse, at most once per 120 ms,
+for intentional demo card moves, recorded-model playback ticks and successful
+private amendment saves. Reduced motion and hidden pages suppress requests.
+No voting, policy-setting sliders, automated playback, loading or progress
+notifications trigger feedback. Unsupported/denied APIs are safe no-ops; there
+is no polling or permission prompt. Blocked storage keeps a page-only preference.
+
+## Fictional facilitation practice
+
+The draft catalog and sample workflow offer **Read the room**, an opt-in,
+three-scene town-hall game. The guided demo links out to its catalog entry.
+All speakers, questions and slots are hypothetical. Feedback rewards fair turns,
+listening and accurate follow-up, never a political preference. Skip, Restart,
+Exit and a complete text explanation are available. State stays in page memory;
+no participation credit, advisory writes or stored scores are created.
+See [SHE-661 verification and limitations](docs/reviews/SHE-661.md).
+
+### Fictional clause reveal
+
+Draft and Votes include a read-only drag comparison of illustrative current and
+proposed text. A native range slider supports touch and keyboard; side-by-side
+mode and complete selectable text remain available alongside background citations.
+Shared prefix/change/suffix anchors align without inferring legal clause boundaries.
+This demo does not display imported official legal text or publish any choice.
+See [SHE-405 verification and limits](docs/reviews/SHE-405.md).
+
+Compact sample background-source chips open on hover, focus or tap. Escape, the
+Close source inspection button, or an outside tap dismisses them. Original links
+open a separate tab, retaining the civic journey. These references do not verify
+scenario claims: original quotations and publication dates are unavailable and
+explicitly labeled; source check dates remain distinct from publication dates.
+
