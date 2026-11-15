@@ -6,7 +6,7 @@ const item = DEMO_ITEMS.find(item => item.id === 'demo-transit')!;
 test('paired fictional trees disclose every unsupported claim and exact clause', () => {
   const html = renderToStaticMarkup(<ArgumentMap item={item} />);
   expect(item.proposedText).toBe(PILOT_TEXT);
-  expect(html.match(/unverified assertion/g)).toHaveLength(4);
+  expect(html.match(/unverified assertion/g)).toHaveLength(6);
   expect(html.match(/Evidence strength: unassessed/g)).toHaveLength(4);
   expect(html.indexOf('Reasons for')).toBeLessThan(html.indexOf('Concerns'));
   expect(html.match(/What would change my mind/g)).toHaveLength(2);

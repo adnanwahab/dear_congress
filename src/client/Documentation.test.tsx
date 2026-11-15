@@ -35,7 +35,7 @@ test('public guide explains trust limits and keeps historical planning collapsed
   const window = new Window();
   const document = window.document;
   document.body.innerHTML = renderToStaticMarkup(<Documentation />);
-  const appendix = document.querySelector('details')!;
+  const appendix = document.querySelector('#historical-appendix')!;
   expect(appendix.hasAttribute('open')).toBe(false);
   expect(appendix.querySelector('summary')!.textContent).toContain('November 12, 2026');
   appendix.innerHTML = '<summary>Historical appendix</summary>';

@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { useLocalUndo } from "./LocalUndo";
 
 // Experiment definitions only. Never initialize these from visitor or journal data.
 export const HOUSEHOLD_PRESETS = [
@@ -40,6 +41,13 @@ const METRICS = ["Rent", "Travel time", "Flooding", "Taxes", "Services"] as cons
 export function HouseholdImpacts() {
   const id = useId();
   const [preset, setPreset] = useState("");
+  const undo = useLocalUndo();
+  function change(next: string) {
+    if (next === preset) return;
+    const previous = preset;
+    setPreset(next);
+    undo.record(`household preset: ${HOUSEHOLD_PRESETS.find(([key]) => key === previous)?.[1] ?? 'total view'}`, () => setPreset(previous));
+  }
   const label = HOUSEHOLD_PRESETS.find(([key]) => key === preset)?.[1];
   const lens = STAKEHOLDER_LENSES[preset as keyof typeof STAKEHOLDER_LENSES];
   return <section className="household-impacts" aria-labelledby={`${id}-title`}>
@@ -47,12 +55,13 @@ export function HouseholdImpacts() {
     <p id={`${id}-help`} className="muted s">Optional experiment input, not a description of you. Selection stays in this page’s memory and is not sent to the simulation, saved or inferred from your journal, income, address or identity.</p>
     <label htmlFor={`${id}-preset`}>Hypothetical household type</label>
     <select id={`${id}-preset`} aria-describedby={`${id}-help`} value={preset}
-      onChange={event => setPreset(HOUSEHOLD_PRESETS.some(([key]) => key === event.target.value) ? event.target.value : "")}>
+      onChange={event => change(HOUSEHOLD_PRESETS.some(([key]) => key === event.target.value) ? event.target.value : "")}>
       <option value="">No household selected — total view</option>
       {HOUSEHOLD_PRESETS.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
     </select>
-    <button type="button" className="ghost small" disabled={!preset} onClick={() => setPreset("")}>Reset household</button>
+    <button type="button" className="ghost small" disabled={!preset} onClick={() => change("")}>Reset household</button>
     <p role="status">{label ? `Hypothetical selection: ${label}.` : "No household selected. Showing total view."}</p>
+    {undo.control}
     {lens && <article className="stakeholder-lens" aria-labelledby={`${id}-lens`}>
       <h5 id={`${id}-lens`}>Synthetic stakeholder lens: {label}</h5>
       <p><strong>Assumptions — illustrative:</strong> {lens.assumptions} These are authored examples, not measured households or population weights.</p>
