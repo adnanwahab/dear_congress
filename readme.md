@@ -61,6 +61,15 @@ both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
 
+## Local discovery
+
+Home includes My area’s civic challenges: choose a browsing jurisdiction and policy
+category without an address or device location. Prompts and policy examples are
+explicitly fictional; no verified local challenge feed is connected. Each example
+retains its sample ID, background-source provenance and link into Feed. Browsing
+preferences do not establish residency or voting eligibility. See
+[the SHE-460 review](docs/reviews/SHE-460.md) for validation and remaining acceptance.
+
 ## Measured outcomes (Harris County / Houston)
 
 The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.

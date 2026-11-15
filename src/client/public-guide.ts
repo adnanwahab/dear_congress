@@ -32,6 +32,8 @@ The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The home page’s My area’s civic challenges rail uses only your chosen browsing jurisdiction, never a street address or device location. This preference does not establish residency or voter eligibility. Its categorized prompts and policy examples are fictional; no verified local challenge feed is connected. Opening an example does not vote or contact an office.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 ## Listen or read before deciding
