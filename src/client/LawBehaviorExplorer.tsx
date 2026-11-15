@@ -2,6 +2,7 @@ import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {LawEnsemble} from './LawEnsemble';
 import {FuturePostcard} from './FuturePostcard';
 import {lawOutcomeTrace} from './law-outcome-trace';
 import {parseCivicLawContext,civicLawQuery,parseSimulationShare,simulationShareQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
@@ -366,6 +367,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       {reference&&strength!==100&&isFiniteNumber(originalValue)&&<p className="muted s">
         Original 100% setting at this checkpoint: {formatted(originalValue)} {unit}. The original run is retained.
       </p>}
+      <LawEnsemble key={`${lawId}:${strength}:${revision}`} lawId={lawId} strength={strength/100} seed={effectiveSeed} hblOrigin={hblOrigin} modelVersion={receipt.manifest?.modelVersion||undefined} metric={selectedMetric} unit={unit}/>
       <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>

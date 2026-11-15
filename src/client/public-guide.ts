@@ -37,6 +37,8 @@ The fictional transit sample includes two argument tracks with unreviewed claims
 
 ## What is fictional and what is verified?
 
+The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.
+
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
@@ -50,6 +52,8 @@ The fictional transit argument map on [Votes](/votes?proposal=demo-transit) offe
 The optional household demo in [Civic plans](/synth) follows one synthetic household through two local budget ledgers. Each line shows a logged event and modeled balance, with matching population, seed and common assumptions in both futures. The demo credit is an illustrative assumption, not an effect of the selected policy package. It uses no resident data and saves no choices.
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
+
+The optional Steelman challenge on the fictional transit argument map is a sandbox self-review. Add an opposing summary and a source passage, then check fidelity, evidence and completeness. AI scoring is off; models can misread context and cannot certify truth or fairness. Skip or clear the exercise at any time. Responses stay in page memory, are lost on navigation, and never change saved votes or model projections. Supplied sources are not verified.
 
 ## Listen or read before deciding
 

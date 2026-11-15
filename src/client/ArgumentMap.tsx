@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import { AudioBriefing } from './AudioBriefing';
 import type { DemoItem } from '../engine/demo';
 import './argument-map.css';
+import { SteelmanChallenge } from './SteelmanChallenge';
 import { ConsensusTerrain } from './ConsensusTerrain';
 import { EvidenceConditionCards } from './PolicyComparison';
 import { PILOT_TEXT, PILOT_SCOPE } from './evidence-conditions';
@@ -70,6 +71,7 @@ function Tabletop({ item, namespace, evidenceConditions }: { item: DemoItem; nam
       </section>)}</div>
       {JSON.stringify(item, (key, value) => ['support', 'oppose', 'unsure'].includes(key) ? undefined : value) === original ? <AudioBriefing clauseId={`${prefix}-clause`} /> : <p>No briefing is available for this source revision.</p>}
       <ConsensusTerrain scope={PILOT_SCOPE} />
+      <SteelmanChallenge key={'steelman:' + PILOT_SCOPE + item.proposedText} item={item} />
       <p>Corrections and citation reports are not open in this fictional pilot. Human evidence review and argument moderation are required before public contributions.</p>
       {evidenceConditions && <EvidenceConditionCards key={PILOT_SCOPE + item.proposedText} scope={PILOT_SCOPE} />}
     </> : <p>No reviewed arguments yet. No argument map is available for this proposal revision.</p>}

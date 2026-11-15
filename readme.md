@@ -734,6 +734,37 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Fictional council practice
+
+`/votes` includes a skippable five-minute council sandbox, pending human review.
+Chair, budget officer, parent and transit user dialogue and costs are explicitly
+fictional. Five one-minute rounds can be paused, advanced, revisited or restarted;
+selecting a practice response pauses for reflection. Full script and all options
+remain available after skipping. Native buttons, radio groups and disclosures
+support keyboard and touch; the exercise adds no motion, audio, account, storage
+or network dependency. It does not submit votes or run policy projections.
+See [SHE-413 review notes](docs/reviews/SHE-413.md) for validation limits.
+
+## Steelman challenge sandbox
+
+The exact-revision fictional transit argument map on Published, Votes and proposal
+comparison offers optional source-backed counterargument practice. Feedback uses
+an explicit self-review rubric for fidelity, evidence and completeness. AI scoring
+is off; no automated truth or fairness assessment is claimed. Skip/clear is always
+available. Responses stay in page memory and never alter stored votes or model
+projections. See [SHE-414 review](docs/reviews/SHE-414.md) for limits and checks.
+
+## Daily curiosity mission
+
+The home dashboard offers a demo reading mission from the existing `/api/demo`
+fictional proposal lane. Chicago calendar days rotate equally across sorted topics,
+then rotate proposal IDs within each topic. Visitors may exclude one familiar topic,
+Shuffle, Skip, or open Learn more and confirm they read the sample text. No political
+profile, popularity signal, vote, actual bill, or model projection enters selection.
+Completion is self-reported reading and stays in page memory; reloading starts fresh.
+The separate daily advisory question retains its existing behavior. See
+[implementation and validation notes](docs/reviews/SHE-411.md).
+
 ## Civic discovery sampler
 
 Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy
