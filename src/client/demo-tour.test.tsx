@@ -16,6 +16,7 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
   const { Window } = await import('happy-dom');
   const { act } = await import('react');
   const { createRoot } = await import('react-dom/client');
+  const { flushSync } = await import('react-dom');
   const dom = new Window({ url: 'http://localhost/votes?demo=1&step=2' });
   dom.matchMedia = (() => ({ matches: reduced, addEventListener() {}, removeEventListener() {} })) as any;
   const globals = { window: dom, document: dom.document, CustomEvent: dom.CustomEvent, ResizeObserver: dom.ResizeObserver, IS_REACT_ACT_ENVIRONMENT: true };
@@ -49,29 +50,29 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
     expect(writes).toBe(0); expect(pending).toBeUndefined();
     // The educational puzzle pauses this tour and never submits civic data.
     const puzzleButton = document.querySelector('.demo-tour .missing-voice > button') as HTMLButtonElement;
-    await act(async () => puzzleButton.click());
+    flushSync(() => puzzleButton.click());
     expect(pending).toBeUndefined();
     await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
     expect(pending).toBeUndefined();
     const puzzle = document.querySelector('.demo-tour .missing-voice')!;
     for (let scene = 0; scene < 3; scene++) {
       const radio = puzzle.querySelector('input') as HTMLInputElement;
-      await act(async () => radio.click());
+      flushSync(() => radio.click());
       const reveal = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Reveal explanation')!;
-      await act(async () => reveal.click());
+      flushSync(() => reveal.click());
       expect(puzzle.querySelector('[role=status]')?.textContent?.length).toBeGreaterThan(100);
       const next = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Next scene')!;
-      await act(async () => next.click());
+      flushSync(() => next.click());
     }
     expect(puzzle.textContent).toContain('Reflection complete');
     const restart = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Restart puzzle')!;
-    await act(async () => restart.click());
+    flushSync(() => restart.click());
     expect(puzzle.textContent).toContain('1 / 3');
     const skip = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Skip scene')!;
-    await act(async () => skip.click());
+    flushSync(() => skip.click());
     expect(puzzle.textContent).toContain('2 / 3');
     const exitPuzzle = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Exit puzzle')!;
-    await act(async () => exitPuzzle.click());
+    flushSync(() => exitPuzzle.click());
     expect(document.activeElement).toBe(puzzleButton);
     expect(writes).toBe(0);
     expect(dom.location.search).toContain('paused=1');
