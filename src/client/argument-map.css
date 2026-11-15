@@ -20,3 +20,15 @@
 .audio-briefing :is(button, select) { min-height: 44px; min-width: 44px; max-width: 100%; }
 .audio-briefing :is(button, select):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .audio-briefing h6 { font-size: 1rem; margin-block: 1rem .5rem; }
+
+.argument-map ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.argument-map-sides > section { padding: .75rem; border: 1px solid var(--border, #bbb); border-radius: .75rem; }
+.argument-card { padding: 1rem; border: 1px solid var(--border, #bbb); border-radius: .5rem; background: var(--panel, Canvas); }
+.argument-card h5 { margin-block: 0 .5rem; font-size: 1rem; }
+.argument-map button { min-height: 44px; padding: .5rem .75rem; white-space: normal; }
+.argument-card-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.argument-map button[aria-disabled="true"] { opacity: .6; }
+.argument-map :is(button, a, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.argument-drag { cursor: grab; }
+.argument-drag:active { cursor: grabbing; }
+/* Reordering is immediate, including under reduced motion; no movement animation. */

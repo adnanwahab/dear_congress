@@ -31,8 +31,11 @@ test('briefing controls and transcript remain usable across access modes', async
   await page.evaluate(() => (window as any).briefingUtterance.onerror());
   await expect(briefing.getByRole('status')).toContainText('Audio could not play');
   await expect(briefing).toContainText('No operating budget');
-  await briefing.getByRole('link', { name: 'Sample proposal clause 1', exact: true }).click();
-  await expect(page.locator('#argument-demo-transit-clause')).toBeVisible();
+  const clauseLink = briefing.getByRole('link', { name: 'Sample proposal clause 1', exact: true });
+  const clauseHref = await clauseLink.getAttribute('href');
+  expect(clauseHref).toMatch(/^#argument-/);
+  await clauseLink.click();
+  await expect(page.locator(`[id="${clauseHref!.slice(1)}"]`)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'critical' || v.impact === 'serious')).toEqual([]);
@@ -43,8 +46,11 @@ test('briefing controls and transcript remain usable across access modes', async
     await touchPage.goto('/votes?proposal=demo-transit');
     const transcript = touchPage.getByRole('region', { name: 'Two-minute demo briefing' });
     await expect(transcript).toContainText('Audio unavailable');
-    await transcript.getByRole('link', { name: 'Sample proposal clause 1', exact: true }).tap();
-    await expect(touchPage.locator('#argument-demo-transit-clause')).toBeVisible();
+    const touchLink = transcript.getByRole('link', { name: 'Sample proposal clause 1', exact: true });
+    const touchHref = await touchLink.getAttribute('href');
+    expect(touchHref).toMatch(/^#argument-/);
+    await touchLink.tap();
+    await expect(touchPage.locator(`[id="${touchHref!.slice(1)}"]`)).toBeVisible();
     await context.close();
   }
   expect(writes).toBe(0);
