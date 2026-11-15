@@ -16,8 +16,10 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   dom.document.body.append(container);
   const root = createRoot(container as any);
   let unavailable = true;
+  let writes = 0;
   const records: Record<string, Record<string, { stance: number }>> = {};
   const request = async <T,>(path: string, body?: any): Promise<T> => {
+    if (body !== undefined) writes++;
     if (unavailable) throw new Error('Offline');
     if (path === '/api/votes') { records.test ??= {}; for (const vote of body.votes) records.test[vote.proposalId] = vote; return { ok: true } as T; }
     return demoPayload(records, 'test') as T;
@@ -57,6 +59,17 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   assert(food, stage);
   assert.match(food.textContent!, /Scenario jurisdiction: County/);
   assert.match(food.textContent!, /Federal food access data background; not evidence of a county pilot/);
+  const layers = food.querySelectorAll('.evidence-layer');
+  assert.equal(layers.length, 3);
+  assert.equal(layers[0]!.open, true);
+  for (const layer of [...layers].slice(1)) {
+    assert.equal(layer.open, false);
+    (layer.querySelector('summary') as any).click();
+    assert.equal(layer.open, true);
+  }
+  assert.match(food.textContent!, /illustrative inference, not official fact/);
+  assert.match(food.textContent!, /not a pinned document revision/);
+  assert.equal(writes, 0, 'reading, retry and peeling never submit');
   if (stage === 'votes') {
     const browser = () => container.querySelector('[aria-label="Unverified browser votes — advisory"]')!;
     assert(browser(), 'separate browser counts shown');
@@ -77,6 +90,10 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     if (stage === 'votes') {
       const select = container.querySelector('.workflow-select select')!;
       await act(async () => { select.value = 'demo-transit'; select.dispatchEvent(new dom.Event('change', { bubbles: true })); });
+      const nextEvidence = container.querySelector('section[aria-label="Scenario and background source"]')!;
+      assert.match(nextEvidence.textContent!, /Metropolitan Transit Authority/);
+      assert(!nextEvidence.textContent!.includes('Food Access Research Atlas'));
+      assert.equal(nextEvidence.querySelectorAll('.evidence-layer[open]').length, 1, 'new proposal resets nested disclosure state');
     }
     const map = [...container.querySelectorAll('[aria-label="Compare arguments"]')].find(node => node.textContent!.includes('More frequent evening'))!;
     assert(map, 'integrated transit argument map');

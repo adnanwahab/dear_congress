@@ -46,3 +46,12 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+Proposal evidence uses native nested details for observation, methodology and
+uncertainty. Fine-pointer desktop layouts optionally lift opened layers with
+perspective and a scaled 260 ms transform; touch, reduced motion, motion=off and
+unsupported CSS retain a flat accordion. All text remains selectable in flow.
+This local disclosure needs no snapshot or asynchronous state: existing typed
+proposal-change transitions and Navigation chapter links remain responsible for
+proposal selection and navigation. Disclosure state resets for a different sample
+ID; leaving during an animation never delays a link or submits a response.

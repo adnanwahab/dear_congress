@@ -63,6 +63,22 @@
 
 .workflow-provenance { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .workflow-provenance strong { display: block; }
+.evidence-layers { margin-top: 12px; min-width: 0; user-select: text; }
+.evidence-layer { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel, Canvas); overflow-wrap: anywhere; }
+.evidence-layer > summary { cursor: pointer; min-height: 44px; display: list-item; align-content: center; font-weight: 600; }
+.evidence-layer > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Native disclosure state and ordinary chapter links remain navigation truth.
+   Depth is optional; no absolute positioning, flattened text or gesture capture. */
+@media (min-width: 800px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  @supports (perspective: 900px) {
+    html:not([data-motion="off"]) .evidence-layers { perspective: 900px; padding-inline: 8px; }
+    html:not([data-motion="off"]) .evidence-layer[open] {
+      transform: translateZ(8px); box-shadow: 0 8px 20px #0002;
+      animation: evidence-peel calc(260ms * var(--motion-scale, 1)) var(--ease-out, ease-out);
+    }
+  }
+}
+@keyframes evidence-peel { from { transform: translateZ(0) rotateX(-2deg); } to { transform: translateZ(8px) rotateX(0); } }
 .workflow-provenance p { margin: 6px 0 0; }
 
 .outreach-draft > label { display: grid; gap: .5rem; margin: 1rem 0; }
