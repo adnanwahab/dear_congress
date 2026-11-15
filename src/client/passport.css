@@ -1,0 +1,4 @@
+.civic-passport button { min-height: 44px; white-space: normal; }
+.civic-passport li { margin-block: 1.25rem; overflow-wrap: anywhere; }
+.passport-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; }
+.civic-passport button:focus-visible, .civic-passport a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

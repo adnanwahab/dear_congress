@@ -23,7 +23,7 @@ test('selected title exists before API refresh and has exactly one shared name o
       const html = renderToStaticMarkup(<WorkflowScreen stage={stage} request={request} />);
       expect(html.match(/view-transition-name:proposal-title-/g)?.length).toBe(1);
       expect(html).toContain(`view-transition-name:${proposalTitleName(data.items[1]!.id)}`);
-      if (stage === 'feed') expect(html).toContain(`<h3 style="view-transition-name:${proposalTitleName(data.items[1]!.id)}"`);
+      if (stage === 'feed') expect(html).toContain(`<h3 data-motion-proposal="${data.items[1]!.id}" data-motion-revision="${data.items[1]!.title}" style="view-transition-name:${proposalTitleName(data.items[1]!.id)}"`);
     }
     const html = renderToStaticMarkup(<Dashboard request={request} />);
     expect(html.match(/view-transition-name:proposal-title-/g)?.length).toBe(1);
