@@ -34,7 +34,7 @@ export function ArgumentMap({ item, namespace = 'fictional-demo', evidenceCondit
       </section>)}</div>
       {JSON.stringify(item, (key, value) => ['support', 'oppose', 'unsure'].includes(key) ? undefined : value) === original ? <AudioBriefing clauseId={`${prefix}-clause`} /> : <p>No briefing is available for this source revision.</p>}
       <ConsensusTerrain scope={PILOT_SCOPE} />
-      <SteelmanChallenge key={PILOT_SCOPE + item.proposedText} item={item} />
+      <SteelmanChallenge key={'steelman:' + PILOT_SCOPE + item.proposedText} item={item} />
       <p>Corrections and citation reports are not open in this read-only pilot. Human evidence review and argument moderation are required before public contributions.</p>
       {evidenceConditions && <EvidenceConditionCards key={PILOT_SCOPE + item.proposedText} scope={PILOT_SCOPE} />}
     </> : <p>No reviewed arguments yet. No argument map is available for this proposal revision.</p>}
