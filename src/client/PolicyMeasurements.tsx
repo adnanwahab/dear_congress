@@ -1,3 +1,4 @@
+import { ProvenanceBadge } from './ProvenanceBadge';
 import { ClaimEvidence } from './ClaimEvidence';
 import { EVIDENCE_EXAMPLES } from '../shared/claim-provenance';
 import { EvidenceCalendar } from './EvidenceCalendar';
@@ -14,6 +15,7 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
         const result = assessMetric(metric, asOf);
         return <article key={metric.id} className="card policy-measurement">
           <h3>{metric.label} · synthetic</h3>
+          <ProvenanceBadge provenance={{ origin: 'demo-fiction', date: null, jurisdiction: 'Fictional transit pilot', confidence: 'Synthetic fixture only', limitations: 'No real policy or measured effect. Assessment date is not an observation date. ' + metric.caveat, link: null }} />
           <p><strong>{result.movement}</strong> · {result.freshness} · {result.target}</p>
           <dl>
             <dt>Promise</dt><dd>{metric.direction === 'lower' ? 'At most' : 'At least'} {metric.target} {result.baseline?.unit} by {metric.targetDate}</dd>
