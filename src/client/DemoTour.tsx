@@ -78,6 +78,7 @@ export function DemoTour() {
   if (!active) return null;
   return <section className="demo-tour" ref={overlay} tabIndex={-1} aria-label="Guided demo controls">
     <p aria-live="polite"><strong>{finished ? 'Demo complete' : `${step + 1} / ${TOUR_STOPS.length} · ${stop.title} · ${paused ? 'Paused' : 'Playing'}`}</strong><br />{stop.caption}</p>
+    <p>Optional Civic Chronicle crossword is available in the draft catalog after exiting this read-only tour. <a href="/bills">Exit tour and explore the crossword</a></p>
     <p>Reading never casts a vote. Saving a draft does not publish it or cast a vote. Exit this tour to make an explicit advisory choice.</p>
     <p><a href="/bills#townhall">Exit demo and explore fictional town-hall practice</a></p>
     <BudgetShock onStart={() => setPaused(true)} /><MissingVoice onOpenChange={value => { setPuzzleOpen(value); if (value) setPaused(true); }} /><PolicyPinball onOpen={() => setPaused(true)} /><OutcomeMetricPuzzle onActiveChange={active => { setMetricOpen(active); if (active) setPaused(true); }} /><small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>

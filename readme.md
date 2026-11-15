@@ -938,3 +938,12 @@ The `/outcomes` measurement area also includes a local claim-to-source anchor
 candidate with versioned passages, missing/conflicting evidence and review labels.
 It demonstrates application-code and synthetic fixture provenance, not verified
 real policy effects. See [SHE-679 scope and remaining acceptance](docs/reviews/SHE-679.md).
+
+## Optional Civic Chronicle crossword
+
+The draft catalog and sample workflow offer a three-word educational crossword;
+the guided demo links to it after exiting the tour. Pack 1 is bundled editorial
+content awaiting human clue/source review. Play uses page memory only, requires
+no signup, and never writes participation data. The grid, hints and complete-text
+answers work offline after loading; institutional links need connectivity.
+See [SHE-665 validation and remaining review](docs/reviews/SHE-665.md).
