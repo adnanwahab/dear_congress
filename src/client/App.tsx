@@ -14,6 +14,7 @@ import { JournalLiveProvider, useJournalLive } from "./JournalLive";
 import { PlanNumber, PlanTransitionStyles, usePlanRowMotion, planTransitionName, rankChanges, updatePlan } from "./plan-motion";
 import { CivicHeader } from "./CivicHeader";
 import { RuleSandbox } from "./RuleSandbox";
+import { CoalitionQuest } from "./CoalitionQuest";
 import { PolicyComparisonPanel } from "./PolicyComparison";
 import { MutationError } from './mutation-status';
 import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
@@ -1725,6 +1726,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
 
   return (
     <div className="stack">
+      <CoalitionQuest />
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">
