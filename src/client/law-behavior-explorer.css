@@ -73,3 +73,11 @@
 .ensemble-table table{border-collapse:collapse;font-size:.8rem;font-variant-numeric:tabular-nums}
 .ensemble-table th,.ensemble-table td{padding:8px;border:1px solid #91b5c9;text-align:right;white-space:nowrap}
 @media(forced-colors:active){.ensemble-plot polygon{fill:Canvas;stroke:GrayText}.ensemble-plot polyline,.ensemble-plot line{stroke:CanvasText}.ensemble-plot text{fill:CanvasText}}
+
+.civic-scenario-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;border:1px solid #a6bdc9;border-radius:9px;margin:16px 0;padding:12px}
+.civic-scenario-gallery legend{font-weight:700}
+.civic-scenario-gallery button{display:flex;flex-direction:column;gap:8px;text-align:left;min-height:100px;padding:14px;border:2px solid #96b4c4;border-radius:9px;background:#fff;color:#203e50;font:inherit;overflow-wrap:anywhere}
+.civic-scenario-gallery button[aria-pressed=true]{border-color:#175875;background:#e9f3fc}
+.civic-scenario-gallery button:disabled{opacity:.6;cursor:wait}
+.civic-scenario-gallery p{grid-column:1/-1}
+.civic-law-behavior>button{min-height:44px;padding:8px 14px}

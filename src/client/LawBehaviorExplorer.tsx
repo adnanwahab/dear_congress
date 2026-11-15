@@ -25,6 +25,10 @@ const MODELED_LAWS=[
   {id:23,label:'23 · Permit processing capacity',editable:true},
   {id:21,label:'21 · Upzoning (fixed model rule)',editable:false}
 ] as const;
+const SCENARIO_PRESETS=[
+  {id:'housing',label:'Housing · construction assumption',lawId:22,strength:50},
+  {id:'transit',label:'Transit · frequency assumption',lawId:83,strength:50}
+] as const;
 const METRICS:Record<string,{label:string;unit:string}>={
   trips:{label:'Modeled trips',unit:'trips'},
   completedTrips:{label:'Completed modeled trips',unit:'trips'},
@@ -258,6 +262,26 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
+    <p className="civic-law-provenance">Demo sandbox · modeled synthetic worlds, not actual outcomes. Real votes and resident records are separate.</p>
+    <button type="button" onClick={()=>{
+      changedInput(imported?.lawId??83,(imported?.implementationStrength??1)*100);
+      setReference(null);setMetric('');
+    }}>Reset local scenario</button>
+    <p className="muted s">Reset restores this page’s starting parameters and clears local results; it does not save or change records.</p>
+    <fieldset className="civic-scenario-gallery" disabled={busy||invalidContext}>
+      <legend>Scenario presets · select, review, then run</legend>
+      {SCENARIO_PRESETS.map(preset=>{
+        const preview=structuredAmendment({...context,lawId:preset.lawId,implementationStrength:preset.strength/100});
+        return <button type="button" key={preset.id}
+          aria-pressed={lawId===preset.lawId&&strength===preset.strength}
+          onClick={()=>changedInput(preset.lawId,preset.strength)}>
+          <strong>{preset.label}</strong>
+          <span>Law {preset.lawId} · {preview.parameterKey}: {preview.originalValue} → {preview.editedValue} {preview.units}</span>
+          <span>Seed {effectiveSeed} · 24 synthetic actors · {preview.horizon} {preview.clock}s</span>
+        </button>;
+      })}
+      <p className="muted s">Flood scenario unavailable: no reviewed flood parameter is supported by this simulator. No flood effects are inferred.</p>
+    </fieldset>
     <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     {imported?.modelVersion&&<p role="status">Shared model version: {imported.modelVersion}. Inputs restored; run to check provider compatibility. Nothing runs automatically.</p>}
     <p className="muted s">Shared links contain only reviewed model settings, seed, fixed horizon, population and model version. Journals, identities and unpublished proposals are excluded.</p>

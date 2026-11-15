@@ -41,6 +41,15 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
   try{
     await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
     expect(host.querySelector('iframe')).toBeNull();
+    const housing=getByRole(host,'button',{name:/Housing · construction assumption/});
+    await act(async()=>housing.click());
+    expect(requests).toHaveLength(0);
+    expect(housing.getAttribute('aria-pressed')).toBe('true');
+    expect(host.textContent).toContain('Reviewed amendment: law 22, implementationStrength, 1 → 0.5');
+    expect(host.textContent).toContain('Flood scenario unavailable');
+    await act(async()=>getByRole(host,'button',{name:'Reset local scenario'}).click());
+    expect(housing.getAttribute('aria-pressed')).toBe('false');
+    expect(host.textContent).toContain('Reviewed amendment: law 83, implementationStrength, 1 → 1');
     expect(host.textContent).toContain('frozen civic package is not automatically applied');
     expect(host.textContent).toContain('What this model cannot tell you');
     expect(host.textContent).toContain('Demo / sandbox');

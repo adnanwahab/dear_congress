@@ -1,3 +1,5 @@
+import { ClaimEvidence } from './ClaimEvidence';
+import type { EvidenceClaim } from '../shared/claim-provenance';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoItem } from '../engine/demo';
 
@@ -19,7 +21,7 @@ export function freshness(item: DemoItem, now = Date.now()): string {
 export function provenanceText(item: DemoItem): string {
   return `Sample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
 }
-export function ProposalProvenance({ item, compact = false }: { item: DemoItem; compact?: boolean }) {
+export function ProposalProvenance({ item, compact = false, claims = [] }: { item: DemoItem; compact?: boolean; claims?: readonly EvidenceClaim[] }) {
   const [open, setOpen] = useState(false);
   const pinned = useRef(false);
   const panel = useRef<HTMLDetailsElement>(null);
@@ -51,6 +53,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     <div>{freshness(item)}</div>
     <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
     <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
+    {claims.length > 0 && <ClaimEvidence claims={claims} />}
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
   return <details ref={panel} open={open}
