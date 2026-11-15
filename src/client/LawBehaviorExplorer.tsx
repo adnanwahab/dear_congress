@@ -165,6 +165,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
+  const [speed,setSpeed]=useState(1);
+  const [reducedMotion,setReducedMotion]=useState(false);
   const [traceOpen,setTraceOpen]=useState(false);
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
@@ -196,11 +198,24 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
 
   useEffect(()=>()=>{controller.current?.abort();generation.current++;},[]);
   useEffect(()=>{
+    const preference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if(!preference)return;
+    const update=()=>{setReducedMotion(preference.matches);setPlaying(false);};
+    update();
+    preference.addEventListener?.('change',update);
+    const hide=()=>{if(document.hidden)setPlaying(false);};
+    document.addEventListener('visibilitychange',hide);
+    return()=>{preference.removeEventListener?.('change',update);document.removeEventListener('visibilitychange',hide);};
+  },[]);
+  useEffect(()=>{
     if(!playing||frames.length<2)return;
-    const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))));
-    const timer=window.setInterval(()=>setFrameIndex(old=>{if(old>=frames.length-1){setPlaying(false);return old;}return old+1;}),delay);
-    return()=>window.clearInterval(timer);
-  },[playing,receipt]);
+    if(frameIndex>=frames.length-1){setPlaying(false);return;}
+    // One exact recorded pair per tick; never invent in-between states or model time.
+    const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))))/speed;
+    const timer=window.setTimeout(()=>setFrameIndex(frameIndex+1),delay);
+    return()=>window.clearTimeout(timer);
+  },[playing,receipt,frameIndex,speed]);
+  function seek(index:number){setPlaying(false);setFrameIndex(Math.max(0,Math.min(frames.length-1,index)));}
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
     setReceipt(null);setTraceOpen(false);setError('');setDirty(true);setFrameIndex(0);
@@ -304,15 +319,27 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
             {metricKeys.map(key=><option key={key} value={key}>{METRICS[key]?.label||key}</option>)}
           </select>
         </label>
-        <label>Time: {receipt.unit} {formatted(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
-          <input type="range" min="0" max={frames.length-1} value={frameIndex}
-            onChange={e=>{const next = Number(e.target.value); if (next !== frameIndex) requestHaptic(e.nativeEvent); setPlaying(false);setFrameIndex(next);}}
+        <label>Time: {receipt.unit} {String(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
+          <input type="range" min="0" max={frames.length-1} step="1" value={frameIndex}
+            aria-valuetext={`${receipt.unit} ${String(frame?.time)}, checkpoint ${frameIndex+1} of ${frames.length}`}
+            onChange={e=>{const next=Number(e.target.value);if(next!==frameIndex)requestHaptic(e.nativeEvent);seek(next);}}
             aria-label="Recorded simulation time"/>
         </label>
+        <label>Playback speed
+          <select value={speed} onChange={e=>setSpeed(Number(e.target.value))}>
+            {[0.5,1,2,4].map(value=><option key={value} value={value}>{value}×</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={frameIndex===0&&!playing} onClick={()=>seek(0)}>Rewind to first checkpoint</button>
+        <button type="button" disabled={frameIndex===0} onClick={()=>seek(frameIndex-1)}>Step back</button>
+        <button type="button" disabled={frameIndex===frames.length-1} onClick={()=>seek(frameIndex+1)}>Step forward</button>
         <button type="button" disabled={frames.length<2} onClick={()=>{
           if(playing)setPlaying(false);else{if(frameIndex===frames.length-1)setFrameIndex(0);setPlaying(true);}
         }}>{playing?'Pause recorded playback':'Play recorded behavior'}</button>
       </div>
+      <p className="muted s" role="status">{playing?'Playing':frameIndex===frames.length-1?'Playback complete':'Paused'} · Both worlds synchronized at {receipt.unit} {String(frame?.time)}. Recorded range: {String(frames[0]?.time)}–{String(frames.at(-1)?.time)} {receipt.unit}s.</p>
+      <p className="muted s">Speed controls checkpoint pacing, not model time. Only recorded paired states are loaded; no intermediate events are invented. Use arrow keys on the time slider or the step buttons to inspect checkpoints.</p>
+      {reducedMotion&&<p className="muted s">Reduced motion is enabled. Playback stays paused until you explicitly press Play; stepping and scrubbing remain available.</p>}
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>

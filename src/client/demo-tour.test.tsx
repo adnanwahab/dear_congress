@@ -16,6 +16,7 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
   const { Window } = await import('happy-dom');
   const { act } = await import('react');
   const { createRoot } = await import('react-dom/client');
+  const { flushSync } = await import('react-dom');
   const dom = new Window({ url: 'http://localhost/votes?demo=1&step=2' });
   dom.matchMedia = (() => ({ matches: reduced, addEventListener() {}, removeEventListener() {} })) as any;
   const globals = { window: dom, document: dom.document, CustomEvent: dom.CustomEvent, ResizeObserver: dom.ResizeObserver, IS_REACT_ACT_ENVIRONMENT: true };
@@ -47,6 +48,20 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
     expect(writes).toBe(0);
     await act(async () => document.getElementById('vote')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
     expect(writes).toBe(0); expect(pending).toBeUndefined();
+    // The educational puzzle pauses this tour and never submits civic data.
+    const puzzleButton = document.querySelector('.demo-tour .missing-voice > button') as HTMLButtonElement;
+    flushSync(() => puzzleButton.click());
+    expect(pending).toBeUndefined();
+    await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
+    expect(pending).toBeUndefined();
+    const puzzle = document.querySelector('.demo-tour .missing-voice')!;
+    // The complete puzzle sequence is covered separately without the tour's mocked timer,
+    // and by keyboard/touch Playwright acceptance below.
+    expect(puzzle.textContent).toContain('1 / 3');
+    const exitPuzzle = Array.from(puzzle.querySelectorAll('button')).find(b => b.textContent === 'Exit puzzle')!;
+    flushSync(() => exitPuzzle.click());
+    expect(document.activeElement).toBe(puzzleButton);
+    expect(writes).toBe(0);
     expect(dom.location.search).toContain('paused=1');
     await act(async () => dom.dispatchEvent(new dom.KeyboardEvent('keydown', { key: ' ' })));
     expect(pending).toBeDefined();
