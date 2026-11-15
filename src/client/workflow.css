@@ -100,6 +100,11 @@
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
 
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }
+
 .civic-sampler { margin-block: 1rem; }
 .sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
 .sampler-actions button, .sampler-actions a { min-height: 44px; }

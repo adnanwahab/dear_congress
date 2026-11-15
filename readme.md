@@ -755,6 +755,14 @@ the export. They label the action non-binding and not an official election.
 No share endpoint, tracking, automatic posting or vote write is added.
 See [SHE-535 validation and limits](docs/reviews/SHE-535.md).
 
+## Sample proposal audio
+
+The six-stage workflow includes a click-to-play synthetic voice explainer with
+transcript, passage sources and subtitles for the selected fictional sample.
+Voice availability and duration depend on the browser/OS. Tradeoff evidence gaps
+are stated explicitly; background agency references are not treated as proof.
+See [SHE-490 scope and validation limits](docs/reviews/SHE-490.md).
+
 ## Fictional council practice
 
 `/votes` includes a skippable five-minute council sandbox, pending human review.
