@@ -62,9 +62,8 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
     <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
     {claims.length > 0 && <ClaimEvidence claims={claims} />}
     <ProvenanceBadge provenance={scenarioProvenance(item)} />
-    <EvidenceExport key={JSON.stringify(item)} item={item} />
   </>;
-  if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
+  if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}<EvidenceExport key={JSON.stringify(item)} item={item} /></section>;
   return <details ref={panel} open={open}
     onPointerEnter={event => { if (event.pointerType === 'mouse') setOpen(true); }}
     onPointerLeave={() => { if (!pinned.current && !panel.current?.contains(document.activeElement)) setOpen(false); }}
@@ -78,6 +77,6 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
       <span> · {freshness(item) === 'Source not available / not checked' ? 'Not checked' : freshness(item)} </span>
       <span className="workflow-source-toggle" aria-hidden="true">⌄</span>
     </summary>
-    <div className="workflow-provenance-body">{full}<button type="button" className="outline" onClick={() => dismiss(true)}>Close source inspection</button></div>
+    <div className="workflow-provenance-body">{full}<button type="button" className="outline" onClick={() => dismiss(true)}>Close source inspection</button><EvidenceExport key={JSON.stringify(item)} item={item} /></div>
   </details>;
 }
