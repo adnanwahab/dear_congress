@@ -744,6 +744,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Sample advisory share cards
+
+Share preview beside the shared sample advisory controls exports a standalone SVG
+and copyable alt text after explicit review. Stance is off by default and resets
+when the preview closes or the proposal changes. Cards use only repository-curated
+fictional scenario fields and existing background-source caveats, with a SHA-256
+content version; no identity, journals, receipts, counts or live-round data enter
+the export. They label the action non-binding and not an official election.
+No share endpoint, tracking, automatic posting or vote write is added.
+See [SHE-535 validation and limits](docs/reviews/SHE-535.md).
+
 ## Sample proposal audio
 
 The six-stage workflow includes a click-to-play synthetic voice explainer with

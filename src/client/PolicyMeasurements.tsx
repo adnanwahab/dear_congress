@@ -3,6 +3,7 @@ import { ClaimEvidence } from './ClaimEvidence';
 import { EVIDENCE_EXAMPLES } from '../shared/claim-provenance';
 import { EvidenceCalendar } from './EvidenceCalendar';
 import { ContradictionCompass } from './ContradictionCompass';
+import { StudyQualityMatrix } from './StudyQualityMatrix';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
@@ -32,5 +33,6 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
     </details>
     <details><summary>Explore claim-to-source demonstration</summary><p>Local demonstration only; human review pending. Sources describe this prototype and invented fixtures.</p><ClaimEvidence claims={EVIDENCE_EXAMPLES} /></details>
     <EvidenceCalendar asOf={asOf} />
+    <StudyQualityMatrix />
   </section></>;
 }

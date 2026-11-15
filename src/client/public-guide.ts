@@ -119,6 +119,8 @@ The Outcomes contradiction compass compares explicit fields only when scope, per
 
 Optional haptics is off by default. Enable it in Page actions (More on phones). On supported devices, brief feedback marks a demo card move, a manual recorded-model time tick, or a successful private amendment save. It never marks a vote, support level, or progress milestone. Reduced motion pauses feedback. Devices without vibration continue normally. The preference stays in this browser, or only this page if storage is blocked.
 
+The Outcomes study-quality matrix separates primary-source findings, editorial inference, illustrative user claims and synthetic estimates. Sort by study characteristics, inspect dated limitations and disclosures, and export or print the records with review history. All entries await human review; a citation is not approval and conflicting endpoints are not a political viewpoint score.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
@@ -137,4 +139,9 @@ This independent prototype explores how everyday needs can inform discussion and
 [Privacy and removal](/privacy) and [participation boundaries](/account) describe the current privacy and consent limits. No separate legal terms route is published here; this prototype does not replace official legal or election information.
 
 This guide uses plain English. Human-reviewed Spanish and broader plain-language access remain pending under [SHE-318](https://linear.app/shel-bernstein/issue/SHE-318/access-human-reviewed-spanish-translation-and-plain-language-civic). No approved Spanish translation is available here yet. Changes to vote, publication, source and deletion wording need the same translation review before they can be labeled reviewed.
+
+
+### Sharing a sample decision
+
+Share preview beside the sample advisory choices creates a downloadable card and copyable alt text. Review it before downloading. It includes the public fictional proposal, a content version and background-source limitations. Chosen stance is off by default and optional. No identity, journals, vote receipt identifiers, tallies or live-round information are included. The card is non-binding, not an official election, and not proof of a saved vote. Downloaded copies cannot be withdrawn from other people.
 `;
