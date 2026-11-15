@@ -46,3 +46,25 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Adjacent chapter peek (SHE-591)
+
+The previous/next edge buttons on the six chapter routes reveal catalog-only
+previews. Drag inward at least 72 CSS pixels and release to expose an ordinary
+Open stage anchor; navigation requires a separate tap/click. Short drags, vertical
+intent, pointer cancellation, lost capture, Escape, history, page lifecycle and
+window interruption discard the preview. A click, Enter or Space on a labeled
+edge button provides the same preview without a drag. A live status announces
+its title, description and next action; the visual preview has no controls.
+
+Only the dedicated edge handles claim pointer capture (`touch-action: pan-y`).
+Horizontal content scrolling remains native. The handles cover a narrow strip
+at mid-height; browser/OS reserved edge gestures can still take precedence.
+No destination component, fetch, vote or public submission runs during preview.
+Open stage retains topic/proposal context and uses native anchors and the existing
+`forward`/`backward` cross-document transition types. Animation never decides the
+route. `motionDisabled()` removes the elastic displacement for off/reduced motion.
+
+Run the isolated DOM integration with `bun test src/client/chapter-peek.test.tsx`.
+Browser success/failure and keyboard/interruption coverage is in
+`tests/accessibility/chapter-peek.pw.ts` (the accessibility Playwright suite).
