@@ -49,6 +49,31 @@ try {
   root = createRoot(document.body.appendChild(document.createElement('div')));
   await mount(); await click('Suggest amendment'); await click('View version 2');
   assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 24 months.');
+  assert(q().getByRole('list', { name: 'Revision branches' }));
+  assert(q().getByText(/Review state: Unreviewed private draft/));
+  assert(window.location.search.includes('amendmentRevision='));
+  await edit('Revision event', 'fork');
+  await edit('Suggested replacement text', 'A separate branch');
+  await click('Save new private version');
+  assert(q().getByRole('link', { name: /Branch 3 · fork/ }));
+  await edit('Revision event', 'compromise');
+  const parentOptions = (q().getByLabelText('Second parent') as HTMLSelectElement).options;
+  await edit('Second parent', parentOptions[1]!.value);
+  await edit('Suggested replacement text', 'A reconciled compromise');
+  await click('Save new private version');
+  assert(q().getByRole('link', { name: /Branch 4 · compromise/ }));
+  assert.equal(q().getAllByText(/Text changes from parent/).length, 2);
+  const savedURL = window.location.href;
+  await act(async () => { root.unmount(); });
+  root = createRoot(document.body.appendChild(document.createElement('div')));
+  await mount(); // URL restores details without opening the editor manually.
+  assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'A reconciled compromise');
+  await act(async () => {
+    window.history.pushState(null, '', savedURL.replace(/amendmentRevision=[^&]+/, 'amendmentRevision=missing'));
+    window.dispatchEvent(new Event('popstate'));
+  });
+  assert(q().getByRole('alert').textContent?.includes('unavailable'));
+  await click('View version 2');
   await mount({ ...source, text: 'The pilot shall run for 6 months.' });
   assert((q().getByRole('button', { name: 'Save new private version' }) as HTMLButtonElement).disabled);
   assert(q().getByText(/source has changed/));

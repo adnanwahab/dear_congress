@@ -25,3 +25,19 @@ html[data-motion="slow"]:active-view-transition-type(clause-explain)::view-trans
 .amendment-editor h5, .amendment-editor h6 { font-size: 1rem; margin: .8rem 0; }
 .amendment-editor blockquote { margin: .5rem 0; }
 .amendment-editor a { display: inline-block; padding: .6rem 0; overflow-wrap: anywhere; }
+
+.amendment-tree { list-style: none; padding-left: 1rem; }
+.amendment-tree li { position: relative; border-left: 3px solid var(--accent); padding: .75rem 1rem; margin-bottom: .5rem; animation: amendment-branch calc(260ms * var(--motion-scale, 1)) ease-out; }
+.amendment-tree li::before { content: ''; position: absolute; left: 0; top: 1.5rem; width: .7rem; border-top: 2px solid var(--accent); }
+.amendment-tree a { display: inline-block; padding: .6rem; overflow-wrap: anywhere; }
+.amendment-tree a[aria-current] { font-weight: bold; text-decoration-thickness: 3px; }
+.amendment-editor select { max-width: 100%; font: inherit; padding: .6rem; }
+@keyframes amendment-branch { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .amendment-tree li { animation: none; } }
+html[data-motion="off"] .amendment-tree li { animation: none; }
+.amendment-graph { display: block; width: min(100%, 240px); color: var(--ink); overflow: visible; }
+.amendment-graph path { fill: none; stroke: currentColor; stroke-width: 2; animation: amendment-branch calc(260ms * var(--motion-scale, 1)) ease-out; }
+.amendment-graph circle { fill: var(--card); stroke: currentColor; stroke-width: 2; }
+.amendment-graph text { fill: currentColor; font-size: 11px; }
+@media (prefers-reduced-motion: reduce) { .amendment-graph path { animation: none; } }
+html[data-motion="off"] .amendment-graph path { animation: none; }

@@ -265,3 +265,18 @@ text). Live text is labeled unsaved; saved replacement text uses its private UUI
 Base text remains a saved snapshot, without inventing an official revision ID.
 The existing local-storage and audit limitations above still apply. No API,
 publication, voting, navigation or source-record changes are involved.
+
+## Private amendment family tree (SHE-454)
+
+The editor records explicit parent revision, fork, compromise and merge events.
+Select a saved version before editing to make it the parent. Compromise and merge
+require another version from the exact same source snapshot; reconciliation is
+manual. Each branch exposes both parent links, exact-text comparisons, citation
+notes, save time and its unreviewed private state. Legacy versions retain unknown
+ancestry. Links preserve the current civic route and proposal selection and add
+source-kind/ID and revision parameters. They reopen only in a browser containing
+the records; a missing revision produces an explicit error, not a fabricated tree.
+Links do not publish, sync or transfer drafts. Proposal drafts are never enacted
+law, verified participation or approval evidence. There is no new API or loading
+request: reads are synchronous browser storage. See the SHE-454 review for checks
+and remaining native browser acceptance.
