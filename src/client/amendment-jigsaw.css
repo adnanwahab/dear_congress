@@ -1,0 +1,9 @@
+.amendment-jigsaw{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1rem 0;overflow-wrap:anywhere}
+.amendment-jigsaw .jigsaw-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
+.amendment-jigsaw fieldset{min-width:0;border:1px solid var(--line);border-radius:8px}
+.amendment-jigsaw legend{font-weight:700}.amendment-jigsaw label{display:flex;align-items:flex-start;gap:.6rem;min-height:44px;padding:.5rem;cursor:pointer}
+.amendment-jigsaw input[type=radio]{width:auto;flex:none;margin-top:.35rem;accent-color:var(--accent)}
+.amendment-jigsaw button{white-space:normal;min-height:44px;background:var(--accent);color:var(--on-accent);border:1px solid var(--accent)}
+.amendment-jigsaw summary{cursor:pointer;min-height:44px;padding:.5rem 0}.amendment-jigsaw :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.amendment-jigsaw .jigsaw-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.demo-tour:has(.amendment-jigsaw){max-height:75vh;overflow-y:auto}
