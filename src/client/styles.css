@@ -1122,3 +1122,18 @@ html[data-motion="calm"] .motion-preview-card { animation: 150ms ease-out both p
 html[data-motion="calm"] .patch-visual { display: none; }
 html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 @media (max-width: 680px) { .workflow-shell .header-meta { display: flex; } }
+
+
+/* Keep the fixed-size curiosity graph scrollable within its panel at 200% zoom. */
+.constellation { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.constellation-viewport {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.constellation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.constellation-preview, .constellation li { min-width: 0; overflow-wrap: anywhere; }
