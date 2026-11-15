@@ -1,3 +1,4 @@
+import { TownHallGame } from './TownHallGame';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -149,6 +150,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
         <a href="/vote/dear_congress?view=prs">Dear Congress pull requests</a>{' · '}
         <a href="/vote/digital_pensieve?view=prs">Digital Pensieve pull requests</a></p>
     </nav>}
+    <TownHallGame />
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? <Skeleton kind="line" /> : 'Sample proposals unavailable'}</span></div>
     {stage === 'votes' && <ParticipationNotice />}
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
