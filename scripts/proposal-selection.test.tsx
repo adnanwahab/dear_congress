@@ -43,7 +43,7 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
       if (page === '/votes') {
         await act(async () => { fireEvent.change(q().getByRole('combobox', { name: 'Proposal' }), { target: { value: DEMO_ITEMS[1]!.id } }); });
       } else {
-        await act(async () => { fireEvent.click(q().getAllByRole('button', { name: 'View proposal' })[1]!); });
+        await act(async () => { fireEvent.click(q().getAllByRole('button', { name: /^View proposal(?:$|: )/ })[1]!); });
       }
       expect(writes).toHaveLength(0);
       expect(new URL(dom.location.href).searchParams.get('proposal')).toBe(DEMO_ITEMS[1]!.id);
