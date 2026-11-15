@@ -734,6 +734,15 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Steelman challenge sandbox
+
+The exact-revision fictional transit argument map on Published, Votes and proposal
+comparison offers optional source-backed counterargument practice. Feedback uses
+an explicit self-review rubric for fidelity, evidence and completeness. AI scoring
+is off; no automated truth or fairness assessment is claimed. Skip/clear is always
+available. Responses stay in page memory and never alter stored votes or model
+projections. See [SHE-414 review](docs/reviews/SHE-414.md) for limits and checks.
+
 ## Civic discovery sampler
 
 Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy

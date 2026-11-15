@@ -51,6 +51,8 @@ The optional household demo in [Civic plans](/synth) follows one synthetic house
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
+The optional Steelman challenge on the fictional transit argument map is a sandbox self-review. Add an opposing summary and a source passage, then check fidelity, evidence and completeness. AI scoring is off; models can misread context and cannot certify truth or fairness. Skip or clear the exercise at any time. Responses stay in page memory, are lost on navigation, and never change saved votes or model projections. Supplied sources are not verified.
+
 ## Listen or read before deciding
 
 The fictional transit sample offers an optional briefing of about two minutes, with a full transcript and cited chapters. Its synthetic browser voice reads a fixed editorial script by the Dear Congress prototype authors. Pause, resume, stop and speed controls are available when the browser supports speech. Voice processing depends on your browser or device speech service. The transcript remains available if audio fails. Reasons and concerns are unverified assertions; the agency link is background only. Listening records no vote and does not verify civic participation.
