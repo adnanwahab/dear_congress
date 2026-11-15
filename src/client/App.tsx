@@ -145,6 +145,7 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
@@ -158,6 +159,7 @@ export function App() {
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
 
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
+  if (stages[path] && new URLSearchParams(window.location.search).get("presenter") === "1") return <Suspense fallback={<PageSkeleton path={path} />}><Presenter stage={stages[path]!} /></Suspense>;
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
