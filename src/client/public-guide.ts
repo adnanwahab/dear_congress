@@ -121,6 +121,12 @@ Optional haptics is off by default. Enable it in Page actions (More on phones). 
 
 The Outcomes study-quality matrix separates primary-source findings, editorial inference, illustrative user claims and synthetic estimates. Sort by study characteristics, inspect dated limitations and disclosures, and export or print the records with review history. All entries await human review; a citation is not approval and conflicting endpoints are not a political viewpoint score.
 
+## Reviewing public datasets
+
+The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV files or pasted data, maps value/date/unit/scope columns and checks them against a civic metric contract. It distinguishes primary sources, editorial inference, user claims and synthetic estimates. Dates, exact source revisions, reuse terms and limitations remain attached to each draft.
+
+Acceptance is a self-reported local review of the exact draft. Any data or metadata change requires new review. Nothing is published or added to measured outcomes or synthesis. Drafts and review history disappear on reload; export the complete JSON packet or copy/print its text to retain them. Offline files work without network requests. The cited example is a transcription exercise awaiting independent source verification. A named reviewer and passing structural checks do not establish authenticated approval or real-world policy benefit.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
