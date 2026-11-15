@@ -61,8 +61,8 @@ export function ProposalGallery({ items, loaded, failed, selected, busy, onSelec
       onPointerUp={e => { pointers.current.delete(e.pointerId); release(); }}
       onPointerCancel={e => { pointers.current.delete(e.pointerId); release(); }}
       onFocusCapture={lock} onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) release(); }}>
-      {shown.map(i => <article className={`entry-item ${selected === i.id ? 'entry-selected' : ''}`} key={i.id} style={proposalCardStyle('home', i.id)}>
-        <div className="entry-source">{i.source} <TopicChip linked topic={i.topic} /></div><h3>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className="outline" disabled={busy} onClick={() => onSelect(i)}>View proposal<span className="sr">: {i.title}</span></button>
+      {shown.map(i => <article className={`entry-item ${selected === i.id ? 'entry-selected' : ''}`} key={i.id} data-motion-proposal={i.id} data-motion-revision={i.title} style={proposalCardStyle('home', i.id)}>
+        <div className="entry-source">{i.source} <TopicChip linked topic={i.topic} /></div><h3 data-motion-proposal={i.id} data-motion-revision={i.title}>{i.title}</h3><p>{i.jurisdiction} · Sample proposal</p><button className="outline" disabled={busy} onClick={() => onSelect(i)}>View proposal<span className="sr">: {i.title}</span></button>
       </article>)}
       {!loaded && !failed && <Skeleton kind="list" />}
     </div>

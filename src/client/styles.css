@@ -703,6 +703,10 @@ html:active-view-transition-type(backward)::view-transition-new(root) { animatio
   ::view-transition-old(*) { opacity: 0; }
 }
 
+html[data-object-navigation="true"]::view-transition-old(root),
+html[data-object-navigation="true"]::view-transition-new(root) { animation: none; }
+html[data-object-navigation="true"]::view-transition-group(sample-navigation-object) { z-index: 3; }
+
 /* One compositor-friendly sweep after the final 1.2s county wave settles. */
 .county-completion-sweep { pointer-events: none; animation: county-completion calc(900ms * var(--motion-scale, 1)) calc(1200ms * var(--motion-scale, 1)) ease-out both; }
 @keyframes county-completion {

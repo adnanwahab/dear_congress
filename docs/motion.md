@@ -47,6 +47,31 @@ Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
 
+## Activated proposal origins
+
+`object-navigation.ts` supplements native cross-document transitions on sample
+proposal links in Published, Feed, Votes, Draft and home. `data-motion-proposal`
+and `data-motion-revision` identify the displayed sample and title. The activated
+anchor owns `sample-navigation-object`; the incoming matching heading takes that
+name for the snapshot. Touch click and keyboard Enter use the same handler.
+Modified clicks, downloads and other targets retain ordinary browser behavior.
+
+A bounded, five-minute session record stores the source/destination navigation
+entry keys and full URLs, proposal ID/title, link ordinal/label and origin viewport
+rectangle. Entry pairs distinguish multiple routes to the same proposal. Returning
+through browser history resolves the original anchor after native scroll
+restoration. Geometry is captured for the origin record; the browser uses the
+live named element's geometry for interpolation. Stored rectangles never create
+placeholder content or force scrolling. No history state or scroll policy changes.
+
+Missing/offscreen/virtualized headings or origins, changed titles/links, expired
+records, blocked storage and missing lifecycle APIs keep the existing page
+transition. Reduced motion and motion off omit object capture. Temporary names
+are restored on completion and page restoration. This metadata contains only
+sample display identity and is never a participation receipt or voting authority.
+Topic badges and official legislative records keep their separate identities and
+navigation behavior; this helper only matches explicit sample proposal links.
+
 ## Sample proposal mosaic (SHE-399)
 
 Dashboard discovery uses row-major responsive tiles with occasional wide cards.
