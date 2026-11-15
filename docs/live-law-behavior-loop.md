@@ -144,3 +144,17 @@ local parameter mapping, and downloads the validated receipt with seed and model
 version. Code revision, events, event timestamps and executed mechanism receipts
 remain explicitly unavailable in provider v1. This does not complete an event
 causality chain. See [SHE-430 validation and remaining acceptance](reviews/SHE-430.md).
+
+### Proposal portal candidate (SHE-389)
+
+Sample detail/draft and published citizen details can open the reviewed model in
+an in-document modal. The source reference remains labeled; proposal prose is
+not mapped to a mechanism or transmitted. The source component stays mounted,
+and Back/Escape/Return closes the portal with source focus and scroll restored.
+The existing shared motion helper gives the portal title a local View Transition
+and respects reduced motion/off. From completed `/synth` results, the portal
+stages the exact validated model recipe before opening the existing HBL link.
+Cross-origin handoff is static, opens a separate tab and explicitly cannot verify
+external loading. No invented ready message, external breadcrumb parameter or
+unreviewed legal-text mapping is sent. See [SHE-389 review](reviews/SHE-389.md)
+for remaining full cross-app acceptance requirements.
