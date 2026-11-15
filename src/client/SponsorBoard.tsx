@@ -1,3 +1,4 @@
+import { useLocalUndo } from "./LocalUndo";
 import { requestHaptic } from './haptics';
 import { runViewTransition, motionDisabled, motionDuration } from "./motion";
 import { TopicChip } from './TopicChip';
@@ -18,12 +19,33 @@ export function SponsorBoard({ cards, save, className, items = [] }: { items?: r
   const board = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; dx: number; dy: number; target: number | null } | null>(null);
   const [announcement, setAnnouncement] = useState('');
+  const undo = useLocalUndo();
+  const currentCards = useRef(cards);
+  currentCards.current = cards;
+  const moveRevision = useRef(0);
   function move(id: string, stage: number, keyboard = false, input?: Event) {
-    const card = cards.find(c => c.id === id);
+    const card = currentCards.current.find(c => c.id === id);
     if (!card || card.stage === stage) return;
+    const revision = ++moveRevision.current;
     moveWithMotion(() => {
-      if (save(cards.map(c => c.id === id ? { ...c, stage, updatedAt: `Demo updated ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}` } : c))) {
+      if (revision !== moveRevision.current) return;
+      const card = currentCards.current.find(c => c.id === id);
+      if (!card || card.stage === stage) return;
+      const before = currentCards.current;
+      const next = before.map(c => c.id === id ? { ...c, stage, updatedAt: `Demo updated ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}` } : c);
+      if (save(next)) {
+        currentCards.current = next;
         if (input) requestHaptic(input);
+        undo.record(`${card.title} to ${SPONSOR_LANES[card.stage]}`, () => {
+          // Restore only this card, preserving unrelated or externally updated cards.
+          moveRevision.current++;
+          const now = currentCards.current;
+          const found = now.find(c => c.id === id);
+          if (found?.stage !== stage || found.updatedAt !== next.find(c => c.id === id)?.updatedAt) return false;
+          const restored = now.map(c => c.id === id ? card : c);
+          if (!save(restored)) return false;
+          currentCards.current = restored;
+        });
         setAnnouncement(`${card.title} moved to ${SPONSOR_LANES[stage]}. Saved in this browser.`);
         if (keyboard) window.requestAnimationFrame(() => board.current?.querySelector<HTMLSelectElement>(`[data-card-name="${transitionName(id)}"] select`)?.focus({ preventScroll: true }));
       }
@@ -36,7 +58,7 @@ export function SponsorBoard({ cards, save, className, items = [] }: { items?: r
         const target = lane && board.current?.contains(lane) ? Number(lane.dataset.sponsorLane) : null;
         setDrag({ ...drag, dx: e.clientX - drag.x, dy: e.clientY - drag.y, target });
       }} onPointerUp={e => { const target = drag?.target; flushSync(() => setDrag(null)); if (target != null) move(c.id, target, false, e.nativeEvent); }} onPointerCancel={() => setDrag(null)} onLostPointerCapture={() => setDrag(null)} onKeyDown={e => { if (e.key === 'Escape') setDrag(null); }}>⠿ <span>Drag card</span></button>
-      <TopicChip topic={topicForProposal(c.id, items)} /><strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true, e.nativeEvent)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p></>;
+      <TopicChip topic={topicForProposal(c.id, items)} /><strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true, e.nativeEvent)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p>{undo.control}</>;
 }
 
 export function OutcomeTotal({ value }: { value: number }) {

@@ -43,6 +43,10 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+Game-loop neutrality and consent review, regression coverage, and pending human
+privacy/minors/accessibility checks are tracked in [SHE-544](docs/reviews/SHE-544.md).
+New rewards must extend that checklist and its stance-parity tests.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
@@ -56,6 +60,15 @@ A pre-paint script sets `html[data-theme]`; its exact CSP hash is verified again
 both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
+
+## Local discovery
+
+Home includes My area’s civic challenges: choose a browsing jurisdiction and policy
+category without an address or device location. Prompts and policy examples are
+explicitly fictional; no verified local challenge feed is connected. Each example
+retains its sample ID, background-source provenance and link into Feed. Browsing
+preferences do not establish residency or voting eligibility. See
+[the SHE-460 review](docs/reviews/SHE-460.md) for validation and remaining acceptance.
 
 ## Measured outcomes (Harris County / Houston)
 
@@ -83,6 +96,7 @@ Notes:
 The `/outcomes` page separates simulated outreach activity from policy measurements.
 Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
+The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 
@@ -254,6 +268,16 @@ src/client/styles.css
 - `POST /api/emergent/:id/variant` `{ variant: "full" | "targeted" | "phased" | "grant" | "pilot" }`
 - `POST /api/synthesize` `{ weights?, lambda?, budget?, includeSynthetic?, extraEntries?, previous? }`
 - `POST /api/reset`
+
+### Local sandbox Undo
+
+Sample proposal filters, comparison selection/order, sponsor-card moves, household
+presets and synthesis sliders offer one-step **Undo local change** for 20 seconds.
+Each new action replaces the previous Undo; focus or hover pauses expiry and
+leaving gives another 20 seconds. Restoration is announced in place. History stays
+in page memory and clears on navigation/reload. Synthesis restoration requests
+only an unsaved preview. Public posts, advisory votes and saved synthesis commits
+retain their separate explicit workflows.
 
 ### Scoring rule sandbox
 
@@ -580,6 +604,19 @@ A fabricated tally and aggregate score can be replayed offline and downloaded
 through `/api/audit-samples`. See [sample replay guide](docs/audit-reproducibility.md)
 for the CLI, expected snapshot ID, verification limits and remaining SHE-321 work.
 
+## First-visit learning
+
+Choose **Five-minute civic adventure** on the home page, or open `/?quest=1`.
+Five untimed, skippable chapters follow journal → need → comparison → proposal →
+future. Optional fictional examples stay inside the guide, separate from live
+records. No data fetch, vote, public post or identity disclosure is required.
+Chapter, completion and sample preference resume via `civic_adventure_v1` in local
+storage; blocked storage allows page-only use with a notice. Restart resets that
+learning progress. `/?quest=1&walkthrough=1` presents equivalent content at once.
+Ordinary stage links appear after completion or in the walkthrough and explicitly
+leave the guide. No automatic advancement or animation is used.
+See [SHE-410 review notes](docs/reviews/SHE-410.md) for validation limits.
+
 ## Guided demo
 
 Choose **▶ Play the demo** on the home page, or open `/?demo=1`. The read-only
@@ -636,6 +673,13 @@ Official legislative observations have no reviewed topic binding, so hubs show
 that stage as not yet available rather than matching bill titles by keyword.
 See [SHE-357 review and verification limits](docs/reviews/SHE-357.md).
 
+Topic hubs also include a zoomable, scrollable curiosity constellation with an
+equivalent list and source/next-step previews. It projects the same typed hub
+data without new inference or writes. Solid sample-lineage edges and dashed
+illustrative catalog edges remain separate; metric nodes are targets only.
+Official bills and verified measurements remain unavailable until reviewed source
+bindings exist. See [SHE-531 review](docs/reviews/SHE-531.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
@@ -689,3 +733,12 @@ private amendment saves. Reduced motion and hidden pages suppress requests.
 No voting, policy-setting sliders, automated playback, loading or progress
 notifications trigger feedback. Unsupported/denied APIs are safe no-ops; there
 is no polling or permission prompt. Blocked storage keeps a page-only preference.
+
+### Fictional clause reveal
+
+Draft and Votes include a read-only drag comparison of illustrative current and
+proposed text. A native range slider supports touch and keyboard; side-by-side
+mode and complete selectable text remain available alongside background citations.
+Shared prefix/change/suffix anchors align without inferring legal clause boundaries.
+This demo does not display imported official legal text or publish any choice.
+See [SHE-405 verification and limits](docs/reviews/SHE-405.md).

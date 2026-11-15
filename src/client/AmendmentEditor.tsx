@@ -2,15 +2,31 @@ import { requestHaptic } from './haptics';
 import { useId, useRef, useState } from 'react';
 import { readAmendments, redline, sameBase, saveAmendment, type AmendmentDraft, type AmendmentFields, type AmendmentSource } from './amendment-drafts';
 import './amendment-editor.css';
+import { impactCategories, impactExcerpt } from './amendment-impact';
 const storage = { getItem: (key: string) => localStorage.getItem(key), setItem: (key: string, value: string) => localStorage.setItem(key, value) };
 const message = (error: unknown) => error instanceof Error ? error.message : 'Could not save in this browser. Your editing text is still here.';
 
-export function AmendmentComparison({ before, after }: { before: string; after: string }) {
+export function AmendmentComparison({ before, after, beforeId = 'Saved base snapshot', afterId = 'Unsaved working text' }: { before: string; after: string; beforeId?: string; afterId?: string }) {
+  const anchorId = useId();
   const diff = redline(before, after);
-  return <div className="amendment-comparison">
+  return <><div className="amendment-comparison">
     <section><h4>Base proposal text</h4><p>{diff.prefix}{diff.removed && <><span className="amendment-marker">Removed: </span><del>{diff.removed}</del></>}{diff.suffix}</p></section>
     <section><h4>Suggested text</h4><p>{diff.prefix}{diff.added && <><span className="amendment-marker">Added: </span><ins>{diff.added}</ins></>}{diff.suffix}</p></section>
-  </div>;
+  </div>
+    <section aria-label="Plain-language impact comparison">
+      <h4>What did this revision change?</h4>
+      <p>Before: {beforeId} · After: {afterId}</p>
+      <p>{before === after ? 'The text is identical.' : 'The wording changed; the redline above preserves the exact text.'} Legal and practical effects need human review. Private preparation is not verified civic participation.</p>
+      <p>Only explicit Scope:, Eligibility:, Cost:, Implementation: and Uncertainties: lines are quoted below. These are author statements, not assessed effects. Citation notes do not verify them.</p>
+      {impactCategories.map(category => <section key={category}><h5>{category} · Needs review</h5>
+        <div className="amendment-comparison">{([['Before', before, beforeId], ['After', after, afterId]] as const).map(([side, text, revision]) => {
+          const anchors = impactExcerpt(text, category);
+          return <div key={side}><h6>{side}</h6>{anchors.length ? anchors.map(anchor => {
+            const target = `${anchorId}-${side}-${anchor.line}`;
+            return <div key={anchor.line}><a href={`#${target}`}>{revision} · line {anchor.line}</a><blockquote id={target} tabIndex={-1} className="amendment-text">{anchor.quote}</blockquote></div>;
+          }) : <p>Needs review — no explicit {category.toLowerCase()} statement anchored in this revision. No effect inferred.</p>}</div>;
+        })}</div></section>)}
+    </section></>;
 }
 
 /** Caller keys by kind + ID, so a selection change never carries text across sources. */
@@ -22,6 +38,8 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
   const [fields, setFields] = useState<AmendmentFields>(() => ({ replacement: source.text, rationale: '', impact: '', citation: '' }));
   const [versions, setVersions] = useState<AmendmentDraft[]>([]);
   const [selected, setSelected] = useState<AmendmentDraft | null>(null);
+  const [compareBefore, setCompareBefore] = useState('');
+  const [compareAfter, setCompareAfter] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const conflict = !sameBase(base, source);
@@ -57,7 +75,17 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
       <h3>Saved private versions</h3>
       <p>Browser storage is editable and can be cleared. These snapshots are not a durable publication audit trail. Saving creates a new version; it never edits an earlier one.</p>
       {versions.length ? <ul>{versions.map((v, index) => <li key={v.id}><button type="button" onClick={() => { setSelected(v); setBase({ ...v.base }); setFields({ replacement: v.replacement, rationale: v.rationale, impact: v.impact, citation: v.citation }); setStatus(`Viewing private version ${index + 1}. Editing and saving will create another version.`); }}>View version {index + 1}</button> <time dateTime={v.savedAt}>{v.savedAt}</time></li>)}</ul> : <p>No versions saved here yet.</p>}
-      {selected && <section aria-label="Saved version details"><h3>Private version {selected.id}</h3><p>{selected.author} · {selected.savedAt} · Publication permission: not requested</p><p>Saved origin: {selected.base.origin} · {selected.base.kind}:{selected.base.id} · {selected.base.title} · {selected.base.jurisdiction}</p><AmendmentComparison before={selected.base.text} after={selected.replacement} /><h4>Rationale</h4><p>{selected.rationale}</p><h4>Impact / cost</h4><p>{selected.impact}</p><h4>Unverified citation note</h4><p>{selected.citation}</p></section>}
+      {versions.length > 0 && <section aria-label="Compare saved revision IDs">
+        <h3>Compare saved revision IDs</h3>
+        <p>Select two private snapshots. This does not load either into the editing fields.</p>
+        {([['Before revision ID', compareBefore, setCompareBefore], ['After revision ID', compareAfter, setCompareAfter]] as const).map(([label, value, update]) => <label key={label}>{label}<select value={value} onChange={e => update(e.target.value)}><option value="">Choose a revision</option>{versions.map(v => <option key={v.id} value={v.id}>{v.id} · {v.savedAt}</option>)}</select></label>)}
+        {compareBefore && compareAfter && (() => {
+          const a = versions.find(v => v.id === compareBefore), b = versions.find(v => v.id === compareAfter);
+          if (!a || !b || !sameBase(a.base, b.base)) return <p role="alert">Needs review — revisions do not share the same source snapshot. Choose revisions from the same base.</p>;
+          return <AmendmentComparison before={a.replacement} after={b.replacement} beforeId={a.id} afterId={b.id} />;
+        })()}
+      </section>}
+      {selected && <section aria-label="Saved version details"><h3>Private version {selected.id}</h3><p>{selected.author} · {selected.savedAt} · Publication permission: not requested</p><p>Saved origin: {selected.base.origin} · {selected.base.kind}:{selected.base.id} · {selected.base.title} · {selected.base.jurisdiction}</p><AmendmentComparison before={selected.base.text} after={selected.replacement} afterId={selected.id} /><h4>Rationale</h4><p>{selected.rationale}</p><h4>Impact / cost</h4><p>{selected.impact}</p><h4>Unverified citation note</h4><p>{selected.citation}</p></section>}
     </div>}
   </section>;
 }
