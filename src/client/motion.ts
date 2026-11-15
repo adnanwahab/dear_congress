@@ -56,10 +56,14 @@ export function installMotion(target: Window) {
   applyMotion(target);
   const changed = () => applyMotion(target);
   target.matchMedia?.('(prefers-reduced-motion: reduce)')?.addEventListener?.('change', changed);
-  return () => target.matchMedia?.('(prefers-reduced-motion: reduce)')?.removeEventListener?.('change', changed);
+  const stopBudget = installMotionBudget(target);
+  return () => {
+    stopBudget();
+    target.matchMedia?.('(prefers-reduced-motion: reduce)')?.removeEventListener?.('change', changed);
+  };
 }
 export function motionDisabled() {
-  return (typeof document !== 'undefined' && ['off', 'calm'].includes(document.documentElement?.dataset.motion ?? '')) ||
+  return (typeof document !== 'undefined' && (['off', 'calm'].includes(document.documentElement?.dataset.motion ?? '') || document.documentElement?.dataset.motionBudget === 'constrained')) ||
     (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
 }
 export function motionDuration(ms: number) {
@@ -120,3 +124,62 @@ export const STATUS_MOTION = {
   error: { label: 'Error', icon: '!', duration: 0 },
 } as const;
 export type StatusKind = keyof typeof STATUS_MOTION;
+
+/** Product budgets, not claims about a particular device's refresh rate. */
+export const MOTION_BUDGET = Object.freeze({ frameMs: 34, inputMs: 100, longTaskMs: 50, layers: 24 });
+
+interface Battery extends EventTarget { readonly charging: boolean; readonly level: number }
+interface BatteryNavigator extends Navigator { getBattery?: () => Promise<Battery> }
+
+/** Bounded foreground sampling after input. No device fingerprint or telemetry. */
+export function installMotionBudget(target: Window) {
+  const root = target.document.documentElement;
+  let disposed = false, battery: Battery | undefined, frame = 0;
+  let remaining = 0, previous = 0, slow = 0, dropped = false;
+  const preference = target.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const apply = () => {
+    const constrained = dropped || !!preference?.matches || !!(battery && !battery.charging && battery.level <= .2);
+    root.dataset.motionBudget = constrained ? 'constrained' : 'full';
+    if (constrained) {
+      // Finish existing WAAPI decorations as well as disabling future shared motion.
+      for (const animation of target.document.getAnimations?.() ?? []) {
+        try { animation.finish(); } catch { animation.cancel(); }
+      }
+    }
+  };
+  const sample = (time: number) => {
+    frame = 0;
+    if (disposed || target.document.hidden) { previous = 0; return; }
+    if (previous && time - previous > MOTION_BUDGET.frameMs) slow++;
+    previous = time;
+    if (--remaining > 0) frame = target.requestAnimationFrame(sample);
+    else { if (slow >= 6) { dropped = true; apply(); } previous = 0; }
+  };
+  const start = () => {
+    if (frame || dropped || target.document.hidden || preference?.matches) return;
+    remaining = 30; slow = 0; previous = 0;
+    frame = target.requestAnimationFrame(sample);
+  };
+  preference?.addEventListener?.('change', apply);
+  target.addEventListener('pointerdown', start, { passive: true });
+  target.addEventListener('keydown', start);
+  apply();
+  const navigator = target.navigator as BatteryNavigator;
+  // Unsupported/denied APIs retain normal motion; reduced motion still wins.
+  try { void navigator.getBattery?.().then(value => {
+    if (disposed) return;
+    battery = value;
+    battery.addEventListener('chargingchange', apply);
+    battery.addEventListener('levelchange', apply);
+    apply();
+  }).catch(() => {}); } catch { /* Optional API can be policy blocked. */ }
+  return () => {
+    disposed = true;
+    target.cancelAnimationFrame(frame);
+    target.removeEventListener('pointerdown', start);
+    target.removeEventListener('keydown', start);
+    preference?.removeEventListener?.('change', apply);
+    battery?.removeEventListener('chargingchange', apply);
+    battery?.removeEventListener('levelchange', apply);
+  };
+}

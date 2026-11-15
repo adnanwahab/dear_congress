@@ -203,3 +203,72 @@ Chromium, Firefox and WebKit with normal/reduced motion, forced missing APIs,
 keyboard/touch activation, back/forward, skip-link focus and interrupted navigation.
 Missing engines fail the command. WebKit automation does not establish Safari/iOS
 acceptance. See [SHE-541 evidence and remaining checks](reviews/SHE-541.md).
+
+## Low-power budgets (SHE-540)
+
+The existing helper now shares `MOTION_BUDGET` with the Chromium benchmark:
+
+| Metric | Regression ceiling |
+| --- | --- |
+| Incoming route frame interval p95 | 34 ms (30 fps floor; aim for 16.7 ms) |
+| Observed input-to-next-paint event duration | 100 ms |
+| Steady-state long task, after first second | 50 ms |
+| Initial shell maximum long task | 200 ms |
+| Peak Chromium compositor layers, including browser root | 24 |
+
+`installMotion` returns a disposer. Reduced motion, an exposed battery at <=20%
+while discharging, or six frame intervals >34 ms in a 30-frame input-triggered
+window set `html[data-motion-budget=constrained]`. This disables decorative CSS,
+snapshots, shared JS duration/FLIP helpers and new scroll reveals. Existing WAAPI
+animations finish (unfinishable/infinite ones cancel). Loading outlines remain
+visible and skeleton placeholders remain static. Updates, focus and native inputs
+continue immediately. Charging/level and OS preference changes apply live; rendering
+fallback stays latched for the document to prevent oscillation. Reload retries
+normal rendering. Slow review mode cannot override constraints.
+
+Sampling is foreground-only, bounded to 30 frames per keyboard/pointer interaction,
+and never polls a battery or sends telemetry. Unsupported/denied Battery APIs retain
+normal motion unless another constraint applies; there is no portable browser
+battery-saver signal. No GPU/phone model inference is performed. Layer count is a
+benchmark gate, not a production DOM heuristic. Long tasks and event timing are
+also benchmark observations, not continuously collected production data.
+
+### Repeatable browser gate
+
+From repository root:
+
+```sh
+cd tests/performance
+npm install
+npx playwright install chromium
+npm test
+```
+
+After setup, `bun run test:motion` runs the suite from the repository root.
+The pinned Playwright suite starts the existing isolated production QA server with
+disposable storage, no inherited service credentials and disabled/dry-run governance.
+It uses Chromium, a 390x844 touch viewport and 4x CPU slowdown, then navigates
+`/ → /feed → /votes` through real links. Each incoming document records its first
+1.2 seconds of rAF intervals, long tasks and Event Timing; CDP observes actual layer
+trees. Keyboard skip navigation and touch are exercised. Separate cases cover
+battery-constrained empty search and reduced-motion pending/error/retry states.
+Event Timing omits durations below 16 ms; an empty list means no observed event
+crossed that floor, not zero latency. rAF measures scheduling, not GPU presentation.
+CPU slowdown does not emulate an integrated GPU or thermal/battery limits.
+
+Run five times on the same idle reference machine/browser version, saving JSON
+attachments under `artifacts/motion/test-results`. Any absolute ceiling failure
+blocks review. Also block a >10% rise in the median of five route p95 values versus
+five base-main runs on that same machine; compare each route and motion mode
+separately. Do not average layer-limit or long-task violations away. Keep raw
+artifacts and environment details with the review. Baselines must be measured,
+never updated simply to make a regression pass. Before release, repeat on a real
+older phone/integrated GPU and inspect compositor paint/layers. Browser checks do
+not establish human acceptance or authorize deployment.
+
+Reviewed API references: [PerformanceObserver](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceObserver),
+[Battery Status API](https://developer.mozilla.org/en-US/docs/Web/API/Battery_Status_API),
+and [Chrome rendering diagnostics](https://developer.chrome.com/docs/devtools/rendering/performance).
+Merge policy remains [unchanged](launch-merge-policy.md): disabled/dry-run defaults,
+quorum 10, kill switch active, required checks and human review; production releases
+require a human-published tag. This change touches no civic records or provenance.
