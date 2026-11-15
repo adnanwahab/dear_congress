@@ -43,6 +43,15 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+## Fictional logistics learning exercise
+
+The draft catalog, Outcomes screen and paused guided demo offer an optional
+three-round flood logistics lab. Its invented map and toy outcomes are not real
+emergency guidance. Game state stays in page memory and never changes advisory
+participation. Rules, uncertainty and results are available as complete text,
+with Skip, Restart and Exit controls. See [SHE-650 review](docs/reviews/SHE-650.md)
+for verification status and pending browser acceptance.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS

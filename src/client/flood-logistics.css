@@ -1,0 +1,7 @@
+.flood-game { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line, #888); border-radius: 12px; background: var(--card); color: var(--ink); }
+.flood-map { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 1rem; margin-block: 1rem; }
+.flood-map article { padding: 1rem; border: 2px solid var(--line, #888); border-radius: 8px; }
+.flood-game button, .flood-game select, .flood-game summary { min-height: 44px; max-width: 100%; white-space: normal; margin-block: .3rem; }
+.flood-game :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+.demo-tour:has(.flood-game) { max-height: 70vh; overflow-y: auto; }
