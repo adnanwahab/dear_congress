@@ -19,6 +19,9 @@ Local sample filters, comparisons, sponsor-card moves, household presets and syn
 
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
+The optional [private civic passport](/account) is a demo / sandbox awaiting review. Start it to record self-reported learning badges for evidence, jurisdictions and opposing views in this browser only. It is independent of verified identity and awards nothing for votes, posts or influence. Reset progress, export a JSON file or delete the passport and turn it off on the account page. People sharing your browser profile can read it; keep exported files private.
+
+
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
