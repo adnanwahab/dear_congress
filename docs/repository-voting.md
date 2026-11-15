@@ -70,3 +70,13 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## PR review queue discovery — SHE-624
+
+PR lists compose eligibility status and text search with checks, current-head
+review evidence, exact blocked reason, GitHub feature labels and age since the
+original GitHub update. Missing metadata stays unknown. Detail navigation uses
+the existing read API to fetch evidence; lists do not eagerly fetch every PR.
+Source sync time does not establish evidence freshness. Filter changes and clear
+only change local discovery state. They never submit a vote, merge or review.
+See [SHE-624 implementation and validation](reviews/SHE-624.md).
