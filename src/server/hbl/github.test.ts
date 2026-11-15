@@ -14,3 +14,17 @@ test('missing credentials and rate limit errors are sanitized',async()=>{
   const source=new GitHubSource({token:'super-secret',fetch:(async()=>new Response('super-secret',{status:429})) as unknown as typeof fetch});
   try { await source.listPulls(); } catch(e) { expect(String(e)).toBe('Error: GitHub source rate-limit'); }
 });
+
+test('diagnostics retain check receipts when protection read permission is denied',async()=>{
+ let denied=true;
+ const source=new GitHubSource({fetch:(async input=>{
+  const path=new URL(String(input)).pathname;
+  if(path.endsWith('/happybearlandia'))return Response.json({id:1364565814,full_name:'adnanwahab/happybearlandia'});
+  if(path.endsWith('/pulls/7'))return Response.json({number:7,title:'patch',head:{sha:'head'},base:{ref:'main',sha:'base',repo:{id:1364565814,full_name:'adnanwahab/happybearlandia'}},state:'open'});
+  if(path.endsWith('/protection'))return denied?new Response('',{status:403}):Response.json({required_status_checks:{strict:true,contexts:['bun test','route smoke test']},required_pull_request_reviews:{required_approving_review_count:1}});
+  if(path.endsWith('/check-runs'))return Response.json({check_runs:[{name:'bun test',status:'in_progress',conclusion:null,head_sha:'head'}]});
+  return Response.json([]);
+ }) as typeof fetch});
+ const pull=await source.detail(7);expect(pull.evidence!.checks[0]?.name).toBe('bun test');expect(pull.evidence!.protectionsKnown).toBe(false);expect(pull.evidence!.receipt).toMatchObject({status:'unavailable',permission:'denied'});
+ denied=false;const complete=await source.detail(7);expect(complete.evidence!.receipt).toMatchObject({status:'complete',permission:'readable',strict:true,requiredApprovals:1,requiredChecks:['bun test','route smoke test']});expect(complete.evidence!.checks.find(c=>c.name==='route smoke test')?.status).toBe('unknown');
+});

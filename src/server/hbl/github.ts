@@ -66,8 +66,9 @@ export class GitHubSource {
     pull.files=files.map(f=>({filename:f.filename,status:f.status,additions:f.additions,deletions:f.deletions,patch:f.patch}));
     const evidence:Evidence={checks:[],reviews:[],requestedReviewers:(raw.requested_reviewers??[]).length+(raw.requested_teams??[]).length,mergeable:raw.mergeable??null,mergeableState:raw.mergeable_state??'unknown',baseSha:raw.base.sha,protectionsKnown:false,protectedBase:false,sensitive:files.some(f=>/(^|\/)(\.github|auth|security|migrations|server|infra|governance)(\/|$)|(?:lock|package\.json|config\.[^/]+)$|(?:vot|policy|roster|migration|docker|terraform)/i.test(f.filename) || f.status==='removed'),maintainerApproved:false};
     pull.evidence=evidence;
+    evidence.receipt={observedAt:new Date().toISOString(),status:"unavailable",permission:"unknown",requiredChecks:[],requiredApprovals:0,strict:false};
     try {
-      const [runs,statuses,reviews,protection,commits]=await Promise.all([this.pages(`/commits/${pull.headSha}/check-runs`,'check_runs'),this.pages(`/commits/${pull.headSha}/statuses`),this.pages(`/pulls/${number}/reviews`),this.request(`/branches/${encodeURIComponent(pull.base)}/protection`),this.pages(`/pulls/${number}/commits`)]);
+      const [runs,statuses,reviews,protection,commits]=await Promise.all([this.pages(`/commits/${pull.headSha}/check-runs`,'check_runs'),this.pages(`/commits/${pull.headSha}/statuses`),this.pages(`/pulls/${number}/reviews`),this.request(`/branches/${encodeURIComponent(pull.base)}/protection`).catch(error=>{if(error instanceof GitHubError && [401,403].includes(error.status)) evidence.receipt!.permission='denied';return null;}),this.pages(`/pulls/${number}/commits`)]);
       if(commits.length>=250) throw new GitHubError('unknown');
       if([...this.openHeads].some(([n,sha])=>n!==number && commits.some(c=>c.sha===sha))) evidence.mergeableState='blocked';
       evidence.checks=runs.map(c=>({name:c.name,status:c.status,conclusion:c.conclusion,sha:c.head_sha}));
@@ -76,6 +77,7 @@ export class GitHubSource {
       const latest=new Map<number,Json>();
       for(const r of reviews) if(r.state!=='COMMENTED' && r.state!=='PENDING') latest.set(r.user.id,r);
       evidence.reviews=[...latest.values()].filter(r=>r.state!=='APPROVED').map(r=>({userId:r.user.id,state:r.state,commitId:r.commit_id}));
+      if(!protection)return pull;
       const contexts=[...(protection.required_status_checks?.contexts??[]),...(protection.required_status_checks?.checks??[]).map((c:Json)=>c.context)];
       for(const name of new Set<string>(contexts)) if(!evidence.checks.some(c=>c.name===name)) evidence.checks.push({name,status:'unknown',conclusion:null,sha:pull.headSha});
       // Repository protection requirements must never be weaker than local policy.
@@ -87,6 +89,7 @@ export class GitHubSource {
       }
       if(evidence.reviews.filter(r=>r.state==='APPROVED' && r.commitId===pull.headSha).length<required) evidence.mergeableState='blocked';
       evidence.protectionsKnown=true; evidence.protectedBase=true;
+      evidence.receipt={observedAt:new Date().toISOString(),status:'complete',permission:'readable',requiredChecks:[...new Set<string>(contexts)],requiredApprovals:required,strict:protection.required_status_checks?.strict===true};
     } catch { /* Missing or inaccessible evidence remains UNKNOWN and cannot merge. */ }
     return pull;
   }

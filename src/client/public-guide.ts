@@ -15,7 +15,7 @@ An advisory vote records a preference inside this prototype. It does not cast an
 
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
-Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
+Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance. Repository PR cards offer expandable Preview readiness diagnostics with refreshable GitHub check receipts and revision details. Refreshing diagnostics does not start a build or submit a vote.
 
 ## What is fictional and what is verified?
 
