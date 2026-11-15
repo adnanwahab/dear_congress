@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { MissionControl } from './MissionControl';
 import { metadataFreshness, type BillObservation } from '../shared/legislation';
 export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObservation[]; now?: number }) {
   return <section className="panel" aria-label="Official bill metadata" style={{ overflowWrap: 'anywhere' }}>
@@ -16,7 +17,8 @@ export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObser
     </article>)}
   </section>;
 }
-export function OfficialBills({ request }: { request: <T>(path: string) => Promise<T> }) {
+export function OfficialBills({ request, observatory = false }: { request: <T>(path: string) => Promise<T>; observatory?: boolean }) {
+  const [attempt, setAttempt] = useState(0);
   const [bills, setBills] = useState<BillObservation[]>([]);
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -27,6 +29,6 @@ export function OfficialBills({ request }: { request: <T>(path: string) => Promi
     void load();
     const timer = setInterval(() => { setNow(Date.now()); void load(); }, 60000);
     return () => { active = false; clearInterval(timer); };
-  }, [request]);
-  return <>{!loaded && <p role="status">Loading official metadata…</p>}{error && <p role="alert">Official metadata unavailable. Any retained records below could not be rechecked.</p>}<BillMetadataLane bills={bills.map(b => error ? { ...b, refreshFailed: true } : b)} now={now} /></>;
+  }, [request, attempt]);
+  return <>{!loaded && <p role="status">Loading official metadata…</p>}{error && <p role="alert">Official metadata unavailable. Any retained records below could not be rechecked. <button onClick={() => setAttempt(n => n + 1)}>Retry official metadata</button></p>}{observatory ? <MissionControl bills={bills.map(b => error ? { ...b, refreshFailed: true } : b)} now={now} /> : <BillMetadataLane bills={bills.map(b => error ? { ...b, refreshFailed: true } : b)} now={now} />}</>;
 }

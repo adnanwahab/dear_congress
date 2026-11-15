@@ -679,3 +679,14 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Civic Mission Control
+
+`/outcomes#mission-control` presents a read-only evidence wall using the existing
+Congress.gov metadata archive. Choose an official record and expand its source
+receipt. Official identity is separate from the fictional sample selected elsewhere
+on the page. Legal status, next institutional action, meetings and replies remain
+Unknown without reviewed evidence. Synthetic measurements stay explicitly labeled;
+model receipts remain in the existing `/synth` explorer and are not policy effects.
+No votes, outreach, model runs or browser storage writes are triggered by the wall.
+See [scope, demo and release gates](docs/reviews/SHE-765.md).

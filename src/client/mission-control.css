@@ -1,0 +1,17 @@
+.mission-control { margin-block: 2rem; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--border, #888); border-radius: 20px; background: radial-gradient(ellipse at top right, color-mix(in srgb, #399b9b 18%, transparent), transparent 65%); overflow-wrap: anywhere; }
+.mission-heading { max-width: 75ch; margin-bottom: 1.5rem; }
+.mission-heading h2 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; margin-block: .6rem; }
+.mission-wall { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.mission-wall > *, .mission-unknowns > * { min-width: 0; margin: 0; }
+.mission-wall select { display: block; width: 100%; max-width: 100%; margin-block: .5rem; }
+.mission-wall summary { cursor: pointer; padding-block: .7rem; }
+.mission-wall dt { font-weight: bold; margin-top: .7rem; }
+.mission-wall dd { margin-left: 0; }
+.mission-unknowns { display: grid; gap: 1rem; }
+.mission-unknown { font-size: 1.5rem; font-weight: bold; }
+.mission-timeline { border-left: 3px solid currentColor; padding-left: 1.8rem; }
+.mission-timeline li { margin-block: 1rem; }
+.mission-measurements { grid-column: 1 / -1; }
+.mission-control :focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+@media (max-width: 760px) { .mission-wall { grid-template-columns: minmax(0, 1fr); } }
+@media (forced-colors: active) { .mission-control { background: Canvas; border-color: CanvasText; } }
