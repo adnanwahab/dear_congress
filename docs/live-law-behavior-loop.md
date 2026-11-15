@@ -137,6 +137,145 @@ otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
 
+## SHE-433 versioned simulation shares
+
+The sandbox's **Reproducible scenario link** now emits `simulationShare=1` with
+explicit `parameter`, `horizon` and `clock`, alongside law, implementation
+strength, seed, population 24, revision and the recorded model version. Transit
+uses 720 minutes; housing uses 12 months, matching the existing provider API's
+fixed horizons. No new provider parameters or production writes are introduced.
+Generated replay URLs exclude proposal IDs and all ambient query parameters,
+including journal text, identities and unpublished proposal context.
+
+The versioned loader requires every replay field, rejects duplicate fields and
+unsupported settings, and restores inputs without automatic execution. Legacy
+reciprocal civic context remains supported. A run verifies the receipt's law,
+seed, population, strength, horizon/clock and shared model version before showing
+results; changed providers fail visibly rather than silently replaying new data.
+This pins a model recipe, not archived results or a guarantee of provider uptime.
+Native links support keyboard/touch; playback remains opt-in, with existing
+reduced-motion styling, cancellation, timeout and retry behavior.
+
+Governance and launch controls remain as documented in launch-merge-policy.md:
+disabled/dry-run defaults, quorum 10, current-head checks and human review are
+unchanged. No deployment, merge, release, vote, proposal or production data write
+is part of this work. Human review and provider parity remain release gates.
+
+Candidate validation in this workspace: 11 focused tests passed (132 assertions),
+typecheck and diff whitespace checks passed. The required full `bun test` run
+reported 476 passes and 26 failures; server-based tests failed to bind local
+sockets (`EADDRINUSE`, port 0). `bun run test:routes` was also blocked at server
+startup by the same bind failure. These checks need rerunning in an environment
+that permits listening sockets. No fresh browser, touch or screen-reader
+acceptance is claimed; the existing native controls and opt-in playback remain.
+PR audit found no SHE-433 PR; the open law-related result was SHE-405 (#133),
+which concerns proposal text comparison rather than simulation replay settings.
+
+## SHE-436 · interactive uncertainty panel
+
+`LawBehaviorExplorer` now keeps **What this model cannot tell you** visible before
+and after runs, labeled **Demo / sandbox · awaiting review**. It lists allowlisted
+mechanisms, unmodeled claims, implementation-strength sensitivity, failed receipt
+checks and assumptions that this contract cannot test. “Reviewed” refers to the
+mapping, not empirical validation. Provider limitations are bounded, validated
+strings; missing limitations are explicitly missing evidence.
+
+Native buttons select 50% transit, construction-cost or permit-capacity assumptions,
+or restore the current mechanism to 100%. Selection clears stale results and
+increments the local discussion revision. It never runs automatically: use the
+existing Run two futures control at each setting, keeping the seed and population
+fixed, then read the paired numeric differences and retained 100% output. The
+retained reference must match law, engine, clock, seed, population and model version.
+No outcome is fabricated before the provider responds. Fixed upzoning has no
+partial-strength preset. The existing civic navigation and advisory vote flow remain
+separate; no proposal text, frozen package or vote is sent to the model API.
+
+Controls use native keyboard/button semantics and wrapping 44px touch targets.
+The panel introduces no motion or autoplay; existing reduced-motion styling and
+manual checkpoint navigation remain available. Busy/invalid-context fieldsets
+prevent new preset selection; existing cancel, timeout, failure and retry apply.
+
+Candidate verification (2026-11-14): focused receipt/interaction tests passed
+8/8 (76 assertions); `bun run typecheck` passed. `bun test` ran 502 tests:
+476 passed and 26 failed in this restricted workspace; server-based failures
+reported inability to listen on port 0 (`EADDRINUSE`). `bun run test:routes` failed
+to start its disposable server with the same error. These checks remain required
+in an environment that permits local listeners. No browser, physical touch or
+screen-reader acceptance is claimed for this increment.
+
+Audit: related Dear Congress PR #120 already defines the paired receipt contract
+and separate synthetic sandbox; no SHE-436 PR was returned by the connected GitHub
+search. Changes extend that consumer without modifying the provider repository.
+Governance policy remains as documented in `docs/launch-merge-policy.md`: disabled,
+dry-run defaults, quorum 10, kill switch active, human review and required checks;
+production configuration/protection was not verified or changed. No deployment,
+merge, release, external message, issue transition or production-data write ran.
+Human acceptance and passing required checks remain outstanding.
+
+Refs: https://linear.app/shel-bernstein/issue/SHE-436/joyworlds-what-this-model-cannot-tell-you-panel
+
+### SHE-430 checkpoint evidence candidate
+
+The demo inspector now exposes selected outcome values, checkpoint time and the
+local parameter mapping, and downloads the validated receipt with seed and model
+version. Code revision, events, event timestamps and executed mechanism receipts
+remain explicitly unavailable in provider v1. This does not complete an event
+causality chain. See [SHE-430 validation and remaining acceptance](reviews/SHE-430.md).
+
+### Proposal portal candidate (SHE-389)
+
+Sample detail/draft and published citizen details can open the reviewed model in
+an in-document modal. The source reference remains labeled; proposal prose is
+not mapped to a mechanism or transmitted. The source component stays mounted,
+and Back/Escape/Return closes the portal with source focus and scroll restored.
+The existing shared motion helper gives the portal title a local View Transition
+and respects reduced motion/off. From completed `/synth` results, the portal
+stages the exact validated model recipe before opening the existing HBL link.
+Cross-origin handoff is static, opens a separate tab and explicitly cannot verify
+external loading. No invented ready message, external breadcrumb parameter or
+unreviewed legal-text mapping is sent. See [SHE-389 review](reviews/SHE-389.md)
+for remaining full cross-app acceptance requirements.
+
+
+## Future postcard (SHE-449)
+
+A completed, validated receipt with a finite selected metric pair offers **Preview
+future postcard**. The local static SVG contains the selected checkpoint's current
+and edited values, signed difference, units, seed, law number, implementation
+strength, local revision and provider model version. These are measurements of a
+synthetic simulation, not measured real-world outcomes. The graphic, its accessible
+alt text and copied description all include **Synthetic scenario / not forecast**.
+The existing reproducible scenario and civic stage links remain unchanged.
+
+Preview does not publish or request an export API. Download saves an SVG; copying
+uses the clipboard only on explicit activation, with a selectable description if
+clipboard permission fails. An explicit aggregate-field allowlist excludes journals,
+actor identities and user data. The image has no external resources or animation.
+Changing metric/checkpoint/inputs clears the preview, so exported facts cannot be
+silently relabeled with a new scenario. Existing run loading, cancellation and
+failure states offer no postcard until comparable model data arrives.
+
+Checks: focused composition and DOM integration tests cover pairs, stamps,
+provenance, privacy, escaping, checkpoint invalidation and clipboard retry. Native
+buttons/links support touch and keyboard with 44px targets and visible focus;
+responsive image/textarea sizing and static rendering apply equally with reduced
+motion. Manual touch, screen-reader and real-browser keyboard/reflow acceptance
+remain pending; DOM tests do not establish those results.
+
+Governance is unchanged: configured approval/quorum/auth/check policies are not
+modified. Required main checks remain `bun test`, `bun run typecheck`, and `route
+smoke test`, with human approval and a human-published tagged release required by
+`launch-merge-policy.md`. No production writes, deploy, merge or external messages
+are part of this feature.
+
+SHE-449 worktree validation: `bun run typecheck` passed; focused postcard/explorer
+integration tests passed (4 tests, 64 assertions); `git diff --check` passed.
+`bun test` reported 477 pass / 26 fail: HTTP/server tests failed to start local
+listeners with `EADDRINUSE` on port 0 in this restricted environment.
+`bun run test:routes` hit the same listener startup error. These required gates
+remain unverified and must pass in a listener-capable environment before review
+acceptance. No check or server binding was weakened to bypass this limitation.
+
 ## SHE-431 recorded twin-world time controls
 
 The demo sandbox adds rewind, previous/next checkpoint, play/pause and
