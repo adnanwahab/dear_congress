@@ -85,6 +85,11 @@ Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+The evidence freshness calendar adds a monthly agenda and dated ledger with
+review reminders, unknown-date labels and copyable/printable provenance.
+Age never determines validity. Its sourced example establishes repository
+fixture contents only; mixed results remain synthetic.
+See [SHE-678 implementation and validation limits](docs/reviews/SHE-678.md).
 
 ## What's in it
 

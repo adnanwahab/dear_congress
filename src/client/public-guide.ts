@@ -45,6 +45,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthly agenda and dated source ledger. It separates primary sources, editorial inference, user claims and synthetic estimates. Publication, observation and retrieval are distinct; unknown dates stay unknown. Review expiry means a review is due, not that an older source is false. Bundled examples work offline; they do not certify live source availability. Copy the JSON export or use browser Print to retain dates, limitations and pending human-review history.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
