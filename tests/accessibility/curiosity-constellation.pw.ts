@@ -17,7 +17,17 @@ test('constellation keyboard, touch-sized controls, source preview and equivalen
   expect(box!.height).toBeGreaterThanOrEqual(44);
   await graph.getByRole('button', { name: 'Show equivalent list' }).click();
   await expect(graph).toContainText('Defines measurement target');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  const reflow = await page.evaluate(() => {
+    const selectors = ['html', 'body', '.product-shell', '.topic-hubs', '.constellation', '.constellation-viewport', '.bottom-bar', '.bottom-utilities', '.bottom-destinations', '.civic-header'];
+    const elements = selectors.map(selector => {
+      const el = document.querySelector(selector);
+      if (!el) return { selector, missing: true };
+      const rect = el.getBoundingClientRect();
+      return { selector, left: Math.round(rect.left), right: Math.round(rect.right), scroll: el.scrollWidth, client: el.clientWidth, overflowX: getComputedStyle(el).overflowX };
+    });
+    return { width: window.innerWidth, scroll: document.documentElement.scrollWidth, elements };
+  });
+  expect(reflow.scroll <= reflow.width, JSON.stringify(reflow, null, 2)).toBe(true);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
 });
