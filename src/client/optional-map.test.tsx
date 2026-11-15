@@ -19,6 +19,9 @@ for (const View of [NeedsGeoMap, JurisdictionMap]) {
       handlers: Record<string, () => void> = {};
       sources: Record<string, any> = {};
       removed = false;
+      flights: any[] = [];
+      stop() {}
+      flyTo(options: any) { this.flights.push(options); }
       constructor() { instances.push(this); }
       on(event: string, cb: () => void) { this.handlers[event] = cb; }
       addControl() {}
@@ -37,9 +40,32 @@ for (const View of [NeedsGeoMap, JurisdictionMap]) {
       const map = instances[0];
       await act(async () => { map.handlers.load(); map.handlers.idle(); });
       expect(host.textContent).toContain('Map visualization available.');
-      if (View === NeedsGeoMap) expect(map.sources.cells.data.features).toHaveLength(1);
+      if (View === NeedsGeoMap) {
+        expect(map.sources.cells.data.features).toHaveLength(1);
+        expect(map.flights).toHaveLength(1);
+        // Source refreshes must preserve a user's camera, rather than recentering.
+        await act(async () => root.render(<View {...props} cells={[...props.cells]} styleUrl="https://tiles.invalid/style.json?token=SECRET" loadMap={loadMap} />));
+        expect(map.flights).toHaveLength(1);
+        document.documentElement.dataset.motion = 'off';
+        const inspect = host.querySelector('li button') as HTMLButtonElement;
+        expect(inspect.type).toBe('button');
+        await act(async () => inspect.click());
+        expect(map.flights.at(-1).duration).toBe(0);
+        expect(map.flights.at(-1).zoom).toBe(11);
+        expect(inspect.getAttribute('aria-pressed')).toBe('true');
+        const filteredProps = { ...props, needFilter: 'housing', needs: [{ id: 'housing', label: 'Housing' }], cells: [{ ...props.cells[0], real: { count: 3, perNeed: [{ needId: 'housing', count: 3, demand: .5 }] } }] };
+        await act(async () => root.render(<View {...filteredProps} styleUrl="https://tiles.invalid/style.json?token=SECRET" loadMap={loadMap} />));
+        expect(map.flights).toHaveLength(3);
+        expect(map.flights.at(-1).duration).toBe(0);
+        expect(host.textContent).toContain('Housing geographic evidence');
+        delete document.documentElement.dataset.motion;
+      }
       await act(async () => map.handlers.error({ error: new Error('MAP_STYLE_URL token=SECRET') }));
       expect(map.removed).toBe(true);
+      if (View === NeedsGeoMap) {
+        expect(host.textContent).toContain('Housing geographic evidence');
+        expect(host.textContent).toContain('Submitted accounts · 3');
+      }
       expect(host.querySelector('[data-no-stage-swipe]')!.hasAttribute('hidden')).toBe(true);
       expect(host.innerHTML).not.toMatch(/MAP_STYLE_URL|SECRET|tiles.invalid/);
       await act(async () => (host.querySelector('button') as HTMLButtonElement).click());
