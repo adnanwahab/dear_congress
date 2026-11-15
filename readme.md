@@ -679,3 +679,12 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Optional Civic Chronicle crossword
+
+The draft catalog and sample workflow offer a three-word educational crossword;
+the guided demo links to it after exiting the tour. Pack 1 is bundled editorial
+content awaiting human clue/source review. Play uses page memory only, requires
+no signup, and never writes participation data. The grid, hints and complete-text
+answers work offline after loading; institutional links need connectivity.
+See [SHE-665 validation and remaining review](docs/reviews/SHE-665.md).

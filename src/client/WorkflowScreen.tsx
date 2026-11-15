@@ -1,3 +1,4 @@
+import { CivicCrossword } from './CivicCrossword';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -140,6 +141,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
+    {!new URLSearchParams(window.location.search).has('demo') && <CivicCrossword />}
     {stage === 'votes' && <DailyQuestion request={request} />}<section className="workflow-heading"><div><p className="workflow-eyebrow" style={{ viewTransitionName: `journey-stage-${meta.n}` }}>Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.title}</h1><p><strong>{meta.heading}</strong></p><p>{meta.description}</p></div>{meta.next && <a className="workflow-next" href={route(meta.next,item?.id ?? selected)}>Next: {STAGES[meta.next].title} →</a>}</section>
     {stage === 'votes' && <nav className="panel workflow-repository-voting" aria-label="Vote on application pull requests">
       <h2>Review and vote on app changes</h2>
