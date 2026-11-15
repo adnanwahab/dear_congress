@@ -11,3 +11,8 @@
 .amendment-comparison ins { color: var(--good-ink); background: var(--good-bg); }
 .amendment-marker { font-weight: bold; }
 @media (max-width: 700px) { .amendment-comparison { grid-template-columns: minmax(0,1fr); } }
+.amendment-editor select { display: block; width: 100%; min-height: 44px; font: inherit; color: var(--ink); background: var(--card); }
+.amendment-editor button { min-height: 44px; }
+.amendment-editor h5, .amendment-editor h6 { font-size: 1rem; margin: .8rem 0; }
+.amendment-editor blockquote { margin: .5rem 0; }
+.amendment-editor a { display: inline-block; padding: .6rem 0; overflow-wrap: anywhere; }
