@@ -39,7 +39,7 @@ test('native departure/restoration preserves scroll, keyboard focus and filters 
     dom.document.querySelector('button')!.remove();
     restoreJourney(target);
     expect(dom.document.activeElement?.id).toBe('main-content');
-    const navigationLink = dom.document.querySelector('nav a')!;
+    const navigationLink = dom.document.querySelector<HTMLAnchorElement>('nav a')!;
     navigationLink.focus();
     dom.dispatchEvent(new dom.Event('pagehide'));
     expect(readJourney(target)?.focus).toContain('nav[aria-label="Main navigation"]');
