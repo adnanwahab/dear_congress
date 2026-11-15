@@ -734,6 +734,20 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## County event heatmap sandbox
+
+`/map` includes a demo event heatmap sourced only from the existing local
+`county-fips-v1` model. Improve the plan, then play or scrub completed revisions.
+An event means one county model changed status during that revision; intensity
+is 0 or 1 events per county per revision, not people, votes or measured impacts.
+Separate controls show Census 2023 boundary evidence and synthetic transitions.
+Every event has an inspectable model/revision/FIPS ID and selects its county.
+The full selected-bucket table remains available without SVG or WebGL; reduced
+motion advances manually. Restart clears the local replay. There is no network
+loading or provider failure state because this view uses bundled shapes and the
+local model. External simulator receipts have no reviewed county/event binding
+and are not geocoded. See [SHE-435 review notes](docs/reviews/SHE-435.md).
+
 ## Goal overlap preview (SHE-453)
 
 The exact-text-bound fictional transit ArgumentMap includes a read-only overlap
