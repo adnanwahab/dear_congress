@@ -28,7 +28,8 @@ test('manual motion-off controls traverse, branch, reset and clean up without ne
   document.documentElement.dataset.motion = 'off';
   const host = document.createElement('div'); document.body.append(host);
   const root = createRoot(host);
-  // Target only the marble controls: the provenance panel also offers buttons.\n  const click = async (index: number) => act(async () => { (host.querySelectorAll('.marble-controls button')[index] as HTMLButtonElement).click(); });
+  // Target only the marble controls: the provenance panel also offers buttons.
+  const click = async (index: number) => act(async () => { (host.querySelectorAll('.marble-controls button')[index] as HTMLButtonElement).click(); });
   try {
     await act(async () => root.render(<CivicMarbleRun item={{ id: 'sample', title: 'Sample' } as DemoItem} />));
     await click(0);
