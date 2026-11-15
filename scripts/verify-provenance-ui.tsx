@@ -38,6 +38,27 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   const disclosures = [...container.querySelectorAll('details.workflow-provenance-compact')];
   if (stage === 'feed' || stage === 'published') {
     assert.equal(disclosures.length, 12);
+    const first = disclosures[0]!;
+    const chip = first.querySelector('summary')!;
+    await act(async () => { chip.dispatchEvent(new dom.PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })); });
+    assert(first.hasAttribute('open'), 'mouse hover inspects');
+    await act(async () => { dom.document.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    assert(!first.hasAttribute('open'), 'Escape dismisses hover');
+    await act(async () => { (chip as any).focus(); });
+    assert(first.hasAttribute('open'), 'focus inspects');
+    await act(async () => { dom.document.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    assert(!first.hasAttribute('open'), 'Escape dismisses focused inspection');
+    assert.equal(dom.document.activeElement, chip);
+    await act(async () => { chip.dispatchEvent(new dom.PointerEvent('pointerover', { bubbles: true, pointerType: 'touch' })); });
+    assert(!first.hasAttribute('open'), 'touch does not rely on hover');
+    await act(async () => { (chip as any).click(); });
+    assert(first.hasAttribute('open'), 'tap opens');
+    const original = first.querySelector('a')!;
+    assert.equal(original.getAttribute('target'), '_blank');
+    assert.equal(dom.location.search, '?proposal=demo-food');
+    await act(async () => { (first.querySelector('button') as any).click(); });
+    assert(!first.hasAttribute('open'), 'close button dismisses');
+    await act(async () => { (chip as any).blur(); });
     for (const disclosure of disclosures) {
       assert.equal(disclosure.hasAttribute('open'), false);
       const summary = disclosure.querySelector('summary')!;
@@ -45,9 +66,9 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
       assert.match(summary.textContent!, /Not checked/);
       assert(!summary.querySelector('a'));
       assert(disclosure.querySelector('.workflow-provenance-body a[href^="https:"]'));
-      (summary as any).click();
+      await act(async () => { (summary as any).click(); });
       assert.equal(disclosure.hasAttribute('open'), true);
-      (summary as any).click();
+      await act(async () => { (summary as any).click(); });
       assert.equal(disclosure.hasAttribute('open'), false);
       assert.match(disclosure.querySelector('.workflow-provenance-body')!.textContent!, /Background only/);
     }
@@ -80,9 +101,9 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     }
     const map = [...container.querySelectorAll('[aria-label="Compare arguments"]')].find(node => node.textContent!.includes('More frequent evening'))!;
     assert(map, 'integrated transit argument map');
-    assert.equal(map.querySelectorAll('.argument-map-sides h4').length, 2);
+    assert.equal(map.querySelectorAll('.argument-map-sides > section > h4').length, 2);
     assert.equal(map.querySelectorAll('.argument-map-sides > section').length, 2);
-    assert.equal((map.textContent!.match(/unverified assertion/g) ?? []).length, 4);
+    assert.equal((map.querySelector('.argument-map-sides')!.textContent!.match(/unverified assertion/g) ?? []).length, 4);
     assert.match(map.textContent!, /Evidence strength: unassessed/);
     const clauseLink = map.querySelector('a')!;
     await act(async () => { (clauseLink as any).click(); });

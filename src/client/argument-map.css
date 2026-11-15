@@ -15,3 +15,8 @@
 .consensus-terrain select { max-width: 100%; min-height: 44px; display: block; }
 .consensus-terrain summary { min-height: 44px; padding-block: .5rem; }
 .consensus-terrain :is(select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.audio-briefing { border-block-start: 1px solid var(--border, #bbb); margin-block-start: 1rem; padding-block-start: 1rem; }
+.briefing-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.audio-briefing :is(button, select) { min-height: 44px; min-width: 44px; max-width: 100%; }
+.audio-briefing :is(button, select):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.audio-briefing h6 { font-size: 1rem; margin-block: 1rem .5rem; }
