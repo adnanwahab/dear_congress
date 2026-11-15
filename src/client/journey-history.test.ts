@@ -22,7 +22,7 @@ test('native departure/restoration preserves scroll, keyboard focus and filters 
   const dom = new DOMWindow({ url: 'https://example.test/feed' });
   const target = dom as unknown as Window;
   try {
-    dom.document.body.innerHTML = '<main id="main-content" tabindex="-1"><input type="search"><button>Advisory choice</button></main>';
+    dom.document.body.innerHTML = '<header><nav aria-label="Main navigation"><a href="/votes">Votes</a></nav></header><main id="main-content" tabindex="-1"><input type="search"><button>Advisory choice</button></main>';
     let votes = 0;
     dom.document.querySelector('button')!.onclick = () => { votes++; };
     writeJourney(entry(), target);
@@ -39,6 +39,14 @@ test('native departure/restoration preserves scroll, keyboard focus and filters 
     dom.document.querySelector('button')!.remove();
     restoreJourney(target);
     expect(dom.document.activeElement?.id).toBe('main-content');
+    const navigationLink = dom.document.querySelector('nav a')!;
+    navigationLink.focus();
+    dom.dispatchEvent(new dom.Event('pagehide'));
+    expect(readJourney(target)?.focus).toContain('nav[aria-label="Main navigation"]');
+    dom.document.querySelector('input')!.focus();
+    restoreJourney(target);
+    expect(dom.document.activeElement).toBe(navigationLink);
+    expect(votes).toBe(0);
   } finally { await dom.happyDOM.close(); }
 });
 
