@@ -85,6 +85,10 @@ Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
+The same page includes a read-only synthetic uncertainty stack with four assumption
+layers, conflict/missing-source blockers and JSON/copy/print fallbacks. See the
+[uncertainty contract](docs/uncertainty-stack.md) and
+[SHE-682 review gaps](docs/reviews/SHE-682.md); it is not a real policy estimate.
 
 ## What's in it
 

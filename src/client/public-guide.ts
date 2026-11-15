@@ -45,6 +45,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+The Outcomes uncertainty stack separates measurement, model, cost and implementation assumptions. Its traceable, conflicting and missing-source cases are synthetic demonstrations. A combined scenario envelope is not a confidence interval or forecast. Conflicts and missing evidence block combination. Each input retains its date, limitations and source identity; material revisions record pending human review. Export the complete record, copy it, or print it after loading; bundled examples work offline.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
