@@ -44,7 +44,7 @@ export class GitHubSource {
   }
   private pull(p:Json):Pull {
     if(p.base?.repo?.id!==this.repositoryId || p.base?.repo?.full_name?.toLowerCase()!==this.repository) throw new GitHubError('rejected');
-    return {links:evidenceLinks(p.body),number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
+    return {branchSource:{headRepository:p.head.repo?.full_name??null,headRef:p.head.ref??''},links:evidenceLinks(p.body),number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
   }
   private issue(p:Json):Pull {
     if(p.pull_request)throw new GitHubError('rejected');
@@ -69,6 +69,7 @@ export class GitHubSource {
     try {
       const [runs,statuses,reviews,protection,commits]=await Promise.all([this.pages(`/commits/${pull.headSha}/check-runs`,'check_runs'),this.pages(`/commits/${pull.headSha}/statuses`),this.pages(`/pulls/${number}/reviews`),this.request(`/branches/${encodeURIComponent(pull.base)}/protection`),this.pages(`/pulls/${number}/commits`)]);
       if(commits.length>=250) throw new GitHubError('unknown');
+      if(pull.branchSource)pull.branchSource.commits=commits.map(c=>({sha:c.sha,parents:(c.parents??[]).map((parent:Json)=>parent.sha)}));
       if([...this.openHeads].some(([n,sha])=>n!==number && commits.some(c=>c.sha===sha))) evidence.mergeableState='blocked';
       evidence.checks=runs.map(c=>({name:c.name,status:c.status,conclusion:c.conclusion,sha:c.head_sha}));
       const seen=new Set<string>();

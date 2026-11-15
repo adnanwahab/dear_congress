@@ -70,3 +70,12 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## Branch subway relationships — SHE-607
+
+The repository browser includes a read-only graph and searchable keyboard-accessible
+relationship table. Source description links remain unverified references. GitHub
+head/base refs and reported commit parents provide revision/ancestry context;
+a PR's base target does not prove ancestry. Missing detail metadata is explicit.
+The graph never casts votes, submits feedback or changes merge policy. See
+[verification and remaining acceptance](reviews/SHE-607.md).
