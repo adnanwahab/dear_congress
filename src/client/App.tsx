@@ -298,7 +298,7 @@ function LegacyApp() {
     <div className="legacy-shell">
       {header}
       <div className="app engine-workspace">
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" data-civic-stage={tab} tabIndex={-1}>
         <h1>{TABS.find(t => t.id === tab)?.label}</h1>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
