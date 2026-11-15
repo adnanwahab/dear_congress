@@ -70,6 +70,7 @@ export function DemoTour() {
   return <section className="demo-tour" ref={overlay} tabIndex={-1} aria-label="Guided demo controls">
     <p aria-live="polite"><strong>{finished ? 'Demo complete' : `${step + 1} / ${TOUR_STOPS.length} · ${stop.title} · ${paused ? 'Paused' : 'Playing'}`}</strong><br />{stop.caption}</p>
     <p>Reading never casts a vote. Saving a draft does not publish it or cast a vote. Exit this tour to make an explicit advisory choice.</p>
+    <p><a href="/bills#townhall">Exit demo and explore fictional town-hall practice</a></p>
     <small>Sample data · Read-only tour · Space: pause · ← / →: step · Esc: exit · Click page to pause</small>
     <div><button disabled={step === 0} onClick={() => go(step - 1)}>← Back</button><button disabled={finished} onClick={() => setPaused(p => !p)}>{paused ? '▶ Resume' : 'Pause'}</button><button disabled={step === TOUR_STOPS.length - 1} onClick={() => go(step + 1)}>Next →</button><button onClick={exit}>Exit demo</button></div>
   </section>;

@@ -729,6 +729,16 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Fictional facilitation practice
+
+The draft catalog and sample workflow offer **Read the room**, an opt-in,
+three-scene town-hall game. The guided demo links out to its catalog entry.
+All speakers, questions and slots are hypothetical. Feedback rewards fair turns,
+listening and accurate follow-up, never a political preference. Skip, Restart,
+Exit and a complete text explanation are available. State stays in page memory;
+no participation credit, advisory writes or stored scores are created.
+See [SHE-661 verification and limitations](docs/reviews/SHE-661.md).
+
 ### Fictional clause reveal
 
 Draft and Votes include a read-only drag comparison of illustrative current and
