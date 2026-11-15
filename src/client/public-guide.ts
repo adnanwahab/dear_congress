@@ -45,6 +45,12 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+## Reviewing public datasets
+
+The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV files or pasted data, maps value/date/unit/scope columns and checks them against a civic metric contract. It distinguishes primary sources, editorial inference, user claims and synthetic estimates. Dates, exact source revisions, reuse terms and limitations remain attached to each draft.
+
+Acceptance is a self-reported local review of the exact draft. Any data or metadata change requires new review. Nothing is published or added to measured outcomes or synthesis. Drafts and review history disappear on reload; export the complete JSON packet or copy/print its text to retain them. Offline files work without network requests. The cited example is a transcription exercise awaiting independent source verification. A named reviewer and passing structural checks do not establish authenticated approval or real-world policy benefit.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
