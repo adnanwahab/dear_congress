@@ -739,6 +739,9 @@ html:is(:active-view-transition-type(proposal-change), [data-motion-type="propos
 html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 html[data-motion="off"]::view-transition-group(*), html[data-motion="off"]::view-transition-old(*), html[data-motion="off"]::view-transition-new(*) { animation: none !important; }
 html[data-motion="off"]::view-transition-old(*) { opacity: 0; }
+html:is(:active-view-transition-type(geography-mode), [data-motion-type="geography-mode"])::view-transition-group(*) { animation-duration: var(--motion-base); }
+html:is(:active-view-transition-type(geography-mode), [data-motion-type="geography-mode"])::view-transition-old(root),
+html:is(:active-view-transition-type(geography-mode), [data-motion-type="geography-mode"])::view-transition-new(root) { animation: none; }
 /* End motion foundation. */
 
 /* Shared native disclosure motion. Unsupported engines retain native instant toggles.
@@ -1089,3 +1092,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.county-evidence-table { width: 100%; border-collapse: collapse; margin-block: 1rem; background: var(--card); }
+.county-evidence-table th, .county-evidence-table td { padding: .65rem; border: 1px solid var(--line); text-align: left; overflow-wrap: anywhere; }
+.county-evidence-table:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
