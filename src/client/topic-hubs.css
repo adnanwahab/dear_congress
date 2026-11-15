@@ -5,7 +5,8 @@
 .topic-hubs input { max-width: 100%; display: block; }
 .topic-return { display: block; padding: 1rem; }
 .constellation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
-.constellation button { min-height: 44px; }
+.constellation button { min-height: 44px; max-width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.constellation li { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .constellation-viewport { overflow: auto; max-height: 34rem; border: 1px solid var(--border, #888); border-radius: .75rem; overscroll-behavior: contain; }
 .constellation-canvas { position: relative; }
 .constellation-canvas svg { position: absolute; inset: 0; pointer-events: none; }

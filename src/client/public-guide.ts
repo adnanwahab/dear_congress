@@ -76,6 +76,10 @@ The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthl
 
 The Outcomes contradiction compass compares explicit fields only when scope, period and claim kind match. It preserves both revisions and their pending human-review state; no AI chooses which source is true. Examples include a constitutional text citation, clearly synthetic conflicting reports and a missing-source user claim. External documents require connectivity. Copyable JSON and page printing preserve dates, limitations and review history if downloads fail. Editorial inference is interpretation, not primary evidence.
 
+## Optional tactile feedback
+
+Optional haptics is off by default. Enable it in Page actions (More on phones). On supported devices, brief feedback marks a demo card move, a manual recorded-model time tick, or a successful private amendment save. It never marks a vote, support level, or progress milestone. Reduced motion pauses feedback. Devices without vibration continue normally. The preference stays in this browser, or only this page if storage is blocked.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.

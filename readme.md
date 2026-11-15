@@ -734,6 +734,16 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Optional haptics
+
+Page actions (More on mobile) offers disabled-by-default browser-local haptics.
+Supported Vibration API devices receive one 8 ms pulse, at most once per 120 ms,
+for intentional demo card moves, recorded-model playback ticks and successful
+private amendment saves. Reduced motion and hidden pages suppress requests.
+No voting, policy-setting sliders, automated playback, loading or progress
+notifications trigger feedback. Unsupported/denied APIs are safe no-ops; there
+is no polling or permission prompt. Blocked storage keeps a page-only preference.
+
 ## Fictional facilitation practice
 
 The draft catalog and sample workflow offer **Read the room**, an opt-in,
