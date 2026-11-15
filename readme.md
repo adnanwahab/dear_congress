@@ -734,6 +734,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Personal priority points
+
+The active `/votes` and `/vote` workflow includes a personal 100-point allocation.
+Drag one point between trays with mouse, pen or touch, or use labeled numeric
+inputs and plus/minus buttons. Totals update immediately and cap at 100; Undo
+reverses draft changes. Only **Save priorities** writes an allocation to the
+existing cookie-bound `/api/votes` storage, without proposal votes or publication.
+Refresh restores saved values; unsaved edits stay in page memory. Loading/error
+and empty-need states do not submit. Personal priorities remain separate from
+synthetic proposal responses. The token display uses no animation.
+
 ### Build-a-plan workbench
 
 Each synthesis lane has a separate, initially empty $40B advisory construction kit.
