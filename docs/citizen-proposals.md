@@ -226,6 +226,31 @@ delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
 
+## Legislative redline detective sandbox (SHE-415)
+
+The existing amendment editor on sample Draft/Votes and citizen detail includes
+an optional, collapsed **Play legislative redline detective · Sandbox**. Three
+bundled fictional cases ask about duty, eligibility and ambiguous timing. Select
+a native radio choice and submit Reveal explanation; only then are feedback,
+Removed/Added comparison, links to the exact fictional source clauses and edge
+cases shown. Next case resets the guess and moves focus to the case heading;
+Play again restarts the set. No score or guess is persisted or sent anywhere.
+
+These are unreviewed invented words, not legal advice or interpretations of the
+selected proposal. The existing source-kind-keyed editor and civic navigation are
+unchanged. The existing comparison and source-chip presentation are reused, with
+local clause anchors rather than misleading official background citations.
+The existing law-behavior API accepts bounded model parameters, not arbitrary
+clauses; this exercise does not call it or claim to project these edits.
+
+Fixtures load synchronously with the editor, so there is no separate network,
+loading, timeout or retry state. The exercise works without storage or model
+availability. Native details, form, radios, buttons and anchors support keyboard
+and touch. Controls have visible focus and at least 44px target height; narrow
+comparisons stack. No animation, timers or automatic progression are used, so
+reduced motion sees the same complete content. Human native-browser, zoom,
+touch and screen-reader review is still required before acceptance.
+
 ## Phrase reading layers (SHE-393)
 
 Opening **Suggest amendment** on `/draft` or `/votes` exposes an exact-text reader.

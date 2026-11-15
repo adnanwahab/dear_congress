@@ -11,6 +11,13 @@
 .amendment-comparison ins { color: var(--good-ink); background: var(--good-bg); }
 .amendment-marker { font-weight: bold; }
 @media (max-width: 700px) { .amendment-comparison { grid-template-columns: minmax(0,1fr); } }
+.redline-detective { margin-bottom: 1rem; }
+.redline-detective summary { cursor: pointer; padding: .75rem; min-height: 44px; box-sizing: border-box; }
+.redline-detective label { padding: .65rem; min-height: 44px; box-sizing: border-box; cursor: pointer; }
+.redline-detective button { min-height: 44px; }
+.redline-detective fieldset { min-width: 0; border: 1px solid var(--line); }
+.redline-detective a { display: inline-block; padding: .65rem; }
+/* This exercise has no animation or timed interaction, including reduced motion. */
 .clause-reader { margin-block: 1rem; }
 .clause-source { white-space: pre-wrap; }
 .clause-reader .clause-source button { display: inline; min-height: 44px; margin: 0; padding: .15rem .25rem; font: inherit; text-align: start; color: var(--ink); background: var(--card); border: 1px solid var(--line); text-decoration: underline; text-underline-offset: .2em; }
