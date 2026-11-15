@@ -10,3 +10,16 @@
 @media (max-width: 600px) {
   .workflow-shell .civic-header:has(.reality-lens button[aria-expanded="true"]) { position: static; }
 }
+
+/* Reflow fixes exercised by the reality-lens route acceptance test.
+   Keep them scoped: the global nowrap-button rule is relied upon elsewhere. */
+.workflow-select { min-width: 0; }
+.workflow-select select { box-sizing: border-box; min-width: 0; max-width: 100%; }
+@media (max-width: 760px) {
+  .legacy-shell main[data-civic-stage="synth"] button {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
