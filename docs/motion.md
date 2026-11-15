@@ -47,6 +47,22 @@ Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
 
+## Sample proposal mosaic (SHE-399)
+
+Dashboard discovery uses row-major responsive tiles with occasional wide cards.
+There is no dense packing, CSS ordering, randomness, dragging or perpetual motion.
+Original, title and topic sorts preserve source records; compact list uses the same
+cards, search, filters, sort and explicit View proposal actions. Choosing a layout
+or exploring never submits a vote or publishes content.
+
+The gallery defers result changes while a pointer is over it, a touch/press is
+active, or focus remains within it. It retains keyed DOM nodes and announces
+pending results until interaction leaves; background refreshes obey the same lock.
+Changes use the existing typed `filter` transition, with callback-only fallback
+selectors and scaled durations. Reduced motion, motion off and unsupported APIs
+commit immediately once the interaction lock is released. View selection retains
+the existing proposal-detail focus behavior and stage URLs.
+
 ## Semantic status dictionary (SHE-408)
 
 `STATUS_MOTION` in `src/client/motion.ts` defines persistent text and icons:
