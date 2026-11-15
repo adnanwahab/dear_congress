@@ -3,6 +3,7 @@ import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
+import { BillShelf, useBillShelf } from './BillShelf';
 
 /** Deliberately limited Markdown: headings, plain paragraphs and unordered lists.
  * Everything is a React text child; HTML, links and inline markup never execute. */
@@ -23,10 +24,12 @@ export default function BillCatalog() {
     window.addEventListener('popstate', update);
     return () => window.removeEventListener('popstate', update);
   }, []);
+  const shelf = useBillShelf(params.toString());
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   function update(q: string, c: string) {
-    const next = new URLSearchParams();
+    const next = new URLSearchParams(params);
+    next.delete('q'); next.delete('category');
     if (q) next.set('q', q);
     if (c) next.set('category', c);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
@@ -38,10 +41,11 @@ export default function BillCatalog() {
   const back = `/bills${params.size ? '?' + params : ''}`;
   return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>
     <p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
+    <BillShelf shelf={shelf} search={params.toString()} />
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
-      <h1>{bill.title}</h1>
+      <h1>{bill.title}</h1><button disabled={shelf.entries.some(e => e.id === bill.id)} onClick={() => shelf.add(bill)}>Add {bill.id} to shelf</button>
       <p className="bill-lead">{bill.proposedChange}</p>
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],
@@ -63,7 +67,7 @@ export default function BillCatalog() {
       <div className="bill-chips" role="group" aria-label="Filter by category"><button aria-pressed={!category} onClick={() => update(query, '')}>All categories</button>{billCollection.categories.map(c => <button key={c} aria-pressed={category === c} onClick={() => update(query, category === c ? '' : c)}>{c}</button>)}</div>
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
-      <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      <div className="bill-grid">{results.map(b => <article key={b.id} draggable onDragStart={e => { e.dataTransfer.setData('application/x-civic-catalog', b.id); e.dataTransfer.effectAllowed = 'copy'; }}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><button disabled={shelf.entries.some(e => e.id === b.id)} onClick={() => shelf.add(b)}>Add {b.id} to shelf</button><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
   </main></div>;
 }

@@ -37,6 +37,8 @@ Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft
 
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
 
+Browse the [draft catalog](/bills) and add up to four concepts to a research shelf. Shelf selection is anonymous local browser state, never a vote or endorsement. Shared shelf links reveal selected IDs and revisions. Draft evidence is unassessed, costs are unknown, and changed or missing saved revisions are flagged. Clear shelf removes its local selection; links already shared remain with their recipients.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
