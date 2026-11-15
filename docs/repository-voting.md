@@ -70,3 +70,22 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## Source flip cards — SHE-603
+
+PR list cards expose a read-only source back through a native button (Enter/Space
+and touch), with expanded state, an accessible file index, focusable scrolling
+patches and a reduced-motion fallback. The title/detail link and ballot remain
+outside the flipping content. Issues and live civic rounds retain their existing
+interfaces. Source backs load the existing detail GET lazily and reject a response
+whose repository ID, item number/kind, version, head, base or canonical URL differs
+from the displayed PR. Missing file summaries, partial patches, inaccessible
+protection evidence, loading, denied access and retryable errors are explicit.
+Checks display their reported commit; absent or mismatched evidence is unverified.
+A completed check receipt still requires human review and never authorizes merging.
+
+The advisory lock, configured quorum 10 / 24-hour exposure defaults, protected-base
+and current-head review requirements, repository/kind isolation, existing ballots,
+receipts and records are unchanged. Runtime configuration and GitHub protections
+were not changed or verified. Desktop/mobile visual and real-browser keyboard QA
+remain required before acceptance.
