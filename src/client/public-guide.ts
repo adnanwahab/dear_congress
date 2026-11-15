@@ -17,6 +17,12 @@ A signed browser cookie lets you change your saved choice. Clearing cookies or u
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
+## Export a sample evidence packet
+
+Open a sample proposal's source details and choose Evidence packet. Export evidence JSON saves a public snapshot with background citations, assumptions, missing dates and review status. Show copy / print fallback lets you select the JSON if downloads fail. Export works offline once the proposal is loaded; it cannot recover a proposal that never loaded.
+
+The packet excludes journals, votes and source full text. Safe HTTPS syntax is checked, but link reachability and source content are unverified. These samples have no reviewed claim-level evidence or upstream evidence revision history. Export time is not a source date or human approval. Citizen proposals and official bill records do not yet have this export.
+
 ## What is fictional and what is verified?
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.

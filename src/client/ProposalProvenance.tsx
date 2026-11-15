@@ -1,3 +1,4 @@
+import { EvidenceExport } from './EvidenceExport';
 import type { DemoItem } from '../engine/demo';
 
 // References are editorial metadata, independent of demo activity and browser votes.
@@ -28,6 +29,7 @@ export function ProposalProvenance({ item, compact = false }: { item: DemoItem; 
     {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
     <div>{freshness(item)}</div>
     <p>{item.background?.scope ?? 'Background scope not documented.'} Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
+    <EvidenceExport key={JSON.stringify(item)} item={item} />
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
   return <details className="workflow-provenance workflow-provenance-compact" aria-label="Scenario and background source">
