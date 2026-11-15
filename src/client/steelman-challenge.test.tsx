@@ -43,8 +43,8 @@ test('steelman is optional, local, revision-bound and gives only self-review fee
       });
     }
     await click('Review my coverage');
-    expect(container.querySelector('[role="status"]')?.textContent).toContain('Practice complete');
-    expect(container.querySelector('[role="status"]')?.textContent).toContain('Revisit:');
+    expect(container.querySelector('.steelman-challenge [role="status"]')?.textContent).toContain('Practice complete');
+    expect(container.querySelector('.steelman-challenge [role="status"]')?.textContent).toContain('Revisit:');
     expect(container.textContent).toContain('Source supplied, not verified');
     await click('Clear and skip challenge');
     expect(container.querySelector('textarea')).toBeNull();
