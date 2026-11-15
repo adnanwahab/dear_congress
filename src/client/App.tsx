@@ -2,6 +2,7 @@ import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
+import { BudgetPuzzle } from "./BudgetPuzzle";
 import { motionDisabled, motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
 import { CivicAdventure } from './CivicAdventure';
@@ -1732,6 +1733,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
   return (
     <div className="stack">
       <CoalitionQuest />
+      <BudgetPuzzle />
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">

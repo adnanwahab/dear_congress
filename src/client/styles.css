@@ -1179,3 +1179,9 @@ html[data-motion="calm"] .motion-preview-card { animation: 150ms ease-out both p
 html[data-motion="calm"] .patch-visual { display: none; }
 html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 @media (max-width: 680px) { .workflow-shell .header-meta { display: flex; } }
+.budget-puzzle fieldset { min-width: 0; border: 1px solid var(--border); border-radius: 8px; }
+.budget-puzzle-programs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; }
+.budget-puzzle-program { display: flex; flex-direction: column; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: 8px; overflow-wrap: anywhere; cursor: pointer; }
+.budget-puzzle-program input { width: 24px; height: 24px; vertical-align: middle; }
+.budget-puzzle-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+.budget-puzzle button { min-height: 44px; min-width: 44px; white-space: normal; }
