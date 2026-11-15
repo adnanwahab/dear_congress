@@ -8,8 +8,9 @@ export const JURISDICTION_KEY = 'civic_browse_jurisdiction_v1';
 export function validJurisdiction(value: string | null): value is Jurisdiction {
   return value === '' || JURISDICTIONS.some(j => j === value);
 }
-export function useJurisdiction() {
+export function useJurisdiction(entryValue?: string) {
   const [preference, setPreference] = useState(() => {
+    if (entryValue !== undefined && validJurisdiction(entryValue)) return { value: entryValue, notice: '' };
     try {
       const saved = localStorage.getItem(JURISDICTION_KEY);
       return saved === null || validJurisdiction(saved)
@@ -34,7 +35,7 @@ export function JurisdictionPicker({ preference, count }: { preference: ReturnTy
     <div><label>Browse jurisdiction<select value={preference.value} onChange={e => preference.change(e.target.value)}>
       <option value="">All jurisdictions</option>{JURISDICTIONS.map(j => <option key={j}>{j}</option>)}
     </select></label><button type="button" onClick={() => preference.change('')}>Clear jurisdiction preference</button></div>
-    <p>Optional browsing preference, not residency verification or voting eligibility. No signup or device location needed.</p>
+    <p>Optional browsing preference, not residency verification or voting eligibility. No street address, signup or device location needed.</p>
     <p role="status" aria-live="polite">{preference.notice} {preference.value ? `Showing ${preference.value} decision scope only; overlapping governments are not included.` : 'Showing All jurisdictions, including regional or unmapped scopes.'} {count === null ? 'Loading proposals…' : `${count} applicable proposals.`}</p>
     <JurisdictionQuest key={preference.value} jurisdiction={preference.value} />
   </section>;

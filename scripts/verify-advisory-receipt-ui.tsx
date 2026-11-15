@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import WorkflowScreen from '../src/client/WorkflowScreen';
+import { demoPayload } from '../src/engine/demo';
+import { fireEvent } from '@testing-library/dom';
+const dom = new Window({ url: 'http://localhost/votes' });
+for (const key of ['window', 'document', 'navigator', 'localStorage', 'sessionStorage']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { createRoot } = await import('react-dom/client');
+for (const reduced of [false, true]) {
+  dom.matchMedia = (() => ({ matches: reduced, addEventListener() {}, removeEventListener() {} })) as any;
+  dom.sessionStorage.clear();
+  const container = dom.document.createElement('div'); dom.document.body.append(container);
+  const root = createRoot(container as any);
+  const payload = demoPayload({}, 'receipt-test');
+  let resolve!: (v: unknown) => void;
+  let posts = 0;
+  const request = (async (path: string, body?: any) => {
+    if (path === '/api/demo') return new Promise(r => { resolve = r; });
+    if (path === '/api/votes') { posts++; return new Promise(r => { resolve = r; }); }
+    return {};
+  }) as any;
+  await act(async () => root.render(<WorkflowScreen stage="votes" request={request} />));
+  assert.equal(container.querySelector('.advisory-receipt'), null);
+  assert.equal(posts, 0);
+  await act(async () => resolve(payload));
+  for (const [index, label] of ['Support', 'Oppose', 'Not sure'].entries()) {
+    const buttons = container.querySelectorAll('.advisory-bars button');
+    await act(async () => { if (index === 0) fireEvent.touchStart(buttons[index]!); });
+    assert.equal(posts, index, 'touch alone never submits');
+    await act(async () => (buttons[index] as any).click());
+    assert.equal(posts, index + 1);
+    assert([...buttons].every(b => (b as any).disabled));
+    assert(!container.querySelector('.advisory-receipt')?.textContent?.includes(`choice: ${label}`));
+    await act(async () => resolve({ ok: true }));
+    const receipt = container.querySelector('.advisory-receipt')!;
+    assert(receipt.textContent!.includes(`choice: ${label}`));
+    assert.match(receipt.textContent!, /Viewed text revision: text-/);
+    assert.match(receipt.textContent!, /does not bind this vote to a revision/);
+    await act(async () => resolve(payload));
+    const actions = receipt.querySelectorAll('button');
+    await act(async () => (actions[0] as any).click());
+    assert.equal(dom.document.activeElement, container.querySelector('.advisory-bars button'));
+    Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async (text: string) => { assert(text.includes(`choice: ${label}`)); } } });
+    await act(async () => (actions[1] as any).click());
+    assert.match(receipt.textContent!, /Receipt copied/);
+  }
+  const oldReceipt = container.querySelector('.advisory-receipt');
+  await act(async () => (container.querySelector('.advisory-bars button') as any).click());
+  await act(async () => resolve({}));
+  assert.equal(container.querySelector('.advisory-receipt'), oldReceipt, 'missing acknowledgement never stamps a new receipt');
+  Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('denied'); } } });
+  await act(async () => (oldReceipt!.querySelectorAll('button')[1] as any).click());
+  assert.match(oldReceipt!.textContent!, /Could not copy/);
+  await act(async () => root.unmount()); container.remove();
+}
+// Empty payload offers no voting controls or receipt.
+const container = dom.document.createElement('div'); dom.document.body.append(container);
+const root = createRoot(container as any);
+await act(async () => root.render(<WorkflowScreen stage="votes" request={(async () => ({ ...demoPayload({}, 'empty'), items: [] })) as any} />));
+assert.equal(container.querySelector('.advisory-receipt'), null);
+assert.equal(container.querySelector('.advisory-bars'), null);
+await act(async () => root.unmount());
+await dom.happyDOM.close();
+console.log('PASS receipt acknowledgement, equal choices, loading, empty, touch, focus, copy and reduced-motion rendering');
