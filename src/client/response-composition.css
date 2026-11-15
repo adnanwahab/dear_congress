@@ -1,0 +1,13 @@
+.response-composition label { display: block; margin-block: 1rem; }
+.response-composition select, .response-composition textarea { max-width: 100%; width: 100%; }
+.response-composition textarea { box-sizing: border-box; font: inherit; }
+.response-composition input[type=range] { display: block; width: 100%; min-height: 44px; }
+.response-composition button, .response-composition select { min-height: 44px; }
+.composition-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 1rem; }
+.composition-groups fieldset { min-width: 0; }
+.response-composition { overflow-wrap: anywhere; }
+.response-composition :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+@media print { .response-composition { break-inside: auto; } .response-composition button { display:none; } .response-composition textarea { height: 40rem; } }
+
+.composition-print-report { display: none; }
+@media print { .response-composition textarea { display: none; } .composition-print-report { display: block; white-space: pre-wrap; overflow-wrap: anywhere; } }

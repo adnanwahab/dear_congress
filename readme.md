@@ -86,6 +86,11 @@ including mixed results, pinned baseline/source history and missing or stale dat
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 
+The same page includes a response-composition exercise with fictional group
+counts, adjustable multipliers, sourced/conflicting/missing-source teaching cases
+and a dated exportable session review log. It uses no browser votes or cookies.
+See [SHE-683 validation and remaining review](docs/reviews/SHE-683.md).
+
 ## What's in it
 
 | Step | What it does |

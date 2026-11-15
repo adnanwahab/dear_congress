@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import AmendmentEditor from './AmendmentEditor';
+import { ResponseComposition } from './ResponseComposition';
 import { PolicyMeasurements } from './PolicyMeasurements';
 import { OfficialBills } from './OfficialBills';
 import { JurisdictionPicker, useJurisdiction, sampleMatchesJurisdiction } from './JurisdictionPicker';
@@ -160,6 +161,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
+    {stage === 'outcomes' && <ResponseComposition />}
     {loading && !data && <WorkflowSkeleton stage={stage} />}
     {['feed', 'votes', 'draft'].includes(stage) && data && !loading && !loadError && <ProposalCompare key={window.location.search} items={items} current={item} search={window.location.search} />}
     {['published', 'feed', 'outcomes'].includes(stage) && <OfficialBills request={request} />}

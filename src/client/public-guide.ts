@@ -37,6 +37,8 @@ Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft
 
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation.
 
+The [response-composition exercise](/outcomes#response-composition) lets you reweight fictional groups. All inputs are illustrative; self-selection and missing groups prevent a representative public poll. It works offline after the page loads. Export or copy its report to retain dated provenance, limitations and pending human-review history; changes otherwise disappear on reload.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
