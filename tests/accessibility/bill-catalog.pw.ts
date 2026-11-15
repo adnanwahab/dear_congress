@@ -36,3 +36,27 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   }
   expect(writes).toBe(0);
 });
+
+test('dependency subway static keyboard selection, back and forward, empty results', async ({ page }) => {
+  await page.goto('/bills?view=subway');
+  const station = page.getByRole('button', { name: /^HFL-051 ·/ });
+  await station.focus();
+  await page.keyboard.press('Enter');
+  await expect(station).toBeFocused();
+  await expect(station).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#bill-route')).toContainText('Selected station: HFL-051');
+  await expect(page.locator('#bill-route')).toContainText('No current reviewed prerequisites');
+  await page.getByRole('button', { name: /^HFL-052 ·/ }).click();
+  await page.goBack();
+  await expect(station).toHaveAttribute('aria-pressed', 'true');
+  await page.goForward();
+  await expect(page.locator('#bill-route')).toContainText('Selected station: HFL-052');
+  await page.getByRole('searchbox', { name: 'Search bills' }).fill('nonexistent-station');
+  await expect(page.locator('main')).toContainText('No stations match');
+  await page.getByRole('button', { name: 'Clear / reset' }).click();
+  await expect(page.locator('.bill-station-lines button')).toHaveCount(100);
+  await expect(page.locator('#bill-route')).toContainText('Select a station');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter(v => v.impact === 'critical' || v.impact === 'serious')).toEqual([]);
+});

@@ -122,3 +122,32 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Policy dependency subway (SHE-721)
+
+`/bills?view=subway` offers a static, map-free station list. It shares the existing
+search and category filters. `station=HFL-051` pins selection; view/filter/selection
+changes create history entries and popstate restores them. Detail and return links
+retain this context. Selection never votes or submits a record. There are no
+animation, canvas, geolocation or external map dependencies; reduced-motion and
+low-power users receive the same controls and text graph.
+
+Category lines express editorial grouping only, with no connecting dependency
+edges. **No reviewed cross-bill dependencies are registered.** Neither draft
+wording, shared topics, background references nor the HFL-051 supplement establish
+funding, agency or implementation prerequisites. Missing routes mean unknown.
+Existing topic IDs remain separate; no category-to-topic binding is inferred.
+
+`src/shared/bill-dependencies.ts` holds a separate, currently empty reviewed-link
+registry. Future entries require both immutable catalog revisions, a directed
+prerequisite/dependent pair, relation kind, explanation, HTTPS source label/URL,
+review date and review deadline. URLs must be publicly accessible and checked by
+the reviewer before registration; URL syntax validation alone cannot establish
+accessibility or the truth of a claim. Runtime rendering does not fetch sources.
+Changed revisions and expired reviews withhold explanations; invalid references,
+missing stations and malformed review metadata fail closed. Filtered-out endpoints
+are withheld rather than silently expanding search results. This registry never
+changes catalog revisions, official metadata, synthesis, ballots or stored data.
+
+Source-backed connected routes remain pending human-reviewed evidence. The
+empty registry is deliberate, not a claim that these concepts are independent.

@@ -679,3 +679,9 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+The catalog also offers `/bills?view=subway`, a static policy dependency explorer
+with the same search and category filters and shareable station selection. No
+reviewed cross-bill dependencies are registered yet; routes remain explicitly
+unknown. See [SHE-721 review](docs/reviews/SHE-721.md) for evidence requirements,
+validation results and remaining acceptance.

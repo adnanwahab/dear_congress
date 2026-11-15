@@ -13,7 +13,7 @@ let writes = 0;
 globalThis.fetch = async () => { writes++; throw new Error('Catalog must not fetch or submit'); };
 await act(async () => root.render(<BillCatalog />));
 assert.equal(container.querySelectorAll('article').length, 100);
-assert.equal(container.querySelectorAll('[aria-pressed]').length, 11);
+assert.equal(container.querySelectorAll('[aria-label="Filter by category"] [aria-pressed]').length, 11);
 const input = container.querySelector('input')!;
 input.focus();
 await act(async () => { fireEvent.input(input, { target: { value: 'HFL-051' } }); });
@@ -22,7 +22,7 @@ assert.equal(container.querySelectorAll('article').length, 1);
 assert.equal(new URLSearchParams(window.location.search).get('q'), 'HFL-051');
 const link = container.querySelector('article a')!;
 assert.match(link.getAttribute('href')!, /^\/bills\/HFL-051\?q=HFL-051$/);
-await act(async () => { (container.querySelector('[aria-pressed="false"]') as HTMLButtonElement).click(); });
+await act(async () => { (container.querySelector('[aria-label="Filter by category"] [aria-pressed="false"]') as HTMLButtonElement).click(); });
 assert.match(container.textContent!, /No draft concepts match/);
 await act(async () => { const reset = [...container.querySelectorAll('button')].find(b => b.textContent === 'Clear / reset')!; reset.click(); });
 assert.equal(container.querySelectorAll('article').length, 100);
@@ -31,6 +31,24 @@ assert.equal(window.location.search, '');
 await act(async () => { window.history.replaceState(null, '', '/bills?q=HFL-051'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
 assert.equal(input.value, 'HFL-051');
 assert.equal(container.querySelectorAll('article').length, 1);
+// The same static station controls work with reduced motion; no animation APIs.
+Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: true, addEventListener() {}, removeEventListener() {} }) });
+await act(async () => { window.history.replaceState(null, '', '/bills?view=subway'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+const station = [...container.querySelectorAll('button')].find(b => b.textContent?.startsWith('HFL-051'))!;
+station.focus();
+await act(async () => station.click());
+assert.equal(document.activeElement, station);
+assert.equal(new URLSearchParams(window.location.search).get('station'), 'HFL-051');
+assert.match(container.querySelector('#bill-route')!.textContent!, /Selected station: HFL-051/);
+assert.match(container.querySelector('#bill-route')!.textContent!, /No current reviewed prerequisites/);
+// Restore both earlier and later history URLs, exercising the native popstate handler.
+for (const [url, expected] of [['/bills?view=subway&station=HFL-001', 'HFL-001'], ['/bills?view=subway&station=HFL-051', 'HFL-051']]) {
+  await act(async () => { window.history.replaceState(null, '', url!); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+  assert.match(container.querySelector('#bill-route')!.textContent!, new RegExp(`Selected station: ${expected}`));
+}
+await act(async () => { fireEvent.input(input, { target: { value: 'no-such-station' } }); });
+assert.match(container.textContent!, /No stations match/);
+assert.match(container.textContent!, /outside the current filters/);
 await act(async () => root.unmount());
 window.history.replaceState(null, '', '/bills/HFL-051');
 const detailRoot = createRoot(container);

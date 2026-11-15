@@ -3,6 +3,7 @@ import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
+import { BillSubway } from './BillSubway';
 
 /** Deliberately limited Markdown: headings, plain paragraphs and unordered lists.
  * Everything is a React text child; HTML, links and inline markup never execute. */
@@ -25,10 +26,12 @@ export default function BillCatalog() {
   }, []);
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
-  function update(q: string, c: string) {
+  function update(q: string, c: string, view = params.get('view') ?? '', station = params.get('station') ?? '') {
     const next = new URLSearchParams();
     if (q) next.set('q', q);
     if (c) next.set('category', c);
+    if (view === 'subway') next.set('view', view);
+    if (station) next.set('station', station);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
     setParams(next);
   }
@@ -58,12 +61,13 @@ export default function BillCatalog() {
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
       <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
+      <div className="bill-chips" role="group" aria-label="Catalog view"><button aria-pressed={params.get('view') !== 'subway'} onClick={() => update(query, category, '')}>Catalog cards</button><button aria-pressed={params.get('view') === 'subway'} onClick={() => update(query, category, 'subway')}>Dependency subway · static</button></div>
       <label htmlFor="bill-search">Search bills</label>
       <input id="bill-search" type="search" placeholder="Search bills…" value={query} onChange={e => update(e.target.value, category)} />
       <div className="bill-chips" role="group" aria-label="Filter by category"><button aria-pressed={!category} onClick={() => update(query, '')}>All categories</button>{billCollection.categories.map(c => <button key={c} aria-pressed={category === c} onClick={() => update(query, category === c ? '' : c)}>{c}</button>)}</div>
-      <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
+      <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '', params.get('view') ?? '', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
-      <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      {params.get('view') === 'subway' ? <BillSubway bills={results} selected={params.get('station') ?? ''} select={station => update(query, category, 'subway', station)} params={params} /> : <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>}
     </>}
   </main></div>;
 }

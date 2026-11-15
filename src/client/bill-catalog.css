@@ -13,3 +13,10 @@
 @media(max-width:600px){.bill-catalog main{padding-top:1.5rem}.bill-chips button{font-size:.9rem}.bill-grid article{padding:1.1rem}}
 /* The catalog owns a dark palette; global light-theme h4 muted text is unreadable here. */
 .bill-document h4{color:inherit}
+.bill-station-lines{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1.5rem}
+.bill-station-lines ul{list-style:none;border-left:3px solid #a9dfcf;padding-left:1rem;margin-left:.5rem}
+.bill-station-lines li{position:relative;margin:.8rem 0}.bill-station-lines li::before{content:'';position:absolute;left:-1.45rem;top:1rem;width:.65rem;height:.65rem;border:2px solid #a9dfcf;border-radius:50%;background:#101820}
+.bill-station-lines button{width:100%;border-radius:8px}.bill-source-chip{display:inline-block;border:1px solid currentColor;padding:.25rem .6rem;border-radius:1rem}
+.bill-subway #bill-route{border:1px solid #738799;padding:1rem;border-radius:12px;scroll-margin-top:2rem}
+.bill-subway :focus{outline:3px solid #ffdb85;outline-offset:4px}
+@media(forced-colors:active){.bill-station-lines ul,.bill-station-lines li::before{border-color:CanvasText}.bill-station-lines li::before{background:Canvas}}
