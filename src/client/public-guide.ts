@@ -33,6 +33,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
 
+The fictional transit sample includes two argument tracks with unreviewed claims and counterarguments. Drag within a track or use Move up and Move down to change your personal reading order. Each card discloses its source limits and quality status and expands Why this matters. This order lasts only while the map is open; it never changes public rankings or votes and is not verified participation. No claim-level citations have been supplied.
+
 ## What is fictional and what is verified?
 
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.

@@ -55,3 +55,10 @@
 .future-postcard textarea { display: block; width: 100%; box-sizing: border-box; }
 .future-postcard button, .future-postcard a { min-height: 44px; padding: .65rem; display: inline-block; }
 .future-postcard :is(button,a,textarea):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+/* SHE-431: native, touch-sized recorded-world time controls. */
+.civic-law-playback-controls{grid-template-columns:repeat(3,minmax(0,1fr))}
+.civic-law-playback-controls button,.civic-law-playback-controls select{min-height:44px;min-width:0;padding:8px}
+.civic-law-playback-controls input[type=range]{min-height:44px;margin-top:0}
+.civic-law-playback-controls button:disabled{opacity:.55;cursor:default}
+@media(max-width:740px){.civic-law-playback-controls{grid-template-columns:1fr}}
