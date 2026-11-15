@@ -35,7 +35,7 @@ for (const search of ['', '?proposal=sample%26one']) {
   assert.match(start.textContent!, /No account is needed/);
   assert.match(start.textContent!, /shared publicly/);
   assert(q().getAllByRole('alert').length >= 1);
-  const details = host.querySelector('details.home-how')!;
+  const details = host.querySelector('main details.home-how')!;
   assert.equal(details.open, false);
   assert.equal(details.querySelector('summary')!.textContent, 'How it works');
   assert.equal(details.querySelectorAll('li').length, 6);
@@ -44,10 +44,10 @@ for (const search of ['', '?proposal=sample%26one']) {
 assert(calls.every(path => path === '/api/demo'));
 // Follow the default vote destination: no chooser or additional navigation is needed.
 dom.happyDOM.setURL('http://localhost/votes');
-await act(async () => root.render(<WorkflowScreen stage="votes" request={async <T,>() => demoPayload({}, 'test') as T} />));
+await act(async () => root.render(<WorkflowScreen stage="votes" request={async <T,>(path: string) => (path === '/api/state' ? { needs: [], user: { allocation: {} } } : demoPayload({}, 'test')) as T} />));
 assert(q().getByRole('button', { name: /^Cast advisory vote: Support/ }));
 // A failed save remains a failure, never a success notice.
-await act(async () => root.render(<WorkflowScreen key="offline" stage="votes" request={async <T,>(path: string, body?: unknown) => { if (body) throw new Error('Save unavailable'); return demoPayload({}, 'test') as T; }} />));
+await act(async () => root.render(<WorkflowScreen key="offline" stage="votes" request={async <T,>(path: string, body?: unknown) => { if (path === '/api/state') return { needs: [], user: { allocation: {} } } as T; if (body) throw new Error('Save unavailable'); return demoPayload({}, 'test') as T; }} />));
 await act(async () => fireEvent.click(q().getByRole('button', { name: /^Cast advisory vote: Support/ })));
 assert.match(host.textContent!, /could not confirm whether your advisory choice/i);
 assert(!host.textContent!.includes('Your advisory vote is saved'));
