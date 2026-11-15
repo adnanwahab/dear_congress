@@ -1,0 +1,17 @@
+.clause-reveal { margin-block: 1rem; }
+.clause-lens { position: relative; border: 1px solid var(--line); background: var(--card); }
+.clause-lens::after { content: ''; position: absolute; inset-block: 0; left: var(--reveal); border-left: 2px solid var(--accent); pointer-events: none; }
+.clause-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+.clause-row > * { grid-area: 1 / 1; padding: .7rem; margin: 0; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.clause-row > :first-child { clip-path: inset(0 calc(100% - var(--reveal)) 0 0); }
+.clause-row > :last-child { clip-path: inset(0 0 0 var(--reveal)); }
+.clause-current, .clause-proposed { background: var(--card); }
+.clause-lens del { color: var(--bad-ink); }
+.clause-lens ins { color: var(--good-ink); background: var(--good-bg); }
+.clause-slider { display: block; margin-block: .8rem; }
+.clause-slider input { display: block; width: 100%; min-height: 44px; accent-color: var(--accent); touch-action: pan-y; }
+.clause-slider input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.clause-columns .clause-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.clause-columns .clause-row > * { grid-area: auto; clip-path: none; }
+.clause-columns::after { display: none; }
+@media print { .clause-reveal { display: none; } }
