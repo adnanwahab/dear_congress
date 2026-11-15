@@ -1,0 +1,8 @@
+.outcome-metric-puzzle { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line, currentColor); border-radius: 10px; color: var(--ink); background: var(--card); overflow-wrap: anywhere; }
+.outcome-metric-puzzle select { display: block; max-width: 100%; width: 100%; margin-block: .75rem; min-height: 44px; color: inherit; background: var(--card); }
+.outcome-metric-puzzle button, .outcome-metric-puzzle summary { min-height: 44px; margin: .25rem; cursor: pointer; }
+.outcome-metric-puzzle dt { font-weight: bold; }
+.outcome-metric-puzzle dd { margin-inline-start: 1rem; }
+.outcome-metric-puzzle :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 3px; }
+
+.outcome-metric-puzzle .workflow-source-status { font-weight: 600; }
