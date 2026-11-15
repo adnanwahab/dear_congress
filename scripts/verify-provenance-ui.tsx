@@ -101,9 +101,9 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     }
     const map = [...container.querySelectorAll('[aria-label="Compare arguments"]')].find(node => node.textContent!.includes('More frequent evening'))!;
     assert(map, 'integrated transit argument map');
-    assert.equal(map.querySelectorAll('h4').length, 2);
+    assert.equal(map.querySelectorAll('.argument-map-sides > section > h4').length, 2);
     assert.equal(map.querySelectorAll('.argument-map-sides > section').length, 2);
-    assert.equal((map.textContent!.match(/unverified assertion/g) ?? []).length, 4);
+    assert.equal((map.querySelector('.argument-map-sides')!.textContent!.match(/unverified assertion/g) ?? []).length, 4);
     assert.match(map.textContent!, /Evidence strength: unassessed/);
     const clauseLink = map.querySelector('a')!;
     await act(async () => { (clauseLink as any).click(); });

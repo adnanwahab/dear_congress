@@ -1,4 +1,5 @@
 import { WorldPortal } from './WorldPortal';
+import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
@@ -271,7 +272,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         </label>
         <label>Time: {receipt.unit} {formatted(frame?.time)} ({frameIndex+1}/{frames.length} recorded)
           <input type="range" min="0" max={frames.length-1} value={frameIndex}
-            onChange={e=>{setPlaying(false);setFrameIndex(Number(e.target.value));}}
+            onChange={e=>{const next = Number(e.target.value); if (next !== frameIndex) requestHaptic(e.nativeEvent); setPlaying(false);setFrameIndex(next);}}
             aria-label="Recorded simulation time"/>
         </label>
         <button type="button" disabled={frames.length<2} onClick={()=>{

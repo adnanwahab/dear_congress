@@ -11,6 +11,10 @@ Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game wal
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
+## Optional sound
+
+The shared header starts with Sound Off. You can enable quiet navigation and sandbox cues for this browser and try each cue under Sound tests. Enabling sound itself is silent. Reduced motion and motion-off suppress cues. Sounds are generated locally and need no network download once the page has loaded; this does not make the whole application available offline. Use Sound Off for silence, including on devices whose mute switch does not silence browser media. All critical status stays visible as text. Voting and publication have no sound rewards.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
@@ -32,6 +36,8 @@ The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The home page’s My area’s civic challenges rail uses only your chosen browsing jurisdiction, never a street address or device location. This preference does not establish residency or voter eligibility. Its categorized prompts and policy examples are fictional; no verified local challenge feed is connected. Opening an example does not vote or contact an office.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 ## Listen or read before deciding
@@ -52,13 +58,31 @@ Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft
 
 The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
 
+## Explore connected issues
+
+[Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
-- [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered.
-- [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative.
+- [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered. Selecting a need previews related aggregate geographic cells. Submitted accounts and simulated estimates stay separate, including in Both mode. Measured conditions appear separately below the map; journal counts are not measurements. If map tiles fail, use the searchable evidence list with the same selected need. Exploring evidence publishes nothing and casts no vote.
+- [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative. The $40B build-a-plan workbench is a separate, unsaved advisory experiment: drag or use Add/Remove to inspect budget conflicts and a change log. It never publishes, votes or changes saved synthesis; other policy interactions are not modeled.
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
+
+## Practice with civic trivia
+
+Try the [civic trivia arcade](/documentation#civic-trivia): five untimed Houston knowledge questions with a source for every explanation. Topics rotate between representation and public budgets. Answers and scores stay only in page memory, disappear when you leave or reload, and never affect votes, proposals, public opinion weights or merge authority. Following a source link visits an external official site.
+
+The [evidence freshness calendar](/outcomes#policy-measurements) offers a monthly agenda and dated source ledger. It separates primary sources, editorial inference, user claims and synthetic estimates. Publication, observation and retrieval are distinct; unknown dates stay unknown. Review expiry means a review is due, not that an older source is false. Bundled examples work offline; they do not certify live source availability. Copy the JSON export or use browser Print to retain dates, limitations and pending human-review history.
+
+## Conflicting sources
+
+The Outcomes contradiction compass compares explicit fields only when scope, period and claim kind match. It preserves both revisions and their pending human-review state; no AI chooses which source is true. Examples include a constitutional text citation, clearly synthetic conflicting reports and a missing-source user claim. External documents require connectivity. Copyable JSON and page printing preserve dates, limitations and review history if downloads fail. Editorial inference is interpretation, not primary evidence.
+
+## Optional tactile feedback
+
+Optional haptics is off by default. Enable it in Page actions (More on phones). On supported devices, brief feedback marks a demo card move, a manual recorded-model time tick, or a successful private amendment save. It never marks a vote, support level, or progress milestone. Reduced motion pauses feedback. Devices without vibration continue normally. The preference stays in this browser, or only this page if storage is blocked.
 
 ## Simple glossary
 
