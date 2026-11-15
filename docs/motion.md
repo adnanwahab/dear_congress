@@ -46,3 +46,23 @@ To add an in-page transition:
 Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
+
+## Stage preview lens (SHE-593)
+
+Main navigation stage links keep their existing chapter URLs, topic and proposal
+bindings. Hover (250 ms intent), keyboard focus or the separate Preview button
+lazily imports authored stage summaries. These are plain React text nodes, not
+HTML, screenshots, embedded routes or fetched resident data. The summary contains
+no destination controls. Close preview and Escape dismiss it; blur, pointer exit,
+pagehide and popstate clear it. Generation tokens discard interrupted loads.
+After four seconds a failed/slow load shows a fallback while the link stays usable.
+Network timeouts do not scale with motion. The fade uses motionDuration, respecting
+off/reduced/slow modes without capturing or mutating route state. Existing typed
+View Transitions remain exclusively responsible for their visual enhancements.
+No preview action submits, votes, persists, changes history or mounts a route.
+
+Tests: `bun test src/client/stage-preview.test.tsx`; browser success/failure cases:
+`cd tests/accessibility && npm test -- --grep 'stage lens|failed lazy'`.
+The existing launch merge policy, disabled/dry-run governance defaults and human
+approval/tagged-release requirements are unchanged. This feature is not authority
+to merge or deploy. See [SHE-593 review](reviews/SHE-593.md) for validation limits.

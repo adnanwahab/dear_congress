@@ -1089,3 +1089,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.stage-peek { position: relative; min-width: 0; }
+.stage-peek-link { display: block; }
+.stage-peek-toggle { position: absolute; top: 0; right: 0; border: 0; border-radius: 50%; background: #f0ebff; color: #493b80; width: 24px; height: 24px; font-size: 18px; }
+.stage-peek-window { position: fixed; z-index: 110; bottom: 145px; left: 50%; transform: translateX(-50%); width: min(360px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--border, #aaa); border-radius: 18px; background: var(--surface, Canvas); color: var(--text, CanvasText); box-shadow: 0 12px 48px #0005; animation: peek-in 150ms ease-out; }
+.stage-peek-window strong { display: block; font-size: 20px; margin: 8px 0; }
+.stage-peek-window p { line-height: 1.5; }
+.stage-peek-caption { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.stage-peek-window button { display: block; margin-top: 12px; }
+@keyframes peek-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 600px) { .stage-peek:has(.secondary-destination) { display: none; } .more-destinations .stage-peek { display: block; } .stage-peek-window { bottom: 90px; } }
+@media (prefers-reduced-motion: reduce) { .stage-peek-window { animation: none; } }
