@@ -1089,3 +1089,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.decision-boundary { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); }
+.decision-boundary input[type=range] { display: block; width: 100%; min-height: 44px; }
+.decision-boundary li { position: relative; padding: .6rem; overflow-wrap: anywhere; border-bottom: 1px solid var(--line); }
+.decision-boundary li[data-highlighted=true] { background: var(--accent-soft); border-inline-start: 4px solid var(--accent); }
+.score-brush { display: block; position: absolute; top: 0; left: 0; width: 100%; border-top: 3px solid var(--accent); pointer-events: none; }
+.decision-boundary :is(input,button):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }

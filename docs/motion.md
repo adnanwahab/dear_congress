@@ -19,6 +19,9 @@ Tokens in styles.css (normal timing):
 | `--ease-out` | cubic-bezier(.2,.8,.2,1) | Navigation easing |
 
 In-page types: `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
+`score-boundary` moves the sandbox brush between distinct rounded engine scores;
+rapid input skips the prior transition and unmount invalidates queued updates.
+Each brush gets its own component identity. Native chapter links are unchanged.
 Cross-document types: `forward`, `backward`; other navigation retains the default
 crossfade. Sponsor movement disables only its own root crossfade. Plan exits use
 500 ms and entries/moves use 700 ms. Default navigation timings are unchanged.
