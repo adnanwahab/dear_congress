@@ -34,7 +34,18 @@ for (const mode of ['keyboard', 'touch'] as const) {
     await expect(panel.locator('details')).toHaveAttribute('open', '');
     // Complete text remains available independently of visual path.
     await expect(panel.locator('details')).toContainText('staffing');
-    await activate('Restart');
+    if (mode === 'touch') await activate('Restart');
+    else {
+      // The details summary follows the controls in DOM order. Reverse-tab from
+      // the expanded summary so the test exercises real keyboard navigation,
+      // rather than traversing the entire bill catalog before looping around.
+      const restart = panel.getByRole('button', { name: 'Restart', exact: true });
+      for (let i = 0; i < 4 && !(await restart.evaluate(el => el === document.activeElement)); i++) {
+        await page.keyboard.press('Shift+Tab');
+      }
+      await expect(restart).toBeFocused();
+      await page.keyboard.press('Enter');
+    }
     await expect(panel.getByRole('status')).toContainText('Ready to launch');
     await activate('Skip');
     await expect(panel.getByRole('button').first()).toBeFocused();
