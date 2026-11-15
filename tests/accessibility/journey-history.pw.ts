@@ -16,6 +16,7 @@ test('native back/forward restores an empty filtered journey without civic write
   await expect(next).toBeFocused();
   await page.goForward();
   await expect(page).toHaveURL(/\/votes/);
-  await expect(page.getByRole('heading', { name: 'Add your voice to a proposal.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Votes', exact: true })).toBeVisible();
+  await expect(page.getByText('Add your voice to a proposal.', { exact: true })).toBeVisible();
   expect(writes).toEqual([]);
 });
