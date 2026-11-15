@@ -1137,3 +1137,21 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 }
 .constellation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .constellation-preview, .constellation li { min-width: 0; overflow-wrap: anywhere; }
+
+
+/* A graph's text alternative must reflow instead of making a page-wide button. */
+.constellation > ul button {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+/* The fixed bottom bar must keep its app links inside the viewport at 200% zoom. */
+.bottom-bar .bottom-app-links {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+.bottom-bar .bottom-app-links a { overflow-wrap: anywhere; }
