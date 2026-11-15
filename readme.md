@@ -786,3 +786,10 @@ mode and complete selectable text remain available alongside background citation
 Shared prefix/change/suffix anchors align without inferring legal clause boundaries.
 This demo does not display imported official legal text or publish any choice.
 See [SHE-405 verification and limits](docs/reviews/SHE-405.md).
+
+Compact sample background-source chips open on hover, focus or tap. Escape, the
+Close source inspection button, or an outside tap dismisses them. Original links
+open a separate tab, retaining the civic journey. These references do not verify
+scenario claims: original quotations and publication dates are unavailable and
+explicitly labeled; source check dates remain distinct from publication dates.
+
