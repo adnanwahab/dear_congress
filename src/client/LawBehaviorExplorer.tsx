@@ -339,7 +339,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       </div>
       <p className="muted s" role="status">{playing?'Playing':frameIndex===frames.length-1?'Playback complete':'Paused'} · Both worlds synchronized at {receipt.unit} {String(frame?.time)}. Recorded range: {String(frames[0]?.time)}–{String(frames.at(-1)?.time)} {receipt.unit}s.</p>
       <p className="muted s">Speed controls checkpoint pacing, not model time. Only recorded paired states are loaded; no intermediate events are invented. Use arrow keys on the time slider or the step buttons to inspect checkpoints.</p>
-      {reducedMotion&&<p className="muted s">Reduced motion is enabled. Playback stays paused until you explicitly press Play; stepping and scrubbing remain available.</p>
+      {reducedMotion&&<p className="muted s">Reduced motion is enabled. Playback stays paused until you explicitly press Play; stepping and scrubbing remain available.</p>}
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>
