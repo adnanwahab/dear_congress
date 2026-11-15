@@ -15,6 +15,7 @@ let posts = 0; let refreshFails = false; const bodies: any[] = [];
 let resolve!: (v: any) => void; let reject!: (e: any) => void;
 let pending = new Promise<any>((a, b) => { resolve = a; reject = b; });
 const request: any = async (path: string, body: any) => {
+  if (path === '/api/state') return { needs: [], user: { allocation: {} } };
   // Reads succeed until a vote is sent; refreshes after a vote fail (other panels such as
   // today's question may also read /api/demo, so count by phase rather than by call).
   if (path === '/api/demo') { if (refreshFails) throw new Error('refresh failed'); return payload; }
