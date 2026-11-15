@@ -80,7 +80,7 @@
    Native summary supplies keyboard activation and expanded/collapsed semantics. */
 .workflow-card-actions { min-width: 0; width: 100%; }
 .workflow-provenance-compact { min-width: 0; max-width: 100%; padding: 0; font-weight: 400; }
-.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: nowrap; overflow-x: auto; list-style: none; }
+.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; min-height: 44px; list-style: none; }
 .workflow-provenance-compact > summary::-webkit-details-marker { display: none; }
 .workflow-provenance-compact > summary::before { content: none; }
 .workflow-source-status { font-weight: 600; }
