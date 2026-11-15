@@ -20,3 +20,8 @@ html[data-motion="slow"]:active-view-transition-type(clause-explain)::view-trans
 @media (prefers-reduced-motion: reduce) {
   html:active-view-transition-type(clause-explain)::view-transition-group(*) { animation: none; }
 }
+.amendment-editor select { display: block; width: 100%; min-height: 44px; font: inherit; color: var(--ink); background: var(--card); }
+.amendment-editor button { min-height: 44px; }
+.amendment-editor h5, .amendment-editor h6 { font-size: 1rem; margin: .8rem 0; }
+.amendment-editor blockquote { margin: .5rem 0; }
+.amendment-editor a { display: inline-block; padding: .6rem 0; overflow-wrap: anywhere; }
