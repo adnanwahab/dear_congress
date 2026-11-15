@@ -22,3 +22,5 @@
 .gp-train summary:focus-visible, .gp-train a:focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
 @media (max-width: 700px) { .gp-train ol { grid-template-columns: 1fr; } .gp-train li { border-top: 0; border-left: 6px double currentColor; } }
 @media (forced-colors: active) { .gp-train li[data-state="blocked"] { border-color: Mark; } }
+
+.gp-card{min-width:0;border-top:3px solid var(--accent,#24568a);padding-top:12px;overflow-wrap:anywhere}.gp-card>button{margin-top:16px;min-height:44px}.gp-card [hidden]{display:none!important}.gp-card-back{min-width:0;animation:gp-card-reveal 180ms ease-out}.gp-card-back .gp-diff{max-width:100%;font-size:13px;tab-size:4}.gp-card-back .gp-diff:focus-visible{outline:3px solid #2378bd;outline-offset:2px}@keyframes gp-card-reveal{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.gp-card-back{animation:none}}@media(max-width:760px){.gp-card .gp-links{flex-direction:column}.gp-card>button{width:100%}.gp-card-back .gp-diff{padding:12px}}
