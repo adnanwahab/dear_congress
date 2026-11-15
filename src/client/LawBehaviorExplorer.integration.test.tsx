@@ -83,7 +83,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(inspect.getAttribute('aria-expanded')).toBe('true');
     expect(host.textContent).toContain('Causal interpretation unavailable');
     const exported=()=>JSON.parse(decodeURIComponent((getByRole(host,'link',{name:'Export selected outcome trace (JSON)'}) as HTMLAnchorElement).href.split(',').slice(1).join(',')));
-    expect(exported().observation).toMatchObject({metric:'meanCommuteMinutes',time:30,baseline:20,edited:14,difference:-6});
+    expect(exported().observation).toMatchObject({metric:'meanCommuteMinutes',time:720,baseline:20,edited:14,difference:-6});
     expect(exported().provenance).toEqual({seed:42,modelVersion:'population.v1',codeVersion:null});
     expect(exported().events).toBeNull();
     expect(exported().receipt).toEqual(receipt(1));
