@@ -2,6 +2,12 @@ import { ClaimEvidence } from './ClaimEvidence';
 import type { EvidenceClaim } from '../shared/claim-provenance';
 import { useEffect, useRef, useState } from 'react';
 import type { DemoItem } from '../engine/demo';
+import { provenanceLines, type Provenance } from '../shared/provenance';
+import { ProvenanceBadge } from './ProvenanceBadge';
+
+export function scenarioProvenance(item: DemoItem): Provenance {
+  return { origin: 'demo-fiction', date: null, jurisdiction: item.jurisdiction, confidence: 'Illustrative only', limitations: 'Fictional scenario and seeded response counts; not a representative poll. Background link is context only, not evidence for the numeric claims.', link: sourceUrl(item) };
+}
 
 // References are editorial metadata, independent of demo activity and browser votes.
 export function sourceUrl(item: DemoItem): string | null {
@@ -19,7 +25,7 @@ export function freshness(item: DemoItem, now = Date.now()): string {
   return `Source checked ${checked}`;
 }
 export function provenanceText(item: DemoItem): string {
-  return `Sample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
+  return `${provenanceLines(scenarioProvenance(item)).join('\n')}\nSample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
 }
 export function ProposalProvenance({ item, compact = false, claims = [] }: { item: DemoItem; compact?: boolean; claims?: readonly EvidenceClaim[] }) {
   const [open, setOpen] = useState(false);
@@ -54,6 +60,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
     <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
     <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
     {claims.length > 0 && <ClaimEvidence claims={claims} />}
+    <ProvenanceBadge provenance={scenarioProvenance(item)} />
   </>;
   if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}</section>;
   return <details ref={panel} open={open}
