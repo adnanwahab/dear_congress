@@ -6,6 +6,7 @@ import { PersonalPriorities } from './PriorityAllocation';
 import { JourneyRibbon } from './JourneyRibbon';
 import { readJourney, restoreJourney, writeJourney } from "./journey-history";
 import { CivicMarbleRun } from './CivicMarbleRun';
+import { CivicSampler } from './CivicSampler';
 import { ProposalCompare } from './ProposalCompare';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
@@ -179,6 +180,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     <TownHallGame />
     <div className="demo-context"><span><strong>A repeatable sample journey.</strong> Fictional proposals, illustrative tallies, and browser-local sponsor progress.</span><span>{data ? `Demo activity date ${date(data.updatedAt)} · not a source check` : loading ? <Skeleton kind="line" /> : 'Sample proposals unavailable'}</span></div>
     {stage === 'votes' && <><ParticipationNotice /><PersonalPriorities request={request} /></>}
+    {stage === 'feed' && <CivicSampler items={items} loading={loading} failed={!!loadError} retry={() => setAttempt(n => n + 1)} />}
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>

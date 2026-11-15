@@ -734,6 +734,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Civic discovery sampler
+
+Feed includes a clearly labeled, unreviewed demo sampler of five fictional policy
+concepts across housing, childcare, transit, flood resilience and health. Both swipe
+directions skip; native buttons provide the same action without gestures. Cards
+change immediately with no motion dependency or countdown. Reading-list saves reuse
+the browser watchlist with `sample` identities; Open context uses the existing draft
+stage. The sampler uses `/api/demo` and never requests vote or simulation writes.
+Its editorial benefit/trade-off summaries are not verified impact projections.
+See [SHE-416 review notes](docs/reviews/SHE-416.md) for validation limits.
+
 ## Synthetic household story sandbox
 
 The optional **Open household demo** control in `/synth` package household panels
