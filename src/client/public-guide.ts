@@ -45,6 +45,10 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+## Conflicting sources
+
+The Outcomes contradiction compass compares explicit fields only when scope, period and claim kind match. It preserves both revisions and their pending human-review state; no AI chooses which source is true. Examples include a constitutional text citation, clearly synthetic conflicting reports and a missing-source user claim. External documents require connectivity. Copyable JSON and page printing preserve dates, limitations and review history if downloads fail. Editorial inference is interpretation, not primary evidence.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.

@@ -86,6 +86,12 @@ including mixed results, pinned baseline/source history and missing or stale dat
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 
+The Outcomes contradiction compass compares explicit fields within matching scope,
+period and claim kind. It keeps both revisions and human-review states, with no
+automatic truth selection. Bundled examples include a primary text citation, a
+synthetic conflict and a missing source. See [SHE-677 validation and remaining
+acceptance](docs/reviews/SHE-677.md).
+
 ## What's in it
 
 | Step | What it does |
