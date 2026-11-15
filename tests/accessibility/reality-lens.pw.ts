@@ -2,14 +2,16 @@ import { test, expect } from '@playwright/test';
 
 const routes = ['/', '/feed', '/votes', '/needs', '/synth', '/map', '/outcomes'];
 test('reality lens works by keyboard across routes without writes', async ({ page }) => {
-  let writes = 0;
-  page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) writes++; });
+  const writes: string[] = [];
+  page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) writes.push(`${request.method()} ${request.url()}`); });
   await page.goto('/');
   const explain = page.getByRole('button', { name: 'Explain data', exact: true });
   for (let n = 0; n < 40 && !(await explain.evaluate(el => el === document.activeElement)); n++) await page.keyboard.press('Tab');
   await expect(explain).toBeFocused();
+  const priorWrites = writes.length;
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Less detail', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  expect(writes.slice(priorWrites), 'Changing Reality lens must not issue network writes').toEqual([]);
   for (const route of routes) {
     await page.goto(route);
     const legend = page.getByRole('region', { name: 'Reality lens', exact: true });
@@ -17,9 +19,16 @@ test('reality lens works by keyboard across routes without writes', async ({ pag
     await expect(legend.getByRole('button', { name: 'Less detail' })).toHaveAttribute('aria-expanded', 'true');
     await expect(legend.getByText('Seeded examples', { exact: true })).toBeVisible();
     await expect(legend.getByText('Missing or mixed origin', { exact: true })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const layout = await page.evaluate(() => ({
+      width: innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      overflowing: [...document.querySelectorAll('*')].filter(element => {
+        const box = element.getBoundingClientRect();
+        return box.right > innerWidth + 1 && box.left < innerWidth && box.width > 1;
+      }).slice(0, 8).map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 90), width: Math.round(element.getBoundingClientRect().width), right: Math.round(element.getBoundingClientRect().right) }))
+    }));
+    expect(layout.scrollWidth <= layout.width, `Overflow on ${route}: ${JSON.stringify(layout)}`).toBe(true);
   }
-  expect(writes).toBe(0);
 });
 
 test('reality lens touch control retains preference on reload', async ({ browser }) => {
