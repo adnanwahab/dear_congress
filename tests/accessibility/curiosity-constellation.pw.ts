@@ -17,7 +17,21 @@ test('constellation keyboard, touch-sized controls, source preview and equivalen
   expect(box!.height).toBeGreaterThanOrEqual(44);
   await graph.getByRole('button', { name: 'Show equivalent list' }).click();
   await expect(graph).toContainText('Defines measurement target');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  const reflow = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    docWidth: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll('*')]
+      .map(element => ({ element, rect: element.getBoundingClientRect() }))
+      .filter(({ rect }) => rect.width && rect.right > innerWidth + 1)
+      .slice(0, 20)
+      .map(({ element, rect }) => ({
+        tag: element.tagName,
+        cls: typeof element.className === 'string' ? element.className.slice(0, 140) : '',
+        width: Math.round(rect.width), left: Math.round(rect.left), right: Math.round(rect.right),
+      })),
+  }));
+  console.log('REFLOW_DIAGNOSTICS', JSON.stringify(reflow));
+  expect(reflow.docWidth <= reflow.viewport).toBe(true);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
 });

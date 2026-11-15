@@ -1133,3 +1133,57 @@ html[data-motion="calm"] .motion-preview-card { animation: 150ms ease-out both p
 html[data-motion="calm"] .patch-visual { display: none; }
 html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 @media (max-width: 680px) { .workflow-shell .header-meta { display: flex; } }
+
+
+/* Keep the fixed-size curiosity graph scrollable within its panel at 200% zoom. */
+.constellation { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.constellation-viewport {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.constellation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.constellation-preview, .constellation li { min-width: 0; overflow-wrap: anywhere; }
+
+
+/* A graph's text alternative must reflow instead of making a page-wide button. */
+.constellation > ul button {
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+/* The fixed bottom bar must keep its app links inside the viewport at 200% zoom. */
+.bottom-bar .bottom-app-links {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+.bottom-bar .bottom-app-links a { overflow-wrap: anywhere; }
+
+
+/* At 200% zoom the usable CSS width is tablet-sized; keep utilities in More. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .bottom-bar { padding-inline: 8px; }
+  .bottom-bar .desktop-utilities,
+  .bottom-bar .bottom-destinations .secondary-destination { display: none; }
+  .bottom-bar .bottom-destinations { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .bottom-bar .bottom-destinations .bottom-more {
+    display: flex;
+    min-width: 0;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    background: transparent;
+    border: 0;
+    font: 700 11px/1.2 var(--sans);
+  }
+}
