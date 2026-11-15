@@ -64,6 +64,10 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 - [Outcomes](/outcomes) separates simulated outreach from synthetic measurement examples. Compare the baseline, source history, freshness and missing-data labels before interpreting a change.
 - [Journal API documentation](/api-docs) describes publication interfaces. [Build version](/version) identifies the running revision; [service health](/healthz) reports service availability, not policy success or acceptance.
 
+## Practice with civic trivia
+
+Try the [civic trivia arcade](/documentation#civic-trivia): five untimed Houston knowledge questions with a source for every explanation. Topics rotate between representation and public budgets. Answers and scores stay only in page memory, disappear when you leave or reload, and never affect votes, proposals, public opinion weights or merge authority. Following a source link visits an external official site.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
