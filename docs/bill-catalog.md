@@ -122,3 +122,27 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Local research shelf (SHE-723)
+
+Add or drag catalog cards to a four-entry compare shelf, also available on detail
+pages. Native buttons provide all selection actions with no animation or drag
+requirement. Search, category filters and source links retain existing IDs and
+URL context. No topic-to-catalog mapping is inferred from the separate sample
+Dashboard or TopicHubs datasets.
+
+The namespaced localStorage key binds this repository, curated-draft kind and
+collection version. Each saved entry holds only its ID and SHA-256 revision.
+Changed/missing revisions show unavailable instead of silently substituting text.
+The comparison shows hypothetical changes, proposed metrics, unassessed evidence
+and unknown fiscal costs; detail links expose existing provenance. No source or
+policy claim becomes verified by placement on the shelf.
+
+Storage-blocked browsers retain in-page state and can keep an explicit shelf URL.
+Links expose selections to recipients and preserve ordered ID/revision snapshots;
+back/forward restores linked snapshots, including empty ones. Clearing the shelf
+removes its local key contents; previously shared links cannot be revoked.
+There are no API writes, votes, endorsement inference or new identity cookies.
+The shelf adds no animation and works in motion-off/reduced-motion mode.
+Governance settings and human release requirements in launch-merge-policy.md
+remain unchanged.

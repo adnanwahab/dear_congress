@@ -36,3 +36,27 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   }
   expect(writes).toBe(0);
 });
+
+test('saved catalog shelf supports keyboard, reload, drag, stale revisions and history without motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills?motion=off');
+  const add = page.getByRole('button', { name: 'Add HFL-001 to shelf', exact: true });
+  await add.focus(); await page.keyboard.press('Enter');
+  await expect(add).toBeFocused();
+  const shelf = page.locator('#research-shelf');
+  await expect(shelf).toContainText('1 of 4 saved');
+  await page.reload();
+  await expect(shelf).toContainText('1 of 4 saved');
+  await page.locator('.bill-grid article').nth(1).dragTo(shelf);
+  await expect(shelf).toContainText('2 of 4 saved');
+  await shelf.getByRole('link', { name: 'Open link to this revision-bound shelf' }).click();
+  await shelf.getByRole('button', { name: 'Remove HFL-001 from shelf' }).click();
+  await expect(shelf).toContainText('1 of 4 saved');
+  await page.goBack(); await expect(shelf).toContainText('2 of 4 saved');
+  await page.goForward(); await expect(shelf).toContainText('1 of 4 saved');
+  await page.goto('/bills?' + new URLSearchParams({ q: 'no-such-draft', shelf: JSON.stringify([{ id: 'HFL-001', revision: '0'.repeat(64) }]) }));
+  await expect(shelf).toContainText('No current text or evidence has been substituted');
+  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await shelf.getByRole('button', { name: 'Remove HFL-001 from shelf' }).click();
+  await expect(shelf).toContainText('Your shelf is empty');
+});

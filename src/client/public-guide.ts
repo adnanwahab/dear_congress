@@ -58,6 +58,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. It ha
 
 [Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
 
+Browse the [draft catalog](/bills) and add up to four concepts to a research shelf. Shelf selection is anonymous local browser state, never a vote or endorsement. Shared shelf links reveal selected IDs and revisions. Draft evidence is unassessed, costs are unknown, and changed or missing saved revisions are flagged. Clear shelf removes its local selection; links already shared remain with their recipients.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
