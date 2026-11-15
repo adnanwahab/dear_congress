@@ -80,7 +80,7 @@
    Native summary supplies keyboard activation and expanded/collapsed semantics. */
 .workflow-card-actions { min-width: 0; width: 100%; }
 .workflow-provenance-compact { min-width: 0; max-width: 100%; padding: 0; font-weight: 400; }
-.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: nowrap; overflow-x: auto; list-style: none; }
+.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; min-height: 44px; list-style: none; }
 .workflow-provenance-compact > summary::-webkit-details-marker { display: none; }
 .workflow-provenance-compact > summary::before { content: none; }
 .workflow-source-status { font-weight: 600; }
@@ -99,6 +99,32 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }
+
+.civic-sampler { margin-block: 1rem; }
+.sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.sampler-actions button, .sampler-actions a { min-height: 44px; }
+
+.journey-ribbon input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accent, #496fc4); }
+.journey-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .35rem; padding: 0; list-style: none; }
+.journey-steps button { width: 100%; min-height: 44px; padding: .5rem .25rem; }
+.journey-steps button[aria-pressed="true"] { outline: 3px solid currentColor; outline-offset: 2px; }
+.journey-artifact { padding: 1rem; margin-block: 1rem; border: 1px solid currentColor; border-radius: 12px; overflow-wrap: anywhere; }
+.journey-artifact h3, .journey-artifact h4 { margin-block: .4rem; }
+@media (max-width: 600px) {
+  .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: .85rem; }
+  .journey-ribbon { padding: .85rem; }
+}
+.council-roleplay { overflow-wrap: anywhere; }
+.council-roleplay details { margin-block: 1rem; }
+.council-roleplay summary { cursor: pointer; padding-block: .75rem; }
+.council-choice { display: block; padding: .75rem; min-height: 44px; }
+.council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.council-controls button { min-height: 44px; }
 
 /* Retained revision records remain readable on narrow screens and in print. */
 .source-revision-alert { min-width: 0; overflow-wrap: anywhere; }
