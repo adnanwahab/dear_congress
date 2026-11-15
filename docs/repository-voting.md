@@ -70,3 +70,26 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## Keyboard patch comparison (SHE-615)
+
+PR lists include a read-only review carousel. Focus its region and use Left/Right
+or the Previous/Next buttons; Summary/Files/Checks implement keyboard tabs with
+Left/Right and Home/End. Selection is deep-linked as `review=<PR>&tab=<section>`
+on the existing repository list URL, with browser back/forward support. Repository
+and issue switches clear that selection. No live-round control is repurposed:
+`LiveRound` remains a separate advisory civic voting surface.
+
+Receipts load through the existing permission-checked detail endpoint. Repository
+ID, PR number, version, head and base must match the selected list revision;
+changed revisions require source refresh. Loading, missing selection, unavailable
+evidence and permission failures are explicit. Contributor text remains plain
+text. Explicit links open the existing PR detail/voting page or GitHub. Carousel
+navigation only reads; it has no ballot, feedback, merge or civic-vote mutation.
+Controls wrap on small screens and use no animation, including reduced motion.
+
+The configured merge policy is preserved: the pilot lock disables automatic
+merging, non-HBL scopes stay disabled/dry-run, and browser choices confer no merge
+authority. Existing quorum, exposure, approval, checks, auth, CSRF and revision
+requirements are unchanged. See `launch-merge-policy.md` for source defaults and
+human review/release requirements; this feature does not verify production values.
