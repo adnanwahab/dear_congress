@@ -12,6 +12,7 @@ import { readJourney, restoreJourney, writeJourney } from "./journey-history";
 import { CivicMarbleRun } from './CivicMarbleRun';
 import { CivicSampler } from './CivicSampler';
 import { CouncilRoleplay } from './CouncilRoleplay';
+import { ProposalExplainer } from './ProposalExplainer';
 import { ProposalCompare } from './ProposalCompare';
 import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
@@ -196,6 +197,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
       {loading ? <Skeleton /> : loadError ? <p>Proposal details are unavailable. Use Retry loading proposals above.</p> : !items.length ? <><h2>No sample proposals available</h2><p>When proposals are available, choose one here to review its draft, prepare a sponsor card and follow its simulated outcomes.</p><button onClick={() => setAttempt(n => n + 1)}>Check again</button><a className="workflow-reference" href="/feed">Explore the proposal feed →</a></> : <>{item && <TopicChip linked topic={item.topic} />}<h2>{item ? item.title : 'Choose a sample proposal'}</h2><p>{item ? 'Continue with this fictional sample, or choose another proposal below.' : 'This proposal link is unavailable. Select a sample below to enter this stage.'}</p>{stage === 'outcomes' || !item ? selectControl : null}{!item && filtered.length > 0 && <button onClick={() => choose(filtered[0]!.id)}>Open first sample proposal</button>}{item && <a className="workflow-reference" href={route('feed',item.id)}>Back to proposal →</a>}</>}
     </section>}
+    {item && !loading && !loadError && <ProposalExplainer key={JSON.stringify([item.id, item.summary, item.proposedText, item.jurisdiction])} item={item} />}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
