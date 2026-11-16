@@ -1165,3 +1165,15 @@ An invitation can be forwarded by its holder. There is no individual revocation,
 verified-person identity, durable recovery or joint package approval. Leave drops
 local access and presence becomes away; the room history remains until expiry.
 Native disclosure, labels and form controls need no motion or pointer gestures.
+
+## Neighborhood project check-ins
+
+`/map` preserves the county sandbox and adds opt-in fictional neighborhood projects.
+The schematic and equivalent native button list expose milestone, implementation
+and update records with stable demo IDs/revisions and publication/observation dates.
+Forecasts remain separate; unknown is not stalled and old observations stay dated.
+The 30-day freshness threshold is an illustrative demo rule, not a source SLA.
+Corrections enter only an append-only page-memory demo queue bound to the selected
+project/evidence revision. Nothing is published or delivered to a real moderator.
+No verified project feed or shared correction API is connected. Reload clears the
+queue. See [SHE-467 scope and remaining acceptance](docs/reviews/SHE-467.md).
