@@ -2,6 +2,8 @@ import { expect, test } from 'bun:test';
 import { decisionCard, SHARE_NOTICE } from './advisory-share';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AdvisoryShare } from './AdvisoryShare';
+import { RESPONSIBLE_SHARING } from './responsible-sharing';
+import { PUBLIC_GUIDE } from './public-guide';
 
 test('exports only public sample content, version and source limitations; stance is opt-in', async () => {
   const card = await decisionCard('demo-housing');
@@ -36,4 +38,17 @@ test('share interaction regression', async () => {
   const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
   expect({code, stderr}).toEqual({code: 0, stderr: ''});
   expect(stdout).toContain('Share preview passed');
+});
+
+test('responsible sharing is optional, concise and consistent with the linked guide', () => {
+  expect(RESPONSIBLE_SHARING.split(/\s+/).length).toBeLessThan(120);
+  for (const phrase of ['independently operated', 'Advisory', 'not official', 'synthetic', 'not verified', 'original source, date, exact version', 'Do not claim endorsement', 'keep reading without sharing']) expect(RESPONSIBLE_SHARING).toContain(phrase);
+  const html = renderToStaticMarkup(<AdvisoryShare id="demo-housing" />);
+  expect(html).toContain('<summary>How to share responsibly</summary>');
+  expect(html).toContain(RESPONSIBLE_SHARING);
+  expect(html).toContain('href="/documentation#how-to-share-responsibly"');
+  expect(html).not.toContain('<details class="responsible-sharing" open');
+  expect(html).not.toContain('disabled');
+  expect(PUBLIC_GUIDE).toContain('## How to share responsibly');
+  expect(PUBLIC_GUIDE).toContain(RESPONSIBLE_SHARING);
 });

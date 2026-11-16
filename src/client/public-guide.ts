@@ -1,3 +1,5 @@
+import { RESPONSIBLE_SHARING } from './responsible-sharing';
+
 /** Public help copy. Keep trust wording aligned with privacy-page and SHE-318 review. */
 export const PUBLIC_GUIDE = `# How Civic Synthesis works
 
@@ -196,6 +198,12 @@ This guide uses plain English. Human-reviewed Spanish and broader plain-language
 ## Data-source health
 
 Review [data-source health](/outcomes#source-health) for recorded fetch dates, retained-data incidents and missing sources. This is a snapshot, not a live availability probe. Schema changes and human review remain unknown unless recorded. Starter fixtures and synthetic estimates are not verified measurements; source links alone do not prove a claim. Source health does not establish policy effects. Use Show export / print text to copy the dated report.
+
+## How to share responsibly
+
+${RESPONSIBLE_SHARING}
+
+[Read the full source and methodology guidance](/documentation#sources-and-methodology) and [privacy and removal notice](/privacy). Sharing is optional; it does not establish meaningful participation or policy impact.
 
 ### Sharing a sample decision
 

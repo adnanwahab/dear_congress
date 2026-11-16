@@ -841,6 +841,11 @@ fictional scenario fields and existing background-source caveats, with a SHA-256
 content version; no identity, journals, receipts, counts or live-round data enter
 the export. They label the action non-binding and not an official election.
 No share endpoint, tracking, automatic posting or vote write is added.
+An optional **How to share responsibly** disclosure sits beside Share preview,
+with under 120 words covering advisory/official, synthetic/verified, source checks
+and endorsement limits. It links to matching public-guide guidance and never gates
+reading or sharing. Usefulness and comprehension still need human evaluation;
+sharing alone is not evidence of meaningful participation.
 See [SHE-535 validation and limits](docs/reviews/SHE-535.md).
 
 ## Sample proposal audio
