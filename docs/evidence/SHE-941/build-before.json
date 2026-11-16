@@ -1,0 +1,114 @@
+{
+  "kind": "static-build-report",
+  "assets": [
+    {
+      "path": "/chunk-syftkp5z.js",
+      "bytes": 745787,
+      "gzipBytes": 240859,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-hydkqa2r.js",
+      "bytes": 4937,
+      "gzipBytes": 2215,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-kbj6n1rx.js",
+      "bytes": 45072,
+      "gzipBytes": 16604,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-5d2fc15q.js",
+      "bytes": 38945,
+      "gzipBytes": 12953,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-fyg6fcbj.js",
+      "bytes": 29591,
+      "gzipBytes": 10501,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-mxz69z33.js",
+      "bytes": 11095,
+      "gzipBytes": 4242,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-xwhva1bf.js",
+      "bytes": 1106732,
+      "gzipBytes": 303451,
+      "county": false,
+      "maplibre": true,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-h6k4nggq.js",
+      "bytes": 923,
+      "gzipBytes": 578,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-wnbvwe5g.js",
+      "bytes": 82,
+      "gzipBytes": 97,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-b604j5wc.js",
+      "bytes": 38935,
+      "gzipBytes": 13497,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-8ke7d2et.js",
+      "bytes": 1745683,
+      "gzipBytes": 569950,
+      "county": true,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-gw472bq6.js",
+      "bytes": 74731,
+      "gzipBytes": 23012,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    },
+    {
+      "path": "/chunk-9gectsnw.js",
+      "bytes": 3518,
+      "gzipBytes": 1539,
+      "county": false,
+      "maplibre": false,
+      "plotting": false
+    }
+  ],
+  "initial": [
+    "/chunk-syftkp5z.js"
+  ],
+  "initialJsBytes": 745787,
+  "initialJsGzipBytes": 240859
+}

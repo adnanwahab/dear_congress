@@ -29,7 +29,9 @@ PRs for human review and merge; analysis-only PRs must leave Linear issues open.
 `bun start` builds the browser shell with production minification and code splitting.
 MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
 Synthesize), not on `/` or `/votes`. `bun test src/server/browser-build.test.ts`
-checks the production shell's 250 KB gzip JS budget and deferred map assets.
+checks the production shell's 250 KB gzip JS budget and deferred map assets. County geometry is also guarded behind the lazy `/map` screen.
+See [SHE-941 loading evidence and local waterfall capture](docs/reviews/SHE-941.md)
+for byte reports and outstanding browser validation.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
