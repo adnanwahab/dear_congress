@@ -1,6 +1,7 @@
 import { GlossaryText } from './CivicGlossary';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
+import { recordQuality } from './experience-quality';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { AssumptionDiagram } from './AssumptionDiagram';
 import { PlanBudget } from "./PlanBudget";
@@ -39,7 +40,7 @@ import { constitutionCityUrl } from "./constitution-city-link";
 import { loadMapLibre } from "./maplibre";
 import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
-import { LawBehaviorExplorer } from "./LawBehaviorExplorer";
+const LawBehaviorExplorer = lazy(() => import("./LawBehaviorExplorer").then(m => ({ default: m.LawBehaviorExplorer })));
 
 // Lazy-load citizen proposal routes to keep editor dependencies out of the initial shell.
 const CitizenProposalsApp = lazy(() => import("./CitizenProposals").then(m => ({ default: m.CitizenProposalsApp })));
@@ -1642,6 +1643,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     } finally { if (version === requestVersion.current) setBusy(false); }
   }
   useEffect(() => {
+    recordQuality('compare_opened');
     // Opening the screen must not advance the saved stability baseline either.
     void run({}, true);
     return invalidateRequest;
@@ -1758,7 +1760,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     <div className="stack">
       <CoalitionQuest />
       <BudgetPuzzle />
-      <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
+      <Suspense fallback={<p role="status">Loading behavior explorer…</p>}><LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} /></Suspense>
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">
       <PolicyComparisonPanel />

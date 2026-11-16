@@ -375,6 +375,19 @@ snapshot failure recovery across the existing viewport/motion projects. These
 checks still require an installed Playwright runtime. Manual screen-reader and
 touch review remains necessary; DOM tests do not establish that acceptance.
 
+## Optional experience-quality observations (SHE-563)
+
+`installRouteQuality` observes incoming route readiness through `pagereveal` and
+its transition's `finished` promise. Older browsers use two animation frames.
+Latency is navigation-start to incoming readiness, including load/render and any
+incoming animation; it is not an isolated animation benchmark. Failed transitions
+and leaving before readiness have separate counters. BFCache restores are excluded
+because their performance clock includes time away. Off/reduced/unsupported motion
+records a fallback when the immediate update or route is actually used.
+
+No observation is sent without affirmative first-party opt-in. See
+[experience quality](experience-quality.md) for the schema, retention and limits.
+
 Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
 view switch and `prepareStageMorph` for ordinary chapter links. The flat default
 uses no 3D transforms. Orbit is an explicit range input, with no autonomous

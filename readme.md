@@ -1266,6 +1266,13 @@ if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
 
+Optional experience-quality signals extend the same launch store and protected
+`/admin/stats` dashboard. The shared shell offers **Experience metrics & privacy**;
+collection defaults off, honors DNT/GPC, and retains only capability-segmented daily
+counts and latency buckets for 30 UTC dates. See [schema, consent, retention and
+measurement limits](docs/experience-quality.md). Existing vote/journal metrics,
+records and governance configuration are unchanged.
+
 ## Civic House
 
 `/?house=1` opens an optional six-room foyer from **More → Civic House**.

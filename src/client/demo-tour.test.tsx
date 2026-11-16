@@ -28,7 +28,7 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
   dom.clearTimeout = (() => { pending = undefined; }) as any;
   const paths: string[] = [];
   dom.location.assign = path => { paths.push(String(path)); };
-  document.body.innerHTML = '<form id="form"><input /></form><button id="vote">Vote</button><div id="root"></div>';
+  document.body.innerHTML = '<form id="form"><input /></form><button id="vote">Vote</button><div data-experience-consent><button id="metrics">Privacy controls</button></div><div id="root"></div>';
   let writes = 0;
   document.getElementById('vote')!.addEventListener('click', () => writes++);
   const root = createRoot(document.getElementById('root')!);
@@ -39,6 +39,13 @@ for (const reduced of [false, true]) test(`tour blocks writes and supports expli
       expect(document.body.textContent).toContain('Paused');
     } else expect(delay).toBe(8000);
     expect(document.body.textContent).toContain('Reading never casts a vote');
+    let privacyClicks = 0;
+    document.getElementById('metrics')!.addEventListener('click', () => privacyClicks++);
+    await act(async () => document.getElementById('metrics')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true, cancelable: true }) as any));
+    expect(privacyClicks).toBe(1);
+    const privacyKey = new dom.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    document.getElementById('metrics')!.dispatchEvent(privacyKey as any);
+    expect(privacyKey.defaultPrevented).toBe(false);
     const resume = document.querySelector('.demo-tour button:nth-child(2)')!;
     const nativeSpace = new dom.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
     resume.dispatchEvent(nativeSpace as any);
