@@ -1,0 +1,12 @@
+.local-projects { margin-block: 2rem; padding: clamp(12px, 3vw, 24px); border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.local-project-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; margin-block: 20px; }
+.local-project-layout > * { min-width: 0; }
+.local-projects svg { width: 100%; max-width: 360px; display: block; }
+.local-projects button, .local-projects summary, .local-projects select { min-height: 44px; }
+.local-project-list, .local-projects label { display: grid; gap: 8px; margin-block: 12px; }
+.local-projects :is(input, textarea, select) { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--muted); padding: 10px; }
+.local-projects textarea { min-height: 100px; }
+.local-projects li { margin-block: 16px; }
+.local-projects :is(button, summary, input, textarea, select):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.local-projects button[aria-pressed=true] { border: 2px solid currentColor; }
+@media (max-width: 700px) { .local-project-layout { grid-template-columns: minmax(0, 1fr); } }

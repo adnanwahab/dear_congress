@@ -21,6 +21,7 @@ for (const stage of ['published', 'feed', 'votes'] as const) {
   const payload = demoPayload({ test: { 'demo-food': { stance: 1 } } }, 'test');
   const originalVotes = JSON.stringify(payload.votes);
   const request = async <T,>(path: string, body?: unknown): Promise<T> => {
+    if (path === '/api/state') return { needs: [], user: { allocation: {} } } as T;
     if (body) { writes.push(body); throw Error('Vote rejected'); }
     if (failed) throw Error('Offline');
     return payload as T;

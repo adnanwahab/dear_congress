@@ -22,7 +22,24 @@ async function click(name: string | RegExp) { await act(async () => { fireEvent.
 async function edit(label: string | RegExp, value: string) { await act(async () => { fireEvent.change(q().getByLabelText(label), { target: { value } }); }); }
 async function mount(s = source) { await act(async () => { root.render(<Editor key={`${s.kind}:${s.id}`} source={s} />); }); }
 try {
-  await mount(); await click('Suggest amendment');
+  await mount();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Annotate line 1');
+  await edit('Private note / citation', 'Why twelve months?');
+  await click('Save private note');
+  assert(q().getByText('Why twelve months?', { selector: 'p' }));
+  await click('Share for review');
+  assert((q().getByLabelText('Copyable review excerpt') as HTMLTextAreaElement).value.includes('Why twelve months?'));
+  await click('Close review excerpt');
+  await click('Report abuse');
+  assert(q().getByText(/Abuse report not submitted/));
+  await mount({ ...source, text: 'Changed source line.' });
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Reattach to selected line 1');
+  assert(q().getByText(/Reattached to current line/));
+  await mount();
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+  await click('Suggest amendment');
   assert.equal(q().getByRole('button', { name: 'Suggest amendment' }).getAttribute('aria-expanded'), 'true');
   await edit('Suggested replacement text', 'The pilot shall run for 18 months.');
   await edit('Rationale', '<script>bad()</script> Observe two summer seasons');
@@ -36,12 +53,44 @@ try {
   assert(q().getByText(/Publication permission: not requested/));
   await edit('Suggested replacement text', 'The pilot shall run for 24 months.');
   await click('Save new private version');
+  const storageBeforeComparison = localStorage.getItem('civic_amendments_v1:citizen:pilot');
+  const snapshots = JSON.parse(storageBeforeComparison!);
+  await edit('Before revision ID', snapshots[0].id);
+  await edit('After revision ID', snapshots[1].id);
+  assert(q().getByRole('region', { name: 'Compare saved revision IDs' }).textContent?.includes(snapshots[0].id));
+  assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 24 months.');
+  assert.equal(localStorage.getItem('civic_amendments_v1:citizen:pilot'), storageBeforeComparison);
   await click('View version 1');
   assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 18 months.');
   await act(async () => { root.unmount(); });
   root = createRoot(document.body.appendChild(document.createElement('div')));
   await mount(); await click('Suggest amendment'); await click('View version 2');
   assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'The pilot shall run for 24 months.');
+  assert(q().getByRole('list', { name: 'Revision branches' }));
+  assert(q().getByText(/Review state: Unreviewed private draft/));
+  assert(window.location.search.includes('amendmentRevision='));
+  await edit('Revision event', 'fork');
+  await edit('Suggested replacement text', 'A separate branch');
+  await click('Save new private version');
+  assert(q().getByRole('link', { name: /Branch 3 · fork/ }));
+  await edit('Revision event', 'compromise');
+  const parentOptions = (q().getByLabelText('Second parent') as HTMLSelectElement).options;
+  await edit('Second parent', parentOptions[1]!.value);
+  await edit('Suggested replacement text', 'A reconciled compromise');
+  await click('Save new private version');
+  assert(q().getByRole('link', { name: /Branch 4 · compromise/ }));
+  assert.equal(q().getAllByText(/Text changes from parent/).length, 2);
+  const savedURL = window.location.href;
+  await act(async () => { root.unmount(); });
+  root = createRoot(document.body.appendChild(document.createElement('div')));
+  await mount(); // URL restores details without opening the editor manually.
+  assert.equal((q().getByLabelText('Suggested replacement text') as HTMLTextAreaElement).value, 'A reconciled compromise');
+  await act(async () => {
+    window.history.pushState(null, '', savedURL.replace(/amendmentRevision=[^&]+/, 'amendmentRevision=missing'));
+    window.dispatchEvent(new Event('popstate'));
+  });
+  assert(q().getByRole('alert').textContent?.includes('unavailable'));
+  await click('View version 2');
   await mount({ ...source, text: 'The pilot shall run for 6 months.' });
   assert((q().getByRole('button', { name: 'Save new private version' }) as HTMLButtonElement).disabled);
   assert(q().getByText(/source has changed/));
@@ -57,7 +106,30 @@ try {
     await act(async () => { root.render(<WorkflowScreen key={stage} stage={stage} request={request} />); });
     await click('Suggest amendment');
     assert(q().getByText('Prepare a private amendment'));
-    assert(q().getByText(/Fictional sample · not legal text/));
+    assert(q().getAllByText(/Fictional sample · not legal text/).length);
+    let morphs = 0;
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: true, addEventListener() {}, removeEventListener() {} }) });
+    document.startViewTransition = ((options: { update: () => void; types: string[] }) => {
+      assert.deepEqual(options.types, ['clause-explain']); morphs++; options.update();
+      return { ready: Promise.resolve(), finished: Promise.resolve(), updateCallbackDone: Promise.resolve(), skipTransition() {} };
+    }) as any;
+    const phrase = q().getByRole('button', { name: 'one accessory dwelling' });
+    (phrase as HTMLElement).focus();
+    await act(async () => { fireEvent.click(phrase); });
+    assert.equal(document.activeElement, phrase, 'focus stays on the stable source control');
+    assert.equal(morphs, 0, 'reduced motion uses immediate text');
+    assert(q().getByText(/One additional home on the same lot/));
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) });
+    await act(async () => { fireEvent.click(phrase, { pointerType: 'touch' }); });
+    assert.equal(morphs, 1, 'touch activation uses the typed morph');
+    assert(q().getByRole('link', { name: 'Return to source phrase' }).getAttribute('href') === '#' + phrase.id);
+    await act(async () => { fireEvent.click(q().getByLabelText('Text-only reading (no morph)')); });
+    assert((q().getByLabelText('Text-only reading (no morph)') as HTMLInputElement).checked);
+    await edit('Suggested replacement text', 'Different draft '.repeat(600));
+    assert(q().getByText(/No matched explanation is available/));
+    assert.equal(q().queryByRole('button', { name: 'one accessory dwelling' }), null);
+    await edit('Suggested replacement text', '');
+    assert(q().getByText('No draft text available.'));
   }
   console.log('PASS amendment creation, redline, version reopen/reload, source isolation, conflict recovery, escaped text, no network, /draft and /votes integration');
 } finally { await act(async () => { root.unmount(); }); await dom.happyDOM.close(); }

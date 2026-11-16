@@ -1,0 +1,15 @@
+.outcome-timeline { margin-block: 1rem; }
+.outcome-timeline button { margin: .25rem; min-height: 44px; }
+.outcome-timeline button[aria-pressed=true] { outline: 2px solid currentColor; }
+.outcome-timeline [tabindex] { touch-action: pan-y; padding: .5rem; }
+.outcome-timeline [tabindex]:focus-visible { outline: 2px solid currentColor; }
+.time-ticks { display: flex; justify-content: space-between; gap: .5rem; border-bottom: 1px solid currentColor; }
+.time-ticks span { border-left: 1px solid currentColor; padding: .4rem; font-size: .75rem; overflow-wrap: anywhere; }
+.time-lane { border-left: 4px solid currentColor; padding-left: 1rem; margin-block: 1rem; }
+.time-planned { border-left-style: dashed; }
+.time-projection { border-left-style: dotted; }
+.time-lane li { margin-block: .75rem; }
+@keyframes time-tick-enter { from { opacity: .3; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion=off]) .time-ticks { animation: time-tick-enter var(--motion-base) var(--ease-out); }
+}

@@ -112,8 +112,16 @@ try {
   const detailPath = dom.location.pathname;
   const id = detailPath.split('/').pop();
   assert.equal((await api('/api/citizen-proposals/' + id)).proposal.countTotal, 0);
+  const beforeTimeline = writeRequests;
   await render(detailPath);
   await until(() => !!query().queryByRole('heading', { name: 'Publish one clear permit checklist' }), 'detail');
+  const timeline = query().getByRole('region', { name: 'Civic milestone timeline' });
+  const sourceProposal = (await api('/api/citizen-proposals/' + id)).proposal;
+  assert.equal(timeline.querySelector('time')?.getAttribute('datetime'), sourceProposal.publishedAt);
+  assert.equal(timeline.querySelectorAll('[data-evidence=unknown]').length, 2);
+  assert.equal(writeRequests, beforeTimeline, 'Reading the timeline never submits');
+  check('Timeline success: exact publication timestamp, unknown review/delivery, no automatic submission');
+
   check('Publication requires confirmation and creates a permanent page without an automatic vote');
   await click(/^Support 0$/);
   await until(() => !!query().queryByText('Your advisory response is saved: Support.'), 'support');
@@ -225,8 +233,12 @@ try {
   const recoveredSourceId = dom.location.pathname.split('/').pop();
   assert.equal((await api('/api/citizen-proposals/' + recoveredSourceId)).proposal.sourceEntryId, undefined);
   check('A saved draft can remove a missing journal link and publish without losing its text');
+  const beforeMissingTimeline = writeRequests;
   await render('/proposals/does-not-exist');
   await until(() => !!query().queryByRole('heading', { name: 'Proposal not found.' }), '404');
+  assert.equal(query().queryByRole('region', { name: 'Civic milestone timeline' }), null);
+  assert.equal(writeRequests, beforeMissingTimeline);
+  check('Timeline failure: missing source never fabricates milestones or submits');
   check('Unknown proposal shows a recoverable not-found page');
   const beforeRecovery = (await api('/api/citizen-proposals')).proposals.length;
   await render('/proposals/new');
