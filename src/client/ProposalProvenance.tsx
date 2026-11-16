@@ -50,17 +50,34 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
   const url = sourceUrl(item);
   const full = <>
     <strong>Sample scenario / not introduced bill</strong>
-    <div>Scenario jurisdiction: {item.jurisdiction}</div>
-    <div>Background source: {item.background?.name ?? 'Source not available'}</div>
-    <div>Original claim: Unavailable — no original source claim or quotation is recorded.</div>
-    <div>Publication date: Not available</div>
-    <div>Publisher: {item.background?.publisher ?? 'Not available'}</div>
-    {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
-    {(!url || !item.background?.publisher) && <div role="note">Unsupported source — a safe HTTPS original and publisher are required.</div>}
-    <div>{freshness(item)}</div>
-    <div role="note">Editorial background; successful fetch and schema monitoring are not recorded.</div>
-    <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
-    <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
+    <p>Peel apart the evidence: observation → methodology → uncertainty. Reading these layers sends nothing.</p>
+    <div className="evidence-layers" key={item.id}>
+      <details className="evidence-layer" open>
+        <summary>Observation · sample claim and source</summary>
+        <p>{item.summary} <strong>Illustrative scenario, not an observed finding or official fact.</strong></p>
+        <div>Scenario jurisdiction: {item.jurisdiction}</div>
+        <div>Background source: {item.background?.name ?? 'Source not available'}</div>
+        <div>Original claim: Unavailable — no original source claim or quotation is recorded.</div>
+        <div>Publication date: Not available</div>
+        <div>Publisher: {item.background?.publisher ?? 'Not available'}</div>
+        {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
+        {(!url || !item.background?.publisher) && <div role="note">Unsupported source — a safe HTTPS original and publisher are required.</div>}
+        <div>{freshness(item)}</div>
+        <div role="note">Editorial background; successful fetch and schema monitoring are not recorded.</div>
+        <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
+        <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
+        <details className="evidence-layer">
+          <summary>Methodology · how this claim was assembled</summary>
+          <p>This editorial sample pairs a fictional proposal with a background reference. No study extraction, causal analysis or independent verification is supplied. Any interpretation is illustrative inference, not official fact.</p>
+          <p>Source identity: {item.background?.publisher ?? 'Not available'} · {item.background?.name ?? 'Source not available'}. Scenario ID: <code>{item.id}</code>. The source URL is a public reference, not a pinned document revision.</p>
+          <details className="evidence-layer">
+            <summary>Uncertainty · what remains unknown</summary>
+            <p>{freshness(item)}. Effectiveness, costs, legal accuracy and applicability to this jurisdiction have not been verified. A background link does not substantiate the proposal.</p>
+            <p>If the source cannot be opened, keep the claim unverified. No replacement source or successful verification is inferred from a failed link.</p>
+          </details>
+        </details>
+      </details>
+    </div>
     {claims.length > 0 && <ClaimEvidence claims={claims} />}
     <ProvenanceBadge provenance={scenarioProvenance(item)} />
   </>;

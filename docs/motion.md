@@ -294,3 +294,14 @@ route. `motionDisabled()` removes the elastic displacement for off/reduced motio
 Run the isolated DOM integration with `bun test src/client/chapter-peek.test.tsx`.
 Browser success/failure and keyboard/interruption coverage is in
 `tests/accessibility/chapter-peek.pw.ts` (the accessibility Playwright suite).
+
+## Layered proposal evidence (SHE-597)
+
+Proposal evidence uses nested native details for observation, methodology and
+uncertainty. Fine-pointer desktop layouts optionally lift opened layers with
+perspective and a scaled 260 ms transform; touch, reduced motion, motion=off and
+unsupported CSS retain a flat accordion. All text remains selectable in flow.
+This disclosure sends no requests; existing typed proposal-change transitions
+and Navigation chapter links own proposal selection and navigation. Disclosure
+state resets for a different sample ID; leaving during an animation never
+delays a link or submits a response.
