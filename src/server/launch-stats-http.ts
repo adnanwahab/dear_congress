@@ -1,4 +1,4 @@
-import { LaunchStats, statsAuthorized, statsPage } from "./launch-stats";
+import { LaunchStats, statsAuthorized, statsPage, type TrafficReason } from "./launch-stats";
 import { boundedJson, createPublicSecurity, securityHeaders } from "./public-security";
 
 export function createStatsHTTP(options: {
@@ -8,6 +8,9 @@ export function createStatsHTTP(options: {
 }) {
   // Independent from voting budgets. This limiter never issues an identity/cookie.
   const security = createPublicSecurity({ ...options.env, PUBLIC_IP_LIMIT: "120", PUBLIC_ID_LIMIT: "1000000" });
+  const observe = (reason: TrafficReason) => {
+    if (options.env?.TRAFFIC_QUALITY_MODE === "observe") options.record(() => options.stats.traffic(reason));
+  };
   function finish(response: Response) {
     response.headers.set("cache-control", "no-store");
     return securityHeaders(response);
@@ -21,16 +24,17 @@ export function createStatsHTTP(options: {
     },
     async pageView(req: Request, peer: string) {
       if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));
-      if (req.headers.get("origin") !== security.origin(req)) return finish(new Response(null, { status: 403 }));
+      if (req.headers.get("origin") !== security.origin(req)) { observe("origin_rejected"); return finish(new Response(null, { status: 403 })); }
       const limited = security.check(req, peer, "page-views", false);
-      if (limited) return finish(limited);
+      if (limited) { observe("rate_limited"); return finish(limited); }
       try {
         const body = await boundedJson(req, 1024);
-        if (typeof body.path !== "string" || body.path.length > 250 || body.path.includes("?") || body.path.includes("#")) return finish(new Response(null, { status: 400 }));
+        if (typeof body.path !== "string" || body.path.length > 250 || body.path.includes("?") || body.path.includes("#")) { observe("invalid_payload"); return finish(new Response(null, { status: 400 })); }
         let accepted = false;
         options.record(() => { accepted = options.stats.view(body.path as string); });
+        if (!accepted && options.healthy()) observe("invalid_payload");
         return finish(new Response(null, { status: accepted ? 204 : options.healthy() ? 400 : 503 }));
-      } catch { return finish(new Response(null, { status: 400 })); }
+      } catch { observe("invalid_payload"); return finish(new Response(null, { status: 400 })); }
     },
   };
 }

@@ -60,3 +60,26 @@ test("page view rate limits use trusted Fly IP and do not mint identities", asyn
     expect((await send("192.0.2.2")).status).toBe(204);
   } finally {stats.close();}
 });
+
+test("quality observation is opt-in, aggregate-only and independent of saved choices", async () => {
+  for (const mode of [undefined, "observe"]) {
+    const {stats,http} = setup({TRAFFIC_QUALITY_MODE:mode});
+    try {
+      stats.vote({identity:"private-browser",scope:"citizen/advisory",target:"p"});
+      const send = (origin:string,body:string) => http.pageView(new Request("https://local/api/page-view",{method:"POST",headers:{origin},body}),"192.0.2.3");
+      expect((await send("https://elsewhere",'{}')).status).toBe(403);
+      expect((await send("https://local",'{')).status).toBe(400);
+      expect((await send("https://local",'{"path":"/account"}')).status).toBe(204);
+      for (let i=0;i<118;i++) await send("https://local",'{"path":"/account"}');
+      expect((await send("https://local",'{}')).status).toBe(429);
+      expect(stats.snapshot().suspiciousRequests).toEqual(mode ? [
+        {reason:"invalid_payload",count:1},{reason:"origin_rejected",count:1},{reason:"rate_limited",count:1},
+      ] : []);
+      expect(stats.snapshot()).toMatchObject({votes:1,uniqueVoters:1});
+      const html = await http.admin(new Request("https://local/admin/stats",{headers:{authorization:"Bearer test-admin-token"}})).text();
+      expect(html).toContain("never establishes formal vote eligibility");
+      expect(html).not.toContain("192.0.2.3");
+      expect(html).not.toContain("private-browser");
+    } finally {stats.close();}
+  }
+});

@@ -1038,3 +1038,16 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+## Traffic quality observation (SHE-933)
+
+`TRAFFIC_QUALITY_MODE=observe` optionally records daily aggregate rejected
+`/api/page-view` request reasons in the separate stats database. Unset or any
+other value disables collection. Existing rejection rules and vote budgets are
+unchanged. The private `/admin/stats` dashboard separates these signals from
+saved choices and accepted route events. It does not identify bots or unique
+humans; no traffic signal establishes formal eligibility or removes a ballot.
+Rules and the public human-review request path are on `/account#traffic-quality`.
+No request payloads, network addresses or links to ballot identities are added.
+Historical counters remain visible when collection stops. See
+[the staged rollout and measurement record](docs/reviews/SHE-933.md).

@@ -7,6 +7,11 @@ export default function AccountScreen() {
   return <div className="civic-shell workflow-shell"><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
+    <section className="panel" id="traffic-quality"><h2>Traffic quality and review</h2>
+      <p>Traffic patterns cannot verify one human per cookie or formal vote eligibility. Optional private dashboard counters separate rejected page-view requests from saved advisory choices. No bot score removes a choice.</p>
+      <p>Page-view rules require the same site origin, an allowed route, a JSON body up to 1 KiB and at most 120 requests per network address per configured window (10 minutes by default). Shared networks and broken clients can trigger these rules. A 429 response includes a retry delay; try again after that delay.</p>
+      <p>To request human review of a rule, use the <a href="https://github.com/adnanwahab/dear_congress/issues">repository issue tracker</a> with the route, approximate time and response status. It is public: do not post cookies, IP addresses, identity documents or private journal text. No private appeal channel or response deadline is configured. Review does not require proving identity.</p>
+    </section>
     <PrivateJourney />
     <EvidenceNotebook />
     <CivicPassport />
