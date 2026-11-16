@@ -1784,23 +1784,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/reset": {
       POST: async (req) => {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
-        // Resetting sample synthesis data must not erase public proposals or their votes.
-        const citizenProposals = db.citizenProposals;
-        const journalOwners = db.journalOwners;
-        const journalReports = db.journalReports;
-        const journalModerationLog = db.journalModerationLog;
-        const reportedIds = new Set((journalReports ?? []).map(r => r.entryId));
-        const moderatedEntries = db.entries.filter(e => e.moderation || reportedIds.has(e.id));
-        const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
-        const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
-        db = seed();
-        db.citizenProposals = citizenProposals;
-        db.journalOwners = journalOwners;
-        db.journalReports = journalReports;
-        db.journalModerationLog = journalModerationLog;
-        const seededIds = new Set(db.entries.map((entry) => entry.id));
-        db.entries.push(...[...new Map([...citedEntries, ...moderatedEntries].map(e => [e.id, e])).values()].filter((entry) => !seededIds.has(entry.id)));
-        await save();
+        // Fictional ballot totals are code-only fixtures. Refresh their cached view;
+        // never replace the civic database to reset a presentation fixture.
+        demoCache = null;
         return Response.json({ ok: true });
       },
     },

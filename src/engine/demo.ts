@@ -20,7 +20,8 @@ export const DEMO_ITEMS: DemoItem[] = [
   { id: 'demo-budget', title: 'Show residents where each budget dollar goes', topic: 'Government', jurisdiction: 'County', source: 'Public finance', background: {"name": "Harris County", "publisher": "Harris County", "scope": "County homepage only; does not substantiate budget dashboard claims", "checkedAt": null}, sourceUrl: 'https://www.harriscountytx.gov/', summary: 'Publish a searchable budget with project spending and milestones. Make the data downloadable and explain changes in plain English.', currentText: 'Budget and project spending reports are published in separate documents.', proposedText: 'Publish a searchable, accessible budget dashboard linking approved spending to project milestones, with monthly downloadable updates.', sponsors: ['County budget office', 'Government accountability committee'], support: 1560, oppose: 90, unsure: 150 },
 ];
 export interface AdvisoryCounts { support: number; oppose: number; unsure: number; }
-export interface DemoPayload { verified: { status: "unavailable" }; browserCounts: Record<string, AdvisoryCounts>; items: DemoItem[]; updatedAt: string; closesAt: string; votes: Record<string, number>; }
+export const DEMO_FIXTURE_NAMESPACE = "civic-demo-fixtures.v1" as const;
+export interface DemoPayload { fixtureNamespace: typeof DEMO_FIXTURE_NAMESPACE; verified: { status: "unavailable" }; browserCounts: Record<string, AdvisoryCounts>; items: DemoItem[]; updatedAt: string; closesAt: string; votes: Record<string, number>; }
 export function demoPayload(votesByVoter: Record<string, Record<string, { stance: number }>>, voterId: string, now = new Date()): DemoPayload {
   const items = DEMO_ITEMS.map(item => ({ ...item }));
   const byId = new Map(items.map(item => [item.id, item]));
@@ -34,5 +35,5 @@ export function demoPayload(votesByVoter: Record<string, Record<string, { stance
   }
   const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const closes = new Date(day); closes.setUTCDate(day.getUTCDate() + (7 - day.getUTCDay() || 7));
-  return { verified: { status: "unavailable" }, browserCounts, items, updatedAt: day.toISOString(), closesAt: closes.toISOString(), votes: Object.fromEntries(Object.entries(votesByVoter[voterId] ?? {}).filter(([id]) => byId.has(id)).map(([id,v]) => [id,v.stance])) };
+  return { fixtureNamespace: DEMO_FIXTURE_NAMESPACE, verified: { status: "unavailable" }, browserCounts, items, updatedAt: day.toISOString(), closesAt: closes.toISOString(), votes: Object.fromEntries(Object.entries(votesByVoter[voterId] ?? {}).filter(([id]) => byId.has(id)).map(([id,v]) => [id,v.stance])) };
 }
