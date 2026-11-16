@@ -99,7 +99,7 @@ export function createPublicSecurity(env: Record<string, string | undefined> = p
         if (bucket.count > limit) retry = Math.max(retry, Math.ceil((bucket.until - time) / 1000));
       }
       if (retry) return Response.json({ error: `Too many submissions. Please try again in ${retry} seconds.` }, { status: 429, headers: { "retry-after": String(retry) } });
-      if (journal && env.PUBLIC_SUBMISSIONS_ENABLED === "0") return Response.json({ error: "Public journal submissions are temporarily paused." }, { status: 503 });
+      if (journal && env.PUBLIC_SUBMISSIONS_ENABLED === "0") return Response.json({ error: "Public journal submissions are temporarily paused." }, { status: 503, headers: { "x-service-outcome": "blocked" } });
     },
   };
 }
