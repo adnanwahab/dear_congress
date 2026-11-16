@@ -50,6 +50,7 @@ import { ProposalProvenance, provenanceText, sourceUrl } from './ProposalProvena
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const CitizenJury = lazy(() => import('./CitizenJury').then(module => ({ default: module.CitizenJury })));
 const ProposalDuet = lazy(() => import('./ProposalDuet').then(mod => ({ default: mod.ProposalDuet })));
 const JurisdictionComparison = lazy(() => import('./JurisdictionComparison').then(m=>({default:m.JurisdictionComparison})));
 const CooperativeMission = lazy(() => import('./CooperativeMission').then(m=>({default:m.CooperativeMission})));
@@ -232,6 +233,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'draft' && !loading && !loadError && item && <OfficeHours key={JSON.stringify([item.id, item.proposedText])} source={{ repository: 'adnanwahab/dear_congress', kind: 'sample', id: item.id, revision: item.proposedText }} />}
     {stage === 'draft' && !loading && !loadError && item && <Suspense fallback={<p role="status">Loading design workshop…</p>}><CooperativeMission key={`mission:sample:${item.id}`} source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} /></Suspense>}
     {(stage === 'draft' || stage === 'votes') && item && <Suspense fallback={<p role="status">Loading private duet…</p>}><ProposalDuet key={`duet:sample:${item.id}`} source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText, jurisdiction: item.jurisdiction, origin: provenanceText(item) }} /></Suspense>}
+    {stage === 'votes' && item && !loading && !loadError && <Suspense fallback={<p role="status">Loading mini citizen jury…</p>}><CitizenJury key={JSON.stringify([item.id, item.proposedText, item.sourceUrl, item.background])} item={item} /></Suspense>}
     {(stage === 'draft' || stage === 'votes') && item && <AmendmentEditor key={`sample:${item.id}`} source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText, jurisdiction: item.jurisdiction, origin: provenanceText(item) }} />}
     {stage === 'sponsors' && !loading && !loadError && item && <><section className="panel workflow-prepare"><div><h2>Prepare a sample outreach card</h2><p className="workflow-body-muted">Cards are saved in this browser and shared with the dashboard walkthrough.</p></div><div>{selectControl}<label className="workflow-select">Possible office<select value={selectedOffice} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><button disabled={!item} onClick={prepare}>Add to tracker</button></div></section><OutreachDraft key={JSON.stringify([item, selectedOffice])} item={item} office={selectedOffice} /><section className="panel workflow-tracker"><div className="panel-head"><h2>Sponsor tracker</h2><span>Local demo · no real outreach</span></div><SponsorBoard items={items} cards={tracker} save={saveTracker} className="workflow-board" /></section></>}
     {stage === 'outcomes' && <EvidenceDocket />}
