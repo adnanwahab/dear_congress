@@ -4,6 +4,7 @@ import { PublicInputError } from './public-security';
 export class LiveRounds {
   private rounds = new Map<string, { code: string; proposalId: string; owner: string; startedAt: number; expiresAt: number; endedAt?: number; voters: Map<string, number>; pulses: number[]; listeners: Set<() => void>; timer?: ReturnType<typeof setTimeout> }>();
   constructor(private now = Date.now) {}
+  exists(code: string) { return this.rounds.has(code); }
   private hash(id: string) { return createHash('sha256').update(id).digest('hex'); }
   start(proposalId: string, owner: string) {
     if (!DEMO_ITEMS.some(p => p.id === proposalId)) throw new PublicInputError('Unknown proposal');

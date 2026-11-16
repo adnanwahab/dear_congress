@@ -1,0 +1,30 @@
+name: Public link audit
+on:
+  schedule:
+    - cron: '23 8 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-link-audit
+  cancel-in-progress: false
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun scripts/audit-links.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-link-audit
+          path: artifacts/link-audit
+          if-no-files-found: error
+          retention-days: 30

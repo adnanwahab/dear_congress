@@ -985,3 +985,9 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Public link monitoring
+
+The bounded weekly public-route and curated-source crawler produces owner-tagged
+JSON/Markdown findings, including unexpected 200s for missing IDs. See
+[docs/link-audit.md](docs/link-audit.md) for execution, limits and triage.

@@ -87,3 +87,9 @@ test('speculation is limited to same-origin navigation routes and prioritizes th
     expect(rules.prerender[1].where.and[0].href_matches).toEqual([STAGES[stage.next].route, `${STAGES[stage.next].route}?*`]);
   }
 });
+
+test('live page requires an existing round, including HEAD router status contract', () => {
+  expect(renderPage(shell, '/live/00000000', []).status).toBe(404);
+  expect(renderPage(shell, '/live/1234abcd', [], code => code === '1234abcd').status).toBe(200);
+  expect(renderPage(shell, '/live/not-a-code', [], () => true).status).toBe(404);
+});
