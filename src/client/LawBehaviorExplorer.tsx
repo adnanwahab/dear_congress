@@ -1,3 +1,4 @@
+import {modelInputManifest} from './model-input-manifest';
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
@@ -167,6 +168,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [revision,setRevision]=useState(imported?.revision??1);
   const [selectedActor,setSelectedActor]=useState('');
   const [receipt,setReceipt]=useState<LawBehaviorReceipt|null>(null);
+  const [retrievedAt,setRetrievedAt]=useState<string|null>(null);
   const [reference,setReference]=useState<LawBehaviorReceipt|null>(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
@@ -249,7 +251,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.status==='completed'&&(parsed.manifest?.start!==0||parsed.manifest?.end!==amendment.horizon||parsed.unit!==amendment.clock))throw Error('Model horizon changed. This scenario cannot be reproduced by this provider.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
-      setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
+      setRetrievedAt(new Date().toISOString());setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
       setMetric(defaultMetric(parsed.frames,keys));
       if(parsed.status==='completed'&&strength===100)setReference(old=>old&&old.law.number===lawId?old:parsed);
@@ -334,6 +336,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     {receipt?.status==='mechanism-unavailable'&&<p role="status">No reviewed behavior mapping: {receipt.reason||'Effects unavailable.'}</p>}
     {receipt?.status==='completed'&&frames.length>0&&<>
       {!dirty && !busy && !error && <SaveToJourney category="Sandbox runs" kind="Model simulation" text={JSON.stringify({ source: 'hbl-law-behavior-receipt.v1', law: receipt.law, amendment, revision, engine: receipt.engine, manifest: receipt.manifest, unit: receipt.unit, limitations: receipt.limitations, note: 'Completed synthetic run metadata only; actor frames are not copied. No legal effect or civic ballot.' }, null, 2)} />}
+      {!dirty && !busy && !error && retrievedAt && <p><a download={`law-${lawId}-model-input-manifest.json`} href={'data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(modelInputManifest(receipt,context,new URL(hblOrigin).origin,retrievedAt),null,2))}>Download evidence and model-input manifest (JSON)</a><br/><span className="muted s">Synthetic advisory scenario only. Provider catalog revision, calibration weights and evidence sources are unavailable and explicitly marked unknown.</span></p>}
       <p className="civic-law-provenance" role="status">Recorded model: {receipt.manifest?.modelVersion||'version unavailable'}
         {' · '}seed {formatted(receipt.manifest?.seed)}
         {' · '}{receipt.manifest?.population} synthetic actors

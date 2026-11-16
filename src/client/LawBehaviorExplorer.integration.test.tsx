@@ -78,7 +78,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const postcard=getByRole(host,'img',{name:/Synthetic scenario \/ not forecast/});
     expect(postcard.getAttribute('alt')).toContain('Seed 42');
     expect(postcard.getAttribute('alt')).toContain('20 → 14');
-    expect(host.querySelector('a[download]')?.getAttribute('href')).toStartWith('data:image/svg+xml');
+    expect(host.querySelector('.future-postcard a[download]')?.getAttribute('href')).toStartWith('data:image/svg+xml');
     Object.defineProperty(browser.navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied');}}});
     await act(async()=>getByRole(host,'button',{name:'Copy description'}).click());
     expect(host.textContent).toContain('Copy failed');
