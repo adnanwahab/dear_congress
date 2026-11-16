@@ -27,6 +27,21 @@ async function mount() {
   await act(async () => root.render(<WorkflowScreen stage="votes" request={request} />));
 }
 await mount();
+// Core reading and all three choices precede optional activities. Eligibility
+// remains visible without opening a disclosure; exact source text is retained.
+const panel = document.getElementById('advisory-choice')!;
+assert.ok(panel.textContent!.includes(payload.items[0]!.proposedText));
+assert.ok(panel.textContent!.includes(payload.items[0]!.summary));
+const disclosure = panel.querySelector('.vote-disclosure')!;
+assert.equal(disclosure.closest('details'), null);
+assert.ok(disclosure.textContent!.includes('No official ballot or verified eligibility'));
+for (const label of ['Support', 'Oppose', 'Not sure']) {
+  const button = within(panel).getByRole('button', { name: new RegExp('Cast advisory vote: ' + label) });
+  assert.equal(button.closest('details'), null);
+}
+assert.equal(posts, 0);
+assert.ok(panel.compareDocumentPosition(q().getByRole('navigation', { name: 'Vote on application pull requests' })) & 4);
+assert.ok(within(panel).getByText('Sources, eligibility and response details').closest('details'));
 await act(async () => {
   const support = q().getByRole('button', { name: /Cast advisory vote: Support/ });
   fireEvent.click(support); fireEvent.click(support);

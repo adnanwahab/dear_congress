@@ -66,9 +66,10 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
         expect(support().getAttribute('aria-pressed')).toBe('true');
         if (page === '/votes') expect(document.querySelector('.advisory-receipt')?.textContent).toContain('choice: Support');
         else expect(support().classList.contains('vote-confirmed')).toBe(true);
-        expect(support().getAttribute('aria-label')).toMatch(/responses, [0-9.]+%/);
-        expect(document.querySelectorAll('.advisory-track')).toHaveLength(3);
-        expect(document.body.textContent).toContain('Illustrative responses, not a representative poll.');
+        if (page === '/votes') expect(support().getAttribute('aria-label')).not.toContain('responses');
+        else expect(support().getAttribute('aria-label')).toMatch(/responses, [0-9.]+%/);
+        expect(document.querySelectorAll('.advisory-track')).toHaveLength(page === '/votes' ? 0 : 3);
+        expect(document.body.textContent).toContain(page === '/votes' ? 'Fictional responses, not a representative poll.' : 'Illustrative responses, not a representative poll.');
         expect(q().getAllByRole('status').map(node => node.textContent).join(' ')).toMatch(page === '/votes' ? /Server confirmed advisory choice/ : /vote (is )?saved/);
       }
       await act(async () => { root.unmount(); });

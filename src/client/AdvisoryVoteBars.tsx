@@ -24,8 +24,8 @@ function LivePulse({ count = 0 }: { count?: number }) {
 }
 
 /** Presentation only: choices and counts always come from the acknowledged payload. */
-export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, live, pulses }: {
-  live?: boolean; pulses?: number[]; item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
+export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, live, pulses, compact = false }: {
+  compact?: boolean; live?: boolean; pulses?: number[]; item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -77,19 +77,19 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
     return () => cancelAnimationFrame(frame);
   }, [visible, reduced, item.support, item.oppose, item.unsure]);
   return <div ref={host} className="advisory-tallies">
-    <p>{live ? 'Live round · advisory · not a poll' : 'Illustrative responses, not a representative poll.'}</p>
+    {!compact && <p>{live ? 'Live round · advisory · not a poll' : 'Illustrative responses, not a representative poll.'}</p>}
     <div className="vote-options advisory-bars">{OPTIONS.map(([label, stance, field], index) => {
       const count = item[field];
       const share = total ? count / total : 0;
       const percentage = `${(share * 100).toFixed(1)}%`;
       return <button key={field} className={highlight === stance ? 'vote-confirmed' : undefined}
         aria-pressed={choice === stance} disabled={busy} onClick={() => onVote(stance)}
-        aria-label={`Cast advisory vote: ${label}${choice === stance ? ', selected' : ''}. ${count.toLocaleString()} responses, ${percentage}`}>
-        <span className="advisory-label">{live && <LivePulse count={pulses?.[index]} />}Cast advisory vote: {label}{choice === stance ? ' ✓' : ''}</span>
-        <span className="advisory-value" aria-hidden="true">{(reduced ? count : shown[index]!).toLocaleString()} · {percentage}</span>
-        <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': reduced || visible ? share : 0 } as CSSProperties} /></span>
+        aria-label={`Cast advisory vote: ${label}${choice === stance ? ', selected' : ''}. ${compact ? '' : `${count.toLocaleString()} responses, ${percentage}`}`}>
+        <span className="advisory-label">{live && <LivePulse count={pulses?.[index]} />}{compact ? label : `Cast advisory vote: ${label}`}{choice === stance ? ' ✓' : ''}</span>
+        {!compact && <><span className="advisory-value" aria-hidden="true">{(reduced ? count : shown[index]!).toLocaleString()} · {percentage}</span>
+        <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': reduced || visible ? share : 0 } as CSSProperties} /></span></>}
       </button>;
     })}</div>
-    {!live && <AdvisoryShare key={item.id} id={item.id} choice={choice} />}
+    {!live && (compact ? <details><summary>Share this sample (optional)</summary><AdvisoryShare key={item.id} id={item.id} choice={choice} /></details> : <AdvisoryShare key={item.id} id={item.id} choice={choice} />)}
   </div>;
 }

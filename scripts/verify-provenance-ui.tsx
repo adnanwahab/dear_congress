@@ -104,7 +104,7 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     assert.match(container.textContent!, /No verified participant count is reported/);
     assert.match(container.textContent!, /Synthetic demo data — illustrative/);
     for (const [label, expected] of [['Support', /Support: 1 · Oppose: 0/], ['Oppose', /Support: 0 · Oppose: 1/]] as const) {
-      const button = [...container.querySelectorAll('.vote-options button')].find(b => b.textContent!.includes(`Cast advisory vote: ${label}`))!;
+      const button = [...container.querySelectorAll('.vote-options button')].find(b => b.getAttribute('aria-label')?.startsWith(`Cast advisory vote: ${label}`))!;
       assert(button, 'voting action available');
       await act(async () => { (button as any).click(); });
       assert.match(browser().textContent!, expected);
@@ -141,9 +141,11 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     if (stage === 'votes') {
       const buttons = [...container.querySelectorAll('.vote-options button')];
       assert.equal(buttons.length, 3);
-      assert(map.compareDocumentPosition(buttons[0]!) & 4, 'arguments precede voting');
+      assert(buttons[0]!.compareDocumentPosition(map) & 4, 'optional argument detail follows the compact choice');
+      assert(map.closest('details'), 'full argument detail remains accessible in a native disclosure');
     }
   }
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
   await act(async () => { root.unmount(); });
   container.remove();
   console.log(`PASS ${stage}: provenance and API failure recovery`);
