@@ -12,6 +12,7 @@ import { CivicHeader } from "./CivicHeader";
 import { CivicFestival } from './CivicFestival';
 import { ProposalGallery } from './ProposalGallery';
 import { CuriosityMission } from './CuriosityMission';
+import { SurpriseExplorer } from './SurpriseExplorer';
 import { DailyQuestion } from './DailyQuestion';
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 import { useEffect, useRef, useState } from 'react';
@@ -95,6 +96,7 @@ export function Dashboard({ request }: { request: Request }) {
       <div className="demo-context"><span><strong>A complete sample journey.</strong> Fictional proposals, illustrative responses, and simulated sponsor outcomes.</span><span>{data ? `Demo refreshed ${dateLabel(data.updatedAt)}` : error ? 'Sample scenarios unavailable' : <Skeleton kind="line" />}</span></div>
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <LocalChallenges items={items} loading={!data && !error} failed={sampleLoadFailed} />
+      <SurpriseExplorer items={items} loaded={!!data} failed={!!error} />
       <div className="triple-grid">
         <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalGallery items={items} loaded={!!data} failed={!!error} selected={item?.id} busy={busy} onSelect={select} />
         </section>
