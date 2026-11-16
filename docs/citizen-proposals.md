@@ -333,3 +333,20 @@ has a self-declared activity source and local saved date; neither proves civic
 eligibility or verified activity. JSON export, selective delete and confirmed
 reset affect only this log. Drafts, follows, public records and actual votes
 stay in their original stores. See [scope and validation](reviews/SHE-533.md).
+
+## Factual error reports (SHE-895 review candidate)
+
+Citizen proposal details offer **Report an error** bound to the immutable public
+text snapshot and canonical proposal ID. The same intake serves sample proposals,
+background references, curated drafts and official metadata, with separate target
+kinds. Intake is anonymous and private to authenticated maintainers; do not include
+personal information. A receipt confirms saved intake, not a verified error or a
+correction. Stale revisions require reopening the source. Votes and published text
+are never changed by a report or triage decision.
+
+Maintainers open `/admin/error-reports` using the existing `ADMIN_TOKEN` credentials
+to record status and a correction/decision note. The queue is disabled without a
+token. Actual corrections require a separately reviewed source change and any
+required source, safety and editorial reviews. See
+[the SHE-895 review](reviews/SHE-895.md) for API contracts, privacy, tests and
+remaining human acceptance; no deployed availability is asserted.

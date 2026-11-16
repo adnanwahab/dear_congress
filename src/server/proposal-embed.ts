@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { reportUrl } from '../shared/error-reports';
 import { DEMO_ITEMS, type DemoItem } from '../engine/demo';
 import { SITE_URL } from '../shared/page-metadata';
 import { securityHeaders } from './public-security';
@@ -21,7 +23,12 @@ export function proposalEmbed(req: Request, items: readonly DemoItem[] = DEMO_IT
   } else {
     let source: URL | undefined;
     try { const parsed = new URL(item.sourceUrl); if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) source = parsed; } catch {}
-    content = `<h1>${escape(item.title)}</h1><p>${escape(item.summary)}</p><p><strong>Scenario jurisdiction:</strong> ${escape(item.jurisdiction)}</p><h2>Background sources</h2><p>${escape(item.background?.publisher ?? 'Publisher unavailable')} — ${escape(item.background?.name ?? 'Source unavailable')}</p>${source ? `<a target="_blank" rel="noopener noreferrer" href="${escape(source.href)}">Open background source (new tab)</a>` : '<p>Source unavailable</p>'}<p>Source review date: ${escape(item.background?.checkedAt ?? 'Not checked')}. ${escape(item.background?.scope ?? 'Background scope not documented.')}. Background only; does not verify this scenario or proposed text as official law.</p><a target="_blank" rel="noopener noreferrer" href="${SITE_URL}/feed?proposal=${encodeURIComponent(item.id)}">Read more about this sample (new tab)</a>`;
+    const reportLinks = ['sample', 'sample-source'].map(kind => {
+      const snapshot = kind === 'sample' ? JSON.stringify(item) : JSON.stringify([item.sourceUrl, item.background]);
+      const href = SITE_URL + reportUrl({ kind, id: item.id, revision: createHash('sha256').update(snapshot).digest('hex') });
+      return `<p>${kind === 'sample' ? 'Sample proposal' : 'Background source'}: <a target="_blank" rel="noopener noreferrer" href="${escape(href)}">Report an error (new tab)</a></p>`;
+    }).join('');
+    content = `${reportLinks}<h1>${escape(item.title)}</h1><p>${escape(item.summary)}</p><p><strong>Scenario jurisdiction:</strong> ${escape(item.jurisdiction)}</p><h2>Background sources</h2><p>${escape(item.background?.publisher ?? 'Publisher unavailable')} — ${escape(item.background?.name ?? 'Source unavailable')}</p>${source ? `<a target="_blank" rel="noopener noreferrer" href="${escape(source.href)}">Open background source (new tab)</a>` : '<p>Source unavailable</p>'}<p>Source review date: ${escape(item.background?.checkedAt ?? 'Not checked')}. ${escape(item.background?.scope ?? 'Background scope not documented.')}. Background only; does not verify this scenario or proposed text as official law.</p><a target="_blank" rel="noopener noreferrer" href="${SITE_URL}/feed?proposal=${encodeURIComponent(item.id)}">Read more about this sample (new tab)</a>`;
   }
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Sample proposal explorer · v1</title><style>body{font:1rem/1.6 system-ui,sans-serif;margin:0;padding:1rem;background:#fff;color:#172333;overflow-wrap:anywhere}main{max-width:46rem;margin:auto}h1{font-size:1.5rem;line-height:1.3}h2{font-size:1.15rem}a{color:#0645ad;display:inline-block;padding:.6rem .2rem}a:focus-visible{outline:3px solid currentColor;outline-offset:3px}li{margin:.4rem 0}footer{border-top:1px solid;padding-top:1rem}</style></head><body><main><p><strong>Fictional demo · read-only · Embed v1</strong></p>${content}<footer>No votes or model simulations are included. This card runs no scripts, uses no browser storage, and sends no analytics. The hosting service receives the normal page request.</footer></main></body></html>`;
   const response = securityHeaders(new Response(req.method === 'HEAD' ? null : html, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } }));

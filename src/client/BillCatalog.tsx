@@ -1,3 +1,4 @@
+import { ReportError } from './ReportError';
 import { CivicCrossword } from './CivicCrossword';
 import { TownHallGame } from './TownHallGame';
 import { BudgetShock } from './BudgetShock';
@@ -47,7 +48,7 @@ export default function BillCatalog() {
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
-      <h1>{bill.title}</h1>
+      <h1>{bill.title}</h1><ReportError kind="catalog" id={bill.id} snapshot={JSON.stringify([bill, bill.id === 'HFL-051' ? supplement : null])} />
       <p className="bill-lead">{bill.proposedChange}</p>
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],

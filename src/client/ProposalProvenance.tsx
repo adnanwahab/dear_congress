@@ -1,3 +1,4 @@
+import { ReportError } from './ReportError';
 import { EvidenceExport } from './EvidenceExport';
 import { ClaimEvidence } from './ClaimEvidence';
 import type { EvidenceClaim } from '../shared/claim-provenance';
@@ -49,6 +50,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
   }, [open]);
   const url = sourceUrl(item);
   const full = <>
+    <ReportError kind="sample" id={item.id} snapshot={JSON.stringify(item)} /><ReportError kind="sample-source" id={item.id} snapshot={JSON.stringify([item.sourceUrl, item.background])} />
     <strong>Sample scenario / not introduced bill</strong>
     <div>Scenario jurisdiction: {item.jurisdiction}</div>
     <div>Background source: {item.background?.name ?? 'Source not available'}</div>
