@@ -59,13 +59,6 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
-    const share=getByRole(host,'link',{name:'Reproducible scenario link'}) as HTMLAnchorElement;
-    expect(share.search).toContain('simulationShare=1');
-    expect(share.search).toContain('horizon=720');
-    expect(share.search).toContain('modelVersion=population.v1');
-    expect(share.search).not.toContain('proposalId');
-    expect(host.textContent).toContain('Receipt checks passed');
-    expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     await act(async()=>fireEvent.mouseOver(getByRole(host,'button',{name:/Current rules · hypothetical/})));
     expect(host.textContent).toContain('Current rules preview:');
@@ -75,6 +68,13 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>getByRole(host,'button',{name:/Current rules · hypothetical/}).click());
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     await act(async()=>getByRole(host,'button',{name:/Edited law · hypothetical/}).click());
+    const share=getByRole(host,'link',{name:'Reproducible scenario link'}) as HTMLAnchorElement;
+    expect(share.search).toContain('simulationShare=1');
+    expect(share.search).toContain('horizon=720');
+    expect(share.search).toContain('modelVersion=population.v1');
+    expect(share.search).not.toContain('proposalId');
+    expect(host.textContent).toContain('Receipt checks passed');
+    expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
     expect(host.textContent).toContain('Simulated fiction, not prediction');
     expect(host.querySelector('a[download]')).not.toBeNull();
