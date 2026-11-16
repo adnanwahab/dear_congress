@@ -4,7 +4,7 @@ import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
 import { WorldPortal } from './WorldPortal';
-import { LawBehaviorExplorer } from './LawBehaviorExplorer';
+const LawBehaviorExplorer = lazy(() => import('./LawBehaviorExplorer').then(m => ({ default: m.LawBehaviorExplorer })));
 import { TownHallGame } from './TownHallGame';
 import { BudgetShock } from './BudgetShock';
 import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
@@ -187,7 +187,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   }
   const filterControls = <ProposalSearch items={scoped} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!loadError} />;
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
-  const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
+  const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><Suspense fallback={<p role="status">Loading behavior explorer…</p>}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></Suspense></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
