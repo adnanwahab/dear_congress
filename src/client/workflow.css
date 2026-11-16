@@ -126,6 +126,15 @@
 .council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
 .council-controls button { min-height: 44px; }
 
+/* Retained revision records remain readable on narrow screens and in print. */
+.source-revision-alert { min-width: 0; overflow-wrap: anywhere; }
+.source-revision-alert button { min-height: 44px; }
+.source-revision-print { display: none; }
+@media print {
+  .source-revision-alert button { display: none; }
+  .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+
 /* Keep the outcomes filter within the 390px viewport while preserving native controls. */
 @media (max-width: 680px) {
   .workflow-shell .workflow-select { grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; }

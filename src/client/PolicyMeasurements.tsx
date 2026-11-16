@@ -1,3 +1,4 @@
+import { SourceRevisionAlert } from './SourceRevisionAlert';
 import { DatasetImportWorkbench } from './DatasetImportWorkbench';
 import { ProvenanceBadge } from './ProvenanceBadge';
 import { ClaimEvidence } from './ClaimEvidence';
@@ -29,6 +30,7 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
             <dt>Data owner and cadence</dt><dd>{metric.owner} · {metric.cadence} · next release expected {metric.nextUpdate}</dd>
           </dl>
           <p>{result.attribution}. {metric.caveat}</p>
+          {result.latest && <SourceRevisionAlert sourceId={metric.id} measurement={result.latest} />}
           <details><summary>Baseline and source version history for {metric.label}</summary>
             <ul>{metric.history.map(row => <li key={row.revision}>{row.period}: {row.value} {row.unit} · {row.population} · revision {row.revision} · source version {row.sourceVersion} · synthetic, no external source</li>)}</ul>
           </details>

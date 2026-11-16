@@ -28,7 +28,8 @@ test('manual motion-off controls traverse, branch, reset and clean up without ne
   document.documentElement.dataset.motion = 'off';
   const host = document.createElement('div'); document.body.append(host);
   const root = createRoot(host);
-  const click = async (index: number) => act(async () => { (host.querySelectorAll('button')[index] as HTMLButtonElement).click(); });
+  // Target only the marble controls: the provenance panel also offers buttons.
+  const click = async (index: number) => act(async () => { (host.querySelectorAll('.marble-controls button')[index] as HTMLButtonElement).click(); });
   try {
     await act(async () => root.render(<CivicMarbleRun item={{ id: 'sample', title: 'Sample' } as DemoItem} />));
     await click(0);
@@ -37,7 +38,7 @@ test('manual motion-off controls traverse, branch, reset and clean up without ne
     expect(host.querySelector('[role=status]')!.textContent).toContain('Step 1');
     await click(2); await click(2);
     expect(host.querySelector('[role=status]')!.textContent).toContain('Revise draft');
-    expect((host.querySelectorAll('button')[2] as HTMLButtonElement).disabled).toBe(true);
+    expect((host.querySelectorAll('.marble-controls button')[2] as HTMLButtonElement).disabled).toBe(true);
     await click(1); expect(host.querySelector('[role=status]')!.textContent).toContain('Committee review');
     await click(3); expect(host.querySelector('[role=status]')!.textContent).toContain('Step 1');
   } finally {

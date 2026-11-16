@@ -35,6 +35,12 @@ On [advisory votes](/votes), distribute a personal budget of 100 priority points
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
+## Export a sample evidence packet
+
+Open a sample proposal's source details and choose Evidence packet. Export evidence JSON saves a public snapshot with background citations, assumptions, missing dates and review status. Show copy / print fallback lets you select the JSON if downloads fail. Export works offline once the proposal is loaded; it cannot recover a proposal that never loaded.
+
+The packet excludes journals, votes and source full text. Safe HTTPS syntax is checked, but link reachability and source content are unverified. These samples have no reviewed claim-level evidence or upstream evidence revision history. Export time is not a source date or human approval. Citizen proposals and official bill records do not yet have this export.
+
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
 
 The fictional transit sample includes two argument tracks with unreviewed claims and counterarguments. Drag within a track or use Move up and Move down to change your personal reading order. Each card discloses its source limits and quality status and expands Why this matters. This order lasts only while the map is open; it never changes public rankings or votes and is not verified participation. No claim-level citations have been supplied.
@@ -91,7 +97,7 @@ The Feed also offers a demo two-minute sampler of five fictional policy topics. 
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. The journey ribbon previews each stage with a drag, arrow keys, or a stage tap. Choose Open to navigate; previewing never publishes, votes, or prepares a sponsor card. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
-The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
+The Outcomes measurement prototype also uses explicitly synthetic metrics. Its source revision demonstration retains a published measurement snapshot and shows field-level corrections with SHA-256 hashes. Corrections require reviewer acknowledgment; no authenticated review or live dataset monitoring is available. Hashes identify local measurement content, not verified publisher datasets. Primary sources, editorial inferences, user claims and synthetic estimates have different evidentiary roles. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
 
 ## Explore connected issues
 
@@ -128,6 +134,10 @@ The Outcomes uncertainty stack separates measurement, model, cost and implementa
 The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV files or pasted data, maps value/date/unit/scope columns and checks them against a civic metric contract. It distinguishes primary sources, editorial inference, user claims and synthetic estimates. Dates, exact source revisions, reuse terms and limitations remain attached to each draft.
 
 Acceptance is a self-reported local review of the exact draft. Any data or metadata change requires new review. Nothing is published or added to measured outcomes or synthesis. Drafts and review history disappear on reload; export the complete JSON packet or copy/print its text to retain them. Offline files work without network requests. The cited example is a transcription exercise awaiting independent source verification. A named reviewer and passing structural checks do not establish authenticated approval or real-world policy benefit.
+
+## Contesting evidence
+
+The [evidence challenge docket](/outcomes#evidence-docket) demonstrates sourced, conflicting and missing-source cases. Prepare a local draft tied to an exact claim revision and source; include new evidence, dates, limitations and the requested correction. The prototype sends nothing and loses drafts on reload. Export before leaving. Example decisions are not verified human reviews. A live private intake, moderator review and independent appeal service remain unavailable. Never include personal details in public evidence.
 
 ## Simple glossary
 
