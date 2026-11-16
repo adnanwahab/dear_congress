@@ -31,3 +31,15 @@
 @media(max-width:760px){.gp-story-pair{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.gp-story-content{animation:none}}
 html[data-motion="off"] .gp-story-content{animation:none}
+.gp-playtest { overflow-wrap: anywhere; }
+.gp-playtest fieldset { min-width: 0; margin: 1rem 0; padding: 1rem; }
+.gp-playtest form label { display: block; margin-block: .75rem; }
+.gp-playtest textarea { display: block; width: 100%; box-sizing: border-box; }
+.gp-playtest :is(input, textarea, button, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.gp-carousel { overflow-wrap: anywhere; }
+.gp-carousel nav, .gp-carousel [role="tablist"] { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.gp-carousel button { min-height: 44px; }
+.gp-carousel [aria-selected="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+.gp-carousel:focus-visible, .gp-carousel :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.gp-carousel [role="tabpanel"] { min-width: 0; }
+.gp-microscope article{border-left:3px solid var(--line,#d9dfe1);padding:0 16px;margin:16px 0;overflow-wrap:anywhere}.gp-microscope h3{overflow-wrap:anywhere}.gp-microscope summary{min-height:44px}.gp-microscope a{display:inline-block;padding:8px 0}.gp-microscope{animation:none;transition:none}

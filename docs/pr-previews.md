@@ -43,3 +43,35 @@ contains no repository PR identity. Story browsing has no write callbacks, netwo
 mutations, voting actions, or publication endpoint. Existing quorum 10, exposure,
 checks, roster/auth/CSRF, advisory lock and disabled/dry-run policies are unchanged;
 see launch-merge-policy.md for the full configured policy and human release rules.
+
+## Civic patch playtest station (SHE-617)
+
+PR detail pages include a page-local exploratory checklist for desktop, mobile,
+keyboard and reduced motion. The station shows repository, repository ID (in the
+report), head SHA, base, revision and advisory review status independently of
+preview availability. Only the existing operator registry's exact-head,
+deployment-verified HBL Fly origins launch; no contributor URL or other repository
+can supply a preview. Missing deployments remain explicitly unavailable. Opening
+is a separate tab with no opener/referrer; no iframe, build or deployment occurs.
+No new preview origins or deployments were registered by this change.
+
+A participant supplies environment, reproduction steps, expected and actual
+behavior and explicitly consents before recording a public report. Nothing is
+autosaved or automatically collected from the browser. Reports serialize this
+structured context into existing feedback text so the durable revision-bound
+feedback/outbox/receipt pipeline remains compatible. Authenticated approved-roster,
+CSRF, source freshness, server revision checks, input/privacy limits and publication
+configuration continue to apply. Retrying an unchanged uncertain submission reuses
+its idempotency key. Editing starts a new report attempt. Changing revision resets
+the station; checklist and unfinished reports are lost on navigation/reload.
+
+Saved feedback is separate from GitHub delivery and task intake; their pending,
+failed and deep-link states appear in Feedback and follow-up. These reports never
+change ballots, approval evidence, eligibility, quorum or merge authority. The
+station intentionally does not integrate LiveRound: its anonymous civic votes are
+a different data source and cannot be treated as playtest feedback or approval.
+
+Run `bun test src/client/playtest.test.tsx` and
+`bun scripts/verify-playtest-ui.tsx` for the station's focused checks, in addition
+to all required repository checks. Real desktop/mobile browser layout and keyboard
+and reduced-motion review remain part of human acceptance.

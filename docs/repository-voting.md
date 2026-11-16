@@ -118,3 +118,37 @@ and current-head review requirements, repository/kind isolation, existing ballot
 receipts and records are unchanged. Runtime configuration and GitHub protections
 were not changed or verified. Desktop/mobile visual and real-browser keyboard QA
 remain required before acceptance.
+
+## Keyboard patch comparison (SHE-615)
+
+PR lists include a read-only review carousel. Focus its region and use Left/Right
+or the Previous/Next buttons; Summary/Files/Checks implement keyboard tabs with
+Left/Right and Home/End. Selection is deep-linked as `review=<PR>&tab=<section>`
+on the existing repository list URL, with browser back/forward support. Repository
+and issue switches clear that selection. No live-round control is repurposed:
+`LiveRound` remains a separate advisory civic voting surface.
+
+Receipts load through the existing permission-checked detail endpoint. Repository
+ID, PR number, version, head and base must match the selected list revision;
+changed revisions require source refresh. Loading, missing selection, unavailable
+evidence and permission failures are explicit. Contributor text remains plain
+text. Explicit links open the existing PR detail/voting page or GitHub. Carousel
+navigation only reads; it has no ballot, feedback, merge or civic-vote mutation.
+Controls wrap on small screens and use no animation, including reduced motion.
+
+The configured merge policy is preserved: the pilot lock disables automatic
+merging, non-HBL scopes stay disabled/dry-run, and browser choices confer no merge
+authority. Existing quorum, exposure, approval, checks, auth, CSRF and revision
+requirements are unchanged. See `launch-merge-policy.md` for source defaults and
+human review/release requirements; this feature does not verify production values.
+
+## Code change microscope — SHE-613
+
+PR details include a read-only file-role guide grouped into UI, Model, Data, Tests
+and Operations, with documented ordered path heuristics, confidence and caveats.
+Added-line receipts pin the source repository and full head SHA. Deleted-line
+receipts require merge-base identity and are explicitly unavailable in the current
+payload; missing patches and renames likewise never fabricate line receipts.
+The guide exposes source/revision/loading/error/stale/permission states separately
+from governance and never submits a vote or approves a merge. See
+[scope, verification and remaining acceptance](reviews/SHE-613.md).
