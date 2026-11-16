@@ -769,6 +769,14 @@ html[data-motion="calm"]::view-transition-group(*) { animation: none !important;
 html[data-motion="calm"]::view-transition-old(root) { animation: 150ms ease-out both page-fade-out !important; }
 html[data-motion="calm"]::view-transition-new(root) { animation: 150ms ease-out both page-fade-in !important; }
 html[data-motion="calm"] .scroll-reveal, html[data-motion="off"] .scroll-reveal { opacity: 1 !important; transform: none !important; }
+/* Fold only disposable snapshots; live clauses stay selectable and untransformed. */
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-group(*) { animation-duration: var(--motion-base); }
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-old(*),
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-new(*) { transform-origin: top; }
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-new(*) { animation: paper-unfold var(--motion-base) var(--ease-out) both; }
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-old(root),
+html:is(:active-view-transition-type(proposal-fold), [data-motion-type="proposal-fold"])::view-transition-new(root) { animation: none; }
+@keyframes paper-unfold { from { transform: perspective(1200px) rotateX(-12deg); opacity: .4; } to { transform: perspective(1200px) rotateX(0); opacity: 1; } }
 /* End motion foundation. */
 
 /* Shared native disclosure motion. Unsupported engines retain native instant toggles.

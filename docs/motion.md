@@ -353,6 +353,25 @@ The existing launch merge policy, disabled/dry-run governance defaults and human
 approval/tagged-release requirements are unchanged. This feature is not authority
 to merge or deploy. See [SHE-593 review](reviews/SHE-593.md) for validation limits.
 
+
+## Proposal paper disclosure (SHE-590)
+
+Feed sample cards expose a native details/summary document with current and
+proposed illustrative wording, existing source provenance and the chapter draft
+link. `ProposalPaper` uses the typed `proposal-fold` transition and a stable,
+CSS-safe `sample`-scoped identity. Only snapshots fold in perspective; live text
+remains selectable and wraps long clauses. Opening never changes history or
+scroll intentionally, replaces text nodes, submits content or casts a vote.
+Off/reduced motion commits immediately. Unsupported or throwing snapshot APIs
+retain the disclosure, newer toggles supersede older intent, and unmount skips
+the visual transition. Existing Navigation chapter links remain authoritative.
+
+Native browser coverage lives in `tests/accessibility/proposal-paper.pw.ts` for
+keyboard opening, route/history isolation, text selection, draft navigation and
+snapshot failure recovery across the existing viewport/motion projects. These
+checks still require an installed Playwright runtime. Manual screen-reader and
+touch review remains necessary; DOM tests do not establish that acceptance.
+
 Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
 view switch and `prepareStageMorph` for ordinary chapter links. The flat default
 uses no 3D transforms. Orbit is an explicit range input, with no autonomous
