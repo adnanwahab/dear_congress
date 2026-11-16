@@ -16,7 +16,9 @@ const request = async <T,>(): Promise<T> => { throw new Error('Offline'); };
 await act(async () => { root.render(<WorkflowScreen stage="outcomes" request={request} />); });
 // Lazy policy measurements should hydrate even when the proposals request fails.
 await act(async () => { await import('../src/client/PolicyMeasurements'); });
-// The sibling response-composition lazy boundary must settle before snapshotting measurements.
+// Wait for the independently split component to hydrate, not for the proposal API.
+await act(async () => { await import('../src/client/UncertaintyStack'); });
+// Wait for sibling response-composition hydration before comparing measurements after storage updates.
 await act(async () => { await import('../src/client/ResponseComposition'); });
 const measurements = container.querySelector('#policy-measurements')!;
 assert(measurements, 'Measurements remain accessible when proposal API is unavailable');

@@ -131,6 +131,8 @@ Optional haptics is off by default. Enable it in Page actions (More on phones). 
 
 The Outcomes study-quality matrix separates primary-source findings, editorial inference, illustrative user claims and synthetic estimates. Sort by study characteristics, inspect dated limitations and disclosures, and export or print the records with review history. All entries await human review; a citation is not approval and conflicting endpoints are not a political viewpoint score.
 
+The Outcomes uncertainty stack separates measurement, model, cost and implementation assumptions. Its traceable, conflicting and missing-source cases are synthetic demonstrations. A combined scenario envelope is not a confidence interval or forecast. Conflicts and missing evidence block combination. Each input retains its date, limitations and source identity; material revisions record pending human review. Export the complete record, copy it, or print it after loading; bundled examples work offline.
+
 ## Reviewing public datasets
 
 The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV files or pasted data, maps value/date/unit/scope columns and checks them against a civic metric contract. It distinguishes primary sources, editorial inference, user claims and synthetic estimates. Dates, exact source revisions, reuse terms and limitations remain attached to each draft.

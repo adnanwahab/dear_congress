@@ -104,6 +104,10 @@ The same page includes a response-composition exercise with fictional group
 counts, adjustable multipliers, sourced/conflicting/missing-source teaching cases
 and a dated exportable session review log. It uses no browser votes or cookies.
 See [SHE-683 validation and remaining review](docs/reviews/SHE-683.md).
+The same page includes a read-only synthetic uncertainty stack with four assumption
+layers, conflict/missing-source blockers and JSON/copy/print fallbacks. See the
+[uncertainty contract](docs/uncertainty-stack.md) and
+[SHE-682 review gaps](docs/reviews/SHE-682.md); it is not a real policy estimate.
 The evidence freshness calendar adds a monthly agenda and dated ledger with
 review reminders, unknown-date labels and copyable/printable provenance.
 Age never determines validity. Its sourced example establishes repository
