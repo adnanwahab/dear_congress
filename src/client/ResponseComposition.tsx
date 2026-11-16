@@ -14,6 +14,14 @@ export function ResponseComposition() {
     setWeights(nextWeights); setCaseId(nextCase);
     setHistory(rows => [...rows, { at: new Date().toISOString(), action, weights: [...nextWeights], caseId: nextCase, provenance: COMPOSITION_VERSION, review: 'pending human review' }]);
   }
+  function reweightFromPosition(index: number, x: number, input: HTMLInputElement, action: string) {
+    const rect = input.getBoundingClientRect();
+    if (!rect.width) return;
+    const value = Math.round(Math.max(0, Math.min(1, (x - rect.left) / rect.width)) * 20) / 4;
+    if (weights[index] === value) return;
+    const next = [...weights]; next[index] = value;
+    update(next, caseId, action);
+  }
   const report = compositionReport(weights, caseId, history);
   function download() {
     try {
@@ -32,7 +40,7 @@ export function ResponseComposition() {
     <p><strong>Primary source:</strong> the complete original fictional count record below, {COMPOSITION_VERSION}/groups, authored 2026-11-14. Primary describes origin, not truth or representativeness; this record is synthetic.</p>
     <div className="composition-groups">{GROUPS.map((g, i) => <fieldset key={g.name}><legend>{g.name}</legend>
       <p>Illustrative input: {g.support} support, {g.oppose} oppose, {g.unsure} unsure · 2026-11-14 · synthetic estimate, pending human review.</p>
-      <label>Response multiplier for {g.name}: {weights[i]}×<input type="range" min="0" max="5" step="0.25" value={weights[i]} onPointerUp={e => { if (e.pointerType !== "touch") return; const box = e.currentTarget.getBoundingClientRect(); if (!box.width) return; const ratio = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)); const next = [...weights]; next[i] = Math.round(ratio * 20) / 4; update(next, caseId, `Touched ${g.name}`); }} onInput={e => { const next = [...weights]; next[i] = Number(e.currentTarget.value); update(next, caseId, `Reweighted ${g.name}`); }} /></label>
+      <label>Response multiplier for {g.name}: {weights[i]}×<input type="range" min="0" max="5" step="0.25" value={weights[i]} onPointerUp={e => { if (e.pointerType === 'touch') reweightFromPosition(i, e.clientX, e.currentTarget, `Touched ${g.name}`); }} onTouchEnd={e => { const touch = e.changedTouches[0]; if (touch) reweightFromPosition(i, touch.clientX, e.currentTarget, `Touched ${g.name}`); }} onClick={e => reweightFromPosition(i, e.clientX, e.currentTarget, `Tapped ${g.name}`)} onInput={e => { const next = [...weights]; next[i] = Number(e.currentTarget.value); update(next, caseId, `Reweighted ${g.name}`); }} /></label>
     </fieldset>)}</div>
     <p>Use arrow keys on sliders or drag by touch. Each group keeps its preferences; only its contribution changes. These multipliers are assumptions, not population weights.</p>
     <div role="status" aria-live="polite" aria-atomic="true"><h3>Illustrative weighted responses: {result.total}</h3>{['Support', 'Oppose', 'Unsure'].map((label, i) => <p key={label}>{label}: {result.counts[i]} weighted responses · {result.percentages[i]}</p>)}</div>
