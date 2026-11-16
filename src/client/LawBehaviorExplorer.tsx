@@ -3,8 +3,8 @@ import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
-import {FuturesGallery} from './FuturesGallery';
 import {lazy,Suspense} from 'react';
+const FuturesGallery = lazy(() => import('./FuturesGallery').then(mod => ({default:mod.FuturesGallery})));
 const FutureLetterCard=lazy(()=>import('./FutureLetter').then(mod=>({default:mod.FutureLetterCard})));
 
 import {LawEnsemble} from './LawEnsemble';
@@ -345,7 +345,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         {' · '}{strength}% reviewed parameter
         {' · '}{frames.length} checkpoints, {receipt.unit}s {frames[0]?.time}–{frames.at(-1)?.time}.
       </p>
-      <FuturesGallery key={`${revision}:${generation.current}`} sourceOrigin={hblOrigin} receipt={receipt} metric={selectedMetric} label={METRICS[selectedMetric]?.label||"Outcome unavailable"} unit={unit} onCompare={open=>{setComparing(open);setPlaying(false);}}/>
+      <Suspense fallback={<p role="status">Loading alternate futures gallery…</p>}><FuturesGallery key={`${revision}:${generation.current}`} sourceOrigin={hblOrigin} receipt={receipt} metric={selectedMetric} label={METRICS[selectedMetric]?.label||"Outcome unavailable"} unit={unit} onCompare={open=>{setComparing(open);setPlaying(false);}}/></Suspense>
       {comparing&&<>
       <div className="civic-law-playback-controls">
         <label>Recorded model outcome
