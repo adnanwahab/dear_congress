@@ -104,7 +104,6 @@ The same page includes a response-composition exercise with fictional group
 counts, adjustable multipliers, sourced/conflicting/missing-source teaching cases
 and a dated exportable session review log. It uses no browser votes or cookies.
 See [SHE-683 validation and remaining review](docs/reviews/SHE-683.md).
-
 The evidence freshness calendar adds a monthly agenda and dated ledger with
 review reminders, unknown-date labels and copyable/printable provenance.
 Age never determines validity. Its sourced example establishes repository
@@ -800,6 +799,16 @@ Revisiting a changed app source record marks its original clips stale without
 rewriting notes. External source pages are not monitored. No change observed
 is not a freshness guarantee. Synthetic measurements cite their fixture module,
 not real-world evidence. See [SHE-537 validation](docs/reviews/SHE-537.md).
+
+### Public-data gaps atlas
+
+`/outcomes#data-gaps-atlas` includes a bundled, read-only research inventory with
+jurisdiction/topic/category filters and metric/question search. It distinguishes
+primary-source metadata, editorial inference, illustrative user claims and
+synthetic estimates. No numeric public observation or verified policy effect is
+registered. Missing evidence means unknown. Exported JSON and the copy/print
+fallback retain dates, limitations, sources, research questions and pending review
+history. See [SHE-684 validation and limits](docs/reviews/SHE-684.md).
 
 ## Sample advisory share cards
 
