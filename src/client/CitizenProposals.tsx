@@ -1,3 +1,4 @@
+import { CivicTimeline } from './CivicTimeline';
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { LawBehaviorExplorer } from './LawBehaviorExplorer';
@@ -365,6 +366,11 @@ function ProposalDetail({ id }: { id: string }) {
       {proposal.ownVote && !voting && !voteError && <SaveToJourney category="Explicit votes" kind="Citizen advisory activity" text={JSON.stringify({ source: "citizen-proposal-advisory", proposalId: proposal.id, title: proposal.title, proposedChange: proposal.proposedChange, choice: proposal.ownVote, note: "Current choice read from server; editable local snapshot, not a verified ballot receipt. Later changes or withdrawal do not update this copy." }, null, 2)} />}
       <Suspense fallback={<p role="status">Loading design workshop…</p>}><CooperativeMission key={`mission:citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} /></Suspense>
       <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />      <ProposalWorkshop key={`workshop:citizen:${proposal.id}`} source={proposal} />
+      <CivicTimeline key={proposal.id} points={[
+        { id: `citizen:${proposal.id}:published`, label: 'Published for advisory voting', timestamp: proposal.publishedAt, evidence: 'recorded' },
+        { id: `citizen:${proposal.id}:reviewed`, label: 'Institutional review', evidence: 'unknown' },
+        { id: `citizen:${proposal.id}:delivered`, label: 'Delivered to a public office', evidence: 'unknown' },
+      ]} />
 
       <Suspense fallback={<p role="status">Loading private duet…</p>}><ProposalDuet key={`duet:citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}`, supportingInfo: proposal.supportingInfo, sourceEntryId: proposal.sourceEntryId }} /></Suspense>
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
