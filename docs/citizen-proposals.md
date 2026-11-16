@@ -226,6 +226,103 @@ delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
 
+## Sample audio explainer (SHE-490)
+
+The six-stage sample workflow offers a click-to-play English synthetic explainer
+for the selected fictional proposal. Five passages describe its goal, clause,
+scenario jurisdiction, unavailable tradeoff evidence and uncertainty. Transcript
+passages link to the exact displayed sample fields; agency background links are
+never narrated as evidence. Speech is provided by the browser/OS and may use its
+speech service, as disclosed before playback. No microphone, autoplay, external
+AI summarization, vote mutation or stored audio preference is used.
+
+Stop cancels owned speech, as does changing proposal text or leaving the view.
+Loading and voice failure leave the transcript usable; Play retries failures.
+Subtitles show the passage currently being spoken. Native buttons and disclosures
+support keyboard use; text wraps on narrow screens and no animation is added.
+The roughly one-minute duration varies with text and platform voice. Citizen,
+official-bill and repository PR records are outside this sample-only feature.
+
+## Legislative redline detective sandbox (SHE-415)
+
+The existing amendment editor on sample Draft/Votes and citizen detail includes
+an optional, collapsed **Play legislative redline detective · Sandbox**. Three
+bundled fictional cases ask about duty, eligibility and ambiguous timing. Select
+a native radio choice and submit Reveal explanation; only then are feedback,
+Removed/Added comparison, links to the exact fictional source clauses and edge
+cases shown. Next case resets the guess and moves focus to the case heading;
+Play again restarts the set. No score or guess is persisted or sent anywhere.
+
+These are unreviewed invented words, not legal advice or interpretations of the
+selected proposal. The existing source-kind-keyed editor and civic navigation are
+unchanged. The existing comparison and source-chip presentation are reused, with
+local clause anchors rather than misleading official background citations.
+The existing law-behavior API accepts bounded model parameters, not arbitrary
+clauses; this exercise does not call it or claim to project these edits.
+
+Fixtures load synchronously with the editor, so there is no separate network,
+loading, timeout or retry state. The exercise works without storage or model
+availability. Native details, form, radios, buttons and anchors support keyboard
+and touch. Controls have visible focus and at least 44px target height; narrow
+comparisons stack. No animation, timers or automatic progression are used, so
+reduced motion sees the same complete content. Human native-browser, zoom,
+touch and screen-reader review is still required before acceptance.
+
+## Phrase reading layers (SHE-393)
+
+Opening **Suggest amendment** on `/draft` or `/votes` exposes an exact-text reader.
+Explicitly authored phrases in known fictional drafts are native buttons that move
+an exact phrase snapshot into an adjacent unreviewed plain-English pane using the
+shared typed `clause-explain` transition. These are terminology aids, not official
+clause boundaries or a legal interpretation. The full original text stays visible.
+The pane records uncertainty, the exact draft locator and private revision; all
+unmapped text and legal effects remain explicitly uninterpreted. Background links
+are never represented as citations proving the sample wording is law.
+
+Mappings require the sample kind, ID and exact original text. Citizen text, edited
+revisions and unsupported samples receive an explicit unavailable explanation;
+there is no generated paraphrase or remote interpretation request. Saved private
+versions retain their existing immutable records. Reading never saves, publishes,
+changes votes or submits anything. Text-only reading disables the morph; reduced
+motion uses the shared immediate-update path. Native button semantics, retained
+source focus and return anchors support keyboard/touch use and long text. There
+is no separate asynchronous explanation loading state; the existing stage loader
+continues to own sample retrieval.
+
+## Private revision impact comparison (SHE-455)
+
+Every amendment redline now includes Before/After panels for scope, eligibility,
+cost, implementation and uncertainties. Explicit `Scope:`, `Eligibility:`,
+`Cost:`, `Implementation:` and `Uncertainties:` lines are quoted verbatim with
+local revision/line links. Unlabeled prose is never classified by keywords;
+missing evidence says Needs review. Even anchored author statements need review:
+a citation note is not verified evidence or a fiscal/legal assessment. This is a
+bounded evidence checklist, not automated legal interpretation or an official
+bill-revision service.
+
+After saving two private versions, choose their IDs in Compare saved revision
+IDs. Selection leaves editing fields and storage unchanged. Versions must share
+the exact original source snapshot (kind, ID, origin, title, jurisdiction and
+text). Live text is labeled unsaved; saved replacement text uses its private UUID.
+Base text remains a saved snapshot, without inventing an official revision ID.
+The existing local-storage and audit limitations above still apply. No API,
+publication, voting, navigation or source-record changes are involved.
+
+## Private amendment family tree (SHE-454)
+
+The editor records explicit parent revision, fork, compromise and merge events.
+Select a saved version before editing to make it the parent. Compromise and merge
+require another version from the exact same source snapshot; reconciliation is
+manual. Each branch exposes both parent links, exact-text comparisons, citation
+notes, save time and its unreviewed private state. Legacy versions retain unknown
+ancestry. Links preserve the current civic route and proposal selection and add
+source-kind/ID and revision parameters. They reopen only in a browser containing
+the records; a missing revision produces an explicit error, not a fabricated tree.
+Links do not publish, sync or transfer drafts. Proposal drafts are never enacted
+law, verified participation or approval evidence. There is no new API or loading
+request: reads are synchronous browser storage. See the SHE-454 review for checks
+and remaining native browser acceptance.
+
 ## Personal learning notes (SHE-533)
 
 `/account` offers an explicitly saved browser-local learning log, with separate

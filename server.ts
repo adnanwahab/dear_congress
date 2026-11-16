@@ -1,3 +1,4 @@
+import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -401,10 +402,14 @@ let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
 let demoCache: { day: string; payload: DemoPayload } | null = null;
 // Serialize snapshots so an older concurrent write cannot replace a newer vote.
 // Atomic rename also keeps a process interruption from leaving a partial JSON DB.
+const operatorHealth = new OperatorHealth();
+let pendingWrites = 0;
+let writeFailures = 0;
 let saveQueue: Promise<unknown> = Promise.resolve();
 const save = () => {
   demoCache = null;
   const snapshot = JSON.stringify(db, null, 2);
+  pendingWrites++;
   const write = saveQueue.then(async () => {
     await mkdir(dirname(DB_PATH), { recursive: true });
     const temporaryPath = `${DB_PATH}.${process.pid}.tmp`;
@@ -412,6 +417,7 @@ const save = () => {
     await rename(temporaryPath, DB_PATH);
   });
   saveQueue = write.catch(() => {});
+  void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
@@ -880,6 +886,9 @@ const publicSecurity = createPublicSecurity();
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
+  // Bun defaults to 10s, which is shorter than our quiet SSE streams.
+  // Keep streaming sockets alive between heartbeats instead of resetting mid-response.
+  idleTimeout: 255,
   development: process.env.NODE_ENV !== "production",
   routes: {
     "/api/topics/:id": { GET: (req) => {
@@ -897,6 +906,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
+    "/admin/health": (req) => operatorHealth.handle(req, ADMIN_TOKEN, { writes: pendingWrites, designs: designInFlight.size, writeFailures }),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
     "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },
@@ -1135,6 +1145,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const origin = new URL(req.url).searchParams.get("origin");
         if (origin && !["real", "public", "sample", "simulated", "all"].includes(origin)) return withReadCors(req, bad("origin must be real, sample, simulated or all"));
         let listener: ((payload: string) => void) | null = null;
+        let cleanup: (() => void) | null = null;
 
         const stream = new ReadableStream({
           start(controller) {
@@ -1144,25 +1155,36 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
             // initial snapshot
             write(entriesPayload(origin));
 
-            listener = (payload: string) => write(origin ? entriesPayload(origin) : payload);
+            listener = (payload: string) => {
+              try { write(origin ? entriesPayload(origin) : payload); }
+              catch { cleanup?.(); }
+            };
             entryListeners.add(listener);
 
-            const cleanup = () => {
+            // Fly can close an SSE response that stays silent; SSE comments
+            // keep the connection active without triggering client messages.
+            const heartbeat = setInterval(() => {
+              try { controller.enqueue(encoder.encode(": keepalive\n\n")); }
+              catch { cleanup?.(); }
+            }, 15_000);
+            const onAbort = () => {
+              cleanup?.();
+              try { controller.close(); } catch { /* already closed */ }
+            };
+            cleanup = () => {
+              clearInterval(heartbeat);
               if (listener) entryListeners.delete(listener);
-              try { controller.close(); } catch {
-                // already closed
-              }
+              req.signal.removeEventListener("abort", onAbort);
             };
 
-            const abort = req.signal;
-            if (abort.aborted) {
-              cleanup();
+            if (req.signal.aborted) {
+              onAbort();
               return;
             }
-            abort.addEventListener("abort", cleanup, { once: true });
+            req.signal.addEventListener("abort", onAbort, { once: true });
           },
           cancel() {
-            if (listener) entryListeners.delete(listener);
+            cleanup?.();
           },
         });
 
@@ -1171,6 +1193,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
             "content-type": "text/event-stream",
             "cache-control": "no-cache, no-transform",
             connection: "keep-alive",
+            "x-accel-buffering": "no",
           },
         }));
       },
@@ -1271,28 +1294,49 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         if (!fork) return new Response("fork not found", { status: 404 });
 
         let listener: ((ev: StageEvent) => void) | null = null;
+        let cleanup: (() => void) | null = null;
         const stream = new ReadableStream({
           start(controller) {
             const encoder = new TextEncoder();
             const write = (ev: StageEvent) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(ev)}\n\n`));
 
+            const heartbeat = setInterval(() => {
+              try { controller.enqueue(encoder.encode(": keepalive\n\n")); }
+              catch { cleanup?.(); }
+            }, 15_000);
+            const onAbort = () => {
+              cleanup?.();
+              try { controller.close(); } catch { /* already closed */ }
+            };
+            cleanup = () => {
+              clearInterval(heartbeat);
+              if (listener) fork.listeners.delete(listener);
+              req.signal.removeEventListener("abort", onAbort);
+            };
+            if (req.signal.aborted) {
+              onAbort();
+              return;
+            }
+            req.signal.addEventListener("abort", onAbort, { once: true });
+
             for (const ev of fork.events) write(ev);
             if (fork.done) {
+              cleanup?.();
               controller.close();
               return;
             }
 
             listener = (ev: StageEvent) => {
-              write(ev);
+              try { write(ev); } catch { cleanup?.(); return; }
               if (fork.done || (ev.status === "error" && ev.stage === "synthesize")) {
-                if (listener) fork.listeners.delete(listener);
+                cleanup?.();
                 controller.close();
               }
             };
             fork.listeners.add(listener);
           },
           cancel() {
-            if (listener) fork.listeners.delete(listener);
+            cleanup?.();
           },
         });
 
@@ -1301,6 +1345,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
             "content-type": "text/event-stream",
             "cache-control": "no-cache, no-transform",
             connection: "keep-alive",
+            "x-accel-buffering": "no",
           },
         });
       },
@@ -1819,6 +1864,21 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
         });
       }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
+  }
+}
+// Observe after existing auth/validation wrappers; never inspect request content.
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (!path.startsWith('/api/') || !route) continue;
+  const wrap = (handler: Function) => async (...args: unknown[]) => {
+    try {
+      const response = await handler(...args);
+      if (response instanceof Response) operatorHealth.record(path, response.status);
+      return response;
+    } catch (error) { operatorHealth.record(path, 500); throw error; }
+  };
+  if (typeof route === 'function') (serverOptions.routes as Record<string, unknown>)[path] = wrap(route);
+  else if (typeof route === 'object') for (const [method, handler] of Object.entries(route)) {
+    if (typeof handler === 'function') (route as Record<string, unknown>)[method] = wrap(handler);
   }
 }
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
