@@ -179,6 +179,13 @@ The [public-data gaps atlas](/outcomes#data-gaps-atlas) lists a sourced metric d
 
 ## Simple glossary
 
+Dotted-underlined civic terms open editorial reading help with an illustrative example. Use Enter, Space or a tap to open, Tab to reach Close, and Escape to return to the term. Help is bundled with the page and needs no separate download. It does not verify legal status.
+
+- Appropriation: authority to spend public money for a specified purpose.
+- Committee: a smaller legislative group that examines proposed laws.
+- Amendment: a proposed change to an existing text.
+- Effective date: when a law or provision begins to operate.
+
 - Advisory vote: a recorded preference with no official or binding effect.
 - Proposal: a suggested change, not an enacted law.
 - Jurisdiction: the place and level of government responsible for a subject.
