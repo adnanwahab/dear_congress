@@ -23,6 +23,7 @@ for (const reduced of [false, true]) {
   }) as any;
   await act(async () => root.render(<WorkflowScreen stage="votes" request={request} />));
   assert.equal(container.querySelector('.advisory-receipt'), null);
+  assert.equal(container.querySelector('.advisory-next-step'), null);
   assert.equal(posts, 0);
   await act(async () => resolve(payload));
   for (const [index, label] of ['Support', 'Oppose', 'Not sure'].entries()) {
@@ -39,6 +40,22 @@ for (const reduced of [false, true]) {
     assert.match(receipt.textContent!, /Viewed text revision: text-/);
     assert.match(receipt.textContent!, /does not bind this vote to a revision/);
     await act(async () => resolve(payload));
+    const next = container.querySelector('.advisory-next-step')!;
+    assert(next, 'all acknowledged choices offer next steps');
+    assert.deepEqual([...next.querySelectorAll('summary')].map(s => s.textContent), ['See trade-offs', 'Compare a possible future', 'Share this explanation']);
+    assert.match(next.textContent!, /non-binding advisory choice.*browser’s cookie/);
+    const explanation = (next.querySelector('textarea') as any).value;
+    assert(explanation.includes(payload.items[0]!.id));
+    assert(explanation.includes(payload.items[0]!.currentText));
+    assert(explanation.includes(payload.items[0]!.proposedText));
+    assert(!explanation.includes(`choice: ${label}`), 'sharing excludes personal stance');
+    Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async (text: string) => { assert.equal(text, explanation); } } });
+    await act(async () => (next.querySelector('button') as any).click());
+    assert.match(next.textContent!, /Explanation copied/);
+    Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('denied'); } } });
+    await act(async () => (next.querySelector('button') as any).click());
+    assert.match(next.textContent!, /Select and copy the explanation above/);
+    assert.equal(posts, index + 1, 'follow-up never submits a vote');
     const actions = receipt.querySelectorAll('button');
     await act(async () => (actions[0] as any).click());
     assert.equal(dom.document.activeElement, container.querySelector('.advisory-bars button'));
@@ -53,14 +70,28 @@ for (const reduced of [false, true]) {
   Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('denied'); } } });
   await act(async () => (oldReceipt!.querySelectorAll('button')[1] as any).click());
   assert.match(oldReceipt!.textContent!, /Could not copy/);
+  const proposalSelect = container.querySelector('.workflow-select select')!;
+  await act(async () => fireEvent.change(proposalSelect, { target: { value: payload.items[1]!.id } }));
+  assert.equal(container.querySelector('.advisory-next-step'), null, 'another proposal cannot inherit the post-choice panel');
+  await act(async () => fireEvent.change(proposalSelect, { target: { value: payload.items[0]!.id } }));
   await act(async () => root.unmount()); container.remove();
 }
 // Empty payload offers no voting controls or receipt.
 const container = dom.document.createElement('div'); dom.document.body.append(container);
 const root = createRoot(container as any);
-await act(async () => root.render(<WorkflowScreen stage="votes" request={(async () => ({ ...demoPayload({}, 'empty'), items: [] })) as any} />));
+dom.history.replaceState(null, '', '/votes');
+dom.sessionStorage.clear();
+const saved = demoPayload({}, 'saved');
+saved.votes[saved.items[0]!.id] = 0;
+await act(async () => root.render(<WorkflowScreen stage="votes" request={(async () => saved) as any} />));
+assert(container.querySelector('.advisory-next-step'), 'previously saved Not sure is a choice');
+assert.equal(container.querySelector('.advisory-receipt'), null, 'loading a saved choice does not fabricate a receipt');
+await act(async () => root.unmount());
+const emptyRoot = createRoot(container as any);
+await act(async () => emptyRoot.render(<WorkflowScreen stage="votes" request={(async () => ({ ...demoPayload({}, 'empty'), items: [] })) as any} />));
 assert.equal(container.querySelector('.advisory-receipt'), null);
 assert.equal(container.querySelector('.advisory-bars'), null);
-await act(async () => root.unmount());
+assert.equal(container.querySelector('.advisory-next-step'), null);
+await act(async () => emptyRoot.unmount());
 await dom.happyDOM.close();
 console.log('PASS receipt acknowledgement, equal choices, loading, empty, touch, focus, copy and reduced-motion rendering');
