@@ -59,6 +59,16 @@ It exports Markdown methodology without private inputs and links to all six stag
 Stale and missing fixtures remain explicit; there is no archived real-source or
 dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
 
+## Priority history
+
+The `/needs` Priority time machine reads `/api/priority-history`. Starting with
+this version, database saves capture changed shared-need model ranks and source
+counts, retaining the latest 365 changes. The first successful state-changing save records the initial baseline;
+there is no historical backfill. Date windows without records show unavailable,
+and one sample cannot establish change. The ranking keeps the existing simulated
+priors and optional measured-outcome contribution, explicitly labeled per sample.
+The viewer only reads; it never submits journals, allocations or votes.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS

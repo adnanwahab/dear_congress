@@ -159,6 +159,7 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ default: m.PriorityHistory })));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
@@ -864,6 +865,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
       <section className="card">
         <JurisdictionPicker preference={jurisdiction} count={state.proposals.filter(p => !jurisdiction.value || p.jurisdiction === jurisdiction.value).length} />
         <h2>Shared needs</h2>
+        <Suspense fallback={<p role="status">Loading priority history…</p>}><PriorityHistory /></Suspense>
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Jurisdiction filters policy options and jurisdiction priorities below. Shared need rankings, journal map and measured outcomes stay unchanged.</p>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
