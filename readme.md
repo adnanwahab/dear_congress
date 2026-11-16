@@ -893,6 +893,11 @@ unreviewed teaching fixture, independent of selected packages and real votes.
 The snapshot handoff API has no household event-log response; external runner
 integration and calibrated policy effects remain unavailable. No resident data,
 storage or snapshot writes are used. See [SHE-428 review](docs/reviews/SHE-428.md).
+The one-assumption replay adds a $0/$150 credit toggle, paired balance highlights,
+pause/replay, manual month inspection and fictional dated month-close events.
+Dates start January 2030 for illustration only. Reduced motion removes the reveal
+animation; manual controls expose the same states. Real effects and funding costs
+remain unknown. See [SHE-902 review](docs/reviews/SHE-902.md).
 
 ### Who decides? sandbox
 

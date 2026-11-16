@@ -1202,3 +1202,11 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
   .claim-evidence a[href^="https:"]::after { content: " (" attr(href) ")"; }
   .claim-evidence mark { background: transparent; color: inherit; font-weight: bold; }
 }
+
+.divergence-worlds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.divergence-worlds > div { border: 2px solid currentColor; border-radius: 8px; padding: 12px; overflow-wrap: anywhere; }
+.divergence-worlds h6 { font-size: inherit; margin: 0; }
+.divergence-changed { border-style: dashed !important; animation: divergence-reveal 600ms ease-out; }
+.divergence-replay li { overflow-wrap: anywhere; }
+@keyframes divergence-reveal { from { transform: translateY(6px); opacity: .55; } to { transform: translateY(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .divergence-changed { animation: none; } }
