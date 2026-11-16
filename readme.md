@@ -1190,3 +1190,10 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Public read-only incident fallback
+
+Owners can pause public API writes using server-only `LAUNCH_READ_ONLY=1` while
+retaining labeled sample reading and source links. See
+[owner enable/disable and rollback](docs/launch-read-only.md) for graceful draining,
+all-instance verification, limits and recovery. No deployment is performed here.
