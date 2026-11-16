@@ -73,6 +73,17 @@ test('hub UI keeps missing evidence explicit, scopes samples and recovers search
     expect(host.textContent).toContain('No verified implemented policy is registered');
     expect(host.textContent).toContain('Legacy journal records do not retain explicit topic-curation consent');
     expect(host.querySelector('a[href="/votes?topic=transit&proposal=demo-transit"]')).not.toBeNull();
+    const annotationToggle = host.querySelector('.topic-annotations input') as HTMLInputElement;
+    expect(annotationToggle.checked).toBe(false);
+    expect(host.querySelector('.topic-annotations fieldset')).toBeNull();
+    await act(async () => { annotationToggle.click(); });
+    expect(host.querySelectorAll('.topic-annotations fieldset input').length).toBe(4);
+    expect(host.textContent).toContain('No reviewed annotations match these layers');
+    const layer = host.querySelector('.topic-annotations fieldset input') as HTMLInputElement;
+    await act(async () => { layer.click(); });
+    expect(layer.checked).toBe(false);
+    await act(async () => { annotationToggle.click(); });
+    expect(host.querySelector('.topic-annotations fieldset')).toBeNull();
     const nav = host.querySelector('nav[aria-label="Topic hubs"]')!;
     expect(nav.querySelectorAll('a').length).toBe(1);
     await act(async () => { window.history.replaceState(null, '', '/topics/transit?q=housing'); window.dispatchEvent(new window.PopStateEvent('popstate')); });
@@ -81,6 +92,18 @@ test('hub UI keeps missing evidence explicit, scopes samples and recovers search
     await act(async () => { select.value = 'Houston'; select.dispatchEvent(new window.Event('change', { bubbles: true }) as unknown as Event); });
     expect(host.textContent).not.toContain('Run frequent buses on evenings and weekends');
     expect(host.textContent).toContain('Make school crossings safer');
+    const { TopicAnnotations } = await import('./TopicAnnotations');
+    const annotations = Array.from({ length: 7 }, (_, i) => ({ id: `a${i}`, topicId: 'transit', layer: 'research' as const, text: `Reviewed question ${i}`, origin: 'individual-account' as const }));
+    await act(async () => root.render(<TopicAnnotations annotations={annotations} />));
+    const toggle = host.querySelector('input') as HTMLInputElement;
+    await act(async () => { toggle.click(); });
+    expect(host.querySelectorAll('article').length).toBe(5);
+    expect(host.textContent).toContain('Showing the first five');
+    const origin = host.querySelector('select')!;
+    await act(async () => { origin.value = 'verified-source'; origin.dispatchEvent(new window.Event('change', { bubbles: true }) as unknown as Event); });
+    expect(host.querySelectorAll('article').length).toBe(0);
+    expect(host.querySelector('section[aria-label="Individual accounts"]')).toBeNull();
+
   } finally {
     await act(async () => root.unmount());
     for (const key of Object.keys(globals)) { if (previous[key]) Object.defineProperty(globalThis, key, previous[key]!); else Reflect.deleteProperty(globalThis, key); }

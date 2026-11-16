@@ -1,3 +1,10 @@
+import { CivicCrossword } from './CivicCrossword';
+import { TownHallGame } from './TownHallGame';
+import { BudgetShock } from './BudgetShock';
+import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
+import { MissingVoice } from './MissingVoice';
+import { PolicyPinball } from './PolicyPinball';
+import { GlossaryText } from './CivicGlossary';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
@@ -11,8 +18,8 @@ export function LegislativeMarkdown({ source }: { source: string }) {
     if (block.startsWith('### ')) return <h4 key={i}>{block.slice(4)}</h4>;
     if (block.startsWith('## ')) return <h3 key={i}>{block.slice(3)}</h3>;
     if (block.startsWith('# ')) return <h2 key={i}>{block.slice(2)}</h2>;
-    if (block.split('\n').every(line => line.startsWith('- '))) return <ul key={i}>{block.split('\n').map((line,j) => <li key={j}>{line.slice(2)}</li>)}</ul>;
-    return <p key={i}>{block}</p>;
+    if (block.split('\n').every(line => line.startsWith('- '))) return <ul key={i}>{block.split('\n').map((line,j) => <li key={j}><GlossaryText text={line.slice(2)} /></li>)}</ul>;
+    return <p key={i}><GlossaryText text={block} /></p>;
   })}</div>;
 }
 export default function BillCatalog() {
@@ -36,8 +43,8 @@ export default function BillCatalog() {
   const bill = billCollection.bills.find(b => b.id === id);
   const results = searchBills(query, category);
   const back = `/bills${params.size ? '?' + params : ''}`;
-  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>
-    <p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
+  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
+    <CivicCrossword /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
@@ -63,7 +70,9 @@ export default function BillCatalog() {
       <div className="bill-chips" role="group" aria-label="Filter by category"><button aria-pressed={!category} onClick={() => update(query, '')}>All categories</button>{billCollection.categories.map(c => <button key={c} aria-pressed={category === c} onClick={() => update(query, category === c ? '' : c)}>{c}</button>)}</div>
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
+      <TownHallGame />
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
+    {id && <TownHallGame />}
   </main></div>;
 }
