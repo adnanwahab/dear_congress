@@ -20,6 +20,10 @@ The shared header starts with Sound Off. You can enable quiet navigation and san
 
 The home page offers optional self-guided trivia, an evidence tour and a fictional proposal walkthrough every week, available anytime in your browser. Opening a session records no attendance, answers or votes and earns no rewards. Public event discussion is unavailable pending moderators and a reporting process. Hypothetical gatherings are planning examples only. The external Library of Congress calendar is an official directory; verify each event’s current time, location and access details with its organizer.
 
+## Expert office hours
+
+On [Draft](/draft), expert office hours is a local rehearsal with fictional verification and conflicts. Nothing is published or sent. Expert opinion and unverified citation notes are separate from official decisions. Questions and timestamped answer history disappear on navigation, reload or draft changes. No real expert is verified or contacted.
+
 ## Explore with Surprise me
 
 On the [home page](/), Surprise me cycles through fictional sample proposals and their official background references. Each result labels its source type. Selection favors changes in topic, source type, jurisdiction or publisher, and associated proposal, randomly breaking ties. Results do not repeat until the available pool is exhausted. The pool is not a representative policy survey. This page remembers only the current round in memory; reloading clears it. The explorer uses no profile, votes, browsing history, location or browser storage. Reading never casts a vote. Official background links do not verify sample proposals or their effects, and current source contents have not been verified.
