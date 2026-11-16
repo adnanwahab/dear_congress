@@ -38,7 +38,7 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   }
   const disclosures = [...container.querySelectorAll('details.workflow-provenance-compact')];
   if (stage === 'feed' || stage === 'published') {
-    assert.equal(disclosures.length, 12);
+    assert.equal(disclosures.length, stage === 'feed' ? 13 : 12);
     const first = disclosures[0]!;
     const chip = first.querySelector('summary')!;
     await act(async () => { chip.dispatchEvent(new dom.PointerEvent('pointerover', { bubbles: true, pointerType: 'mouse' })); });
@@ -56,7 +56,12 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     assert(first.hasAttribute('open'), 'tap opens');
     const original = first.querySelector('a')!;
     assert.equal(original.getAttribute('target'), '_blank');
-    assert.equal(dom.location.search, '?proposal=demo-food');
+    const params = new URLSearchParams(dom.location.search);
+    assert.equal(params.get('proposal'), 'demo-food', 'source inspection never changes the selected proposal');
+    if (stage === 'feed') {
+      assert.equal(params.get('discover'), null, 'passive feed visits must not rewrite the route URL');
+      assert.equal(JSON.parse(dom.localStorage.getItem('civic_sample_discovery_v1') || 'null')?.cursor, 'demo-housing', 'discovery deck independently stores its current card');
+    }
     await act(async () => { (first.querySelector('button') as any).click(); });
     assert(!first.hasAttribute('open'), 'close button dismisses');
     await act(async () => { (chip as any).blur(); });

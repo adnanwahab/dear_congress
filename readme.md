@@ -1091,3 +1091,15 @@ no enactment, endorsement or measured benefit. Reading performs no writes.
 and stage links together. Motion is brief, can be paused, and respects reduced
 motion. Bundled text and inline drawings remain available without API results or
 image downloads. The existing timed guided demo remains a separate experience.
+
+
+## Sample discovery deck
+
+The existing `/feed` includes a touch discovery deck: left skips, right saves for
+later, and native buttons expose the same actions to keyboard and screen readers.
+Read full proposal opens the existing sample draft. Entry copy explicitly states
+that swiping never casts Support, Oppose or Not sure. Position and saved sample
+IDs use a separate browser-local key; `discover` query history restores cards on
+Back/Forward and reload. Storage failure leaves usable in-page actions with a
+notice. No motion is added, including under reduced motion. Official records,
+public advisory votes and fictional sample cards retain separate presentations.
