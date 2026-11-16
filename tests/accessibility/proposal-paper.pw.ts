@@ -41,5 +41,5 @@ test('failed snapshot still opens document and interrupted navigation stays usab
   await paper.getByRole('link', { name: 'Continue to sample draft →' }).click();
   await expect(page).toHaveURL(/\/draft\?proposal=/);
   await page.goBack();
-  await expect(page.locator('.proposal-paper').first().locator('summary')).toBeVisible();
+  await expect(page.locator('.proposal-paper').first().locator(':scope > summary')).toBeVisible();
 });
