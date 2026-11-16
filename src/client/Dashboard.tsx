@@ -5,7 +5,7 @@ import { Skeleton } from './LoadingSkeleton';
 import type { CSSProperties } from 'react';
 import { prepareStageMorph } from './view-transitions';
 import { proposalTitleName, readProposalSnapshot, saveProposalSnapshot } from './proposal-motion';
-import { AdvisoryVoteBars } from './AdvisoryVoteBars';
+import { AdvisoryVoteBars, FictionalResponseGraphic } from './AdvisoryVoteBars';
 import { SponsorBoard } from './SponsorBoard';
 import { PatchChange, transitionProposal } from './PatchChange';
 import { CivicHeader } from "./CivicHeader";
@@ -55,7 +55,6 @@ export function Dashboard({ request }: { request: Request }) {
   }, []);
   const items = data?.items ?? [];
   const item = items.find(i => i.id === selected) ?? items[0];
-  const total = item ? item.support + item.oppose + item.unsure : 0;
   const chosen = item ? data?.votes[item.id] : undefined;
   const tracked = item ? tracker.some(t => t.id === item.id) : false;
   function persist(next: Tracked[]) {
@@ -74,7 +73,7 @@ export function Dashboard({ request }: { request: Request }) {
   }
   function download() {
     if (!item) return;
-    const text = `CIVIC SYNTHESIS — SAMPLE DRAFT\nFictional demo. Not submitted to a public office. Not legal advice.\n\n${item.title}\n\nContext (not a quotation)\n${item.currentText}\n\nProposed text\n${item.proposedText}\n\nPlain-English summary\n${item.summary}\n\nReference for background only\n${item.sourceUrl}\n\nPossible office\n${office || item.sponsors[0]}\n\nIllustrative responses: ${total}\n`;
+    const text = `CIVIC SYNTHESIS — SAMPLE DRAFT\nFictional demo. Not submitted to a public office. Not legal advice.\n\n${item.title}\n\nContext (not a quotation)\n${item.currentText}\n\nProposed text\n${item.proposedText}\n\nPlain-English summary\n${item.summary}\n\nReference for background only\n${item.sourceUrl}\n\nPossible office\n${office || item.sponsors[0]}\n\nFictional sample responses (not people or browser choices): ${item.support + item.oppose + item.unsure}\n`;
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = `${item.id}-draft.txt`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     setNotice('Sample draft downloaded. Review it before contacting any office.');
@@ -102,7 +101,7 @@ export function Dashboard({ request }: { request: Request }) {
       <div className="triple-grid">
         <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalGallery items={items} loaded={!!data} failed={!!error} selected={item?.id} busy={busy} onSelect={select} />
         </section>
-        <section data-motion-proposal={item?.id} data-motion-revision={item?.title} className="panel vote-panel" style={{ viewTransitionName: 'proposal-detail' }} ref={voteRef} tabIndex={-1} aria-labelledby="vote-title"><div className="panel-head"><h2 id="vote-title">Cast advisory vote</h2><span className="pill info">Non-binding</span></div>{item && <TopicChip linked topic={item.topic} />}<h3 data-motion-proposal={item?.id} data-motion-revision={item?.title} className="vote-question" style={{ viewTransitionName: item ? proposalTitleName(item.id) : undefined }}>{item ? `Should we ${item.title.charAt(0).toLowerCase() + item.title.slice(1)}?` : <Skeleton kind="line" />}</h3><p className="vote-summary">{item?.summary}</p><p>Viewing a proposal does not cast a vote. Choose Support, Oppose, or Not sure below to save a non-binding advisory vote.</p>{!data && !error && <Skeleton kind="vote" />}{item && <AdvisoryVoteBars key={item.id} item={item} choice={chosen} busy={busy} confirmation={confirmation} onVote={vote} />}<div className="vote-foot"><p>{total.toLocaleString()} illustrative responses<br/>Demo voting window ends {data ? dateLabel(data.closesAt) : '—'}</p><p>One anonymous browser cookie tracks your advisory choice per proposal; it is not a verified voter identity. Sample counts are not verified residents or a representative public poll.</p>{item && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Official background reference ↗</a>}</div></section>
+        <section data-motion-proposal={item?.id} data-motion-revision={item?.title} className="panel vote-panel" style={{ viewTransitionName: 'proposal-detail' }} ref={voteRef} tabIndex={-1} aria-labelledby="vote-title"><div className="panel-head"><h2 id="vote-title">Cast advisory vote</h2><span className="pill info">Non-binding</span></div>{item && <TopicChip linked topic={item.topic} />}<h3 data-motion-proposal={item?.id} data-motion-revision={item?.title} className="vote-question" style={{ viewTransitionName: item ? proposalTitleName(item.id) : undefined }}>{item ? `Should we ${item.title.charAt(0).toLowerCase() + item.title.slice(1)}?` : <Skeleton kind="line" />}</h3><p className="vote-summary">{item?.summary}</p><p>Viewing a proposal does not cast a vote. Choose Support, Oppose, or Not sure below to save a non-binding advisory vote.</p>{!data && !error && <Skeleton kind="vote" />}{item && <AdvisoryVoteBars key={item.id} item={item} browserCounts={data?.browserCounts?.[item.id]} choice={chosen} busy={busy} confirmation={confirmation} onVote={vote} />}{item && <FictionalResponseGraphic item={item} />}<div className="vote-foot"><p>Demo voting window ends {data ? dateLabel(data.closesAt) : '—'}</p><p>One anonymous browser cookie tracks your advisory choice per proposal; it is not a verified voter identity. Sample counts are not verified residents or a representative public poll.</p>{item && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Official background reference ↗</a>}</div></section>
         <section className="panel patch-panel"><div className="panel-head"><h2>This week’s patch</h2><span>Sample draft</span></div>{item ? <><TopicChip linked topic={item.topic} /><PatchChange key={item.id} item={item} /></> : <Skeleton />}<h3 className="patch-label">Possible sponsor offices</h3><label className="sponsor-picker"><span className="sr">Choose a sponsor office</span><select value={office || item?.sponsors[0] || ''} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><div className="draft-actions"><button disabled={!item || tracked} onClick={prepare}>{tracked ? 'Added to tracker ✓' : 'Prepare sponsor draft'}</button><button className="outline" disabled={!item} onClick={download}>Download draft</button></div><p className="draft-caption">Demo preparation only. Nothing is sent to a public office.</p></section>
       </div>
       <SideQuest item={item} loading={!data} failed={!!error} />

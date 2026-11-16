@@ -1,5 +1,5 @@
 import { motionDisabled, motionDuration } from "./motion";
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, useId, type CSSProperties } from 'react';
 import type { DemoItem } from '../engine/demo';
 import './advisory-vote-bars.css';
 import { AdvisoryShare } from './AdvisoryShare';
@@ -23,10 +23,26 @@ function LivePulse({ count = 0 }: { count?: number }) {
   return <span key={pulse} className={pulse ? 'live-pulse live-pulse-marker' : 'live-pulse-marker'} aria-hidden="true" />;
 }
 
+export function FictionalResponseGraphic({ item }: { item: DemoItem }) {
+  const description = useId();
+  const total = item.support + item.oppose + item.unsure;
+  return <figure className="fictional-response-graphic" aria-describedby={description}>
+    <figcaption><h3>Fictional sample responses</h3></figcaption>
+    <p id={description}>Synthetic teaching data, not people or community turnout. These numbers never include your browser choice or join the browser tally.</p>
+    <p>{total.toLocaleString()} fictional sample responses</p>
+    <ul>{OPTIONS.map(([label, , field]) => <li key={field}>
+      <span>{label}: {item[field].toLocaleString()} fictional responses</span>
+      <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': total ? item[field] / total : 0 } as CSSProperties} /></span>
+    </li>)}</ul>
+  </figure>;
+}
+
 /** Presentation only: choices and counts always come from the acknowledged payload. */
-export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, live, pulses }: {
-  live?: boolean; pulses?: number[]; item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
+export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, live, pulses, browserCounts }: {
+  browserCounts?: Pick<DemoItem, "support" | "oppose" | "unsure">; live?: boolean; pulses?: number[]; item: DemoItem; choice?: number; busy: boolean; confirmation: number; onVote: (stance: number) => void;
 }) {
+  const description = useId();
+  const counts = live ? item : browserCounts;
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
@@ -34,7 +50,7 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
   const current = useRef(shown);
   const [highlight, setHighlight] = useState<number>();
   const previousConfirmation = useRef(confirmation);
-  const values = [item.support, item.oppose, item.unsure];
+  const values = [counts?.support ?? 0, counts?.oppose ?? 0, counts?.unsure ?? 0];
   const total = values.reduce((sum, n) => sum + n, 0);
   useEffect(() => {
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -75,18 +91,19 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [visible, reduced, item.support, item.oppose, item.unsure]);
-  return <div ref={host} className="advisory-tallies">
-    <p>{live ? 'Live round · advisory · not a poll' : 'Illustrative responses, not a representative poll.'}</p>
+  }, [visible, reduced, counts?.support, counts?.oppose, counts?.unsure]);
+  return <div ref={host} className="advisory-tallies" role={live ? undefined : "region"} aria-label={live ? undefined : "Unverified browser choices"}>
+    {!live && <><h3>Unverified browser choices</h3><p id={description}>Cookie-based advisory choices, not unique people, verified eligibility, or an official ballot. Fictional sample responses are excluded.</p>{counts ? <p>Support: {counts.support} · Oppose: {counts.oppose} · Not sure: {counts.unsure}</p> : <p>Browser counts unavailable.</p>}</>}
+    {live && <p>Live round · advisory · not a poll</p>}
     <div className="vote-options advisory-bars">{OPTIONS.map(([label, stance, field], index) => {
-      const count = item[field];
+      const count = counts?.[field] ?? 0;
       const share = total ? count / total : 0;
       const percentage = `${(share * 100).toFixed(1)}%`;
       return <button key={field} className={highlight === stance ? 'vote-confirmed' : undefined}
-        aria-pressed={choice === stance} disabled={busy} onClick={() => onVote(stance)}
-        aria-label={`Cast advisory vote: ${label}${choice === stance ? ', selected' : ''}. ${count.toLocaleString()} responses, ${percentage}`}>
+        aria-describedby={live ? undefined : description} aria-pressed={choice === stance} disabled={busy} onClick={() => onVote(stance)}
+        aria-label={`Cast advisory vote: ${label}${choice === stance ? ', selected' : ''}. ${counts ? `${count.toLocaleString()} ${live ? "responses" : "browser choices"}, ${percentage}` : "browser counts unavailable"}`}>
         <span className="advisory-label">{live && <LivePulse count={pulses?.[index]} />}Cast advisory vote: {label}{choice === stance ? ' ✓' : ''}</span>
-        <span className="advisory-value" aria-hidden="true">{(reduced ? count : shown[index]!).toLocaleString()} · {percentage}</span>
+        <span className="advisory-value" aria-hidden="true">{counts ? `${(reduced ? count : shown[index]!).toLocaleString()} · ${percentage}` : "Unavailable"}</span>
         <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': reduced || visible ? share : 0 } as CSSProperties} /></span>
       </button>;
     })}</div>

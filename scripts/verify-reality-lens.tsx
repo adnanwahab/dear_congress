@@ -59,13 +59,13 @@ const request = async <T,>(path: string): Promise<T> => {
 };
 await render(<WorkflowScreen stage="votes" request={request} />);
 assert.ok(document.body.textContent!.includes('Support: 7 · Oppose: 2 · Not sure: 1'));
-const actual = q().getByRole('region', { name: 'Unverified browser votes — advisory' }).textContent;
+const actual = q().getByRole('region', { name: 'Unverified browser choices' }).textContent;
 const calls = reads;
 await toggle(); await toggle();
-assert.equal(q().getByRole('region', { name: 'Unverified browser votes — advisory' }).textContent, actual);
+assert.equal(q().getByRole('region', { name: 'Unverified browser choices' }).textContent, actual);
 assert.equal(JSON.stringify(payload), before);
 assert.equal(reads, calls);
-assert.ok(document.body.textContent!.includes('Synthetic demo data — illustrative'));
+assert.ok(document.body.textContent!.includes('Fictional sample responses'));
 // Missing counts, empty and failed requests do not remove the independent legend.
 for (const data of [{ ...payload, browserCounts: undefined }, { ...payload, items: [] }]) {
   await render(<WorkflowScreen stage="votes" request={async <T,>() => data as T} />);
