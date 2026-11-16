@@ -1,11 +1,14 @@
 import { CivicHeader } from "./CivicHeader";
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { DESIGN_DOCUMENT } from './design-document';
 import { PUBLIC_GUIDE } from './public-guide';
 import './documentation.css';
-import ProvenanceExplorer from './ProvenanceExplorer';
+import CivicTrivia from "./CivicTrivia";
+import SourceTreasureHunt from "./SourceTreasureHunt";
 import ThreeAppLoop from './ThreeAppLoop';
 import { trackDocumentSections } from './scroll-motion';
+
+const ProvenanceExplorer = lazy(() => import('./ProvenanceExplorer'));
 
 /** Render the supplied document as text and semantic elements, never raw HTML. */
 function Inline({ text }: { text: string }) {
@@ -41,5 +44,5 @@ export default function Documentation() {
     const url = URL.createObjectURL(new Blob([PUBLIC_GUIDE], {type:'text/markdown;charset=utf-8'}));
     const anchor = document.createElement('a'); anchor.href=url; anchor.download='civic-synthesis-guide.md'; anchor.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   }
-  return <div className="civic-shell documentation-shell"><CivicHeader stage="How it works" /><div className="documentation-progress" aria-hidden="true"><div /></div><main id="main-content" tabIndex={-1} className="civic-main documentation-main"><section className="documentation-heading"><div><p className="map-eyebrow">Public guide · updated November 13, 2026</p><h1>How Civic Synthesis works</h1><p>Read, respond, or journal. Understand the limits before sharing.</p></div><button className="outline" onClick={download}>Download guide ↓</button></section><div className="documentation-layout"><aside className="panel documentation-toc"><h2>In this guide</h2><nav aria-label="Guide sections">{sections.map(section => <a key={section} href={`#${slug(section)}`} aria-current={active === slug(section) ? "location" : undefined}>{section}</a>)}<a href="#provenance-explorer">Evidence layers</a><a href="#historical-appendix">Historical appendix</a></nav></aside><article ref={article} className="panel documentation-article"><DocumentBody text={PUBLIC_GUIDE} /><ProvenanceExplorer /><details id="historical-appendix"><summary>Historical appendix — archived design report, November 12, 2026</summary><div className="documentation-note">Historical internal planning, preserved for context. Dates, countdowns, operational claims and recommendations below are archived, not current instructions or commitments. Other apps' plans do not define Civic Synthesis requirements.</div><DocumentBody /></details></article></div></main></div>;
+  return <div className="civic-shell documentation-shell"><CivicHeader stage="How it works" /><div className="documentation-progress" aria-hidden="true"><div /></div><main id="main-content" tabIndex={-1} className="civic-main documentation-main"><section className="documentation-heading"><div><p className="map-eyebrow">Public guide · updated November 13, 2026</p><h1>How Civic Synthesis works</h1><p>Read, respond, or journal. Understand the limits before sharing.</p></div><button className="outline" onClick={download}>Download guide ↓</button></section><div className="documentation-layout"><aside className="panel documentation-toc"><h2>In this guide</h2><nav aria-label="Guide sections">{sections.map(section => <a key={section} href={`#${slug(section)}`} aria-current={active === slug(section) ? "location" : undefined}>{section}</a>)}<a href="#civic-trivia">Civic trivia arcade</a><a href="#civic-source-treasure-hunt">Civic source treasure hunt</a><a href="#provenance-explorer">Evidence layers explorer</a><a href="#historical-appendix">Historical appendix</a></nav></aside><article ref={article} className="panel documentation-article"><DocumentBody text={PUBLIC_GUIDE} /><CivicTrivia /><SourceTreasureHunt /><Suspense fallback={<p role="status">Loading evidence layers…</p>}><ProvenanceExplorer /></Suspense><details id="historical-appendix"><summary>Historical appendix — archived design report, November 12, 2026</summary><div className="documentation-note">Historical internal planning, preserved for context. Dates, countdowns, operational claims and recommendations below are archived, not current instructions or commitments. Other apps' plans do not define Civic Synthesis requirements.</div><DocumentBody /></details></article></div></main></div>;
 }

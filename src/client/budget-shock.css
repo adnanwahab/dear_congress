@@ -1,0 +1,11 @@
+.budget-shock { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--ink); }
+.budget-shock h2 { font-size: 1.25rem; }
+.budget-shock p, .budget-shock li { line-height: 1.5; }
+.budget-shock label { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: .75rem 0; }
+.budget-shock select { width: auto; min-height: 44px; }
+.budget-shock-options { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.budget-shock button, .budget-shock summary { min-height: 44px; white-space: normal; }
+/* Keep the closed-state launcher legible at 390px and across slow route transitions. */
+.budget-shock > button { background: #17375f; border-color: #17375f; color: #fff; }
+.budget-shock summary { cursor: pointer; padding: .75rem 0; }
+.budget-shock :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }

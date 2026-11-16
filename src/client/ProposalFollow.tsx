@@ -1,3 +1,4 @@
+import SaveToJourney from './SaveToJourney';
 import { useEffect, useState } from 'react';
 import { FOLLOW_KEY, followIdentity, observeFollow, readFollows, toggleFollow, writeFollows, type FollowSource } from './proposal-follows';
 const changed = () => window.dispatchEvent(new Event('proposal-follows'));
@@ -8,7 +9,7 @@ export function ProposalFollow({ source, observe = true }: { source: FollowSourc
     sync(); window.addEventListener('storage', sync); window.addEventListener('proposal-follows', sync);
     return () => { window.removeEventListener('storage', sync); window.removeEventListener('proposal-follows', sync); };
   }, [source.kind, source.id, source.title, source.text, observe]);
-  return <div><button type="button" aria-pressed={following} onClick={() => { try { toggleFollow(localStorage, source); changed(); } catch (e) { setError(String(e)); } }}>{following ? 'Unfollow proposal' : 'Follow this proposal'}</button> <a href="/outcomes#watchlist">Watchlist</a><p>Saved only in this browser. No vote is cast and no notifications are enabled.</p>{error && <p role="alert">{error}</p>}</div>;
+  return <div><button type="button" aria-pressed={following} onClick={() => { try { toggleFollow(localStorage, source); changed(); } catch (e) { setError(String(e)); } }}>{following ? 'Unfollow proposal' : 'Follow this proposal'}</button> <a href="/outcomes#watchlist">Watchlist</a><p>Saved only in this browser. No vote is cast and no notifications are enabled.</p>{error && <p role="alert">{error}</p>}<SaveToJourney category="Topics" kind={source.kind === 'sample' ? 'Seeded fiction' : 'Citizen advisory activity'} text={JSON.stringify({ source: { kind: source.kind, id: source.id, title: source.title, text: source.text }, note: 'Explored proposal snapshot; no vote or follow implied.' }, null, 2)} /></div>;
 }
 export function ProposalWatchlist() {
   const [items, setItems] = useState<ReturnType<typeof readFollows>>([]), [error, setError] = useState('');
