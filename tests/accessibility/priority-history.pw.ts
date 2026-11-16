@@ -22,7 +22,11 @@ test('priority history reads recorded samples, filters dates and navigates witho
   await expect(page.locator('.priority-history')).toContainText('No recorded snapshots');
   await page.getByLabel('From date').fill('');
   await expect(page.locator('.priority-history table')).toBeVisible();
-  await page.getByRole('link', { name: 'Overview', exact: true }).first().click();
+  // The visible main stage navigation works on both mobile and desktop;
+  // the Overview utility may be collapsed behind the mobile More dialog.
+  await page.locator('.bottom-destinations a[href="/published"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/published$/);
   await page.goBack();
   await expect(page).toHaveURL(/\/needs$/);
   expect(writes).toEqual([]);
