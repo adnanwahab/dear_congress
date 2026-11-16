@@ -16,12 +16,13 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
   globalThis.fetch = ((_path: unknown, init: RequestInit) => new Promise<Response>(resolve => requests.push({ body: JSON.parse(init.body as string), signal: init.signal!, resolve }))) as typeof fetch;
   const host = document.createElement('div'); document.body.append(host);
   const root = createRoot(host);
-  const settle = async (index: number, error = false) => { await act(async () => requests[index]!.resolve(Response.json(error ? { error: 'obsolete failure' } : { real: [], blended: [], diff: {} }, { status: error ? 500 : 200 }))); };
+  const settle = async (index: number, error = false) => { await act(async () => requests[index]!.resolve(Response.json(error ? { error: 'obsolete failure' } : { real: [{ id: 'fixture-only', name: `weight-result-${index}`, items: [], totalCost: 0, avgSupport: 0 }], blended: [], diff: {} }, { status: error ? 500 : 200 }))); };
   try {
     await act(async () => root.render(<SynthView state={{ defaultWeights: DEFAULT_WEIGHTS, entries: [], proposals: [] } as any} refresh={async () => {}} />));
     expect(requests[0]!.body.preview).toBe(true);
     await settle(0);
     expect(host.textContent).toContain('Live preview · not saved');
+    expect(host.textContent).toContain('weight-result-0');
     const sliders = [...host.querySelectorAll<HTMLInputElement>('.controls input[type=range]')];
     expect(sliders.length).toBe(8);
     for (const slider of sliders) {
@@ -32,6 +33,7 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
         slider.dispatchEvent(new window.Event('change', { bubbles: true }) as unknown as Event);
       });
       expect(requests.length).toBe(before);
+      expect(host.textContent).not.toContain('weight-result-');
       await act(async () => { await Bun.sleep(210); });
       expect(requests.length).toBe(before + 1);
       expect(requests.at(-1)!.body.preview).toBe(true);
@@ -44,6 +46,8 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
     expect(requests.at(-1)!.body.budget).toBe(40);
     expect(host.textContent).toContain('Restored synthesis weights, penalty and budget');
     expect(requests[1]!.signal.aborted).toBe(true);
+    await settle(2);
+    expect(host.textContent).not.toContain('weight-result-2');
     await settle(1, true);
     expect(host.textContent).not.toContain('obsolete failure');
     const commit = [...host.querySelectorAll('button')].find(button => button.textContent === 'Synthesize')!;
