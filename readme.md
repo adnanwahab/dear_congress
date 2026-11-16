@@ -992,3 +992,10 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Continuous civic probes
+
+The proposed five-minute workflow checks all six rendered sample stages and
+Journal discovery with public GET-only browsing and separate disposable local
+staging writes. See [probe operations and limits](docs/synthetic-probes.md).
+Scheduled execution and response ownership require maintainer verification.

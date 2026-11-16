@@ -1,0 +1,58 @@
+name: Civic synthetic probes
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: civic-synthetic-probes
+  cancel-in-progress: false
+jobs:
+  public:
+    if: github.repository == 'adnanwahab/dear_congress'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: npm install --prefix tests/accessibility --ignore-scripts --package-lock=false
+      - run: cd tests/accessibility && npx playwright install --with-deps chromium
+      - run: bun scripts/synthetic-probes.ts https://civic-synthesis.fly.dev
+        env:
+          PLAYWRIGHT_MODULE: ../tests/accessibility/node_modules/playwright/index.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-public
+          path: synthetic-public.json
+          if-no-files-found: error
+          retention-days: 7
+  isolated-staging:
+    if: github.repository == 'adnanwahab/dear_congress'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun --no-env-file scripts/synthetic-staging.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-staging
+          path: synthetic-staging.json
+          if-no-files-found: error
+          retention-days: 7
