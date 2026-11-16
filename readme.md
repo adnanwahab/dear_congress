@@ -1115,3 +1115,15 @@ requires no animation. General examples remain available during proposal loading
 or failure. These are educational roles, not verified office assignments for the
 selected fictional proposal; city, county and transit authority remain unresolved.
 See `src/shared/responsibility.ts` for the typed editorial contracts and citations.
+
+
+## Private clause marginalia
+
+The amendment area on sample Draft/Votes and citizen proposal views offers
+browser-local questions and proposals beside exact source lines. SHA-256 source
+revision IDs bind repository, item kind/ID, provenance and exact text. Changed
+sources show orphaned anchors requiring explicit reattachment; old snapshots stay
+attached to the note history. These are explanatory line anchors, not verified
+legal clause IDs. Review sharing prepares a copyable excerpt only; no publication,
+review delivery or abuse-reporting service is connected. See
+[scope and validation](docs/reviews/SHE-502.md).
