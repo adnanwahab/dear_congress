@@ -1,6 +1,6 @@
 import { MutationError, type MutationState } from './mutation-status';
-export type VoteDraft = { proposalId: string; title: string; stance: number; revision?: string };
-type Stored = { draft: VoteDraft; confirmed: boolean };
+export type VoteDraft = { proposalId: string; title: string; stance: number; revision?: string; withdraw?: boolean };
+type Stored = { draft: VoteDraft; confirmed: boolean; acknowledgedAt?: string };
 const KEY = 'civic_advisory_receipt_v1';
 export type VoteRequest = <T>(path: string, body?: unknown, method?: string, signal?: AbortSignal) => Promise<T>;
 /** Only explicit advisory upserts belong here; never use this retry path for creation. */
@@ -11,10 +11,10 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
   let state: MutationState = { phase: 'idle', message: '' };
   const emit = (next: MutationState) => { state = next; notify(next); };
   const persist = () => { try { storage.setItem(KEY, JSON.stringify(stored)); return true; } catch { return false; } };
-  const receipt = () => `Server confirmed advisory choice for ${stored!.draft.title} (${stored!.draft.proposalId}): ${stored!.draft.stance === 1 ? 'Support' : stored!.draft.stance === -1 ? 'Oppose' : 'Not sure'}. Non-binding.`;
+  const receipt = () => `Server confirmed advisory ${stored!.draft.withdraw ? 'withdrawal' : 'choice'} for ${stored!.draft.title} (${stored!.draft.proposalId}): ${stored!.draft.stance === 1 ? 'Support' : stored!.draft.stance === -1 ? 'Oppose' : 'Not sure'}. Non-binding.`;
   try {
     const value = JSON.parse(storage.getItem(KEY) ?? 'null');
-    if (value && typeof value.confirmed === 'boolean' && typeof value.draft?.proposalId === 'string' && typeof value.draft?.title === 'string' && (value.draft.revision === undefined || typeof value.draft.revision === 'string') && [-1, 0, 1].includes(value.draft?.stance)) {
+    if (value && typeof value.confirmed === 'boolean' && (value.draft?.withdraw === undefined || typeof value.draft.withdraw === 'boolean') && typeof value.draft?.proposalId === 'string' && typeof value.draft?.title === 'string' && (value.draft.revision === undefined || typeof value.draft.revision === 'string') && [-1, 0, 1].includes(value.draft?.stance)) {
       stored = value;
       state = { phase: value.confirmed ? 'confirmed' : 'failed', message: value.confirmed ? receipt() + ' Previous server acknowledgement; current choice may have changed.' : 'A previous advisory choice was interrupted. We could not confirm whether it was saved. Retry the exact choice below.' };
     }
@@ -26,13 +26,14 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
     if (!stored) return false;
     locked = true;
     const recoverable = persist();
-    emit({ phase: 'submitting', message: `Saving advisory choice for ${stored.draft.title}…${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
+    emit({ phase: 'submitting', message: `${stored.draft.withdraw ? 'Withdrawing advisory choice' : 'Saving advisory choice'} for ${stored.draft.title}…${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const result = await request<{ ok?: boolean }>('/api/votes', { votes: [{ proposalId: stored.draft.proposalId, stance: stored.draft.stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] }, 'POST', controller.signal);
+      const result = await request<{ ok?: boolean }>('/api/votes', stored.draft.withdraw ? { withdrawVotes: [stored.draft.proposalId] } : { votes: [{ proposalId: stored.draft.proposalId, stance: stored.draft.stance, importance: .5, acceptCompromise: true, concern: '', changeMind: '' }] }, 'POST', controller.signal);
       if (result.ok !== true) throw new Error('Missing server acknowledgement');
       stored.confirmed = true;
+      stored.acknowledgedAt = new Date().toISOString();
       const saved = persist();
       retryAt = 0;
       emit({ phase: 'confirmed', message: receipt() + (saved ? '' : ' Receipt recovery unavailable after reload.') });
@@ -43,9 +44,9 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
         const seconds = header && /^\d+$/.test(header) ? Number(header) * 1000 : NaN;
         retryAt = Number.isFinite(seconds) ? Date.now() + seconds : Math.max(Date.now(), Date.parse(header ?? '') || Date.now() + 60000);
       }
-      emit({ phase: 'failed', message: `We could not confirm whether your advisory choice for ${stored.draft.title} was saved.${retryAt > Date.now() ? ` Too many requests; wait until ${new Date(retryAt).toLocaleTimeString()} before retrying.` : ' Retry sends the same choice to the same proposal.'}${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
+      emit({ phase: 'failed', message: `We could not confirm whether your advisory ${stored.draft.withdraw ? 'withdrawal' : 'choice'} for ${stored.draft.title} was ${stored.draft.withdraw ? 'completed' : 'saved'}.${retryAt > Date.now() ? ` Too many requests; wait until ${new Date(retryAt).toLocaleTimeString()} before retrying.` : ' Retry sends the same choice to the same proposal.'}${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
       return false;
     } finally { clearTimeout(timer); locked = false; }
   }
-  return { submit, get state() { return state; }, get pending() { return locked; }, get confirmedDraft(): VoteDraft | undefined { return stored?.confirmed ? { ...stored.draft } : undefined; } };
+  return { submit, get state() { return state; }, get pending() { return locked; }, get attemptedDraft() { return stored ? { ...stored.draft } : undefined; }, get acknowledgedAt() { return stored?.confirmed ? stored.acknowledgedAt : undefined; }, get confirmedDraft(): VoteDraft | undefined { return stored?.confirmed ? { ...stored.draft } : undefined; } };
 }

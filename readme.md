@@ -1190,3 +1190,14 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Advisory choice status
+
+The sample `/votes` flow shows pending, saved, failed/outcome unknown and withdrawn
+receipts with the exact proposal ID/title and selected option. An explicit server
+acknowledgement is required for saved or withdrawn status. Its timestamp records
+when this browser received that acknowledgement, not a server commit time.
+Change vote returns focus to the options; Withdraw vote uses the existing explicit
+withdrawal API. Failed requests retain their exact action for retry. Session
+recovery is best effort; cookie identities never establish unique people.
+See [SHE-793 review](docs/reviews/SHE-793.md) for validation and remaining gates.

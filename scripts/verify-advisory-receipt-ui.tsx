@@ -32,7 +32,8 @@ for (const reduced of [false, true]) {
     await act(async () => (buttons[index] as any).click());
     assert.equal(posts, index + 1);
     assert([...buttons].every(b => (b as any).disabled));
-    assert(!container.querySelector('.advisory-receipt')?.textContent?.includes(`choice: ${label}`));
+    assert.match(container.querySelector('.advisory-receipt')!.textContent!, /Pending/);
+    assert(!container.querySelector('.advisory-receipt')!.textContent!.includes('Server confirmed'));
     await act(async () => resolve({ ok: true }));
     const receipt = container.querySelector('.advisory-receipt')!;
     assert(receipt.textContent!.includes(`choice: ${label}`));
@@ -49,10 +50,18 @@ for (const reduced of [false, true]) {
   const oldReceipt = container.querySelector('.advisory-receipt');
   await act(async () => (container.querySelector('.advisory-bars button') as any).click());
   await act(async () => resolve({}));
-  assert.equal(container.querySelector('.advisory-receipt'), oldReceipt, 'missing acknowledgement never stamps a new receipt');
+  assert.equal(container.querySelector('.advisory-receipt'), oldReceipt);
+  assert.match(oldReceipt!.textContent!, /Failed \/ outcome unknown/);
+  assert(!oldReceipt!.textContent!.includes('Server confirmed'));
   Object.defineProperty(dom.navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw Error('denied'); } } });
   await act(async () => (oldReceipt!.querySelectorAll('button')[1] as any).click());
   assert.match(oldReceipt!.textContent!, /Could not copy/);
+  await act(async () => (oldReceipt!.querySelectorAll('button')[2] as any).click());
+  await act(async () => resolve({ ok: true }));
+  assert.match(oldReceipt!.textContent!, /Withdrawn/);
+  assert.match(oldReceipt!.textContent!, /Browser received acknowledgement: \d{4}-/);
+  assert.match(oldReceipt!.textContent!, /does not prove a unique person/);
+  await act(async () => resolve(payload));
   await act(async () => root.unmount()); container.remove();
 }
 // Empty payload offers no voting controls or receipt.

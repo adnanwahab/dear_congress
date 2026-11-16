@@ -83,3 +83,17 @@ test('acknowledged receipt retains exact submitted choice and viewed revision; g
   mutation.confirmedDraft!.stance = 0;
   expect(mutation.confirmedDraft!.stance).toBe(1);
 });
+test('withdrawal retries the exact proposal and only acknowledges explicit success', async () => {
+  const bodies: unknown[] = [];
+  const store = storage();
+  const request = (async (_path, body) => { bodies.push(body); return bodies.length === 1 ? {} : { ok: true }; }) as VoteRequest;
+  const mutation = advisoryMutation(request, store, () => {});
+  expect(await mutation.submit({ ...draft, withdraw: true })).toBe(false);
+  expect(mutation.confirmedDraft).toBeUndefined();
+  expect(mutation.acknowledgedAt).toBeUndefined();
+  const restored = advisoryMutation(request, store, () => {});
+  expect(await restored.submit()).toBe(true);
+  expect(bodies).toEqual([{ withdrawVotes: [draft.proposalId] }, { withdrawVotes: [draft.proposalId] }]);
+  expect(restored.confirmedDraft?.withdraw).toBe(true);
+  expect(Number.isFinite(Date.parse(restored.acknowledgedAt!))).toBe(true);
+});
