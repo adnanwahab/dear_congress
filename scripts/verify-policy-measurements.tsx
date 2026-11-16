@@ -14,6 +14,8 @@ dom.document.body.append(container);
 const root = createRoot(container as any);
 const request = async <T,>(): Promise<T> => { throw new Error('Offline'); };
 await act(async () => { root.render(<WorkflowScreen stage="outcomes" request={request} />); });
+// Wait for the independently split component to hydrate, not for the proposal API.
+await act(async () => { await import('../src/client/UncertaintyStack'); });
 const measurements = container.querySelector('#policy-measurements')!;
 assert(measurements, 'Measurements remain accessible when proposal API is unavailable');
 const before = measurements.textContent;
