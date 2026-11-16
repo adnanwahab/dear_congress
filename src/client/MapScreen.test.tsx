@@ -11,6 +11,9 @@ test('map separates modeled coverage and support from unavailable verified parti
   expect(html).toContain('Before evaluation, zero agreements means no scenarios have been evaluated, not dissent.');
   expect(html).toContain('Synthetic scenario status legend');
   expect(html).toContain('Data origin');
+  expect(html).toContain('Run modeled county evaluation');
+  expect(html).not.toContain('0.0%');
+  expect(html).not.toContain('0 / 0');
   expect(html).toContain('not representative or legally binding');
   expect(html).not.toContain('counties participating');
   expect(html).not.toContain('Every county votes');
@@ -23,7 +26,7 @@ test('map separates modeled coverage and support from unavailable verified parti
 test('map methodology defines its population and never invents survey or real participation estimates', () => {
   const html = renderToStaticMarkup(<MapScreen />);
   expect(html).toContain('<summary>How is agreement calculated?</summary>');
-  expect(html).toContain('Revision 1: 0 / 3,144 county models');
+  expect(html).toContain('Revision 1: Not evaluated. No modeled agreement result yet.');
   expect(html).toContain('3,144 / 3,144 bundled shapes');
   expect(html).toContain('territories are excluded');
   expect(html).toContain('Nonresponse is unknown');
