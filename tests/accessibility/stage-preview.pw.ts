@@ -22,11 +22,16 @@ test('stage lens stays inert, dismisses, and preserves the destination identity'
 test('failed lazy summary keeps the real link available without submission', async ({ page }) => {
   let writes = 0;
   page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) writes++; });
-  await page.route('**/*stage-preview-data*', route => route.abort());
   await page.goto('/feed');
+  // The production build names split chunks with a content hash. Intercept new
+  // JavaScript requests *after* the app boots, rather than assuming a source
+  // filename appears in the built URL. A blocked lazy chunk must fail safely.
+  let blockedChunks = 0;
+  await page.route('**/*.js', route => { blockedChunks++; return route.abort(); });
   const link = page.locator('.bottom-destinations a').filter({ hasText: 'Votes' });
   await link.focus();
   await expect(page.getByRole('status').filter({ hasText: 'Preview unavailable' })).toBeVisible();
+  expect(blockedChunks).toBeGreaterThan(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.stage-peek-window')).toHaveCount(0);
   await link.click();
