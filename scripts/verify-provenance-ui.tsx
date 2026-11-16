@@ -98,11 +98,11 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
   assert.match(food.textContent!, /not a pinned document revision/);
   assert.equal(writes, 0, 'reading, retry and peeling never submit');
   if (stage === 'votes') {
-    const browser = () => container.querySelector('[aria-label="Unverified browser votes — advisory"]')!;
+    const browser = () => container.querySelector('[aria-label="Unverified browser choices"]')!;
     assert(browser(), 'separate browser counts shown');
     assert.match(browser().textContent!, /Support: 0 · Oppose: 0 · Not sure: 0/);
     assert.match(container.textContent!, /No verified participant count is reported/);
-    assert.match(container.textContent!, /Synthetic demo data — illustrative/);
+    assert.match(container.textContent!, /Fictional sample responses/);
     for (const [label, expected] of [['Support', /Support: 1 · Oppose: 0/], ['Oppose', /Support: 0 · Oppose: 1/]] as const) {
       const button = [...container.querySelectorAll('.vote-options button')].find(b => b.textContent!.includes(`Cast advisory vote: ${label}`))!;
       assert(button, 'voting action available');

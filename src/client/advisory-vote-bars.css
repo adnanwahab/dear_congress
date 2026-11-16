@@ -31,3 +31,10 @@
 @keyframes advisory-receipt-stamp { from { opacity: .4; transform: scale(1.06); } to { opacity: 1; transform: none; } }
 html[data-motion="off"] .advisory-receipt, html[data-motion="off"] .advisory-receipt-stamp { animation: none; }
 @media (prefers-reduced-motion: reduce) { .advisory-receipt, .advisory-receipt-stamp { animation: none; } }
+
+.fictional-response-graphic { margin: 2rem 0 1rem; padding: 1rem; border: 2px dashed currentColor; border-radius: 8px; background: var(--neu); overflow-wrap: anywhere; min-width: 0; }
+.fictional-response-graphic h3 { margin-top: 0; }
+.fictional-response-graphic ul { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.fictional-response-graphic li { display: grid; gap: .5rem; min-width: 0; }
+.fictional-response-graphic .advisory-track { background: var(--bg); }
+.advisory-tallies { min-width: 0; overflow-wrap: anywhere; }

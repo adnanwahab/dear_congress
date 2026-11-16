@@ -53,6 +53,12 @@ It exports Markdown methodology without private inputs and links to all six stag
 Stale and missing fixtures remain explicit; there is no archived real-source or
 dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
 
+The sample Votes page and dashboard show **Unverified browser choices** separately
+from a dashed, read-only **Fictional sample responses** graphic. Fictional totals
+are teaching data, never turnout or browser choices. Missing browser counts show
+unavailable rather than falling back to sample numbers. Live rounds retain their
+separate round counts. See [SHE-794 verification limits](docs/reviews/SHE-794.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
