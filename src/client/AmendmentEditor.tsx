@@ -1,8 +1,8 @@
 import { requestHaptic } from './haptics';
-import { useEffect, useId, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { readAmendments, redline, sameBase, saveAmendment, type AmendmentLineage, type AmendmentDraft, type AmendmentFields, type AmendmentSource } from './amendment-drafts';
 import './amendment-editor.css';
-import ClauseMarginalia from './ClauseMarginalia';
+const ClauseMarginalia = lazy(() => import('./ClauseMarginalia'));
 import { impactCategories, impactExcerpt } from './amendment-impact';
 import ClauseReader from './ClauseReader';
 const storage = { getItem: (key: string) => localStorage.getItem(key), setItem: (key: string, value: string) => localStorage.setItem(key, value) };
@@ -121,7 +121,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
   }
   function fail(e: unknown) { setError(message(e)); setStatus(''); window.setTimeout(() => errorRef.current?.focus(), 0); }
   return <section className="amendment-editor" aria-label="Private amendment preparation">
-    <ClauseMarginalia key={`${source.kind}:${source.id}`} source={source} />
+    <Suspense fallback={<p role="status">Loading private clause notes…</p>}><ClauseMarginalia key={`${source.kind}:${source.id}`} source={source} /></Suspense>
     <RedlineDetective />
     <button type="button" aria-expanded={open} aria-controls={`${id}-editor`} onClick={show}>Suggest amendment</button>
     {open && <div id={`${id}-editor`}>
