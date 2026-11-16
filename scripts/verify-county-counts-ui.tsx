@@ -28,6 +28,7 @@ const click = async (text: string) => {
   const button = buttons().find(b => b.textContent === text)!;
   assert(button && !(button as any).disabled, text);
   await act(async () => { (button as any).click(); });
+  if (text === 'Improve one revision') await act(async () => { await new Promise(resolve => setTimeout(resolve, 150)); });
 };
 const ids = counties.map(c => c.id);
 assert.equal(container.querySelectorAll('path.county-shape title').length, counties.length);

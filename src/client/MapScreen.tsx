@@ -2,10 +2,13 @@ import { CountyEventHeatmap } from "./CountyEventHeatmap";
 import { CivicHeader } from "./CivicHeader";
 import { motionDisabled, motionDuration } from "./motion";
 import { tourState } from './demo-tour';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import counties from './data/counties.json';
 import { CountyCountMethodology, modeledCountyPercent } from './CountyCountMethodology';
-import { countyVote, improvePlan, INITIAL_PLAN, PRIORITIES, requirements } from './county-simulation';
+import { countyVote, INITIAL_PLAN, PRIORITIES, requirements } from './county-simulation';
+
+import { startCountyBatch } from './county-batch';
+import type { CountyEvent } from './county-events';
 
 import { pathCentroid, rippleDelays } from './county-motion';
 
@@ -26,9 +29,15 @@ function HeaderMetrics({ agreed, round }: { agreed: number; round: number }) {
 export default function MapScreen() {
   const [plan, setPlan] = useState([...INITIAL_PLAN]);
   const [round, setRound] = useState(1);
+  const [results, setResults] = useState(() => IDS.map(id => countyVote(id, INITIAL_PLAN, false)));
+  const [events, setEvents] = useState<CountyEvent[]>([]);
+  const [progress, setProgress] = useState<number | null>(null);
+  const cancelRef = useRef<(() => void) | null>(null);
+  function cancelBatch() { cancelRef.current?.(); cancelRef.current = null; setProgress(null); }
+  useEffect(() => () => cancelRef.current?.(), []);
   const [running, setRunning] = useState(() => { if (typeof window === 'undefined') return false; const tour = tourState(new URL(window.location.href)); return !!tour && !tour.paused; });
   useEffect(() => {
-    const pause = (event: Event) => setRunning(!(event as CustomEvent<boolean>).detail);
+    const pause = (event: Event) => { const paused = (event as CustomEvent<boolean>).detail; if (paused) cancelBatch(); setRunning(!paused); };
     window.addEventListener('demo:paused', pause);
     return () => window.removeEventListener('demo:paused', pause);
   }, []);
@@ -37,21 +46,30 @@ export default function MapScreen() {
   const [filter, setFilter] = useState('all');
   const [zoom, setZoom] = useState(1);
   const delays = useMemo(() => rippleDelays(CENTERS, CENTERS[IDS.indexOf(selected)]!), [selected]);
-  const votes = useMemo(() => counties.map(c => ({ ...c, ...countyVote(c.id, plan, round > 1) })), [plan, round]);
+  const votes = useMemo(() => counties.map((c, i) => ({ ...c, ...results[i]! })), [results]);
   const agreed = votes.filter(c => c.status === 'agree').length;
 
   const complete = agreed === counties.length;
   const active = votes.find(c => c.id === selected)!;
   const visible = votes.filter(c => (filter === 'all' || c.status === filter) && `${c.name} ${c.state} ${c.id}`.toLowerCase().includes(search.toLowerCase()));
   const objections = PRIORITIES.map((_, i) => votes.filter(c => c.status !== 'unevaluated' && c.status !== 'agree' && c.priority === i).length);
-  function revise() { setPlan(p => improvePlan(p, IDS)); setRound(r => r + 1); }
+  function revise() {
+    if (cancelRef.current) return;
+    setProgress(0);
+    const useWorker = new URL(window.location.href).searchParams.get('countyWorker') === 'on';
+    cancelRef.current = startCountyBatch(IDS, plan, useWorker, setProgress, result => {
+      const revision = round + 1;
+      setEvents(old => [...old, ...result.votes.flatMap((vote, i) => vote.status === results[i]!.status ? [] : [{ id: `county-fips-v1:r${revision}:${IDS[i]}`, countyId: IDS[i]!, revision, before: results[i]!.status, after: vote.status }])]);
+      setPlan(result.plan); setResults(result.votes); setRound(revision); setProgress(null); cancelRef.current = null;
+    });
+  }
   useEffect(() => {
-    if (!running || complete) return;
+    if (!running || complete || progress !== null) return;
     const timer = window.setInterval(revise, motionDisabled() ? 1800 : motionDuration(1800));
     return () => window.clearInterval(timer);
-  }, [running, complete]);
+  }, [running, complete, progress, plan, round, results]);
   useEffect(() => { if (complete) setRunning(false); }, [complete]);
-  function reset() { setRunning(false); setPlan([...INITIAL_PLAN]); setRound(1); }
+  function reset() { cancelBatch(); setResults(IDS.map(id => countyVote(id, INITIAL_PLAN, false))); setEvents([]); setRunning(false); setPlan([...INITIAL_PLAN]); setRound(1); }
   return <div className="civic-shell map-shell county-shell">
     <CivicHeader stage="National sandbox" />
     <main id="main-content" tabIndex={-1} className="civic-main map-main">
@@ -69,9 +87,10 @@ export default function MapScreen() {
       </section><aside className="county-plan"><div className="county-plan-title"><span className="map-eyebrow">The evolving plan</span><span>v{round}</span></div><h2>Stronger communities,<br />shared prosperity.</h2><p>A simulated national investment plan shaped by synthetic county requirements.</p><div className="county-progress"><span>Modeled county support <b>{round === 1 ? 'Not evaluated' : modeledCountyPercent(agreed, counties.length, 0)}</b></span><small>{agreed.toLocaleString()} / {counties.length.toLocaleString()} bundled county models meet all four requirements</small><progress aria-label="County models meeting all four synthetic requirements" max={counties.length} value={agreed} /></div>
         <div className="county-priorities">{PRIORITIES.map((p, i) => <div key={p}><div><strong>{p}</strong><span>{plan[i]}/100</span></div><progress aria-label={`${p} modeled commitment`} max="100" value={plan[i]} /><small>{objections[i] ? `${objections[i]!.toLocaleString()} evaluated county models require this improvement` : round === 1 ? 'Not evaluated' : 'No unmet model requirements in this area'}</small></div>)}</div>
         <div className={`county-status ${complete ? 'complete' : ''}`} role="status">{complete ? 'Simulation complete. Every county’s modeled requirements are satisfied.' : round === 1 ? 'No scenarios evaluated. Zero agreement is not a dissent vote. Start the simulation to evaluate a revised sample plan.' : `Revision ${round}: strengthened all four commitments in response to synthetic requirements.`}</div>
-        <button className="county-start" disabled={complete} onClick={() => setRunning(r => !r)}>{complete ? '✓ All county models support plan' : running ? 'Pause simulation' : round === 1 ? '▶ Start nationwide simulation' : '▶ Resume simulation'}</button><div className="county-actions"><button className="outline" disabled={running || complete} onClick={revise}>Improve one revision</button><button className="outline" onClick={reset}>Restart</button></div><p className="county-disclosure">Simulation only. Each county has one synthetic position and fixed modeled requirements. Revisions raise plan scores until those requirements are met. Results are not representative, legally binding, polling, a forecast, or evidence of real public consensus.</p>
+        {progress !== null && <div role="status">Evaluating synthetic scenarios: {progress.toLocaleString()} / {counties.length.toLocaleString()}. Showing completed revision {round}. <button onClick={() => { cancelBatch(); setRunning(false); }}>Cancel evaluation</button></div>}
+        <button className="county-start" disabled={complete} onClick={() => { if (running) cancelBatch(); setRunning(r => !r); }}>{complete ? '✓ All county models support plan' : running ? 'Pause simulation' : round === 1 ? '▶ Start nationwide simulation' : '▶ Resume simulation'}</button><div className="county-actions"><button className="outline" disabled={running || complete || progress !== null} onClick={revise}>Improve one revision</button><button className="outline" onClick={reset}>Restart</button></div><p className="county-disclosure">Simulation only. Each county has one synthetic position and fixed modeled requirements. Revisions raise plan scores until those requirements are met. Results are not representative, legally binding, polling, a forecast, or evidence of real public consensus.</p>
       </aside></div>
-      <CountyEventHeatmap revision={round} onCounty={setSelected} />
+      <CountyEventHeatmap events={events} revision={round} onCounty={setSelected} />
       <section className="county-directory"><div><h2>Inspect the county models.</h2><p>Search synthetic positions, including Alaska and Hawaii. No resident ballots are shown.</p></div><label>Find a county<input type="search" placeholder="County, state, or FIPS code" value={search} onChange={e => setSearch(e.target.value)} /></label><p role="status">{visible.length.toLocaleString()} / {counties.length.toLocaleString()} synthetic scenarios match search and status filters · county-fips-v1 · plan revision {round} {filter !== 'all' ? `· ${LABELS[filter as keyof typeof LABELS]}` : ''}</p><div className="county-results">{visible.slice(0, 60).map(c => <button key={c.id} onClick={() => setSelected(c.id)} aria-pressed={selected === c.id}><span>{c.name}, {c.state}</span><small style={{ color: COLORS[c.status] }}>{LABELS[c.status]}</small></button>)}</div>{visible.length > 60 && <p>Showing the first 60 matches. Narrow your search to find a county.</p>}{!visible.length && <p>No matching counties. Try another name or clear the model filter.</p>}</section>
       <p className="map-footnote">Geography: U.S. Census Bureau, 2023 cartographic boundaries. All {counties.length.toLocaleString()} counties and county equivalents in the 50 states and D.C.; territories excluded. Equal county models, not population weighted. Alaska and Hawaii shown as insets.</p>
     </main></div>;

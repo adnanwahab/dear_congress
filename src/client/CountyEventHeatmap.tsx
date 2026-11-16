@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import counties from './data/counties.json';
-import { countyEvents } from './county-events';
+import { countyEvents, type CountyEvent } from './county-events';
 import { motionDisabled, motionDuration } from './motion';
 import './county-events.css';
 
 const COUNTY_BY_ID = new Map(counties.map(c => [c.id, c]));
 
-export function CountyEventHeatmap({ revision, onCounty }: { revision: number; onCounty: (id: string) => void }) {
-  const events = useMemo(() => countyEvents(revision), [revision]);
+export function CountyEventHeatmap({ revision, onCounty, events: suppliedEvents }: { revision: number; onCounty: (id: string) => void; events?: CountyEvent[] }) {
+  const events = useMemo(() => suppliedEvents ?? countyEvents(revision), [revision, suppliedEvents]);
   const [bucket, setBucket] = useState(1);
   const [playing, setPlaying] = useState(false);
   const [geography, setGeography] = useState(true);
