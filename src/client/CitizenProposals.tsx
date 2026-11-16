@@ -1,11 +1,10 @@
-import { ProposalCredits } from "./ProposalCredits";
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { LawBehaviorExplorer } from './LawBehaviorExplorer';
 import { ProposalFollow } from './ProposalFollow';import { ProposalWorkshop } from "./ProposalWorkshop";
 
 import { ProposalObjections } from "./ProposalObjections";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
   type AdvisoryChoice, type CitizenProposalInput, type CitizenProposalView, type ProposalJurisdiction,
@@ -15,6 +14,8 @@ import ProposalWorkspace from "./ProposalWorkspace";
 import AmendmentEditor from "./AmendmentEditor";
 import { ProposalReadingHelp } from "./ProposalReadingHelp";
 import { DiscussionGuide, discussionCommentId } from "./DiscussionGuide";
+
+const ProposalCredits = lazy(() => import("./ProposalCredits").then(mod => ({ default: mod.ProposalCredits })));
 
 const API = "/api/citizen-proposals";
 const DRAFTS_KEY = "civic_synthesis_proposal_drafts_v1";
@@ -363,10 +364,10 @@ function ProposalDetail({ id }: { id: string }) {
       <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />      <ProposalWorkshop key={`workshop:citizen:${proposal.id}`} source={proposal} />
 
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
-      <ProposalCredits key={proposal.id} proposal={proposal} submit={async body => {
+      <Suspense fallback={<p role="status">Loading contributor credits…</p>}><ProposalCredits key={proposal.id} proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/credits`, body);
         setProposal(result.proposal);
-      }} />
+      }} /></Suspense>
       <ProposalObjections proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/objections`, body);
         setProposal(result.proposal);
