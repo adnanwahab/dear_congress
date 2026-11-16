@@ -1,0 +1,14 @@
+.patch-subway { min-width:0; }
+.patch-subway input { display:block; width:100%; max-width:34rem; margin-block:8px 20px; }
+.patch-subway code,.patch-subway a,.patch-subway td { overflow-wrap:anywhere; }
+.subway-lines { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr)); gap:16px; }
+.subway-lines article { border:1px solid currentColor; border-radius:12px; padding:16px; min-width:0; }
+.subway-lines ul { list-style:none; padding:0 0 0 16px; border-left:4px solid currentColor; }
+.subway-lines li { position:relative; display:flex; flex-direction:column; gap:6px; padding:12px; }
+.subway-lines li::before { content:''; position:absolute; left:-24px; top:20px; width:12px; height:12px; border:3px solid currentColor; border-radius:50%; background:Canvas; }
+.subway-track { font-size:.85em; }
+.subway-table { overflow:auto; max-height:32rem; }
+.subway-table table { border-collapse:collapse; width:100%; }
+.subway-table th,.subway-table td { text-align:left; padding:12px; border-bottom:1px solid currentColor; min-width:9rem; }
+.patch-subway :focus-visible { outline:3px solid currentColor; outline-offset:3px; }
+@media(prefers-reduced-motion:reduce) { .patch-subway * { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

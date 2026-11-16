@@ -20,6 +20,6 @@ test('pair markup stays bounded, clickable and separate from verified deployment
  const p=pull(`![One](${image('one')})\n![Two](${image('two')})\n![Three](${image('three')})`);p.preview={headSha:old,route:'/',capturedAt:'',screenshotUrl:'/old.png',exploreUrl:'https://stale.fly.dev'};
  const html=renderToStaticMarkup(<PatchPreview pull={p}/>);expect((html.match(/<img /g)||[])).toHaveLength(2);expect(html).toContain('gp-screenshot-pair');expect(html).toContain('no-referrer');expect(html).not.toContain('stale.fly.dev');expect(html).not.toContain('/three.png');expect(html).not.toContain('being prepared');
 });
-test('exact-revision operator preview is retained when attachments are absent',()=>{
- const p=pull('No screenshots');p.preview={headSha:sha,route:'/',capturedAt:'',screenshotUrl:'/current.png',exploreUrl:'https://verified.fly.dev'};const html=renderToStaticMarkup(<PatchPreview pull={p}/>);expect(html).toContain('/current.png');expect(html).toContain('https://verified.fly.dev');p.headSha=old;expect(renderToStaticMarkup(<PatchPreview pull={p}/>)).not.toContain('https://verified.fly.dev');
+test('incomplete operator receipt is not presented as verified build evidence',()=>{
+ const p=pull('No screenshots');p.preview={headSha:sha,route:'/',capturedAt:'',screenshotUrl:'/current.png',exploreUrl:'https://verified.fly.dev'};const html=renderToStaticMarkup(<PatchPreview pull={p}/>);expect(html).not.toContain('/current.png');expect(html).not.toContain('https://verified.fly.dev');expect(html).toContain('Verification pending');p.headSha=old;expect(renderToStaticMarkup(<PatchPreview pull={p}/>)).not.toContain('https://verified.fly.dev');
 });

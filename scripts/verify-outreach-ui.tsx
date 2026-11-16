@@ -10,7 +10,7 @@ const { createRoot } = await import('react-dom/client');
 const container = dom.document.createElement('div'); dom.document.body.append(container);
 const root = createRoot(container as any);
 const calls: string[] = [];
-const request = async <T,>(path: string): Promise<T> => { calls.push(path); return demoPayload({}, 'test') as T; };
+const request = async <T,>(path: string): Promise<T> => { if (path === '/api/meetings') return { meetings: [] } as T; calls.push(path); return demoPayload({}, 'test') as T; };
 const sentinel = '[{"id":"kept","title":"kept","office":"kept","stage":2,"updatedAt":"kept"}]';
 dom.localStorage.setItem('civic_demo_tracker_v1', sentinel);
 await act(async () => root.render(<WorkflowScreen stage="sponsors" request={request} />));

@@ -1,0 +1,31 @@
+import { expect, test } from 'bun:test';
+import { OperatorHealth } from './operator-health';
+const queues = { writes: 2, designs: 1, writeFailures: 0 };
+test('operator surface fails closed and never embeds credentials', async () => {
+  const health = new OperatorHealth();
+  const req = (method = 'GET', auth = 'Bearer secret') => new Request('http://localhost/admin/health', {method, headers: {authorization: auth}});
+  expect(health.handle(req(), '', queues).status).toBe(401);
+  expect(health.handle(req('GET', 'Bearer wrong'), 'secret', queues).status).toBe(401);
+  expect(health.handle(req('POST'), 'secret', queues).status).toBe(405);
+  expect(await health.handle(req('HEAD'), 'secret', queues).text()).toBe('');
+  const res = health.handle(req(), 'secret', queues);
+  expect(res.headers.get('cache-control')).toBe('no-store');
+  expect(res.headers.get('set-cookie')).toBeNull();
+  const html = await res.text();
+  expect(html).not.toContain('secret');
+  expect(html).toContain('DB saturation: unknown');
+  expect(html).toContain('rel="noopener noreferrer"');
+});
+test('five minute history expires failures and escapes registered route labels', async () => {
+  let now = 600000;
+  const health = new OperatorHealth(() => now);
+  health.record('/api/example/:id<script>', 503);
+  health.record('/api/example/:id<script>', 200);
+  const req = new Request('http://localhost/admin/health', { headers: {authorization:'Bearer test'} });
+  const html = await health.handle(req, 'test', queues).text();
+  expect(html).toContain('/api/example/:id&lt;script&gt;');
+  expect(html).not.toContain(':id<script>');
+  expect(health.snapshot()[4]?.routes[0]?.[1]).toEqual({requests:2, failures:1});
+  now += 300000;
+  expect(health.snapshot().flatMap(b => b.routes)).toEqual([]);
+});

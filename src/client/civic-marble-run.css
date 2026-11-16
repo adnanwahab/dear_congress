@@ -1,0 +1,13 @@
+.marble-run { margin-block: 1.5rem; }
+.marble-run select { max-width: 100%; margin: .5rem; }
+.marble-controls { display: flex; flex-wrap: wrap; gap: .6rem; margin-block: 1rem; }
+.marble-controls button { min-height: 44px; }
+.marble-run :is(button, select, summary, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.marble-track { display: grid; gap: .25rem; margin-block: 1rem; }
+.marble-stop { display: flex; align-items: center; gap: .75rem; padding: .6rem; border-inline-start: 3px solid currentColor; }
+.marble-stop.active { outline: 2px solid currentColor; font-weight: bold; }
+.marble { font-size: 1.8rem; }
+.marble-stop.active .marble { animation: marble-arrive calc(450ms * var(--motion-scale, 1)) ease-out; }
+@keyframes marble-arrive { from { transform: translateY(-1rem); } to { transform: translateY(0); } }
+html[data-motion="off"] .marble { animation: none; }
+@media (prefers-reduced-motion: reduce) { .marble-stop.active .marble { animation: none; } }

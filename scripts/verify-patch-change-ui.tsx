@@ -17,6 +17,19 @@ Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => O
 try {
   await act(async () => root.render(<PatchChange key={item.id} item={item} />));
   const q = within(document.body);
+  const slider = q.getByRole('slider') as HTMLInputElement;
+  assert.equal(slider.min, '0'); assert.equal(slider.max, '100');
+  assert.equal(slider.getAttribute('aria-valuetext'), '50% current approach, 50% proposed text');
+  await act(async () => fireEvent.change(slider, { target: { value: '0' } }));
+  assert.equal(document.querySelector('.clause-lens')?.getAttribute('style')?.includes('0%'), true);
+  await act(async () => fireEvent.change(slider, { target: { value: '100' } }));
+  assert.equal(slider.getAttribute('aria-valuetext'), '100% current approach, 0% proposed text');
+  await act(async () => fireEvent.click(q.getByRole('button', { name: 'Side-by-side mode' })));
+  assert.equal(q.queryByRole('slider'), null);
+  assert.ok(document.querySelector('.clause-columns'));
+  assert.equal(q.getByRole('button', { name: 'Side-by-side mode' }).getAttribute('aria-pressed'), 'true');
+  await act(async () => fireEvent.click(q.getByRole('button', { name: 'Side-by-side mode' })));
+  assert.ok(q.getByText(/No imported official legal text/));
   const play = () => fireEvent.click(q.getByRole('button', { name: 'Play the change' }));
   const finalText = () => [...document.querySelectorAll('.patch-final')].map(n => n.textContent);
   const expected = [`− ${item.currentText}`, `+ ${item.proposedText}`];
@@ -58,6 +71,13 @@ try {
   transitionProposal(() => updates++);
   assert.equal(snapshots, 1);
   assert.equal(updates, 3);
+  assert.equal((q.getByRole('slider') as HTMLInputElement).value, '50');
+  const { ClauseReveal } = await import('../src/client/ClauseReveal');
+  await act(async () => root.render(<ClauseReveal before="" after="" />));
+  assert.ok(q.getByText('No clause text available to compare.'));
+  assert.equal(q.queryByRole('slider'), null);
+  await act(async () => root.render(<ClauseReveal before="" after="New clause" />));
+  assert.ok(document.querySelector('ins')?.textContent?.includes('New clause'));
   await act(async () => root.unmount());
   console.log('PASS replay, full text, completion, proposal swap, fallback and reduced motion');
 } finally {
