@@ -1,0 +1,10 @@
+.classroom { max-width: 960px; margin: auto; padding: 24px; overflow-wrap: anywhere; }
+.classroom main > section { margin-block: 32px; scroll-margin-top: 20px; }
+.classroom a { text-decoration: underline; }
+.classroom-notice, .classroom-options article { border: 1px solid currentColor; border-radius: 8px; padding: 16px; }
+.classroom-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.classroom dt { font-weight: bold; }
+.classroom dd { margin: 0 0 12px; }
+.classroom li { margin-block: 12px; }
+.classroom nav a { display: inline-block; padding-block: 12px; }
+@media (max-width: 480px) { .classroom { padding: 16px; } }

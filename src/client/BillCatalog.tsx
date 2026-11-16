@@ -43,7 +43,7 @@ export default function BillCatalog() {
   const results = searchBills(query, category);
   const back = `/bills${params.size ? '?' + params : ''}`;
   return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
-    <CivicCrossword /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
+    <CivicCrossword /><p><a href="/classroom">Classroom lesson · compare, inspect evidence and simulate without voting</a></p><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
