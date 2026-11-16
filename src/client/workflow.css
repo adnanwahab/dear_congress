@@ -182,3 +182,8 @@
 .policy-actions ul { padding-inline-start: 1.25rem; }
 .policy-actions li { margin-block: 1rem; }
 .policy-actions a { display: inline-flex; align-items: center; min-height: 44px; padding-block: .5rem; }
+
+.discovery-deck { margin-bottom: 24px; }
+.discovery-deck article { touch-action: pan-y pinch-zoom; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.discovery-deck .workflow-card-actions { margin-top: 16px; align-items: center; }
+.discovery-deck button, .discovery-deck a { min-height: 44px; }

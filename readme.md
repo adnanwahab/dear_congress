@@ -1080,6 +1080,31 @@ mounted page. A turn-on control remains available. No vote, posting volume,
 profile, reward, tracking request or model ranking determines a suggestion.
 
 
+## The life of a law
+
+The home-page **The life of a law** disclosure opens six reader-controlled comic
+chapters following a fictional evening-bus proposal. Every chapter links to its
+real product stage with `demo-transit` selected and states the hypothetical or
+synthetic boundary. METRO is cited only as agency background; the story claims
+no enactment, endorsement or measured benefit. Reading performs no writes.
+**Skip illustrations · complete text edition** shows all narration, reality checks
+and stage links together. Motion is brief, can be paused, and respects reduced
+motion. Bundled text and inline drawings remain available without API results or
+image downloads. The existing timed guided demo remains a separate experience.
+
+
+## Sample discovery deck
+
+The existing `/feed` includes a touch discovery deck: left skips, right saves for
+later, and native buttons expose the same actions to keyboard and screen readers.
+Read full proposal opens the existing sample draft. Entry copy explicitly states
+that swiping never casts Support, Oppose or Not sure. Position and saved sample
+IDs use a separate browser-local key; `discover` query history restores cards on
+Back/Forward and reload. Storage failure leaves usable in-page actions with a
+notice. No motion is added, including under reduced motion. Official records,
+public advisory votes and fictional sample cards retain separate presentations.
+
+
 ## Government responsibility explorer
 
 The six-stage sample workflow includes a read-only institutional explorer with
