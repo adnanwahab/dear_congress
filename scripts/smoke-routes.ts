@@ -14,7 +14,7 @@ Object.assign(process.env, {
   NODE_ENV: 'production', PORT: '0', DB_PATH: join(directory, 'db.json'),
   HBL_DB_PATH: join(directory, 'governance.sqlite'), HBL_SINGLE_WRITER: '1',
   HBL_MERGE_ENABLED: '0', HBL_MERGE_DRY_RUN: '1', HBL_KILL_SWITCH: '1',
-  OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0',
+  MEETINGS_PATH: join(directory, 'meetings.json'), OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0',
   ANON_COOKIE_SECRET: crypto.randomUUID() + crypto.randomUUID(),
 });
 let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
@@ -32,6 +32,17 @@ try {
   assert.equal((await get('/topics/unknown')).status, 404);
   assert.equal((await get('/bills/HFL-101')).status, 404);
   assert.equal((await get('/api/topics/unknown')).status, 404);
+  const proposalCard = await get('/embed/v1?proposal=demo-housing');
+  assert.equal(proposalCard.status, 200);
+  assert.match(proposalCard.headers.get('content-security-policy') ?? '', /script-src 'none'/);
+  assert.equal(proposalCard.headers.get('set-cookie'), null);
+  assert.match(await proposalCard.text(), /Fictional demo · read-only/);
+  assert.equal((await get('/embed/v1?proposal=missing')).status, 404);
+  assert.equal((await fetch(new URL('/embed/v1', server!.url), { method: 'POST' })).status, 405);
+  const meetings = await get('/api/meetings');
+  assert.equal(meetings.status, 200);
+  assert.equal(meetings.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await meetings.json(), { meetings: [] });
   const auditIndex = await get('/api/audit-samples');
   assert.equal(auditIndex.status, 200);
   const { samples } = await auditIndex.json();
@@ -74,6 +85,11 @@ try {
   assert.equal((await livePost('end',ownerCookie,{})).status,200);
   assert.equal((await livePost('vote',voterCookie,{stance:0})).status,409);
   assert.equal((await livePost('questions',voterCookie,{kind:'submit',text:'Too late?'})).status,409);
+  const operator = await get('/admin/health');
+  assert.equal(operator.status, 401);
+  assert.equal(operator.headers.get('cache-control'), 'no-store');
+  assert.equal(operator.headers.get('set-cookie'), null);
+  assert.doesNotMatch(await operator.text(), /Storage & queues|Release SHA|Fly logs/);
   const versionResponse = await get('/version');
   assert.equal(versionResponse.status, 200);
   assert.equal(versionResponse.headers.get('cache-control'), 'no-store');
