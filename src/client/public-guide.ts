@@ -109,6 +109,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. Its s
 
 The [response-composition exercise](/outcomes#response-composition) lets you reweight fictional groups. All inputs are illustrative; self-selection and missing groups prevent a representative public poll. It works offline after the page loads. Export or copy its report to retain dated provenance, limitations and pending human-review history; changes otherwise disappear on reload.
 
+Optional related reading on the dashboard and sample journey offers one source read when a reviewed association is available. Each suggestion explains why it appears and what the source does and does not establish. Dismiss it without receiving a replacement, or turn related reading off and back on. These preferences stay in this browser; if storage is blocked, they last only on the open page. Suggestions use the viewed sample, never your vote or public posting activity.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.

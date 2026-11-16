@@ -13,6 +13,7 @@ import { CivicMarbleRun } from './CivicMarbleRun';
 import { CivicSampler } from './CivicSampler';
 import { CouncilRoleplay } from './CouncilRoleplay';
 import { ProposalExplainer } from './ProposalExplainer';
+import { SideQuest } from './SideQuest';
 import { ProposalCompare } from './ProposalCompare'; 
 import { PolicyActions } from './PolicyActions';
 import { MissingVoice } from './MissingVoice';
@@ -197,6 +198,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     <MissingVoice />
     {stage === 'votes' && <><ParticipationNotice /><PersonalPriorities request={request} /></>}
     {stage === 'feed' && <CivicSampler items={items} loading={loading} failed={!!loadError} retry={() => setAttempt(n => n + 1)} />}
+    <SideQuest item={item} loading={loading} failed={!!loadError} />
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
