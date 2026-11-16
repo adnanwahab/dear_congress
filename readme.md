@@ -1190,3 +1190,14 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Plain-text advisory receipts
+
+After server acknowledgement, the sample `/votes` receipt offers a selectable
+plain-text preview, Copy receipt and a `.txt` download. Both exports list the
+sample proposal, local viewed-text fingerprint, Support/Oppose/Not sure options,
+non-binding disclaimer and public proposal link. Stance is excluded by default;
+an explicit checkbox includes it for that receipt only. No cookie identifiers,
+current-URL parameters, journals or private receipt identifiers are serialized.
+The fingerprint is not a server-bound revision; the link may show newer text.
+See [SHE-863 review](docs/reviews/SHE-863.md).
