@@ -1,6 +1,7 @@
 import { test, expect } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { billCollection, searchBills } from '../shared/bill-catalog';
+import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
 import { LegislativeMarkdown } from './BillCatalog';
 import { renderPage, sitemap } from '../server/pages';
 test('search covers every catalog field and combines category with all terms', () => {
@@ -35,4 +36,15 @@ test('catalog UI controls, restored URL and expanded detail are isolated from AP
   const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   expect(stdout).toContain('PASS catalog:');
+});
+
+test('every curated draft exposes unresolved authority review without inferring validity', () => {
+  for (const bill of billCollection.bills) {
+    const html = renderToStaticMarkup(<LegalAuthorityChecklist bill={bill} />);
+    for (const text of ['Legal review status: unverified', 'Authority hypothesis', 'Preemption questions', 'Rights questions', 'Unassigned / not reviewed', bill.id, bill.revision]) expect(html).toContain(text);
+    expect(html).not.toContain('<input');
+    expect(html).not.toContain('<button');
+  }
+  const thirdPlaces = renderToStaticMarkup(<LegalAuthorityChecklist bill={billCollection.bills.find(b => b.id === 'HFL-051')!} />);
+  for (const text of ['operating grants', 'procurement', 'religious freedom', 'not included in the catalog digest']) expect(thirdPlaces).toContain(text);
 });
