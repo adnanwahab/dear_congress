@@ -914,6 +914,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p role="status">Source freshness, completeness and human review are not verified here. Retained values may be stale after a failed refresh. <a href="/outcomes#source-health">Review data-source health and incidents</a>.</p>
           <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
