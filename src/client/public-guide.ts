@@ -3,6 +3,8 @@ export const PUBLIC_GUIDE = `# How Civic Synthesis works
 
 Civic Synthesis is an independent civic prototype, not a government service, election, or official channel to an office. You can read without participating. This guide describes the prototype, not a promise that a proposal will become law.
 
+During read-only incident mode, public writes (including journals and votes) return a clear pause notice. Rejected attempts are not saved or queued. Keep unsent text before reloading or leaving; sample reading and outbound source links remain available. Retry only when the owner reopens writes.
+
 ## Choose a safe starting path
 
 Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game walkthrough](/?quest=1&walkthrough=1). Five skippable chapters explain journal → need → comparison → proposal → future. Fictional examples are optional. Only chapter progress and the sample preference stay in this browser; nothing is published or voted on.

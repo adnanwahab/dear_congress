@@ -1,3 +1,4 @@
+import { launchReadOnly, pausedWrite, readOnlyShell } from "./src/server/launch-read-only";
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
@@ -56,6 +57,8 @@ import {
   parseOutcomesMode,
   type OutcomesMode,
 } from "./src/server/outcomes";
+
+const LAUNCH_READ_ONLY = launchReadOnly(process.env.LAUNCH_READ_ONLY);
 
 const DB_PATH = process.env.DB_PATH ?? "data/db.json";
 
@@ -874,7 +877,7 @@ function parseWhatIfExtraEntries(input: unknown) {
 // Build the browser shell once; render per-request canonical and social metadata.
 const browserBuild = await buildBrowser(process.env.NODE_ENV === "production");
 if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser build failed");
-const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
+const shell = readOnlyShell(transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text()), LAUNCH_READ_ONLY);
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
@@ -1882,7 +1885,8 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
   if (!path.startsWith('/api/') || !route) continue;
   const wrap = (handler: Function) => async (...args: unknown[]) => {
     try {
-      const response = await handler(...args);
+      const blocked = pausedWrite(args[0] as Request, LAUNCH_READ_ONLY);
+      const response = blocked ? securityHeaders(blocked) : await handler(...args);
       if (response instanceof Response) operatorHealth.record(path, response.status);
       return response;
     } catch (error) { operatorHealth.record(path, 500); throw error; }
