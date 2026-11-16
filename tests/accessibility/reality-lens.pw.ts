@@ -34,7 +34,7 @@ test('reality lens works by keyboard across routes without writes', async ({ pag
       overflowing: [...document.querySelectorAll('*')].filter(element => {
         const box = element.getBoundingClientRect();
         return box.right > innerWidth + 1 && box.left < innerWidth && box.width > 1;
-      }).slice(0, 8).map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 90), width: Math.round(element.getBoundingClientRect().width), right: Math.round(element.getBoundingClientRect().right) }))
+      }).slice(0, 8).map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 90), width: Math.round(element.getBoundingClientRect().width), right: Math.round(element.getBoundingClientRect().right), maxWidth: getComputedStyle(element).maxWidth, parents: (() => { const p = []; for (let n: Element | null = element; n && p.length < 7; n = n.parentElement) p.push(n.tagName + '.' + String(n.className).slice(0, 35)); return p; })() }))
     }));
     expect(layout.scrollWidth <= layout.width, `Overflow on ${route}: ${JSON.stringify(layout)}`).toBe(true);
   }
