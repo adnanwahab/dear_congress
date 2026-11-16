@@ -226,6 +226,33 @@ delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
 
+## Design workshop preparation (SHE-501)
+
+Loaded citizen proposal details offer a six-part agenda: problem, evidence,
+goals, constraints, options and open questions. Initial notes copy public source
+text; edits stay in page memory. Reloading or navigating away loses the notes.
+The six-stage navigation provides context only and never transfers workshop text
+into sample drafts, sponsor flows or votes. Source loading and retry use the
+existing detail loader; no workshop request or storage is introduced.
+
+Facilitators explicitly consent before preparing a read-only snapshot for manual
+copy/sharing or downloading an attributed plain-text proposal draft. Exports
+identify the citizen proposal, original publication date, journal source when
+present and self-described facilitator. Notes are attributed only to their author,
+not inferred participants. Empty sections remain open; citations remain unverified.
+No shared URL, public hosting, authenticated facilitator role or multi-user session
+is provided. Opt out clears notes/attribution/summary and revokes local consent;
+previously distributed files cannot be recalled. Exports require a separate human
+review of permission before distribution.
+
+Public collaboration is disabled pending working participant consent, attribution
+choices, opt-out/withdrawal, abuse reporting and moderation. The safety disclosure
+explains that boundary before the controls. This preparation slice does not satisfy
+full public-workshop acceptance. Existing public discussion is unchanged. Native
+labels, keyboard controls, wrapping actions and fluid fields support narrow screens;
+there is no workshop animation or reduced-motion dependency. Native mobile,
+keyboard and screen-reader acceptance still requires review.
+
 ## Sample audio explainer (SHE-490)
 
 The six-stage sample workflow offers a click-to-play English synthetic explainer
