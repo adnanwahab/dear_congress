@@ -32,7 +32,7 @@ test('home, navigation and stage headings use the same six labels before API loa
       expect(home).toContain(`style="--i:${s.n - 1}"`);
       expect(nav).toContain(`<span>${s.title}</span>`);
       const html = renderToStaticMarkup(<WorkflowScreen stage={s.route.slice(1) as any} request={request} />);
-      expect(html).toContain(`<h1>${s.title}</h1>`);
+      expect(html).toContain(`<h1 id="stage-heading" tabindex="-1">${s.title}</h1>`);
       expect(html).toContain(`view-transition-name:journey-stage-${s.n}`);
       expect(html).toContain('Next: ');
       expect(html).toContain(`href="/${s.next}?proposal=sample%26one"`);

@@ -1,0 +1,22 @@
+.house-main { max-width: 1120px; padding-bottom: 180px; }
+.house-kicker { letter-spacing: .18em; font-size: .75rem; }
+.house-main h1 { font-size: clamp(2.5rem, 7vw, 5rem); margin: .25em 0; }
+.house-controls { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.house-controls button[aria-pressed=true] { outline: 2px solid currentColor; outline-offset: 3px; }
+.house-orbit { display: flex; align-items: center; gap: 16px; }
+.house-orbit input { min-height: 44px; max-width: 100%; }
+.house-foyer { padding: 28px 8px; }
+.house-rooms { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+.house-room { border: 1px solid currentColor; border-radius: 12px 12px 2px 2px; padding: 24px; background: var(--card, Canvas); color: var(--ink, CanvasText); min-width: 0; box-shadow: 5px 8px 0 color-mix(in srgb, currentColor 12%, transparent); }
+.house-number { font: 2rem Georgia,serif; opacity: .65; }
+.house-room h2 { font: 1.8rem Georgia,serif; }
+.house-preview { border-top: 1px solid currentColor; padding-top: 16px; margin: 20px 0; overflow-wrap: anywhere; }
+.house-room a { display: inline-block; padding: 12px 0; }
+.house-spatial { perspective: 1400px; padding: 65px 30px; }
+.house-spatial .house-rooms { transform: rotateX(8deg) rotateY(var(--house-angle)); transform-style: preserve-3d; }
+.house-spatial .house-room { transform: translateZ(20px); border-top-width: 8px; }
+.house-room:focus-within { outline: 3px solid currentColor; outline-offset: 4px; }
+@media(max-width: 800px) { .house-rooms { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 500px) { .house-rooms { grid-template-columns: 1fr; } .house-spatial { padding: 24px 10px; perspective: 1400px; } .house-spatial .house-rooms { transform: scale(.9) rotateY(var(--house-angle)); } }
+@media(prefers-reduced-motion: reduce), (forced-colors: active) { .house-spatial .house-rooms, .house-spatial .house-room { transform: none; } }
+html[data-motion=off] .house-spatial .house-rooms, html[data-motion=off] .house-spatial .house-room { transform: none; }

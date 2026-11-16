@@ -159,6 +159,7 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ default: m.PriorityHistory })));
 const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
@@ -167,6 +168,7 @@ const JournalScreen = lazy(() => import("./JournalScreen"));
 const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
+const CivicHouse = lazy(() => import("./CivicHouse"));
 export function App() {
   if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -184,6 +186,7 @@ export function App() {
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
+    : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
   return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
@@ -864,6 +867,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
       <section className="card">
         <JurisdictionPicker preference={jurisdiction} count={state.proposals.filter(p => !jurisdiction.value || p.jurisdiction === jurisdiction.value).length} />
         <h2>Shared needs</h2>
+        <Suspense fallback={<p role="status">Loading priority history…</p>}><PriorityHistory /></Suspense>
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Jurisdiction filters policy options and jurisdiction priorities below. Shared need rankings, journal map and measured outcomes stay unchanged.</p>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
