@@ -13,6 +13,7 @@ let writes = 0;
 globalThis.fetch = async () => { writes++; throw new Error('Catalog must not fetch or submit'); };
 await act(async () => root.render(<BillCatalog />));
 assert.equal(container.querySelectorAll('article').length, 100);
+assert.equal(container.querySelectorAll('article [data-source-status="draft"]').length, 100);
 assert.equal(container.querySelectorAll('[aria-pressed]').length, 11);
 const input = container.querySelector('input')!;
 input.focus();
@@ -26,6 +27,7 @@ await act(async () => { (container.querySelector('[aria-pressed="false"]') as HT
 assert.match(container.textContent!, /No draft concepts match/);
 await act(async () => { const reset = [...container.querySelectorAll('button')].find(b => b.textContent === 'Clear / reset')!; reset.click(); });
 assert.equal(container.querySelectorAll('article').length, 100);
+assert.equal(container.querySelectorAll('article [data-source-status="draft"]').length, 100);
 assert.equal(window.location.search, '');
 // Restored URL drives controls and results on native history notification.
 await act(async () => { window.history.replaceState(null, '', '/bills?q=HFL-051'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
@@ -37,6 +39,7 @@ const detailRoot = createRoot(container);
 await act(async () => detailRoot.render(<BillCatalog />));
 for (const text of ['Third Places for Everyone Act', 'Unknown until assessed', 'Statutory text', 'Proposed funding scenarios', 'Con arguments', 'Evidence plan', 'Review before participation', 'Immutable catalog revision']) assert(container.textContent!.includes(text), text);
 assert.equal(container.querySelectorAll('input,form').length, 0);
+assert.equal(container.querySelectorAll('main > [data-source-status="draft"]').length, 1);
 assert.equal(writes, 0);
 await act(async () => detailRoot.unmount());
 await dom.happyDOM.close();

@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { ProvenanceBadge } from './ProvenanceBadge';
 import { safeProvenanceLink } from '../shared/provenance';
 import { useEffect, useState } from 'react';
@@ -8,6 +9,7 @@ export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObser
     <p>Separate from citizen ideas, drafts and fictional samples. Metadata-only coverage: full text, amendments and complete legal status have not been checked. Enactment does not establish effective dates or measured outcomes.</p>
     {!bills.length && <p>No official bill metadata available. This is not a complete catalog.</p>}
     {bills.map(b => <article key={b.id}>
+      <SourceStatus kind="metadata" />
       <ProvenanceBadge provenance={{ origin: 'official-source', date: /^\d{4}-\d{2}-\d{2}/.test(b.checkedAt) ? b.checkedAt.slice(0, 10) : null, jurisdiction: 'US', confidence: 'Official metadata record only', limitations: 'Full text, amendments, legal status and measured outcomes unverified.', link: safeProvenanceLink(b.sourceUrl) }} />
       <h3>{b.type.toUpperCase()} {b.number} · Congress {b.congress}: {b.title}</h3>
       <p>Introduced bill record · US · {b.chamber} · introduced {b.introducedDate}. Current legal status unverified.</p>

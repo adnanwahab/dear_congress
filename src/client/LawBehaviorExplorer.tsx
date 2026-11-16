@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
@@ -264,6 +265,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     }finally{window.clearTimeout(timeout);if(request===generation.current)setBusy(false);}
   }
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
+    <SourceStatus kind="model" />
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="civic-law-provenance">Demo sandbox · modeled synthetic worlds, not actual outcomes. Real votes and resident records are separate.</p>
@@ -417,9 +419,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
           {receipt.engine==='city'?' households':' residents'} differ at this checkpoint.
           Up to 12 fixed IDs are shown; this is not a representative sample.</p>
         {matched.length>0&&<label>Follow the same synthetic actor<select aria-label="Synthetic actor" value={selectedActor} onChange={e=>setSelectedActor(e.target.value)}><option value="">All sampled actors</option>{matched.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label>}
-        {selectedActor&&matched.filter(row=>row.id===selectedActor).map(row=><article key={row.id}><h4>{row.label} · current rules → edited law</h4>{(receipt.engine==='city'?HOUSE_FIELDS:PERSON_FIELDS).map(key=><p key={key}>{LABELS[key]}: {formatted(row.before[key])} → {formatted(row.after[key])}</p>)}</article>)}
+        {selectedActor&&matched.filter(row=>row.id===selectedActor).map(row=><article key={row.id}><SourceStatus kind="model" /><h4>{row.label} · current rules → edited law</h4>{(receipt.engine==='city'?HOUSE_FIELDS:PERSON_FIELDS).map(key=><p key={key}>{LABELS[key]}: {formatted(row.before[key])} → {formatted(row.after[key])}</p>)}</article>)}
         {actorChanges.length>0?<div className="civic-law-actors">
-          {actorChanges.slice(0,6).map(row=><article key={row.id} className="civic-law-actor">
+          {actorChanges.slice(0,6).map(row=><article key={row.id} className="civic-law-actor"><SourceStatus kind="model" />
             <b>{row.label}</b>
             {row.fields.slice(0,4).map(key=><p key={key}>{LABELS[key]||key}: {formatted(row.before[key])} → {formatted(row.after[key])}</p>)}
           </article>)}

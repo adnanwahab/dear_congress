@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import type { DemoPayload } from '../engine/demo';
 import './civic-festival.css';
 
@@ -19,7 +20,7 @@ export function CivicFestival({ data, failed, retry }: { data: DemoPayload | nul
       </details>
       <details><summary>Weekend · Proposal walkthrough · 10 minutes</summary>
         {failed ? <><p role="alert">The sample walkthrough could not be refreshed. Try again before starting.</p><button type="button" onClick={retry}>Retry walkthrough</button></> : !data ? <p role="status">Loading the sample walkthrough…</p> : !item ? <p>No sample proposal is available. You can still try trivia or the evidence tour.</p> : <>
-          <p><strong>Fictional sample: {item.title}</strong></p><p>{item.summary}</p>
+          <SourceStatus kind="sample" /><p><strong>Fictional sample: {item.title}</strong></p><p>{item.summary}</p>
           <ol><li>Read the current and proposed text. Which words change?</li><li>Identify a benefit, a trade-off and a missing source.</li><li>Follow the sample draft to a possible sponsor. No office is contacted; sponsor outcomes are simulated.</li></ol>
           <a href={`/feed?proposal=${encodeURIComponent(item.id)}`}>Start this sample walkthrough</a>
         </>}

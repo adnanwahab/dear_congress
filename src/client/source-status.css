@@ -1,0 +1,23 @@
+.source-status {
+  display: inline-block;
+  max-inline-size: 100%;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: .4rem;
+  padding: .2em .5em;
+  margin-block: .25rem;
+  font-size: .75rem;
+  font-weight: 750;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--ink, CanvasText);
+  background: var(--card, Canvas);
+}
+.source-status-legend { flex-basis: 100%; }
+.source-status-legend > div { display: flex; flex-wrap: wrap; gap: .4rem; }
+.source-status-legend p { margin: .25rem 0; font-size: .8rem; }
+@media (forced-colors: active) {
+  .source-status { color: CanvasText; background: Canvas; border-color: CanvasText; }
+}
+.civic-header:has(.source-status-legend) { flex-wrap: wrap; }

@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { runViewTransition, motionDisabled, motionDuration } from './motion';
 import type { DemoItem } from '../engine/demo';
@@ -22,6 +23,7 @@ export function PatchChange({ item }: { item: Pick<DemoItem, 'id' | 'currentText
   }, [playing, run]);
   const phrases = item.proposedText.match(/\S+(?:\s+\S+){0,3}\s*/g) ?? [item.proposedText];
   return <div className="patch-change" style={{ viewTransitionName: 'proposal-patch' }}>
+    <SourceStatus kind="sample" />
     <ClauseReveal key={item.id} before={item.currentText} after={item.proposedText} />
     <button className="outline patch-play" onClick={() => {
       setPlaying(!reducedMotion()); setRun(n => n + 1);

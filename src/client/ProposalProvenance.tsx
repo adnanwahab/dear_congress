@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { EvidenceExport } from './EvidenceExport';
 import { ClaimEvidence } from './ClaimEvidence';
 import type { EvidenceClaim } from '../shared/claim-provenance';
@@ -64,7 +65,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
     {claims.length > 0 && <ClaimEvidence claims={claims} />}
     <ProvenanceBadge provenance={scenarioProvenance(item)} />
   </>;
-  if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source">{full}<EvidenceExport key={JSON.stringify(item)} item={item} /></section>;
+  if (!compact) return <section className="workflow-provenance" aria-label="Scenario and background source"><SourceStatus kind="sample" />{full}<EvidenceExport key={JSON.stringify(item)} item={item} /></section>;
   return <details ref={panel} open={open}
     onPointerEnter={event => { if (event.pointerType === 'mouse') setOpen(true); }}
     onPointerLeave={() => { if (!pinned.current && !panel.current?.contains(document.activeElement)) setOpen(false); }}
@@ -72,7 +73,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) dismiss(); }}
     className="workflow-provenance workflow-provenance-compact" aria-label="Scenario and background source">
     <summary ref={trigger} onClick={event => { event.preventDefault(); if (pinned.current) dismiss(); else { pinned.current = true; setOpen(true); } }}>
-      <span className="workflow-source-status">Sample scenario / not introduced bill</span>
+      <SourceStatus kind="sample" /><span className="workflow-source-status">Sample scenario / not introduced bill</span>
       <span> · {item.jurisdiction} · </span>
       {url ? <span>{item.background?.name ?? 'Source not available'}</span> : <span>Source not available</span>}
       <span> · {freshness(item) === 'Source not available / not checked' ? 'Not checked' : freshness(item)} </span>

@@ -67,6 +67,16 @@ both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
 
+## Source status
+
+Content cards use a shared vocabulary: **Fictional sample**, **Unreviewed draft**,
+**Source-backed metadata**, or **Modeled scenario**. The shared header explains
+these labels and the independent advisory beta boundary. Background citations
+never upgrade samples into sourced proposals; metadata is not verified legal
+status and a model is not a forecast. No agency endorsement is implied. See
+[the SHE-795 implementation review](docs/reviews/SHE-795.md) for coverage and
+remaining production verification.
+
 ## Local discovery
 
 Home includes My area’s civic challenges: choose a browsing jurisdiction and policy

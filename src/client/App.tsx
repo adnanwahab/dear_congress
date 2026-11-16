@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
@@ -1502,7 +1503,7 @@ function SimulateRealities({ entryId, packageName = "Balanced", runs = 100, comp
 
   return (
     <div className={`sim-realities${compact ? " compact" : ""}${result ? " ready" : ""}`}>
-      <fieldset className="sim-settings" disabled={busy}>
+      <SourceStatus kind="model" /><fieldset className="sim-settings" disabled={busy}>
         <legend>Simulation settings</legend>
         {([ ["runs", "Futures", 1, 1000], ["years", "Years", 1, 10], ["seed", "Seed", 0, 4294967295] ] as const).map(([key, label, min, max]) => (
           <label key={key}>{label}
