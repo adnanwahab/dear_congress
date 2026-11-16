@@ -50,6 +50,12 @@ const METRICS:Record<string,{label:string;unit:string}>={
   jobs:{label:'Modeled jobs',unit:'jobs'},
   balance:{label:'Model treasury balance',unit:'synthetic USD'}
 };
+const CONSEQUENCE_METRICS:Record<number,readonly string[]>={
+  83:['meanCommuteMinutes','trips'],
+  22:['housingUnits','meanRent'],
+  23:['housingUnits','meanRent'],
+  21:['housingUnits','meanRent']
+};
 const PERSON_FIELDS=['activity','mode','commuteMinutes','employmentStatus','homeDistrictId','workDistrictId','x','z'];
 const HOUSE_FIELDS=['districtId','unitId','monthlyIncome','monthlyRent','savings','unhoused'];
 const LABELS:Record<string,string>={activity:'Activity',mode:'Travel mode',commuteMinutes:'Commute minutes',
@@ -367,14 +373,31 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <p className="muted s" role="status">{playing?'Playing':frameIndex===frames.length-1?'Playback complete':'Paused'} · Both worlds synchronized at {receipt.unit} {String(frame?.time)}. Recorded range: {String(frames[0]?.time)}–{String(frames.at(-1)?.time)} {receipt.unit}s.</p>
       <p className="muted s">Speed controls checkpoint pacing, not model time. Only recorded paired states are loaded; no intermediate events are invented. Use arrow keys on the time slider or the step buttons to inspect checkpoints.</p>
       {reducedMotion&&<p className="muted s">Reduced motion is enabled. Playback stays paused until you explicitly press Play; stepping and scrubbing remain available.</p>}
+      <section aria-label="Two simulated consequences" className="civic-consequence-preview">
+        <h4>Two simulated consequences · {law.label}</h4>
+        <p>Recorded at {receipt.unit} {frame?.time}. Change implementation strength, then Run two futures to compare again. Differences may be zero; these model observations do not establish policy benefits.</p>
+        <div className="ensemble-table"><table>
+          <caption>Edited minus current rules · synthetic model outputs</caption>
+          <thead><tr><th scope="col">Simulated outcome</th><th scope="col">Current rules</th><th scope="col">Edited law</th><th scope="col">Difference</th></tr></thead>
+          <tbody>{CONSEQUENCE_METRICS[lawId]!.map(key=>{
+            const before=frame?.baseline.metrics[key],after=frame?.edited.metrics[key];
+            return <tr key={key}><th scope="row">{METRICS[key]!.label} ({METRICS[key]!.unit})</th>
+              <td>{formatted(before)}</td><td>{formatted(after)}</td>
+              <td>{formatted(isFiniteNumber(before)&&isFiniteNumber(after)?after-before:undefined)}</td></tr>;
+          })}</tbody>
+        </table></div>
+        <p className="muted s">Unavailable means the provider did not record this outcome; no substitute estimate is generated.</p>
+      </section>
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>
+          <p className="muted s">Deterministic seed {receipt.manifest?.seed} · Synthetic simulation, not a forecast or measured real-world outcome.</p>
           <p className="civic-law-value">{formatted(baselineMetric)} <small>{unit}</small></p>
           <ActorPositionMap actors={frame?.baseline.actors||[]} bounds={bounds} label="Current rules" changed={changedIds}/>
         </section>
         <section className="civic-law-lane civic-law-after">
           <h4>World B · edited law</h4>
+          <p className="muted s">Deterministic seed {receipt.manifest?.seed} · Synthetic simulation, not a forecast or measured real-world outcome.</p>
           <p className="civic-law-value">{formatted(editedMetric)} <small>{unit}</small></p>
           <ActorPositionMap actors={frame?.edited.actors||[]} bounds={bounds} label="Edited law" changed={changedIds}/>
         </section>
