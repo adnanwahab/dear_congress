@@ -1,3 +1,4 @@
+import { SourceStatusLegend } from './SourceStatus';
 import { SoundControl } from './SoundControl';
 import { MotionStudio } from './MotionStudio';
 import { ThemeSwitch } from './ThemeSwitch';
@@ -7,6 +8,6 @@ export function CivicHeader({ stage, dataLabel }: { stage: string; dataLabel?: s
   return <header className="civic-header civic-shell">
     <div className="header-brand"><a href="/">Civic Synthesis</a><span className="pill">{stage}</span></div>
     <SoundControl /><div className="header-meta"><ThemeSwitch /><MotionStudio />{dataLabel && <span className="pill warn">{dataLabel}</span>}<span className="pill info">Advisory · not binding</span></div>
-    <RealityLens />
+    <SourceStatusLegend /><RealityLens />
   </header>;
 }

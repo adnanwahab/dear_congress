@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { useEffect, useState } from 'react';
 import type { DemoPayload } from '../engine/demo';
 import { chicagoDate } from '../shared/daily-question';
@@ -26,7 +27,7 @@ export function CuriosityMission({ data, failed }: { data: DemoPayload | null; f
   const item = deck[offset % deck.length];
   const identity = item?.id;
   useEffect(() => { setReading(false); setCompleted(false); }, [identity]);
-  return <section className="panel curiosity-mission" aria-labelledby="curiosity-title">
+  return <section className="panel curiosity-mission" aria-labelledby="curiosity-title"><SourceStatus kind="sample" />
     <p className="pill info">Demo / sandbox · pending review</p>
     <h2 id="curiosity-title">Daily curiosity mission</h2>
     <p>Explore a civic topic outside your usual interests. {day} · America/Chicago</p>

@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { useLocalUndo } from "./LocalUndo";
 import { requestHaptic } from './haptics';
 import { runViewTransition, motionDisabled, motionDuration } from "./motion";
@@ -58,7 +59,7 @@ export function SponsorBoard({ cards, save, className, items = [] }: { items?: r
         const target = lane && board.current?.contains(lane) ? Number(lane.dataset.sponsorLane) : null;
         setDrag({ ...drag, dx: e.clientX - drag.x, dy: e.clientY - drag.y, target });
       }} onPointerUp={e => { const target = drag?.target; flushSync(() => setDrag(null)); if (target != null) move(c.id, target, false, e.nativeEvent); }} onPointerCancel={() => setDrag(null)} onLostPointerCapture={() => setDrag(null)} onKeyDown={e => { if (e.key === 'Escape') setDrag(null); }}>⠿ <span>Drag card</span></button>
-      <TopicChip topic={topicForProposal(c.id, items)} /><strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true, e.nativeEvent)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p>{undo.control}</>;
+      <SourceStatus kind="sample" /><TopicChip topic={topicForProposal(c.id, items)} /><strong>{c.title}</strong><span>{c.office}</span><small>{c.updatedAt}</small><label><span className="sr">Demo stage for {c.title}</span><select value={c.stage} onChange={e => move(c.id, Number(e.target.value), true, e.nativeEvent)}>{SPONSOR_LANES.map((name, i) => <option key={name} value={i}>{name}</option>)}</select></label></article>)}{!cards.some(c => c.stage === stage) && <p className="workflow-empty">Move a demo card here to explore the journey.</p>}</section>)}</div><p aria-live="polite" className="sr">{announcement}</p>{undo.control}</>;
 }
 
 export function OutcomeTotal({ value }: { value: number }) {

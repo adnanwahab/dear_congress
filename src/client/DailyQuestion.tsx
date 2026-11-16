@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { useEffect, useState } from 'react';
 import type { DemoPayload } from '../engine/demo';
 import { chicagoDate, dailyQuestion, nextChicagoDay } from '../shared/daily-question';
@@ -38,7 +39,7 @@ export function DailyQuestion({ request }: { request: Request }) {
   const item = snapshot && snapshot.day === chicagoDate(now) ? dailyQuestion(snapshot.data, now) : undefined;
   const choice = item ? snapshot?.data.votes[item.id] : undefined;
   const completed = choice === -1 || choice === 0 || choice === 1;
-  return <section className="panel daily-question" aria-labelledby="daily-title">
+  return <section className="panel daily-question" aria-labelledby="daily-title"><SourceStatus kind="sample" />
     <h2 id="daily-title">Today's question</h2>
     <p>{chicagoDate(now)} · America/Chicago</p>
     {error ? <><p role="alert">Today's question could not be loaded. No choice has been changed.</p><button onClick={() => setAttempt(n => n + 1)}>Retry today's question</button></> : !snapshot ? <p role="status">Loading today's question…</p> : !item ? <p>No open question is available right now. Come back tomorrow or explore the proposal feed.</p> : <>

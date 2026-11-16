@@ -1,3 +1,4 @@
+import { SourceStatus } from './SourceStatus';
 import { CivicCrossword } from './CivicCrossword';
 import { TownHallGame } from './TownHallGame';
 import { BudgetShock } from './BudgetShock';
@@ -47,7 +48,7 @@ export default function BillCatalog() {
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
-      <h1>{bill.title}</h1>
+      <SourceStatus kind="draft" /><h1>{bill.title}</h1>
       <p className="bill-lead">{bill.proposedChange}</p>
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],
@@ -70,7 +71,7 @@ export default function BillCatalog() {
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
       <TownHallGame />
-      <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      <div className="bill-grid">{results.map(b => <article key={b.id}><SourceStatus kind="draft" /><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
     {id && <TownHallGame />}
   </main></div>;
