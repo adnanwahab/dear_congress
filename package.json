@@ -18,7 +18,8 @@
     "clusters:pilot": "bun src/server/need-clusters/run.ts",
     "audit:replay": "bun scripts/audit-replay.ts",
     "test:a11y": "cd tests/accessibility && npm test",
-    "test:motion": "cd tests/performance && npm test"
+    "test:motion": "cd tests/performance && npm test",
+    "test:vitals": "node tests/performance/vitals.mjs"
   },
   "dependencies": {
     "@deck.gl/core": "9.2",
