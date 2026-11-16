@@ -1,3 +1,4 @@
+import SaveToJourney from './SaveToJourney';
 import { useEffect, useRef, useState } from 'react';
 import { PROPOSAL_JURISDICTIONS } from '../shared/citizen-proposals';
 import { blankWorkspace, PROCESS_TEMPLATES, readWorkspace, WORKSPACE_FIELDS, WORKSPACE_KEY, workspaceGaps, workspaceOutline, workspaceSummary, type WorkspaceField, type WorkspaceValues } from './proposal-workspace';
@@ -13,6 +14,7 @@ export default function ProposalWorkspace() {
     try { return { draft: readWorkspace(localStorage.getItem(WORKSPACE_KEY)), error: '' }; }
     catch { return { draft: null, error: 'Saved workspace could not be read. It has not been overwritten. Copy your text and recover or clear browser storage before saving.' }; }
   });
+  const [savedDraft, setSavedDraft] = useState(initial.draft);
   const [values, setValues] = useState<WorkspaceValues>(initial.draft?.values ?? blankWorkspace());
   const [id] = useState(() => initial.draft?.id ?? crypto.randomUUID());
   const [step, setStep] = useState(0);
@@ -34,7 +36,9 @@ export default function ProposalWorkspace() {
   function save() {
     if (initial.error) return;
     try {
-      localStorage.setItem(WORKSPACE_KEY, JSON.stringify({ version: 1, id, savedAt: new Date().toISOString(), values }));
+      const snapshot = { version: 1 as const, id, savedAt: new Date().toISOString(), values };
+      localStorage.setItem(WORKSPACE_KEY, JSON.stringify(snapshot));
+      setSavedDraft(snapshot);
       setDirty(false); setError(''); setStatus('Private draft saved in this browser. Nothing was sent or published.');
     } catch { setError('Could not save: browser storage may be full or disabled. Keep this page open and copy your text before leaving.'); }
   }
@@ -57,6 +61,8 @@ export default function ProposalWorkspace() {
     {error && <p role="alert">{error}</p>}
     <div className="cp-actions"><button type="button" className="cp-button cp-button-secondary" disabled={step === 0} onClick={() => navigate(step - 1)}>Back</button><button type="button" className="cp-button" onClick={save} disabled={!!initial.error}>Save privately</button>{step < 3 && <button type="button" className="cp-button" onClick={() => navigate(step + 1)}>Next</button>}</div>
     <p role="status" aria-live="polite">{status}</p>
+    {savedDraft && <SaveToJourney category="Drafts" kind="Personal learning" text={JSON.stringify({ source: "private-proposal-workspace", draft: savedDraft }, null, 2)} />}
+
     <p><a href="/needs">Needs</a> · <a href="/draft">Sample draft workflow</a> · <a href="/proposals/new">Existing proposal editor and saved drafts</a></p>
   </section>;
 }
