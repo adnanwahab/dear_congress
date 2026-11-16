@@ -1,3 +1,4 @@
+import { LaunchLanding, isLaunchLanding } from './LaunchLanding';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
@@ -165,6 +166,7 @@ const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
 export function App() {
+  if (isLaunchLanding(window.location.pathname, window.location.search)) return <LaunchLanding />;
   if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;

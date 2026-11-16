@@ -1190,3 +1190,13 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Launch referral overview (SHE-861)
+
+Open `/?audience=launch` for a shared methodology-first overview for journalists,
+civic organizers and newcomers: a 30-second explanation, explicit evidence limits,
+a self-paced sample tour, one clean share link and an unsaved comprehension check.
+Only one exact `audience=launch` value on `/` selects it; other values use existing
+routing. This editorial mode does not infer identity, inspect referrers or persist
+an audience. Share and tour links discard incoming query parameters and fragments.
+See [scope, validation and review limits](docs/reviews/SHE-861.md).
