@@ -69,6 +69,11 @@ try {
   assert.equal((await livePost('end',voterCookie,{})).status,403);
   assert.equal((await livePost('end',ownerCookie,{})).status,200);
   assert.equal((await livePost('vote',voterCookie,{stance:0})).status,409);
+  const operator = await get('/admin/health');
+  assert.equal(operator.status, 401);
+  assert.equal(operator.headers.get('cache-control'), 'no-store');
+  assert.equal(operator.headers.get('set-cookie'), null);
+  assert.doesNotMatch(await operator.text(), /Storage & queues|Release SHA|Fly logs/);
   const versionResponse = await get('/version');
   assert.equal(versionResponse.status, 200);
   assert.equal(versionResponse.headers.get('cache-control'), 'no-store');

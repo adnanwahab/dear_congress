@@ -17,19 +17,53 @@ try {
   const q = within(document.body);
   const select = q.getByRole('combobox', { name: 'Hypothetical household type' }) as HTMLSelectElement;
   assert.equal(select.value, '');
+  assert.equal(q.queryByRole('article'), null);
   assert.equal(q.getAllByRole('cell').length, 5);
   for (const [id, label] of HOUSEHOLD_PRESETS) {
     await act(async () => fireEvent.change(select, { target: { value: id } }));
     assert.ok(q.getByRole('columnheader', { name: label }));
     assert.equal(q.getAllByRole('cell').length, 10);
     assert.ok(q.getAllByRole('cell').every(cell => cell.textContent === 'Unavailable'));
-    assert.ok(q.getByRole('status').textContent?.includes(label));
+    assert.ok(q.getAllByRole('status')[0]!.textContent?.includes(label));
+    const card = within(q.getByRole('article'));
+    assert.ok(card.getByRole('heading', { name: `Synthetic stakeholder lens: ${label}` }));
+    for (const text of ['Assumptions — illustrative:', 'Metrics to examine:', 'Direct evidence:', 'Extrapolation — conditional, unvalidated:', 'Illustrative narrative — fictional:', 'Uncertainty:']) {
+      assert.ok(card.getByText(text));
+    }
+    assert.ok(q.getByRole('article').textContent?.includes('not a vote or verified civic participation'));
     await act(async () => fireEvent.click(q.getByRole('button', { name: 'Reset household' })));
     assert.equal(select.value, '');
     assert.equal(q.getAllByRole('cell').length, 5);
-    assert.ok(q.getByRole('status').textContent?.includes('No household selected'));
+    assert.ok(q.getAllByRole('status')[0]!.textContent?.includes('No household selected'));
     assert.equal(q.queryByRole('columnheader', { name: label }), null);
+    assert.equal(q.queryByRole('article'), null);
   }
+  // Rapid actions retain the immediately preceding preset, with one-step Undo.
+  await act(async () => fireEvent.change(select, { target: { value: HOUSEHOLD_PRESETS[0][0] } }));
+  await act(async () => fireEvent.change(select, { target: { value: HOUSEHOLD_PRESETS[1][0] } }));
+  await act(async () => fireEvent.click(q.getByRole('button', { name: 'Undo local change' })));
+  assert.equal(select.value, HOUSEHOLD_PRESETS[0][0]);
+  assert.ok(document.body.textContent?.includes('Restored household preset: Renter using public transit'));
+  await act(async () => fireEvent.click(q.getByRole('button', { name: 'Undo local change' })));
+  assert.equal(select.value, HOUSEHOLD_PRESETS[0][0]);
+  const originalNow = Date.now;
+  let clock = originalNow();
+  Date.now = () => clock;
+  try {
+    await act(async () => fireEvent.change(select, { target: { value: HOUSEHOLD_PRESETS[2][0] } }));
+    const undo = q.getByRole('button', { name: 'Undo local change' });
+    await act(async () => undo.focus());
+    clock += 30_000;
+    await act(async () => fireEvent.click(undo));
+    assert.equal(select.value, HOUSEHOLD_PRESETS[0][0]);
+    await act(async () => select.focus());
+    await act(async () => fireEvent.change(select, { target: { value: HOUSEHOLD_PRESETS[1][0] } }));
+    clock += 20_001;
+    await act(async () => fireEvent.click(undo));
+    assert.equal(select.value, HOUSEHOLD_PRESETS[1][0]);
+    assert.ok(document.body.textContent?.includes('expired'));
+  } finally { Date.now = originalNow; }
+  await act(async () => fireEvent.click(q.getByRole('button', { name: 'Reset household' })));
   // Unknown/identity-like values cannot become an experiment selection.
   await act(async () => fireEvent.change(select, { target: { value: 'income=50000&address=private' } }));
   assert.equal(select.value, '');
