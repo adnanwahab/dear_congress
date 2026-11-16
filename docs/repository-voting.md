@@ -152,3 +152,12 @@ payload; missing patches and renames likewise never fabricate line receipts.
 The guide exposes source/revision/loading/error/stale/permission states separately
 from governance and never submits a vote or approves a merge. See
 [scope, verification and remaining acceptance](reviews/SHE-613.md).
+
+## Branch subway relationships — SHE-607
+
+The repository browser includes a read-only graph and searchable keyboard-accessible
+relationship table. Source description links remain unverified references. GitHub
+head/base refs and reported commit parents provide revision/ancestry context;
+a PR's base target does not prove ancestry. Missing detail metadata is explicit.
+The graph never casts votes, submits feedback or changes merge policy. See
+[verification and remaining acceptance](reviews/SHE-607.md).
