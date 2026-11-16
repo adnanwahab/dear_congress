@@ -36,6 +36,13 @@ test('touch controls retain all four components at phone width', async ({ browse
   await stack.getByLabel('Example case').tap();
   await stack.getByLabel('Example case').selectOption('conflicting');
   await expect(stack.getByRole('status')).toContainText('Unresolved conflicting evidence');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const reflow = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+    offenders: [...document.querySelectorAll('*')].filter(el => { const r = el.getBoundingClientRect(); return r.right > innerWidth + 1 && r.left < innerWidth && r.width > 1; }).slice(0, 12).map(el => ({
+      tag: el.tagName, className: String(el.className).slice(0, 80), rect: (() => { const r = el.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right), Math.round(r.width)]; })(),
+      maxWidth: getComputedStyle(el).maxWidth, overflowX: getComputedStyle(el).overflowX,
+      ancestors: (() => { const p = []; for (let n: Element | null = el; n && p.length < 5; n = n.parentElement) p.push(n.tagName + '.' + String(n.className).slice(0, 35)); return p; })()
+    }))
+  }));
+  expect(reflow.scrollWidth <= reflow.width, JSON.stringify(reflow)).toBe(true);
   await context.close();
 });
