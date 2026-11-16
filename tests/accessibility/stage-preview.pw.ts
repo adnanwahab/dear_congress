@@ -27,7 +27,16 @@ test('failed lazy summary keeps the real link available without submission', asy
   // JavaScript requests *after* the app boots, rather than assuming a source
   // filename appears in the built URL. A blocked lazy chunk must fail safely.
   let blockedChunks = 0;
-  await page.route('**/*.js', route => { blockedChunks++; return route.abort(); });
+  // Block only the data module requested by the preview, not every unrelated
+  // lazy script: failing the entire app does not test the preview fallback.
+  await page.route('**/*.js', async route => {
+    const response = await route.fetch();
+    const script = await response.text();
+    if (script.includes('Unknown stage') && script.includes('heading')) {
+      blockedChunks++;
+      await route.abort();
+    } else await route.fulfill({ response });
+  });
   const link = page.locator('.bottom-destinations a').filter({ hasText: 'Votes' });
   await link.focus();
   await expect(page.getByRole('status').filter({ hasText: 'Preview unavailable' })).toBeVisible();
