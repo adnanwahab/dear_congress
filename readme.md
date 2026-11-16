@@ -1052,3 +1052,14 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+### Fiscal assumption sensitivity
+
+Each selected policy on `/synth` shows annual USD-billion units, its model or
+catalog assumption label, missing independent source/date and an unknown
+uncertainty range. These are not appropriated dollars or exact predictions.
+The per-policy 0–200% sensitivity control changes a local cost/delta display only;
+it is an exploratory multiplier, not a confidence interval. Package totals,
+selection, exports, votes and saved costs stay at the calculated baseline.
+Unknown/invalid costs disable sensitivity; zero remains a valid assumption.
+See [SHE-891 review](docs/reviews/SHE-891.md) for validation and review limits.

@@ -1202,3 +1202,8 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
   .claim-evidence a[href^="https:"]::after { content: " (" attr(href) ")"; }
   .claim-evidence mark { background: transparent; color: inherit; font-weight: bold; }
 }
+
+.fiscal-assumption { padding: 0 0 16px; overflow-wrap: anywhere; }
+.fiscal-assumption p { margin: 6px 0; }
+.fiscal-assumption label { display: grid; gap: 6px; }
+.fiscal-assumption input { width: 100%; max-width: 28rem; }
