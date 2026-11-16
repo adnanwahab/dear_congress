@@ -68,7 +68,7 @@ interface Tracked { id: string; title: string; office: string; stage: number; up
 const SELECTION_KEY = 'civic_demo_selection_v1';
 function initialSelection() {
   const explicit = new URLSearchParams(window.location.search).get('proposal');
-  if (explicit) return explicit;
+  if (explicit !== null) return explicit;
   const entry = readJourney();
   if (entry) return entry.proposal;
   if ((new URLSearchParams(window.location.search).get('demo') === '1')) return null;
@@ -144,13 +144,17 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const scoped = items.filter(i => sampleMatchesJurisdiction(i.id, jurisdiction.value));
   const filtered = filterProposals(scoped, query, topic);
   const explicit = new URLSearchParams(window.location.search).get('proposal');
-  const item = filtered.find(i => i.id === selected) ?? (explicit && !items.some(i => i.id === explicit) ? undefined : filtered[0]);
+  // A linked identity wins over remembered selection and browsing filters.
+  // Never silently turn an unavailable link into a different voting target.
+  const item = explicit !== null ? items.find(i => i.id === explicit) : filtered.find(i => i.id === selected) ?? filtered[0];
+  const linkedOutsideFilters = !!item && !filtered.some(i => i.id === item.id);
+  const selectable = linkedOutsideFilters ? [item!, ...filtered] : filtered;
   const deepStage = stage === 'draft' || stage === 'sponsors' || stage === 'outcomes';
   useEffect(() => {
     if (!item) return;
     setSelected(item.id);
     if (!(new URLSearchParams(window.location.search).get('demo') === '1')) { try { sessionStorage.setItem(SELECTION_KEY, item.id); } catch {} }
-    if (deepStage) {
+    if (explicit === null) {
       const url = new URL(window.location.href);
       url.searchParams.set('proposal', item.id);
       window.history.replaceState(window.history.state, '', url);
@@ -159,7 +163,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
-  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); }); }
+  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.pushState(null, '', route(stage,id)); }); }
   function saveTracker(next: Tracked[]) { try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; } catch { setError('Could not save the walkthrough in this browser. Enable local storage and try again.'); return false; } }
   async function submitVote(stance?: number) {
     if (mutation.pending || (stance !== undefined && !item)) return;
@@ -183,7 +187,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); const a = document.createElement('a'); a.href = url; a.download = `${item.id}-draft.txt`; a.click(); window.setTimeout(() => URL.revokeObjectURL(url),1000); setStatus('Sample draft downloaded. Review it before contacting an office.');
   }
   const filterControls = <ProposalSearch items={scoped} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!loadError} />;
-  const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
+  const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!selectable.length}>{!item && <option value="">Choose a sample proposal</option>}{selectable.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
   const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
@@ -207,6 +211,8 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'feed' && <CivicSampler items={items} loading={loading} failed={!!loadError} retry={() => setAttempt(n => n + 1)} />}
     <SideQuest item={item} loading={loading} failed={!!loadError} />
     <Suspense fallback={<p role="status">Loading responsibility explorer…</p>}><ResponsibilityExplorer loading={loading} failed={!!loadError} proposal={item} /></Suspense>
+    {linkedOutsideFilters && <p role="status">Showing the linked proposal. Your browsing filters apply to the proposal list, not this selection.</p>}
+    {explicit !== null && !item && !loading && !loadError && <p role="status">This proposal link is unavailable. No choice has been changed. Choose a sample proposal to continue.</p>}
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>

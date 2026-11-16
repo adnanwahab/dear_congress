@@ -10,7 +10,7 @@ Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game wal
 - Explore: try the [Houston and Harris County source treasure hunt](/documentation#civic-source-treasure-hunt). Demo learning prompts link to dated official records. Progress is self-reported, held only on the page, and is never verified civic participation.
 - Discover: the [proposal feed](/feed) has fictional sample cards. Swipe left to Skip or right to Save for later; buttons offer the same actions. Swiping never casts Support, Oppose or Not sure. Read full proposal opens the sample draft. Card position and saves persist in this browser when storage is available; browser Back restores earlier cards.
 - Read: open the [proposal feed](/feed) or [published sources](/published). Check each item's source and sample label before relying on it.
-- Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
+- Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed. A sample proposal link keeps that proposal selected even when browsing filters exclude it. Unknown links offer a choice of samples without changing a vote. Opening a link never casts a vote.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
 ## Optional sound
