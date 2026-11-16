@@ -1,0 +1,18 @@
+.data-gaps { overflow-wrap: anywhere; }
+.gap-controls { display:flex; flex-wrap:wrap; gap:1rem; align-items:end; }
+.gap-controls label { display:grid; gap:.4rem; flex:1 1 12rem; }
+.gap-controls input, .gap-controls select, .data-gaps button, .data-gaps summary { min-height:44px; }
+.gap-controls input, .gap-controls select { width:100%; min-width:0; }
+.gap-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr)); gap:1rem; padding:0; list-style:none; }
+.gap-grid li { min-width:0; }
+.gap-claim { border-top:1px solid currentColor; margin-top:1rem; }
+.gap-export pre { white-space:pre-wrap; max-height:24rem; overflow:auto; }
+.data-gaps :focus-visible { outline:3px solid currentColor; outline-offset:3px; }
+@media print {
+  .gap-controls, .data-gaps button, .gap-export { display:none; }
+  .gap-grid { display:block; }
+  .gap-grid > li { break-inside:avoid; margin-bottom:1rem; }
+  .data-gaps details::details-content { content-visibility:visible; }
+  .data-gaps details > * { display:block; }
+  .data-gaps a::after { content:' (' attr(href) ')'; }
+}
