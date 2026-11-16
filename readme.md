@@ -1190,3 +1190,12 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Launch changelog
+
+`/changelog` is a public, script-free release history linked from every page's
+build footer and the `/version` JSON. It compares the image commit to documented
+release identity without treating a preview or build timestamp as a new rollout.
+Entries link exact source, scoped changed paths, dated test evidence and known
+reliability issues; unknown incident coverage stays explicit. Code releases never
+establish policy outcomes. See [the editorial contract](docs/changelog.md).
