@@ -17,6 +17,9 @@ test('assumption diagram calculates, fails honestly, and leaves navigation and p
   await page.goto('/synth');
   await page.getByText('Advanced synthesis, scoring and frozen plan comparisons', { exact: true }).click();
   await expect(page.locator('.controls')).toContainText('Live preview · not saved');
+  // Wait for the first synthetic preview to render before changing assumptions.
+  // Otherwise the new request can abort the baseline and no comparable figures exist.
+  await expect(page.locator('.synthesis-package')).toHaveCount(1);
   const slider = page.locator('.controls input[type=range]').last();
   cost = 15;
   await slider.focus();

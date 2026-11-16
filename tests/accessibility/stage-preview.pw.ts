@@ -34,7 +34,7 @@ test('failed lazy summary keeps the real link available without submission', asy
   expect(blockedChunks).toBeGreaterThan(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.stage-peek-window')).toHaveCount(0);
-  // Retain native, keyboard-accessible navigation even if the lazy chunk failed.
+  // Native keyboard activation remains usable even when the summary script fails.
   await link.focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/votes$/);

@@ -31,6 +31,10 @@ On the [home page](/), Surprise me cycles through fictional sample proposals and
 
 Votes also offers a mini citizen-jury rehearsal for three opt-in seats sharing one device with a facilitator. Pseudonyms, notes and consent stay in page memory; reload, proposal change or Delete room removes them. Reports only pause this local rehearsal and are not sent to a moderator. Summary previews require every seat’s consent to the exact text and identify the group as non-representative. Public publishing and the public pilot are unavailable. Rehearsal seats are not verified civic participants.
 
+## Practice checking claims
+
+The [transit sample argument map](/votes?proposal=demo-transit) includes Fact-check detective. Classify four editorial examples about a separate historical bill, then reveal the original Congress.gov source, date and reasoning. Practice has no political score and saves nothing. It is not a vote or verified civic participation. The bundled excerpt works offline after the page loads; the full source link needs connectivity.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
@@ -74,7 +78,7 @@ The home page’s Daily curiosity mission is a demo reading activity. Its date-b
 
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
 
-Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
+Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results. Its alternate futures gallery shows two hypothetical, same-seed law-model outcomes. Hover or focus to preview, then select both for synchronized metric and time comparisons with model sources and limitations. Exhibition order is not a preference ranking; sample proposal text is not applied.
 
 The fictional transit proposal includes a goal-overlap preview. All its sample counts are invented; no consented real sample is connected. Compare response-weighted and equal-group views, inspect subgroup denominators, and read the unresolved constraints. Small groups and rare cells are withheld. Shared goals do not establish agreement on a policy or verified participation.
 
