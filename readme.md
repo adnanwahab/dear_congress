@@ -1052,3 +1052,11 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+## Plain-language sample explanations
+
+All twelve fictional samples have two-sentence explanations and a key caveat.
+Feed, Source desk and Votes include a native **Full details** expansion retaining
+illustrative current wording and the sample draft. Copy remains unreviewed;
+comprehension-reader and source/editorial acceptance are tracked in
+[the SHE-897 review](docs/reviews/SHE-897.md).
