@@ -14,7 +14,10 @@ test('every navigation stage reserves cards while data is pending without action
       expect(html).toContain(`data-skeleton-stage="${stage.route.slice(1)}"`);
       expect(html).toContain('aria-busy="true"');
       expect(html).not.toContain('Loading sample proposals…');
-      expect(html).not.toContain('aria-pressed=');
+      // Read-only journey stage selectors remain usable while vote controls load.
+      expect(html).not.toContain('Cast advisory vote');
+      expect(html).not.toContain('>Support</button>');
+      expect(html).not.toContain('>Oppose</button>');
     }
   } finally { Object.defineProperty(globalThis, 'window', { configurable: true, value: previous }); }
 });

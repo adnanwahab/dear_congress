@@ -1,0 +1,12 @@
+.policy-pinball { margin: 12px 0; color: var(--ink); }
+.policy-pinball > div { padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius, 12px); }
+.policy-pinball button { min-height: 44px; white-space: normal; }
+.pinball-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.pinball-board { position: relative; height: 260px; max-width: 520px; border: 2px solid var(--accent); border-radius: 40px 40px 16px 16px; background: var(--bg); margin: 16px 0; }
+.pinball-board svg { width: 100%; height: 100%; overflow: visible; }
+.pinball-board polyline { fill: none; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 2; }
+.pinball-board text { fill: var(--accent); font-size: 7px; text-anchor: middle; }
+.pinball-board span { position: absolute; transform: translate(-50%, 8px); font-size: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px; white-space: nowrap; }
+.pinball-board .active { border: 2px solid var(--accent); font-weight: bold; }
+.policy-pinball summary { min-height: 44px; cursor: pointer; }
+.policy-pinball :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }

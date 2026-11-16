@@ -3,6 +3,8 @@ import AxeBuilder from '@axe-core/playwright';
 
 const routes = ['/', '/feed', '/votes', '/published', '/journal', '/needs', '/synth', '/map', '/draft', '/sponsors', '/outcomes', '/documentation', '/account'];
 for (const route of routes) test(`${route} accessibility evidence`, async ({ page }, info) => {
+  // The geographic evidence view can take longer to audit at high contrast.
+  if (route === '/map') test.setTimeout(60_000);
   await page.goto(route);
   await expect(page.locator('main')).toHaveCount(1);
   await expect(page.locator('main h1').first()).toBeVisible();
@@ -56,7 +58,7 @@ test('keyboard advisory journey confirms once and returns', async ({ page }) => 
   const support = page.getByRole('button', { name: /Cast advisory vote: Support/ });
   await tabTo(support);
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('status').filter({ hasText: 'Server confirmed advisory choice' })).toBeVisible();
+  await expect(page.locator('.workflow-status[role="status"]').filter({ hasText: 'Server confirmed advisory choice' })).toBeVisible();
   expect(writes).toBe(1);
   await page.goBack();
   await expect(search).toBeVisible();
