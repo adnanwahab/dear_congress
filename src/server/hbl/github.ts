@@ -62,6 +62,7 @@ export class GitHubSource {
     if(this.options.kind==='issue')return this.issue(await this.request(`/issues/${number}`));
     const raw=await this.request(`/pulls/${number}`), pull=this.pull(raw);
     const files=await this.pages(`/pulls/${number}/files`);
+    try { const commits=await this.pages(`/pulls/${number}/commits`); if(commits.length<250) pull.commitShas=commits.map(c=>c.sha); } catch { /* Dependency metadata unavailable; never infer absence. */ }
     if(files.length>=3000 || (typeof raw.changed_files==='number' && files.length!==raw.changed_files)) throw new GitHubError('unknown');
     pull.files=files.map(f=>({filename:f.filename,status:f.status,additions:f.additions,deletions:f.deletions,patch:f.patch}));
     const evidence:Evidence={checks:[],reviews:[],requestedReviewers:(raw.requested_reviewers??[]).length+(raw.requested_teams??[]).length,mergeable:raw.mergeable??null,mergeableState:raw.mergeable_state??'unknown',baseSha:raw.base.sha,protectionsKnown:false,protectedBase:false,sensitive:files.some(f=>/(^|\/)(\.github|auth|security|migrations|server|infra|governance)(\/|$)|(?:lock|package\.json|config\.[^/]+)$|(?:vot|policy|roster|migration|docker|terraform)/i.test(f.filename) || f.status==='removed'),maintainerApproved:false};
