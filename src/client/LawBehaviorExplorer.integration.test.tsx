@@ -148,7 +148,7 @@ test('bounded request, cancellation, response identity and unsupported context n
  let timeout:(()=>void)|undefined,resolve:((r:Response)=>void)|undefined;
  const originalTimeout=browser.setTimeout.bind(browser);
  browser.setTimeout=((fn:any,ms:number,...args:any[])=>{if(ms===45000){timeout=fn;return 123 as any;}return originalTimeout(fn,ms,...args)}) as any;
- for(const [key,value] of Object.entries({window:browser,document:browser.document,navigator:browser.navigator,IS_REACT_ACT_ENVIRONMENT:true,fetch:(_u:any,init:RequestInit)=>new Promise<Response>((done,reject)=>{resolve=done;init.signal?.addEventListener('abort',()=>reject(new Error('aborted')));})}))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
+ for(const [key,value] of Object.entries({window:browser,document:browser.document,navigator:browser.navigator,IS_REACT_ACT_ENVIRONMENT:true,fetch:(_u:any,init:RequestInit)=>new Promise<Response>((done,reject)=>{resolve=done;/* Deliberately ignore abort to exercise late-provider isolation. */})}))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
  const host=document.createElement('main');document.body.append(host);const {createRoot}=await import('react-dom/client');const root=createRoot(host);
  try{
   await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
@@ -158,8 +158,14 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>timeout!());
   expect(host.textContent).toContain('exceeded the 45-second limit');
   expect(host.textContent).toContain('Run check failed');
+  expect(getByRole(host,'region',{name:'Static simulation fallback'}).textContent).toContain('expected wait = interval ÷ 2');
+  expect(host.textContent).toContain('not your live simulation');
+  await act(async()=>resolve!(Response.json(receipt(1))));
+  expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  expect(host.textContent).toContain('exceeded the 45-second limit');
   expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
-  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  await act(async()=>getByRole(host,'button',{name:'Retry live simulation'}).click());
+  expect(host.querySelector('[aria-label="Static simulation fallback"]')).toBeNull();
   await act(async()=>getByRole(host,'button',{name:'Cancel run'}).click());
   expect(host.textContent).toContain('Run canceled');
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
@@ -179,6 +185,13 @@ test('bounded request, cancellation, response identity and unsupported context n
   const changedHorizon=receipt(1);changedHorizon.manifest!.end=730;
   await act(async()=>resolve!(Response.json(changedHorizon)));
   expect(host.textContent).toContain('Model horizon changed');
+  const savedFetch=globalThis.fetch;
+  Object.defineProperty(globalThis,'fetch',{configurable:true,writable:true,value:undefined});
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  expect(host.textContent).toContain('lacks the request features');
+  expect(getByRole(host,'button',{name:'Retry live simulation'})).toBeTruthy();
+  expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  Object.defineProperty(globalThis,'fetch',{configurable:true,writable:true,value:savedFetch});
   browser.location.href+='&horizon=12';
   await act(async()=>root.render(<LawBehaviorExplorer key="invalid" seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
   expect(host.textContent).toContain('invalid or unsupported context');

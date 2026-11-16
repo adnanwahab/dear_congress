@@ -77,6 +77,8 @@ The fictional transit sample offers an optional briefing of about two minutes, w
 
 ## Optional stakeholder lenses
 
+If the external world model times out, fails receipt checks or cannot run with this browser’s request features, Civic plans shows textual assumptions and a static precomputed fictional bus-wait example with Retry live simulation. That arithmetic example is independent of your settings, is not a provider result or forecast, and never replaces your live run. Late responses from timed-out runs are ignored. You can still read proposals and give non-binding advisory views.
+
 On [Explore civic plans](/synth), optional synthetic stakeholder lenses offer four invented household scenarios with assumptions, metrics and conditional tradeoffs. Each separates unavailable direct household evidence, unvalidated extrapolation and fictional narrative. They do not predict package effects or describe you. Selection stays in page memory, can be reset, and is not saved or sent to a simulation. Selecting a lens is not a vote or verified civic participation.
 
 In [Draft](/draft), open **Play legislative redline detective · Sandbox** to practice on three fictional clauses. Choose a guess, then reveal an explanation with links to the exact invented before/after words and unresolved edge cases. This unreviewed demo is not legal advice. Guesses stay in page memory, are lost on navigation or reload, and never become votes, private amendment versions or model projections. The same exercise appears beside amendment preparation on citizen proposal details; its invented text is independent of that proposal.
