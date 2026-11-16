@@ -44,7 +44,13 @@ The optional [private civic passport](/account) is a demo / sandbox awaiting rev
 
 On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
 
-Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance. Repository PR cards offer expandable Preview readiness diagnostics with refreshable GitHub check receipts and revision details. Refreshing diagnostics does not start a build or submit a vote.
+Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
+ 
+## Live audience questions
+
+Live sample rounds have a separate question wall. Send a question anonymously or add an optional, self-described display name. Text and names wait for the starting browser's presenter review; approved questions are public to anyone with the link. Avoid private information. Matching approved questions are grouped under the first approved wording and name. Presenters can hide questions and review audience abuse reports. Each question group gets equal manual screen turns regardless of upvotes.
+
+Question upvotes are discussion signals, never civic election votes, verified attendance, verified civic participation or merge authority. Signed browser cookies and shared write limits deter abuse but do not prove unique people. Five questions per browser per round are allowed. The temporary board freezes when the round ends or expires and disappears on server restart. It does not feed civic ballots or synthesis. Repository PR cards offer expandable Preview readiness diagnostics with refreshable GitHub check receipts and revision details. Refreshing diagnostics does not start a build or submit a vote.
 
 ## Export a sample evidence packet
 
