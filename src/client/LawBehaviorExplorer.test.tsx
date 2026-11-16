@@ -84,6 +84,25 @@ test('simulation first-load shows native accessible controls with explicit separ
  }
  });
 
+ test('provider limitations must be bounded displayable text',()=>{
+  for(const limitations of [null,{},[{}],Array(101).fill('limit'),['x'.repeat(10001)]]){
+    expect(()=>parseLawBehaviorReceipt({...realShape,limitations})).toThrow();
+  }
+ });
+
+test('outcome trace rejects mismatched scenario and preserves missing outcome evidence',async()=>{
+  const {lawOutcomeTrace}=await import('./law-outcome-trace');
+  const context={lawId:83,seed:42,population:24 as const,implementationStrength:.5,revision:2};
+  const value=structuredClone(realShape);value.manifest!.population=24;
+  const trace=lawOutcomeTrace(value,context,'missingMetric',1,'https://happybearlandia.fly.dev');
+  expect(trace.observation).toMatchObject({baseline:null,edited:null,difference:null,time:15});
+  expect(trace.events).toBeNull();
+  expect(trace.source.law.id).toBe('law-83');
+  for(const change of [{seed:43},{lawId:22},{implementationStrength:1},{modelVersion:'different'}])
+    expect(()=>lawOutcomeTrace(value,{...context,...change},'trips',1,'https://happybearlandia.fly.dev')).toThrow();
+  expect(()=>lawOutcomeTrace(value,context,'trips',99,'https://happybearlandia.fly.dev')).toThrow();
+});
+
 test('future letter cites exact paired logs, preserves assumptions and never extends model horizon to 2035',async()=>{
   const {buildFutureLetter,exportFutureLetter,FutureLetterCard,FICTION_LABEL}=await import('./FutureLetter');
   const letter=buildFutureLetter(realShape)!;

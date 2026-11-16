@@ -4,3 +4,22 @@
 .jurisdiction-picker select { min-height: 44px; max-width: 100%; }
 .jurisdiction-picker button { min-height: 44px; white-space: normal; }
 .jurisdiction-picker p { margin: 10px 0 0; }
+.jurisdiction-quest { margin-top: 16px; }
+.jurisdiction-quest summary { cursor: pointer; padding: 12px 0; font-weight: 700; }
+.jurisdiction-quest fieldset { min-width: 0; margin: 16px 0; padding: 12px; border: 1px solid var(--line, #ccc); border-radius: 8px; }
+.jurisdiction-quest legend { white-space: normal; }
+.jurisdiction-quest a { overflow-wrap: anywhere; }
+.jurisdiction-quest :is(button, select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+.local-challenges { margin-block: 24px; }
+.local-category { display: flex; flex-direction: column; gap: 6px; }
+.local-category select { min-height: 44px; max-width: 100%; }
+.local-challenge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; padding: 0; list-style: none; }
+.local-challenge-grid li { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 8px; overflow-wrap: anywhere; }
+.local-challenge-grid a { display: inline-flex; align-items: center; min-height: 44px; }
+.local-challenges :is(a, button, select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+/* Ensure every visible control in the local-challenges region meets the 44px touch target,
+   including contextual source disclosures on narrow screens and reduced-motion layouts. */
+.local-challenges :is(button, select, a, summary) { min-height: 44px; }
+.local-challenges :is(a, summary) { display: inline-flex; align-items: center; flex-wrap: wrap; }
