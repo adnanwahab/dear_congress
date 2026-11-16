@@ -1,3 +1,4 @@
+import { RedlineCard, RedlineShareLink } from './RedlineShareCard';
 import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
@@ -92,7 +93,7 @@ const date = (value: string) => new Date(value).toLocaleDateString(undefined, { 
 const count = (item: DemoItem) => item.support + item.oppose + item.unsure;
 
 
-export default function WorkflowScreen({ stage, request }: { stage: Stage; request: Request }) {
+function WorkflowScreen({ stage, request }: { stage: Stage; request: Request }) {
   const jurisdiction = useJurisdiction(readJourney()?.filters.jurisdiction);
   const [data, setData] = useState<DemoPayload | null>(readProposalSnapshot);
   const [selected, setSelected] = useState(initialSelection);
@@ -184,7 +185,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   }
   const filterControls = <ProposalSearch items={scoped} query={query} topic={topic} setQuery={setQuery} setTopic={setTopic} loaded={!!data} failed={!!loadError} />;
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
-  const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
+  const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /><RedlineShareLink item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
   return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
@@ -241,4 +242,9 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'outcomes' && (!loading || !!data) && <><OutcomeTimeline /><Suspense fallback={<p role="status">Loading policy measurements…</p>}><PolicyMeasurements /></Suspense><Suspense fallback={<p role="status">Loading place comparisons…</p>}><JurisdictionComparison /></Suspense><h2>Outreach activity · simulated</h2><div className="workflow-outcome-stats">{[2,3,4].map(n => <section className="panel" key={n}><OutcomeTotal value={tracker.filter(t => t.stage === n).length} /><span>{LANES[n]}</span><small>Simulated outcomes</small></section>)}</div><section className="panel"><div className="panel-head"><h2>Follow-through log</h2><p>Draft downloads do not create outreach evidence. All milestones below are manually selected simulations, not verified contact, replies or sponsorship.</p><label><span className="sr">Filter outcomes</span><select value={outcomeFilter} onChange={e => setOutcomeFilter(e.target.value)}>{['All outcomes',...LANES.slice(2)].map(s => <option key={s}>{s}</option>)}</select></label></div><div className="workflow-outcome-list">{visibleOutcomes.map(t => <article key={t.id}><span className={`workflow-outcome-badge outcome-${t.stage}`}>{LANES[t.stage]} · demo</span><TopicChip linked topic={topicForProposal(t.id, items)} /><h3>{t.title}</h3><p>{t.office}</p><small>{t.updatedAt}</small><p className="workflow-next-step">{t.stage === 2 ? 'Next: review the sample reply and prepare a follow-up.' : t.stage === 3 ? 'Next: track the committee milestone and public record.' : 'Next: revise the proposal and choose a new outreach step.'}</p><a href={t.stage === 4 ? route('feed',item?.id) : route('sponsors',item?.id)}>{t.stage === 4 ? 'Return to the feed →' : 'Update tracker →'}</a></article>)}</div>{!visibleOutcomes.length && <p className="workflow-empty">No simulated outcomes match this filter. Move a card to Replied, Introduced or offered, or Stalled to explore this stage. <a href={route('sponsors',item?.id)}>Open sponsor tracker →</a></p>}</section></>}
     <BudgetShock /><footer className="workflow-footer"><a href="/proposals/new?guided=1">Propose a change · private guided draft →</a><p>Sample clauses are fictional, reference links provide background, and sponsor outcomes are simulated.</p><a href="/journal">Start with your own experience · Journal & API →</a></footer>
   </main></div>;
+}
+
+export default function WorkflowRoute(props: { stage: Stage; request: Request }) {
+  const params = new URLSearchParams(window.location.search);
+  return props.stage === "draft" && params.has("card") ? <RedlineCard revision={params.get("card")!} /> : <WorkflowScreen {...props} />;
 }
