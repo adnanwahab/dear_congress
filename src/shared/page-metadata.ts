@@ -5,6 +5,7 @@ export const SITE_NAME = "Civic Synthesis";
 export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
 
 export const PAGE_TITLES: Record<string, string> = {
+  "/classroom": "Fictional classroom lesson · no vote required",
   "/bills": "100 Bills for Human Flourishing",
   "/topics": "Topic hubs",
   ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),

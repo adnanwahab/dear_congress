@@ -1190,3 +1190,14 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Independent classroom lesson (SHE-845)
+
+`/classroom`, linked from `/bills`, opens a standalone fictional grant-program
+lesson with two alternatives, fixture provenance, missing-evidence explanations,
+an interactive household simulation and discussion/comprehension questions.
+No account, vote or saved ballot is required. It bypasses the live journal provider,
+guided tour and participation shell; no API, live stream or browser-storage writes
+are used. Reload restores the baseline; sharing the URL shares the starting lesson,
+not slider state. Optional local JSON export uses the existing unsigned tabletop
+format and never publishes anything. See [docs/classroom.md](docs/classroom.md).

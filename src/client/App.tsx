@@ -157,6 +157,7 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const Classroom = lazy(() => import("./Classroom"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
@@ -167,6 +168,7 @@ import WorkflowScreen from "./WorkflowScreen";
 export function App() {
   if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (path === "/classroom") return <Suspense fallback={<PageSkeleton path={path} />}><Classroom /></Suspense>;
   const liveCode = path.startsWith('/live/') ? path.slice(6) : path === '/votes' ? new URLSearchParams(window.location.search).get('live') : null;
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
 
