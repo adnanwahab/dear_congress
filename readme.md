@@ -496,6 +496,11 @@ source alignment and verification limitations.
 
 ## Launch-day metrics (SHE-286)
 
+Source-channel publication approvals, consent, spend and aggregate measurement
+belong in the [launch distribution ledger](docs/launch-distribution/README.md).
+It starts empty; existing route views are neither sessions nor verified people
+and cannot be attributed to channels from current metrics.
+
 Open `/admin/stats` using username `admin` and the existing `ADMIN_TOKEN` as the
 password, or request it with `Authorization: Bearer <ADMIN_TOKEN>`. It returns 401
 when the token is absent or wrong. The page is server-rendered, uncacheable and
