@@ -36,8 +36,14 @@ await click('Hypothetical model agrees0 / 3,144');
 assert.equal(container.querySelectorAll('.county-results button').length, 0);
 assert(container.querySelector('.county-directory')!.textContent!.includes('0 / 3,144 synthetic scenarios'));
 await click('Hypothetical model agrees0 / 3,144');
-let plan = [...INITIAL_PLAN];
-for (let revision = 1; revision <= 10; revision++) {
+assert(container.querySelector('.county-progress')!.textContent!.includes('No modeled agreement result yet'));
+assert.equal(container.querySelector('.county-progress progress'), null);
+await click('Run modeled county evaluation');
+assert(container.querySelector('.county-status[role=status]')!.textContent!.includes('Evaluation complete: 3,144 synthetic county scenarios evaluated at revision 2'));
+assert(!container.textContent!.includes('Simulation running'));
+assert([...container.querySelectorAll('path.county-shape title')].every(t => !t.textContent!.includes('Not evaluated')));
+let plan = improvePlan([...INITIAL_PLAN], ids);
+for (let revision = 2; revision <= 10; revision++) {
   const supported = ids.filter(id => countyVote(id, plan).status === 'agree').length;
   const ratio = `${supported.toLocaleString()} / ${counties.length.toLocaleString()}`;
   assert(panel.textContent!.includes(`Revision ${revision}: ${ratio} county models`));
@@ -76,7 +82,7 @@ assert(container.querySelector('.county-directory')!.textContent!.includes('Harr
 assert.equal(container.querySelectorAll('.county-results button').length, counties.filter(c => `${c.name} ${c.state} ${c.id}`.toLowerCase().includes('harris')).length);
 assert.equal(panel.textContent, before, 'search and filters must not redefine the denominator');
 await click('Restart');
-assert(panel.textContent!.includes('Revision 1: 0 / 3,144 county models meet all four'));
+assert(panel.textContent!.includes('Revision 1: Not evaluated. No modeled agreement result yet.'));
 assert(panel.hasAttribute('open'), 'revision and restart retain the open explanation');
 assert.equal(heatmap.querySelectorAll('tbody tr').length, 0, 'restart clears replayed events');
 await act(async () => { root.unmount(); });

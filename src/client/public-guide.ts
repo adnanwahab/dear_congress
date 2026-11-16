@@ -102,6 +102,8 @@ The [outcomes demonstration](/outcomes#policy-measurements) links claims to reta
 
 ## Can I follow neighborhood projects?
 
+[Map](/map) offers **Run modeled county evaluation**: one action evaluates a revised sample plan against 3,144 synthetic county models in this local session. Before running, agreement is Not evaluated. Results are not resident ballots, verified participation, or public consensus. Restart clears the local evaluation.
+
 [Map](/map) includes opt-in fictional project check-ins with dated example evidence, stalled and unknown states, and forecasts shown separately from observations. No verified neighborhood project feed is connected. Corrections go only to a page-memory demo queue: nothing is sent to a real moderator, facts stay unchanged, and reloading clears the queue. Use fictional text without personal details.
 
 
