@@ -1,0 +1,11 @@
+.cooperative-mission { margin-block: 1.5rem; min-width: 0; overflow-wrap: anywhere; }
+.cooperative-mission label { display: grid; gap: .4rem; margin-block: .8rem; }
+.cooperative-mission :is(textarea, input, select) { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; font: inherit; padding: .65rem; color: inherit; background: var(--panel, Canvas); border: 1px solid var(--line, GrayText); border-radius: .35rem; }
+.cooperative-mission fieldset { min-width: 0; margin-block: 1rem; border: 1px solid var(--line, GrayText); }
+.cooperative-mission form + form, .cooperative-mission article { border-top: 1px solid var(--line, GrayText); margin-top: 1rem; padding-top: 1rem; }
+.cooperative-mission button { min-height: 44px; max-width: 100%; white-space: normal; }
+.cooperative-mission :is(button, summary, input, textarea, select):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.cooperative-mission summary { cursor: pointer; padding-block: .8rem; }
+.cooperative-mission .mission-text { white-space: pre-wrap; }
+@media (max-width: 600px) { .cooperative-mission { padding: 1rem; } .cooperative-mission fieldset { padding: .6rem; } }
+@media (prefers-reduced-motion: reduce) { .cooperative-mission *, .cooperative-mission { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
