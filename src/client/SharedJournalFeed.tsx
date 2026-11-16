@@ -1,3 +1,4 @@
+import { SAMPLE } from './JournalSharing';
 import { journalOrigin } from '../shared/journal-discovery';
 import type { JournalEntry } from '../engine/types';
 import { Skeleton } from './LoadingSkeleton';
@@ -5,8 +6,8 @@ import { groupJournalEntries } from './journal-groups';
 import { needTransitionName, needUrl } from './journal-motion';
 import { motionDuration } from './motion';
 
-type Props = { entries: JournalEntry[]; needs: { id: string; label: string }[]; loading: boolean; publishedId?: string };
-export function SharedJournalFeed({ entries, needs, loading, publishedId }: Props) {
+type Props = { entries: JournalEntry[]; needs: { id: string; label: string }[]; loading: boolean; publishedId?: string; emptyPublicFeed?: boolean; unavailable?: boolean };
+export function SharedJournalFeed({ entries, needs, loading, publishedId, emptyPublicFeed = false, unavailable = false }: Props) {
   function story(e: JournalEntry) {
     const isNew = publishedId === e.id;
     return <article key={e.id} id={`story-${e.id}`} tabIndex={-1} data-entry-id={e.id} className={isNew ? 'journal-story-new' : undefined}>
@@ -21,6 +22,13 @@ export function SharedJournalFeed({ entries, needs, loading, publishedId }: Prop
     <div className="journal-feed" aria-busy={loading}>{loading && !entries.length && <Skeleton kind="list" />}{groupJournalEntries(entries).map(group => <div className="journal-story-group" key={group[0]!.id}>
       {story(group[0]!)}
       {group.length > 1 && <details className="journal-similar"><summary>+{group.length - 1} similar {group.length === 2 ? 'story' : 'stories'} from simulated residents</summary>{group.slice(1).map(story)}</details>}
-    </div>)}{!loading && !entries.length && <p className="empty-feed">No public experiences match this view. Adjust the filters or clear them. A linked entry may be unavailable or removed.</p>}</div>
+    </div>)}{!loading && !unavailable && !entries.length && (emptyPublicFeed ? <section className="empty-feed" aria-label="About the empty shared journal">
+      <h3>No public submissions to show yet</h3>
+      <p>This public feed is empty. Private working drafts do not appear here. Only a separately reviewed excerpt you choose to share is published to the feed and API.</p>
+      <p>You can write without publishing. Your working draft stays in this open page only; it is not uploaded, saved or encrypted and is lost on refresh or leaving.</p>
+      <button type="button" onClick={() => document.getElementById('journal-working-draft')?.focus()}>Write a private draft</button>
+      <details><summary>Open a fictional example</summary><p><strong>Fictional example · not a public submission</strong></p><p>{SAMPLE}</p><p>This invented experience illustrates journal writing. It is not community activity, is not included in feed counts, and opening it neither publishes anything nor casts a vote.</p></details>
+      <p>Independent advisory beta · not an official ballot. No participation or civic eligibility is verified here.</p>
+    </section> : <p className="empty-feed">No public experiences match this view. Adjust the filters or clear them. A linked entry may be unavailable or removed.</p>)}</div>
   </>;
 }

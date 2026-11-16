@@ -33,14 +33,29 @@ test('browse restores URL state, paginates and recovers offline without public w
  await act(async()=>root.render(<Screen request={request}/>));
  expect(calls.at(-1)).toBeDefined(); expect(calls.some(p=>p.includes('origin=sample') && p.includes('need=food'))).toBe(true);
  expect(q.getByLabelText('Origin').tagName).toBe('SELECT');
+ expect(q.queryByRole('heading', {name:'No public submissions to show yet'})).toBeNull();
  await act(async()=>fireEvent.click(q.getByRole('button',{name:'Next page'})));
  expect(location.search).toContain('cursor=next'); expect(location.search).toContain('need=food');
  offline=true;
  await act(async()=>{ dom.history.replaceState(null,'','/journal?origin=public'); dom.dispatchEvent(new dom.PopStateEvent('popstate')); });
  expect(q.getByRole('alert').textContent).toContain('Check your connection');
+ expect(q.queryByRole('heading', {name:'No public submissions to show yet'})).toBeNull();
  offline=false; await act(async()=>fireEvent.click(q.getByRole('button',{name:'Retry loading'})));
  expect(q.queryByRole('alert')).toBeNull();
+ expect(q.getByRole('heading', {name:'No public submissions to show yet'})).toBeDefined();
  await act(async()=>fireEvent.submit(q.getByRole('form',{name:'Browse public experiences'})));
  expect(location.search).toContain('origin=public');
  } finally { await act(async()=>root.unmount()); for(const k of Object.keys(globals)) { if(previous[k]) Object.defineProperty(globalThis,k,previous[k]!); else Reflect.deleteProperty(globalThis,k); } await dom.happyDOM.close(); }
+});
+
+test('empty onboarding stays distinct from loading, failure and filtered results', () => {
+ const render = (extra = {}) => renderToStaticMarkup(<SharedJournalFeed entries={[]} needs={[]} loading={false} emptyPublicFeed {...extra} />);
+ expect(render()).toContain('No public submissions to show yet');
+ expect(render()).toContain('not uploaded, saved or encrypted');
+ expect(render()).toContain('Fictional example · not a public submission');
+ expect(render()).toContain('0 loaded');
+ expect(render()).not.toContain('data-entry-id');
+ expect(render({ loading: true })).not.toContain('This public feed is empty');
+ expect(render({ unavailable: true })).not.toContain('This public feed is empty');
+ expect(render({ emptyPublicFeed: false })).toContain('No public experiences match');
 });

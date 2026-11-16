@@ -30,6 +30,15 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
   try {
     await act(async () => { root.render(<JournalScreen request={request} />); });
     const baseline = calls.length;
+    expect(q().getByRole('heading', { name: 'No public submissions to show yet' })).toBeDefined();
+    await click('Write a private draft');
+    expect(document.activeElement).toBe(q().getByLabelText('Working draft (not uploaded)'));
+    const example = q().getByText('Open a fictional example');
+    expect(example.parentElement?.hasAttribute('open')).toBe(false);
+    await act(async () => { fireEvent.click(example); });
+    expect(document.body.textContent).toContain('Fictional example · not a public submission');
+    expect((q().getByLabelText('Public excerpt') as HTMLTextAreaElement).value).toBe('');
+    expect(calls.length).toBe(baseline);
     await edit('Working draft (not uploaded)', 'PRIVATE_SENTINEL unshared family details');
     await edit('Public excerpt', '  Safe excerpt  ');
     await edit('Public display name (optional)', 'Public name');

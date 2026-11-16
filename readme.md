@@ -693,6 +693,11 @@ can split across pages. Jurisdiction remains unavailable because no consented
 public broad-jurisdiction field exists. Coordinates, source text and authors are
 never used to infer locality. Draft and explicit publication flows are unchanged.
 
+The unfiltered empty public Journal explains the publication boundary and offers
+a page-only private working draft or an expandable fictional writing example.
+The example never becomes a feed entry or changes participation counts. Filtered
+and missing-link results retain their separate no-results guidance.
+
 ## Topic hubs
 
 Open `/topics` to search the existing taxonomy, or share `/topics/transit`,
