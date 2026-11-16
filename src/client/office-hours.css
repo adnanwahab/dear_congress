@@ -1,0 +1,9 @@
+.office-hours { overflow-wrap: anywhere; }
+.office-hours label { display: block; margin-block: .8rem; }
+.office-hours textarea { display: block; width: 100%; max-width: 100%; box-sizing: border-box; min-height: 5rem; }
+.office-hours fieldset { min-width: 0; margin-block: 1rem; }
+.office-hours article { border-top: 1px solid var(--border, #888); padding-block: 1rem; }
+.office-hours button { min-height: 44px; margin-block: .3rem; max-width: 100%; white-space: normal; }
+.office-hours summary { cursor: pointer; padding-block: .8rem; }
+.office-hours :is(button, textarea, input, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+/* No motion or timers: the same controls work with reduced motion. */

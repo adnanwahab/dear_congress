@@ -21,6 +21,10 @@ The shared header starts with Sound Off. You can enable quiet navigation and san
 
 The home page offers optional self-guided trivia, an evidence tour and a fictional proposal walkthrough every week, available anytime in your browser. Opening a session records no attendance, answers or votes and earns no rewards. Public event discussion is unavailable pending moderators and a reporting process. Hypothetical gatherings are planning examples only. The external Library of Congress calendar is an official directory; verify each event’s current time, location and access details with its organizer.
 
+## Expert office hours
+
+On [Draft](/draft), expert office hours is a local rehearsal with fictional verification and conflicts. Nothing is published or sent. Expert opinion and unverified citation notes are separate from official decisions. Questions and timestamped answer history disappear on navigation, reload or draft changes. No real expert is verified or contacted.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
