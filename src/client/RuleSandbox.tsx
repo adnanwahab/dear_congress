@@ -1,6 +1,6 @@
 import { playSound } from './civic-sound';
-import { DecisionBoundary } from './DecisionBoundary';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+const DecisionBoundary = lazy(() => import('./DecisionBoundary').then(mod => ({default:mod.DecisionBoundary})));
 import type { Weights } from '../engine/types';
 import type { RulePreview } from '../server/synthesis-rule-preview';
 import { normalizeWeights, WEIGHT_KEYS } from '../shared/synthesis-rule';
@@ -13,7 +13,7 @@ export function RuleComparison({ preview }: { preview: RulePreview }) {
     <p>Baseline: default weights, penalty 0.25, $40B budget. Candidate: penalty {preview.candidate.lambda}, ${preview.candidate.budget}B budget.</p>
     <p>Balanced uses normalized weights. Minimal change uses the same weights and penalty × 3 + 0.3. Most popular uses support alone and zero penalty. Rights constraints apply to all packages. Fairness is a score component; no hard fairness floor is configured.</p>
     {preview.packages.map(pkg => <details key={pkg.id}><summary>{pkg.name} · spend ${pkg.baseline.spend}B → ${pkg.candidate.spend}B</summary>
-      <DecisionBoundary pkg={pkg} />
+      <Suspense fallback={null}><DecisionBoundary pkg={pkg} /></Suspense>
       <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label={`${pkg.name} score comparison`}>
         <table><caption>{pkg.name}: baseline versus candidate. Scores precede stability and selection constraints.</caption>
           <thead><tr><th scope="col">Option</th><th scope="col">Baseline score</th><th scope="col">Candidate score</th><th scope="col">Score change</th><th scope="col">Selection effect</th></tr></thead>
