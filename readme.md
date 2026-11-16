@@ -97,7 +97,7 @@ The `/outcomes` page separates simulated outreach activity from policy measureme
 Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
 The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
-No verified implemented policy is registered. These fixtures never feed synthesis.
+A separate historical Child Tax Credit case-study draft cites enacted law, implementation and a dated Census measurement snapshot, including its revision warning. Human source, safety and editorial review remain pending; it does not establish a verified causal effect. See [SHE-908](docs/reviews/SHE-908.md). No human-approved implemented-policy case is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 The evidence freshness calendar adds a monthly agenda and dated ledger with
 review reminders, unknown-date labels and copyable/printable provenance.
