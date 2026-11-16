@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { emptyDB } from "../engine/engine";
 import { createPolicyComparison } from "../server/policy-comparison";
-import { ComparisonDetails, PolicyComparisonPanel } from "./PolicyComparison";
+import { ComparisonDetails, InputDifferences, PolicyComparisonPanel } from "./PolicyComparison";
 
 test("comparison pilot renders native labels, semantic input table, unknown outcomes and replay provenance", () => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -26,3 +26,17 @@ test("comparison pilot renders native labels, semantic input table, unknown outc
     else Reflect.deleteProperty(globalThis, "location");
   }
 });
+
+ test("edited settings expose exact differences while pending packages remain unknown", () => {
+  const comparison = createPolicyComparison(emptyDB(), { a: "A", b: "B" });
+  const chosen = { weights: { support: .4, welfare: .25, fairness: .15, feasibility: .1, reversibility: .1, evidence: .1 }, lambda: .5, budget: 55, packages: [], pending: true };
+  const markup = renderToStaticMarkup(<InputDifferences chosen={chosen} comparison={comparison} />);
+  expect(markup).toContain("Chosen synthesis settings versus default demo");
+  expect(markup).toContain("<td>0.4</td><td>0.3</td><td>0.1</td>");
+  expect(markup).toContain("<td>55</td><td>40</td><td>15</td>");
+  expect(markup).toContain("Previous packages do not represent these inputs");
+  expect(markup).toContain("Unavailable until current calculation completes");
+  expect(markup).toContain("Model execution is unavailable");
+  const complete = renderToStaticMarkup(<InputDifferences chosen={{ ...chosen, packages: comparison.content.worlds as any, pending: false }} comparison={comparison} />);
+  expect(complete).toContain("Chosen only: None. Frozen only: None");
+ });
