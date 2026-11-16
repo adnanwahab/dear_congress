@@ -1,3 +1,4 @@
+import { runSynthesis } from './src/server/synthesis-runner';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
@@ -24,9 +25,8 @@ import { SITE_URL } from "./src/shared/page-metadata";
 import { NEEDS, PROPOSALS, SEED_JOURNALS, CHANGE_LEVELS } from "./src/engine/catalog";
 import { demoPayload, DEMO_ITEMS, type DemoPayload } from "./src/engine/demo";
 import {
-  ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, diffPackages, emptyDB, extract, packageOptions, synthesize, tokens, DEFAULT_WEIGHTS,
+  ARCHETYPES, POPULATION, JOURNAL_HALF_LIFE_DAYS, JOURNAL_REFERENCE, buildContext, clusterAnswer, emptyDB, extract, synthesize, tokens, DEFAULT_WEIGHTS,
 } from "./src/engine/engine";
-import { attachIdeaReports } from "./src/engine/idea-report";
 import { variantCounts } from "./src/engine/variants";
 import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
@@ -49,7 +49,6 @@ import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from ".
 import {
   loadOutcomesFile,
   measuredNeedsOutcomes,
-  measuredPreviewByPackage,
   mergeOutcomes,
   parseOutcomesMode,
   type OutcomesMode,
@@ -1608,79 +1607,25 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
           ? mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes)
           : parsedOutcomes.outcomes;
 
-        if (compare === true) {
-          const ctxReal = buildContext(db, undefined, {
-            includeSynthetic: false,
-            extraEntries: parsed.entries,
-            now,
-            outcomes: baseOutcomes,
-          });
-          const ctxBlended = buildContext(db, undefined, {
-            includeSynthetic: true,
-            extraEntries: parsed.entries,
-            now,
-            outcomes: baseOutcomes,
-          });
-          const real = synthesize(ctxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-          const blended = synthesize(ctxBlended, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-          const pkgOpts = packageOptions(weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-          attachIdeaReports(ctxReal, real, pkgOpts);
-          attachIdeaReports(ctxBlended, blended, pkgOpts, { fitTests: false });
-
-          let measuredPreview: Record<string, { items: string[]; diff: { added: string[]; removed: string[]; moneyMovedB: number } }> = {};
-          if (OUTCOMES_MODE === "shadow") {
-            const measuredCtxReal = buildContext(db, undefined, {
-              includeSynthetic: false,
-              extraEntries: parsed.entries,
-              now,
-              outcomes: mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes),
-            });
-            const measuredReal = synthesize(measuredCtxReal, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-            measuredPreview = measuredPreviewByPackage(real, measuredReal);
-          }
-
-          // In compare mode, persist only the REAL side exactly like a normal real-only run.
-          // what-if requests (extraEntries) remain read-only.
-          if (!hasWhatIfEntries && preview !== true) {
-            db.lastPlan = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
-            db.challengerStreak = Object.fromEntries(real.map((pkg) => [pkg.id, pkg.challengerStreak]));
+        const persists = !hasWhatIfEntries && preview !== true && (compare === true || includeSynthetic !== true);
+        // Async work must never overwrite intervening ballots, entries or another saved plan.
+        const revision = persists ? JSON.stringify(db) : null;
+        try {
+          const result = await runSynthesis({ db, weights, lambda, budget, includeSynthetic, compare,
+            parsed, now: now ?? Date.now(), baseOutcomes, measuredOutcomes, parsedOutcomes,
+            previousUsed, challengerStreakUsed, OUTCOMES_MODE }, req.signal);
+          if (req.signal.aborted) return new Response(null, { status: 499 });
+          if (persists) {
+            if (revision !== JSON.stringify(db)) return Response.json({ error: 'Inputs changed during synthesis. Please retry.' }, { status: 409 });
+            db.lastPlan = Object.fromEntries(result.plans.map(pkg => [pkg.id, pkg.items.map(item => item.proposal.id)]));
+            db.challengerStreak = Object.fromEntries(result.plans.map(pkg => [pkg.id, pkg.challengerStreak]));
             await save();
           }
-
-          return Response.json({ real, blended, diff: diffPackages(real, blended), measuredPreview, outcomesMode: OUTCOMES_MODE });
+          return Response.json(result.payload);
+        } catch (error) {
+          return Response.json({ error: error instanceof Error ? error.message : 'Synthesis unavailable' },
+            { status: req.signal.aborted ? 499 : 503 });
         }
-
-        const ctx = buildContext(db, undefined, {
-          includeSynthetic: includeSynthetic === true,
-          extraEntries: parsed.entries,
-          now,
-          outcomes: baseOutcomes,
-        });
-        const results = synthesize(ctx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-        attachIdeaReports(ctx, results, packageOptions(weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed));
-
-        if (OUTCOMES_MODE === "shadow") {
-          const measuredCtx = buildContext(db, undefined, {
-            includeSynthetic: includeSynthetic === true,
-            extraEntries: parsed.entries,
-            now,
-            outcomes: mergeOutcomes(measuredOutcomes, parsedOutcomes.outcomes),
-          });
-          const measured = synthesize(measuredCtx, weights ?? DEFAULT_WEIGHTS, lambda ?? 0.25, budget ?? 40, previousUsed, challengerStreakUsed);
-          const preview = measuredPreviewByPackage(results, measured);
-          for (const pkg of results) pkg.measuredPreview = preview[pkg.id];
-        }
-
-        // What-if requests must be read-only: include request-scoped extra entries
-        // in synthesis without mutating or persisting server state.
-        const isRealOnly = includeSynthetic !== true;
-        if (!hasWhatIfEntries && isRealOnly && preview !== true) {
-          db.lastPlan = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.items.map((i) => i.proposal.id)]));
-          db.challengerStreak = Object.fromEntries(results.map((pkg) => [pkg.id, pkg.challengerStreak]));
-          await save();
-        }
-
-        return Response.json(results);
       },
     },
 

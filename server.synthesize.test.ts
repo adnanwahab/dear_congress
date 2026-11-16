@@ -75,6 +75,14 @@ describe("/api/synthesize what-if", () => {
       expect(repeated).toEqual(first); // Also catches in-memory stability mutation.
       expect(await Bun.file(dbPath).text()).toBe(before);
     }
+    if (captured) {
+      const pending = [20, 30].map(budget => captured.routes["/api/synthesize"].POST(new Request(new URL("/api/synthesize", server.url), {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...options, budget, compare: true }),
+      }), server) as Promise<Response>);
+      const statuses = (await Promise.all(pending)).map(response => response.status).sort();
+      expect(statuses).toEqual([200, 409]); // One snapshot cannot overwrite a newer saved baseline.
+    }
     const committed = await request({ ...options, compare: true }) as { real: PackageResult[] };
     const persisted = await Bun.file(dbPath).json() as DB;
     expect(persisted.lastPlan).toEqual(Object.fromEntries(committed.real.map(pkg => [pkg.id, pkg.items.map(item => item.proposal.id)])));

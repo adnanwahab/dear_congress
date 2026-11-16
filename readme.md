@@ -311,6 +311,8 @@ See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 - `preview: true` returns the same plan calculation without changing `lastPlan`, challenger streaks or the database file. Synthesis sliders request previews after a 180 ms pause; Synthesize commits the plan. Preview results use the existing re-rank motion and reduced-motion preference.
 
+- Scoring runs in disposable server workers (maximum two concurrent jobs, 30-second deadline). Disconnected requests cancel work; busy/failed jobs return 503 for retry. A concurrent input change makes a saved-plan request return 409 rather than overwrite newer state. Changing sliders immediately hides the previous result. `SYNTHESIS_EXECUTION=inline` is an operator-only rollback to synchronous computation; it does not change scoring or governance. Local measurements, rollout stages and browser verification limits are in [SHE-943](docs/reviews/SHE-943.md).
+
 - `previous?: { [packageId: string]: string[] }` lets clients pass incumbents (proposal ids) per package, e.g. `{ "A": ["h_vouchers", "t_bus"] }`.
 - If `previous` is omitted, the server uses persisted `db.lastPlan` (from the prior synthesis run). If none exists yet, it behaves like a fresh run.
 - Response now includes, per package:

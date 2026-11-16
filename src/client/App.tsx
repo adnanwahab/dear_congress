@@ -1550,6 +1550,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
   const [lambda, setLambda] = useState(0.25);
   const [budget, setBudget] = useState(40);
+  const [resultState, setResultState] = useState<AppState | null>(null);
   const [realPkgs, setRealPkgs] = useState<PackageResult[] | null>(null);
   const [blendedPkgs, setBlendedPkgs] = useState<PackageResult[] | null>(null);
   const [previousPlans, setPreviousPlans] = useState<{ real: PackageResult[]; blended: PackageResult[] }>({ real: [], blended: [] });
@@ -1585,6 +1586,11 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       }, true));
     }
     invalidateRequest();
+    setRealPkgs(null);
+    setBlendedPkgs(null);
+    setDiff({});
+    setMeasuredPreview({});
+    setSynthError(null);
     setBusy(false);
     setLivePreview(true);
     change();
@@ -1592,6 +1598,10 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
   }
   async function run(over: { budget?: number } = {}, preview = false) {
     invalidateRequest();
+    setRealPkgs(null);
+    setBlendedPkgs(null);
+    setDiff({});
+    setMeasuredPreview({});
     const version = requestVersion.current;
     const controller = new AbortController();
     requestController.current = controller;
@@ -1603,6 +1613,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       await updatePlan(() => {
         // View Transition callbacks can run after a newer setting/request.
         if (version !== requestVersion.current) return;
+        setResultState(state);
         setPreviousPlans(visiblePlans.current);
         visiblePlans.current = { real: payload.real ?? [], blended: payload.blended ?? [] };
         setShowPlanChanges(true);
@@ -1622,7 +1633,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     // Opening the screen must not advance the saved stability baseline either.
     void run({}, true);
     return invalidateRequest;
-  }, []);
+  }, [state]);
   useEffect(() => {
     if (settingsRevision === 0) return;
     previewTimer.current = setTimeout(() => { void run({}, true); }, 180);
@@ -1634,9 +1645,10 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     return () => clearTimeout(timer);
   }, [showPlanChanges, busy]);
 
-  const basePkgs = realPkgs ?? blendedPkgs;
-  const realPkg = realPkgs?.find((p) => p.id === active) ?? null;
-  const blendedPkg = blendedPkgs?.find((p) => p.id === active) ?? null;
+  const currentResults = resultState === state;
+  const basePkgs = currentResults ? realPkgs ?? blendedPkgs : null;
+  const realPkg = currentResults ? realPkgs?.find((p) => p.id === active) ?? null : null;
+  const blendedPkg = currentResults ? blendedPkgs?.find((p) => p.id === active) ?? null : null;
   const pkgDiff = diff[active] ?? { addedBySimulated: [], removedBySimulated: [], moneyMovedB: 0, pending: [], shifted: [] };
 
   useEffect(() => {
