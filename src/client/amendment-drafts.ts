@@ -6,7 +6,9 @@ export interface AmendmentSource {
 export interface AmendmentFields {
   replacement: string; rationale: string; impact: string; citation: string;
 }
+export interface AmendmentLineage { event: 'revision' | 'fork' | 'compromise' | 'merge'; parents: string[]; }
 export interface AmendmentDraft extends AmendmentFields {
+  lineage?: AmendmentLineage;
   version: 1; id: string; savedAt: string; base: AmendmentSource;
   author: 'This browser · unverified'; publicationPermission: 'not-requested';
 }
@@ -34,14 +36,29 @@ export function readAmendments(storage: DraftStorage, source: AmendmentSource): 
       || !['id','title','text','jurisdiction','origin'].every(key => typeof row.base[key] === 'string')) return false;
     try { validateAmendment(row, row.base); return true; } catch { return false; }
   })) throw new Error('Saved amendments could not be read. Existing storage was left untouched.');
+  const seen = new Map<string, AmendmentDraft>();
+  for (const row of rows as AmendmentDraft[]) {
+    const edge = row.lineage;
+    if (seen.has(row.id) || (edge && (!['revision', 'fork', 'compromise', 'merge'].includes(edge.event)
+      || !Array.isArray(edge.parents) || edge.parents.length > 2 || new Set(edge.parents).size !== edge.parents.length
+      || (edge.event === 'merge' || edge.event === 'compromise' ? edge.parents.length !== 2 : edge.event === 'fork' ? edge.parents.length !== 1 : edge.parents.length > 1)
+      || edge.parents.some(id => !seen.has(id) || !sameBase(seen.get(id)!.base, row.base))))) {
+      throw new Error('Saved amendment relationships could not be read. Existing storage was left untouched.');
+    }
+    seen.set(row.id, row);
+  }
   return rows;
 }
-export function saveAmendment(storage: DraftStorage, source: AmendmentSource, base: AmendmentSource, fields: AmendmentFields): AmendmentDraft[] {
+export function saveAmendment(storage: DraftStorage, source: AmendmentSource, base: AmendmentSource, fields: AmendmentFields, lineage: AmendmentLineage = { event: 'revision', parents: [] }): AmendmentDraft[] {
   if (!sameBase(source, base)) throw new Error('The source changed. Review the current source and start a fresh amendment. Your saved versions are retained.');
   validateAmendment(fields, base);
   const rows = readAmendments(storage, source);
   if (rows.length >= 30) throw new Error('This proposal has 30 saved local versions. Keep these records before clearing browser storage.');
-  const next: AmendmentDraft = { ...fields, version: 1, id: crypto.randomUUID(), savedAt: new Date().toISOString(),
+  if (!['revision', 'fork', 'compromise', 'merge'].includes(lineage.event)
+    || new Set(lineage.parents).size !== lineage.parents.length || lineage.parents.length > 2
+    || (lineage.event === 'merge' || lineage.event === 'compromise' ? lineage.parents.length !== 2 : lineage.event === 'fork' ? lineage.parents.length !== 1 : lineage.parents.length > 1)
+    || lineage.parents.some(id => !rows.some(row => row.id === id && sameBase(row.base, base)))) throw new Error('Choose valid parent versions from this exact source revision.');
+  const next: AmendmentDraft = { ...fields, lineage: { event: lineage.event, parents: [...lineage.parents] }, version: 1, id: crypto.randomUUID(), savedAt: new Date().toISOString(),
     base: { kind: base.kind, id: base.id, title: base.title, text: base.text, jurisdiction: base.jurisdiction, origin: base.origin }, author: 'This browser · unverified', publicationPermission: 'not-requested' };
   const result = [...rows, next];
   storage.setItem(amendmentKey(source), JSON.stringify(result));
