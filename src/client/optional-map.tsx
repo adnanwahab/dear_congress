@@ -12,7 +12,8 @@ export function mapAttempt(onStatus: (status: MapStatus) => void, timeout = MAP_
     if (stopped) return;
     stopped = true;
     clearTimeout(timer);
-    console.warn(`[map] Visualization unavailable (${reason}); check map provider configuration, connectivity and browser policy.`);
+    const category = ['timeout', 'resource', 'initialization'].includes(reason) ? reason : 'resource';
+    console.warn(`[map] Visualization unavailable (${category}); check map provider configuration, connectivity and browser policy.`);
     onStatus('unavailable');
   };
   return {

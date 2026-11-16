@@ -1,3 +1,4 @@
+import { logPrivateEvent, reportPrivateError, withRequestLogContext } from "./src/server/private-logs";
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
@@ -87,41 +88,18 @@ const HBL_URL = (process.env.HBL_URL ?? "https://happybearlandia.fly.dev").trim(
 const OUTCOMES_PATH = (process.env.OUTCOMES_PATH ?? "data/outcomes.json").trim() || "data/outcomes.json";
 const OUTCOMES_MODE: OutcomesMode = parseOutcomesMode(process.env.OUTCOMES_MODE);
 
-function logRequest(req: Request, route: string) {
+function logRequest(_req: Request, _route: string) {
   if (!DEBUG_REQUEST_LOGS) return;
-  const url = new URL(req.url);
-  console.log("[REQ]", JSON.stringify({
-    ts: new Date().toISOString(),
-    route,
-    method: req.method,
-    path: url.pathname,
-    origin: req.headers.get("origin"),
-    referer: req.headers.get("referer"),
-    host: req.headers.get("host"),
-    secFetchSite: req.headers.get("sec-fetch-site"),
-    secFetchMode: req.headers.get("sec-fetch-mode"),
-    secFetchDest: req.headers.get("sec-fetch-dest"),
-    userAgent: req.headers.get("user-agent"),
-  }));
+  logPrivateEvent('request');
 }
 
-function logResponse(route: string, res: Response, extra: Record<string, unknown> = {}) {
+function logResponse(_route: string, _res: Response) {
   if (!DEBUG_REQUEST_LOGS) return;
-  console.log("[RES]", JSON.stringify({
-    ts: new Date().toISOString(),
-    route,
-    status: res.status,
-    csp: res.headers.get("content-security-policy"),
-    xfo: res.headers.get("x-frame-options"),
-    ...extra,
-  }));
+  logPrivateEvent('response');
 }
 
+const logPublishEvent = logPrivateEvent;
 
-
-function logPublishEvent(event: string, payload: Record<string, unknown>) {
-  console.log(`[${event}]`, JSON.stringify({ ts: new Date().toISOString(), ...payload }));
-}
 
 function corsAllowOrigin(req: Request, configured: string) {
   const requestOrigin = req.headers.get("origin");
@@ -1823,12 +1801,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
   },
-  error(error: Error) {
-    console.error("[SERVER_ERROR]", JSON.stringify({
-      ts: new Date().toISOString(),
-      name: error.name,
-    }));
-    return securityHeaders(new Response("Internal Server Error", { status: 500 }));
+  error(_error: Error) {
+    const requestId = reportPrivateError();
+    return securityHeaders(new Response("Internal Server Error", { status: 500, headers: { "x-request-id": requestId } }));
   },
 };
 // Wrap every API handler so aliases share identity, limits and response headers.
@@ -1881,6 +1856,17 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
     if (typeof handler === 'function') (route as Record<string, unknown>)[method] = wrap(handler);
   }
 }
+// Request correlation wraps both method maps and function routes, after existing security.
+const correlate = (handler: Function) => async (req: Request, ...args: unknown[]) =>
+  withRequestLogContext(() => handler(req, ...args));
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (typeof route === 'function') (serverOptions.routes as Record<string, unknown>)[path] = correlate(route);
+  else if (route && typeof route === 'object' && !(route instanceof Response)) {
+    for (const [method, handler] of Object.entries(route)) if (typeof handler === 'function')
+      (route as Record<string, unknown>)[method] = correlate(handler);
+  }
+}
+serverOptions.fetch = correlate(serverOptions.fetch!) as typeof serverOptions.fetch;
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);

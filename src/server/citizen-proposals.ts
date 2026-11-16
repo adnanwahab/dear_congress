@@ -1,3 +1,4 @@
+import { reportPrivateError } from "./private-logs";
 import { createHash } from "node:crypto";
 import {
   ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
@@ -293,7 +294,7 @@ export function createCitizenProposalHandlers(deps: {
     try { return json(await run()); }
     catch (error) {
       if (error instanceof CitizenProposalError) return json({ error: error.message }, error.status);
-      console.error("[CITIZEN_PROPOSAL_ERROR]", error);
+      reportPrivateError();
       return json({ error: "The proposal could not be saved. Please retry; your draft has been kept." }, 500);
     }
   }
