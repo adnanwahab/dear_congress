@@ -47,6 +47,12 @@ Game-loop neutrality and consent review, regression coverage, and pending human
 privacy/minors/accessibility checks are tracked in [SHE-544](docs/reviews/SHE-544.md).
 New rewards must extend that checklist and its stance-parity tests.
 
+The guide's evidence layers explorer connects the existing synthetic policy
+measurements to claim, source identity, measurement, transformation and UI layers.
+It exports Markdown methodology without private inputs and links to all six stages.
+Stale and missing fixtures remain explicit; there is no archived real-source or
+dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
