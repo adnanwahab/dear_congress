@@ -985,3 +985,12 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Daily question editorial queue
+
+The daily card exposes seven dated fictional candidates and their revision IDs.
+Human source/editorial approval is pending. Scheduled dates fail closed until
+review is recorded; other dates retain the labeled sample rotation. The versioned
+archive, Chicago timezone rules and reviewed rollback procedure are documented in
+[docs/daily-editorial-queue.md](docs/daily-editorial-queue.md). Editorial scheduling
+never changes an existing advisory choice or establishes official eligibility.

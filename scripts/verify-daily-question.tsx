@@ -9,6 +9,9 @@ for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 
 const { act } = await import('react');
 const { createRoot } = await import('react-dom/client');
 const { within, fireEvent } = await import('@testing-library/dom');
+// Keep the legacy saved-choice checks outside the dated editorial candidate window.
+const NativeDate = Date;
+globalThis.Date = new Proxy(NativeDate, { construct(target, args) { return Reflect.construct(target, args.length ? args : ['2026-11-15T18:00:00Z']); } });
 const { DailyQuestion } = await import('../src/client/DailyQuestion');
 const { demoPayload } = await import('../src/engine/demo');
 const { dailyQuestion } = await import('../src/shared/daily-question');
@@ -28,6 +31,8 @@ const q = () => within(document.body);
 assert.ok(q().getByRole('heading', { name: featured.title }));
 assert.equal(q().getByRole('link', { name: 'Make an advisory choice' }).getAttribute('href'), `/votes?proposal=${featured.id}#advisory-choice`);
 assert.ok(document.body.textContent?.includes('Fictional demo proposal'));
+assert.ok(q().getByText('Seven-day editorial queue and archive'));
+assert.equal(q().getAllByText(/Awaiting human review/).length, 7);
 payload.votes[featured.id] = 0;
 await act(async () => window.dispatchEvent(new Event('advisory-vote:saved')));
 assert.ok(q().getByRole('status').textContent?.includes('Not sure'));
