@@ -1,0 +1,206 @@
+[
+  {
+    "revision": "f0a7047eec1dd25419f6fd890f60fff5710e9c022d55ed1240e19d7db3542422",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-housing",
+    "title": "Allow backyard cottages near frequent transit",
+    "jurisdiction": "City",
+    "before": "An additional dwelling requires a separate discretionary review.",
+    "after": "Permit one accessory dwelling on eligible lots within a half-mile of frequent transit, subject to building and fire codes.",
+    "backgroundUrl": "https://www.houstontx.gov/planning/",
+    "background": {
+      "name": "Planning and Development",
+      "publisher": "City of Houston Planning and Development Department",
+      "scope": "Planning department background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "6edc74846c5e7298bdd84ac3fcef07ce5c9e1f6b7b306018b067309353d24869",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-childcare",
+    "title": "Cap childcare copays for working families",
+    "jurisdiction": "Federal",
+    "before": "Family copays vary by program and eligibility category.",
+    "after": "Limit participating families’ childcare copays to 7 percent of household income and reimburse eligible providers for the difference.",
+    "backgroundUrl": "https://www.acf.hhs.gov/occ",
+    "background": {
+      "name": "Office of Child Care",
+      "publisher": "U.S. Department of Health and Human Services, Administration for Children and Families",
+      "scope": "Federal child care program background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "5f840b7ba8f38adbc4d3dd8bf4d1cd70931150504bed0796bc3dbb8ba0618c01",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-transit",
+    "title": "Run frequent buses on evenings and weekends",
+    "jurisdiction": "City",
+    "before": "Evening and weekend service follows the existing lower-frequency schedule.",
+    "after": "Fund a twelve-month pilot of fifteen-minute service through 10 p.m. on three priority corridors, with quarterly public reporting.",
+    "backgroundUrl": "https://www.ridemetro.org/",
+    "background": {
+      "name": "METRO",
+      "publisher": "Metropolitan Transit Authority of Harris County",
+      "scope": "Regional transit agency background only; not a city bill",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "870896a3ed0f921b78fa03421bd2d4a0cfa740693c2024bfe1d4d0812fe6fbb7",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-flood",
+    "title": "Prioritize drainage work around repeatedly flooded homes",
+    "jurisdiction": "County",
+    "before": "Drainage projects are scheduled through the existing capital improvement process.",
+    "after": "Publish a risk-based drainage priority list and reserve a portion of annual capital funding for repeatedly flooded neighborhoods.",
+    "backgroundUrl": "https://www.hcfcd.org/",
+    "background": {
+      "name": "Harris County Flood Control District",
+      "publisher": "Harris County Flood Control District",
+      "scope": "Flood control district background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "63c3041e1c813ca8ea9ae752ab6881360393970d1e574037f1717d0ae6e44e44",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-health",
+    "title": "Publish the full price before routine medical care",
+    "jurisdiction": "Federal",
+    "before": "Patients may receive separate estimates for facility and clinician services.",
+    "after": "Require a single plain-language estimate for scheduled services, including known facility and clinician charges and a dispute contact.",
+    "backgroundUrl": "https://www.cms.gov/priorities/key-initiatives/hospital-price-transparency",
+    "background": {
+      "name": "Hospital Price Transparency",
+      "publisher": "Centers for Medicare & Medicaid Services",
+      "scope": "Hospital price transparency background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "dfba4b73efaa03885e3e578ad041f6964cc8064d44aabd3d6c1ee26ade811a54",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-streets",
+    "title": "Make school crossings safer before the next school year",
+    "jurisdiction": "City",
+    "before": "School crossing upgrades compete within the general street maintenance queue.",
+    "after": "Create a dedicated school crossing program prioritizing twenty high-risk locations, with accessible design and published completion dates.",
+    "backgroundUrl": "https://www.houstontx.gov/visionzero/",
+    "background": {
+      "name": "Vision Zero Houston",
+      "publisher": "City of Houston",
+      "scope": "City street safety initiative background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "0daf8a1ad053b30d059be8190bd89109d7e60ea428e7ae59e511f74e5ced8558",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-food",
+    "title": "Bring affordable groceries to underserved neighborhoods",
+    "jurisdiction": "County",
+    "before": "Existing food access programs do not guarantee regular grocery service in every priority area.",
+    "after": "Fund a one-year mobile grocery pilot with weekly stops in priority areas and public reporting on affordability and household reach.",
+    "backgroundUrl": "https://www.ers.usda.gov/data-products/food-access-research-atlas",
+    "background": {
+      "name": "Food Access Research Atlas",
+      "publisher": "U.S. Department of Agriculture, Economic Research Service",
+      "scope": "Federal food access data background; not evidence of a county pilot",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "1fb61d1ba41ee3652125476ce1a44d1a2ba70ebf894e1d8fee6564bc7b86fac2",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-mental-health",
+    "title": "Offer a first mental health appointment within two weeks",
+    "jurisdiction": "State",
+    "before": "Community mental health appointment availability varies by provider and region.",
+    "after": "Fund additional community clinic capacity with a target of a first appointment within fourteen days and quarterly aggregate wait-time reporting.",
+    "backgroundUrl": "https://www.hhs.texas.gov/services/mental-health-substance-use",
+    "background": {
+      "name": "Mental Health & Substance Use",
+      "publisher": "Texas Health and Human Services",
+      "scope": "State services background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "56f5e5d0e6982b2dc2966258a98fc71a259ad6fbfa6c09682f2aae29a3f83bca",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-permits",
+    "title": "Give small businesses one clear permit checklist",
+    "jurisdiction": "City",
+    "before": "Applicants navigate separate department checklists and status updates.",
+    "after": "Provide a consolidated startup permit checklist, shared status tracking, and published service targets for routine applications.",
+    "backgroundUrl": "https://www.houstonpermittingcenter.org/",
+    "background": {
+      "name": "Houston Permitting Center",
+      "publisher": "City of Houston",
+      "scope": "Permit services background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "bafb60d216ec1c1b497ef73e8c7923b76f8e21ae80e9574627f69a6cc3ac09b1",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-insurance",
+    "title": "Explain property insurance increases before renewal",
+    "jurisdiction": "State",
+    "before": "Renewal notices list premiums and policy terms in separate documents.",
+    "after": "Provide a plain-language renewal comparison showing premium changes, deductibles, coverage reductions, and consumer assistance contacts.",
+    "backgroundUrl": "https://www.tdi.texas.gov/",
+    "background": {
+      "name": "Texas Department of Insurance",
+      "publisher": "Texas Department of Insurance",
+      "scope": "State insurance agency background only",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "fc21385642e3efb244897287bfefcb9fd9aab0143204e363b7dc255caf00daf4",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-shade",
+    "title": "Add shade at the hottest bus stops",
+    "jurisdiction": "City",
+    "before": "Bus stop shelter placement follows the existing amenity program.",
+    "after": "Prioritize shade and accessible seating at high-ridership, high-heat stops and publish annual installation and maintenance targets.",
+    "backgroundUrl": "https://www.houstontx.gov/",
+    "background": {
+      "name": "City of Houston",
+      "publisher": "City of Houston",
+      "scope": "City homepage only; does not substantiate bus stop heat or shelter claims",
+      "checkedAt": null
+    }
+  },
+  {
+    "revision": "798f1fc2914a1b717b8985a22a21d5a81202f9f7ee72b4ac77548195789f66c7",
+    "repository": "adnanwahab/dear_congress",
+    "kind": "sample",
+    "id": "demo-budget",
+    "title": "Show residents where each budget dollar goes",
+    "jurisdiction": "County",
+    "before": "Budget and project spending reports are published in separate documents.",
+    "after": "Publish a searchable, accessible budget dashboard linking approved spending to project milestones, with monthly downloadable updates.",
+    "backgroundUrl": "https://www.harriscountytx.gov/",
+    "background": {
+      "name": "Harris County",
+      "publisher": "Harris County",
+      "scope": "County homepage only; does not substantiate budget dashboard claims",
+      "checkedAt": null
+    }
+  }
+]

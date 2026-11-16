@@ -1190,3 +1190,16 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+### Revision-pinned redline cards
+
+Sample Draft offers a self-contained text share card at `/draft?card=<sha256>`.
+The archive in `src/shared/redline-card-archive.json` pins repository/sample identity,
+title, jurisdiction, exact before/after text and background provenance. Preserve
+existing archive rows unchanged when appending revisions; never regenerate or
+replace old rows. The hash covers JSON fields in their stored order, excluding
+`revision`. Snapshot tests guard the full archive text. Changed current content
+without a matching archive row has no share link; unknown revisions fail closed.
+Cards include copy/select fallbacks and a complete accessibility description for
+optional manual image captures. No image export or social preview crawler support
+is provided. References remain background only, not evidence of quoted law.
