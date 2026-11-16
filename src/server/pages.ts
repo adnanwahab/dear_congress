@@ -9,9 +9,9 @@ export function escapeHTML(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 }
 
-export function metadata(title: string, description: string, path: string) {
+export function metadata(title: string, description: string, path: string, socialImage = "/social-preview.png") {
   const url = SITE_URL + path;
-  const image = `${SITE_URL}/social-preview.png`;
+  const image = `${SITE_URL}${socialImage}`;
   return `<title>${escapeHTML(title)}</title>
 <meta name="description" content="${escapeHTML(description)}">
 <link rel="canonical" href="${escapeHTML(url)}">
@@ -47,7 +47,7 @@ export function speculationRules(path: string) {
   ] };
 }
 
-export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[]) {
+export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[], socialImage = "/social-preview.png") {
   path = path.replace(/\/+$/, "") || "/";
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
@@ -56,7 +56,7 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
   const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
   const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
-  let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
+  let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path, socialImage));
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
   if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");

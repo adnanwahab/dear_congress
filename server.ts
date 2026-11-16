@@ -1,3 +1,4 @@
+import { assetResponse } from "./src/server/asset-cache";
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
@@ -876,6 +877,8 @@ if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser 
 const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
+const socialImage = [...browserAssets.keys()].find(path => /^\/social-preview-.*\.png$/.test(path));
+
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
 let statsHealthy = true;
 // Metrics failures must never turn a persisted vote into an apparent failed vote.
@@ -905,7 +908,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       GET: () => securityHeaders(Response.json({ ok: true, service: "civic-synthesis", mode: "demo" }, { headers: { "Cache-Control": "no-store" } })),
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
     },
-    "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
+    "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8", "Cache-Control": "no-cache" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
     "/admin/health": (req) => operatorHealth.handle(req, ADMIN_TOKEN, { writes: pendingWrites, designs: designInFlight.size, writeFailures }),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
@@ -933,9 +936,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
-    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
-    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs")),
-    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs")),
+    "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url)), { headers: { "cache-control": "no-cache" } }),
+    "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs"), { headers: { "cache-control": "no-cache" } }),
+    "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs"), { headers: { "cache-control": "no-cache" } }),
 
     "/api/hbl/*": (req) => handleHblGovernance(req, observeRepositoryVote),
     "/api/internal/hbl/batch": (req) => handleHblGovernance(req),
@@ -1820,10 +1823,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       return proposalEmbed(req);
     }
     const asset = browserAssets.get(path);
-    if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
+    if (asset) return securityHeaders(assetResponse(req, asset, process.env.IMMUTABLE_ASSETS === "1"));
+    if (/\.(?:js|mjs|css|png|svg|woff2?)$/.test(path)) return securityHeaders(new Response("Asset not found", { status: 404, headers: { "cache-control": "no-store" } }));
     if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
     if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
-    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const response = renderPage(shell, path, db.citizenProposals ?? [], socialImage);
     const secured = securityHeaders(response);
     if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;

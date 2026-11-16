@@ -31,6 +31,11 @@ MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
 Synthesize), not on `/` or `/votes`. `bun test src/server/browser-build.test.ts`
 checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
+Build-manifest assets can opt into one-year immutable caching with
+`IMMUTABLE_ASSETS=1` (default off). HTML revalidates and `/version` is never stored.
+Read [the SHE-924 staged rollout and retention requirements](docs/reviews/SHE-924.md)
+before enabling it; cross-release asset retention is not supplied by the current image.
+
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
 ## Public guide
