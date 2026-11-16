@@ -410,9 +410,9 @@ const operatorHealth = new OperatorHealth();
 let pendingWrites = 0;
 let writeFailures = 0;
 let saveQueue: Promise<unknown> = Promise.resolve();
-const save = () => {
+const save = (recordHistory = true) => {
   demoCache = null;
-  recordPriorities(db, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
+  if (recordHistory) recordPriorities(db, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
   const snapshot = JSON.stringify(db, null, 2);
   pendingWrites++;
   const write = saveQueue.then(async () => {
@@ -432,7 +432,7 @@ function dashboardState(voterId: string) {
   const votes = Object.fromEntries(Object.entries(db.votesByVoter[voterId] ?? {}).filter(([id]) => DEMO_ITEMS.some(item => item.id === id)).map(([id, vote]) => [id, vote.stance]));
   return { ...demoCache.payload, votes };
 }
-await save();
+await save(false);
 
 function state(voterId = "anon") {
   const measuredOutcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
