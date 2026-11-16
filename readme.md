@@ -104,6 +104,7 @@ The same page includes a response-composition exercise with fictional group
 counts, adjustable multipliers, sourced/conflicting/missing-source teaching cases
 and a dated exportable session review log. It uses no browser votes or cookies.
 See [SHE-683 validation and remaining review](docs/reviews/SHE-683.md).
+
 The evidence freshness calendar adds a monthly agenda and dated ledger with
 review reminders, unknown-date labels and copyable/printable provenance.
 Age never determines validity. Its sourced example establishes repository
@@ -748,6 +749,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Sample evidence packets
+
+Sample proposal source panels offer a citation-only evidence JSON export, with
+copy/print fallback after loading. Unknown source dates and human review remain
+explicit; links receive safe HTTPS syntax checks, not reachability verification.
+No journals, ballots or source full text are included. Citizen/official proposal
+exports, claim-level evidence and reviewed conflicting cases remain pending.
+See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
 
 ## Sample advisory share cards
 
