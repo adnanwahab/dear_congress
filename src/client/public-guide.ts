@@ -51,6 +51,8 @@ The [budget-balancing puzzle](/synth) offers five invented programs and a fixed 
 
 ## What is fictional and what is verified?
 
+The shared Reality lens explains actual activity, seeded examples, model simulations, source-backed records and unknown origins. Choose Explain data for details or Less detail for the compact legend. This browser preference changes only the legend; counts, record origins and synthesis settings stay the same. Read each item’s source label, especially in mixed displays.
+
 The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.
 
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
