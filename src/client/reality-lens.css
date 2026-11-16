@@ -1,0 +1,76 @@
+.reality-lens { flex: 0 0 100%; min-width: 0; font: 14px/1.5 var(--sans); border-top: 1px solid var(--line); padding-top: 8px; }
+.reality-lens-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.reality-lens-heading button { min-height: 44px; padding: 8px 12px; margin-left: auto; }
+.reality-lens button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.reality-lens dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 24px; margin: 12px 0; }
+.reality-lens dt { font-weight: 700; }
+.reality-lens dd { margin: 4px 0 0; }
+.reality-lens p { margin: 8px 0; }
+.civic-header:has(> .reality-lens) { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .workflow-shell .civic-header:has(.reality-lens button[aria-expanded="true"]) { position: static; }
+}
+
+/* Reflow fixes exercised by the reality-lens route acceptance test.
+   Keep them scoped: the global nowrap-button rule is relied upon elsewhere. */
+.workflow-select { min-width: 0; }
+.workflow-select select { box-sizing: border-box; min-width: 0; max-width: 100%; }
+@media (max-width: 760px) {
+  .legacy-shell main[data-civic-stage="synth"] button {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Keep the proposal picker grid from expanding to the longest option text.
+   On /outcomes at 390px, its intrinsic min-content width caused 30px overflow. */
+.workflow-shell .workflow-select {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.workflow-shell .workflow-select select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Outcomes places its native filter in a flex heading, not .workflow-select. */
+@media (max-width: 680px) {
+  /* The outcomes heading must wrap before its select consumes an extra flex row. */
+  .workflow-shell .panel-head:has(> label > select) {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .workflow-shell .panel-head:has(> label > select) > * { min-width: 0; }
+  .workflow-shell .panel-head > label:has(> select) {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .workflow-shell .panel-head > label > select {
+    display: block;
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* In the 390px Outcomes route, a second native filter outside .panel-head
+   can keep its intrinsic 360px width and run beyond the viewport. Restrict
+   native control width to available viewport space, without clipping the
+   proposal tables' deliberately scrollable content. */
+@media (max-width: 680px) {
+  .workflow-shell main select {
+    min-width: 0;
+    max-width: min(100%, calc(100vw - 80px));
+  }
+}

@@ -1,0 +1,7 @@
+.citizen-jury { overflow-wrap: anywhere; }
+.citizen-jury label { display: block; margin: 12px 0; }
+.citizen-jury input:not([type=checkbox]), .citizen-jury textarea { display: block; width: 100%; max-width: 36rem; box-sizing: border-box; }
+.citizen-jury textarea { min-height: 8rem; }
+.citizen-jury button { min-height: 44px; margin: 6px; white-space: normal; }
+.citizen-jury input[type=checkbox] { min-width: 24px; min-height: 24px; vertical-align: middle; }
+.citizen-jury fieldset { min-width: 0; }
