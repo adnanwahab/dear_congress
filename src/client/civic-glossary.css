@@ -1,0 +1,6 @@
+.civic-term .civic-term-trigger { display: inline; padding: 2px 1px; min-height: 24px; border: 0; border-radius: 2px; background: transparent; color: inherit; font: inherit; text-decoration: underline dotted; text-underline-offset: .2em; cursor: help; }
+.civic-term button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.civic-definition { position: fixed; z-index: 1000; inset: auto 1rem 1rem auto; width: min(28rem, calc(100vw - 2rem)); max-height: min(70vh, 32rem); overflow-y: auto; box-sizing: border-box; padding: 1rem; border: 2px solid currentColor; border-radius: .6rem; background: Canvas; color: CanvasText; box-shadow: 0 4px 24px #0004; font-size: 1rem; line-height: 1.5; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.civic-definition > * { display: block; margin-bottom: .65rem; }
+.civic-definition > button { min-height: 44px; margin-bottom: 0; }
+/* No animation: reduced-motion and offline reading use the same immediate help. */
