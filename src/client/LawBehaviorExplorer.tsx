@@ -6,7 +6,7 @@ import './law-behavior-explorer.css';
 import {LawEnsemble} from './LawEnsemble';
 import {FuturePostcard} from './FuturePostcard';
 import {lawOutcomeTrace} from './law-outcome-trace';
-import {parseCivicLawContext,civicLawQuery,parseSimulationShare,simulationShareQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
+import {parseCivicLawContext,parseSimulationShare,simulationShareQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
 type Actor = {id:string;label?:string;x?:number;z?:number;[key:string]:string|number|boolean|null|undefined};
@@ -286,6 +286,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <p className="muted s">Demo / sandbox · pending review. Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     {imported?.modelVersion&&<p role="status">Shared model version: {imported.modelVersion}. Inputs restored; run to check provider compatibility. Nothing runs automatically.</p>}
     <p className="muted s">Shared links contain only reviewed model settings, seed, fixed horizon, population and model version. Journals, identities and unpublished proposals are excluded.</p>
+    <p className="note warn" role="note">Catalog compatibility unverified: this provider contract supplies no immutable catalog version or code revision. A matching model version alone cannot guarantee identical inputs. This recipe is separate from your saved Civic plan; external viewer return-link preservation is unverified.</p>
     <section className="civic-model-limits" aria-labelledby="model-limits-title">
       <h4 id="model-limits-title">What this model cannot tell you</h4>
       <p><strong>Demo / sandbox · awaiting review.</strong> Synthetic examples and model projections are separate from real votes. No arbitrary bill prose is implemented in HappyBearLandia.</p>
@@ -400,7 +401,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <p><a href={'/synth?'+simulationShareQuery(context)}>Reproducible scenario link</a></p>
       <WorldPortal title={law.label} source={`${context.proposalId} · model recipe revision ${revision} · ${strength}% implementation · seed ${effectiveSeed}`}>
         <p>Static cross-origin handoff. The external world opens in another tab; this exact source view stays here. Its loading status cannot be verified here. If unavailable, close that tab and return here to retry. This is a separate reviewed model, not your bill text.</p>
-        <a href={new URL('/world/constitution-city.html?'+civicLawQuery({...context,proposalId:undefined}),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
+        <a href={new URL('/world/constitution-city.html?'+simulationShareQuery(context),hblOrigin).href} target="_blank" rel="noopener">Open reviewed world in HappyBearLandia ↗</a>
       </WorldPortal>
       <p><a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
       {frame&&receipt.manifest&&isFiniteNumber(baselineMetric)&&isFiniteNumber(editedMetric)&&<FuturePostcard

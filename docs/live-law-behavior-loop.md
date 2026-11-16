@@ -139,6 +139,12 @@ unchanged full suite passed536/536 after separating external tool artifacts.
 
 ## SHE-433 versioned simulation shares
 
+SHE-903 extends the external world link to carry this same complete public replay
+query, including parameter, horizon and clock. Civic shows an explicit catalog
+compatibility warning: the provider v1 contract has no immutable catalog version
+or code revision. Query preservation by the external viewer and binding to an
+actual saved Civic plan remain unverified. See [SHE-903](reviews/SHE-903.md).
+
 The sandbox's **Reproducible scenario link** now emits `simulationShare=1` with
 explicit `parameter`, `horizon` and `clock`, alongside law, implementation
 strength, seed, population 24, revision and the recorded model version. Transit
