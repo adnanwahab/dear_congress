@@ -1,13 +1,17 @@
+import { CountyEventHeatmap } from "./CountyEventHeatmap";
+import { NeighborhoodBudget } from "./NeighborhoodBudget";
 import { CivicHeader } from "./CivicHeader";
 import { motionDisabled, motionDuration, runViewTransition } from "./motion";
 import { tourState } from './demo-tour';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import counties from './data/counties.json';
 import { CountyCountMethodology, modeledCountyPercent } from './CountyCountMethodology';
 import { countyVote, improvePlan, INITIAL_PLAN, PRIORITIES, requirements } from './county-simulation';
 
 import { pathCentroid, rippleDelays } from './county-motion';
 
+const JurisdictionComparison = lazy(() => import('./JurisdictionComparison').then(m=>({default:m.JurisdictionComparison})));
+const LocalProjectCheckins = lazy(() => import('./LocalProjectCheckins').then(m => ({ default: m.LocalProjectCheckins })));
 const CENTERS = counties.map(c => pathCentroid(c.path));
 const IDS = counties.map(c => c.id);
 const COLORS = { agree: '#39caa0', review: '#e6bc60', object: '#687fa8', unevaluated: '#575757' };
@@ -83,6 +87,7 @@ export default function MapScreen() {
     <CivicHeader stage="National sandbox" />
     <main id="main-content" tabIndex={-1} className="civic-main map-main">
       <section className="map-heading"><div><p className="map-eyebrow">Illustrative county sandbox</p><h1>Explore a modeled county plan.</h1><p>County shapes show synthetic requirements, not constituent votes. Improve the sample plan to explore modeled support.</p></div><div className="county-live"><span className={running ? 'pulse' : ''} />{complete ? 'Simulation complete' : running ? 'Simulation running' : 'Simulation ready'}</div></section>
+      <NeighborhoodBudget />
       <HeaderMetrics agreed={agreed} round={round} />
       <p className="county-disclosure">Real verified county participation: unavailable. Actual participating people and organizations: unavailable; no verified source or observation timestamp exists. No verified county participation feed is connected. Real county support and its measured denominator are also unavailable.</p>
       <CountyCountMethodology supported={agreed} total={counties.length} revision={round} />
@@ -103,9 +108,12 @@ export default function MapScreen() {
         <div className={`county-status ${complete ? 'complete' : ''}`} role="status">{complete ? 'Simulation complete. Every county’s modeled requirements are satisfied.' : round === 1 ? 'No scenarios evaluated. Zero agreement is not a dissent vote. Start the simulation to evaluate a revised sample plan.' : `Revision ${round}: strengthened all four commitments in response to synthetic requirements.`}</div>
         <button className="county-start" disabled={complete} onClick={() => setRunning(r => !r)}>{complete ? '✓ All county models support plan' : running ? 'Pause simulation' : round === 1 ? '▶ Start nationwide simulation' : '▶ Resume simulation'}</button><div className="county-actions"><button className="outline" disabled={running || complete} onClick={revise}>Improve one revision</button><button className="outline" onClick={reset}>Restart</button></div><p className="county-disclosure">Simulation only. Each county has one synthetic position and fixed modeled requirements. Revisions raise plan scores until those requirements are met. Results are not representative, legally binding, polling, a forecast, or evidence of real public consensus.</p>
       </aside></div>
+      <CountyEventHeatmap revision={round} onCounty={setSelected} />
       <section className="county-directory"><div><h2>Inspect the county models.</h2><p>Search synthetic positions, including Alaska and Hawaii. No resident ballots are shown.</p></div><label>Find a county<input type="search" placeholder="County, state, or FIPS code" value={search} onChange={e => setSearch(e.target.value)} /></label><p role="status">{visible.length.toLocaleString()} / {counties.length.toLocaleString()} synthetic scenarios match search and status filters · county-fips-v1 · plan revision {round} {filter !== 'all' ? `· ${LABELS[filter as keyof typeof LABELS]}` : ''}</p>{mode === 'list' && <table className="county-evidence-table"><caption>Selected county model · county-fips-v1 · plan revision {round}</caption><thead><tr><th scope="col">County / FIPS</th><th scope="col">Synthetic scenario status</th><th scope="col">Source / requirements</th></tr></thead><tbody><tr ref={destination} tabIndex={-1} style={{ viewTransitionName: `county-model-${active.id}` }}><th scope="row">{active.name}, {active.state} · {active.id}</th><td>{LABELS[active.status]}</td><td>county-fips-v1 · {requirements(active.id).join(', ')} / 100 in priority order · No resident ballots</td></tr></tbody></table>}
       {!visible.some(c => c.id === selected) && <p>The selected county is outside the current filters. Filters have not changed.</p>}
       <div className="county-results">{visible.slice(0, 60).map(c => <button key={c.id} onClick={() => setSelected(c.id)} aria-pressed={selected === c.id}><span>{c.name}, {c.state}</span><small style={{ color: COLORS[c.status] }}>{LABELS[c.status]}</small></button>)}</div>{visible.length > 60 && <p>Showing the first 60 matches. Narrow your search to find a county.</p>}{!visible.length && <p>No matching counties. Try another name or clear the model filter.</p>}</section>
+      <Suspense fallback={<p role="status">Loading place comparisons…</p>}><JurisdictionComparison /></Suspense>
+      <Suspense fallback={<p role="status">Loading project check-ins…</p>}><LocalProjectCheckins /></Suspense>
       <p className="map-footnote">Geography: U.S. Census Bureau, 2023 cartographic boundaries. All {counties.length.toLocaleString()} counties and county equivalents in the 50 states and D.C.; territories excluded. Equal county models, not population weighted. Alaska and Hawaii shown as insets.</p>
     </main></div>;
 }

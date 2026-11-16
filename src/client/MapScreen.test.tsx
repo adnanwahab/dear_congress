@@ -48,6 +48,7 @@ test('integrated map counts stay scoped to the current revision and all bundled 
   expect(stdout).toContain('PASS county counts:');
 });
 
+
 test('geographic continuity survives failure and interrupted transitions', async () => {
   const child = Bun.spawn([process.execPath, 'scripts/verify-geography-continuity-ui.tsx'], { stdout: 'pipe', stderr: 'pipe' });
   const [code, stdout, stderr] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
