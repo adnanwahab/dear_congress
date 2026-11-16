@@ -58,7 +58,8 @@ export default function JournalSharing({ request, onPublished, needs = [] }: { r
     {review && <section aria-label="Exact public preview" className="journal-result">
       <h3>Exact public preview</h3><strong>{review.author}</strong><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{review.text}</p>
       <p>{review.labels.length ? `Categories: ${review.labels.map(id => needs.find(n => n.id === id)?.label ?? id).join(', ')}` : 'No categories selected.'}</p>
-      <p>This excerpt, display name and the categories you selected will be public through the feed and API. No AI or keyword inference is requested. No location is included. Copies and independently published proposals may remain after removal. Keep this browser’s cookies to retain removal ownership. <a href="/privacy">Privacy and deletion details</a>.</p>
+      <p>{review.synthetic ? 'Origin: Simulated · Source: civic-synthesis-demo. This sample is not a real participant experience.' : 'Origin: Public submission (unverified).'}</p>
+      <p>This excerpt, display name and the categories you selected will be public through the feed and API. No AI or keyword inference is requested. No location is included. Copies and independently published proposals may remain after removal. Use Delete my entry beside your published entry in this browser to remove it. Keep this browser’s cookies to retain removal ownership. <a href="/privacy">Privacy and deletion details</a>.</p>
       <label><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> I want to share this exact excerpt publicly.</label>
       <button type="button" disabled={!consent || busy} onClick={publish}>Share publicly</button>
       <button type="button" className="outline" onClick={invalidate}>Cancel sharing</button>
