@@ -30,8 +30,8 @@
 .workflow-detail-meta span { padding: 3px 10px; background: var(--bg); border-radius: 20px; }
 .workflow-reference { display: block; margin-top: 18px; font-size: 14px; font-weight: 600; }
 .workflow-two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
-.workflow-select { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
-.workflow-select select { font-size: 15px; font-weight: 400; }
+.workflow-select { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
+.workflow-select select { min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 15px; font-weight: 400; }
 .workflow-body-muted { color: var(--muted); margin-top: 12px !important; }
 .workflow-action-stack { display: grid; gap: 12px; }
 .workflow-action-stack a { font-size: 14px; font-weight: 700; }
@@ -134,3 +134,25 @@
   .source-revision-alert button { display: none; }
   .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
 }
+
+.source-health { overflow-wrap: anywhere; }
+.source-health button { min-height: 44px; margin-block: 4px; }
+.source-health button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+@media print {
+  .source-health button { display: none; }
+  .source-health { color: black; background: white; }
+  .source-health .card { break-inside: avoid; }
+}
+
+.evidence-notebook { min-width: 0; overflow-wrap: anywhere; }
+.evidence-notebook label { display: block; }
+.evidence-notebook textarea { display: block; box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; }
+.evidence-notebook button, .evidence-notebook summary { min-height: 44px; }
+.evidence-notebook :is(button, textarea, summary, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+ 
+.private-journey form, .private-journey label { display: grid; gap: .5rem; }
+.private-journey form { gap: 1rem; }
+.private-journey select, .private-journey textarea { width: 100%; max-width: 100%; min-width: 0; font: inherit; }
+.private-journey button, .private-journey select { min-height: 44px; }
+.private-journey-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.private-journey li { margin-bottom: 1.5rem; }

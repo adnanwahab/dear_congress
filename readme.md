@@ -750,6 +750,29 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Community learning embed (v1)
+
+In `/feed`, select a sample and expand “Embed this sample on a community website”
+to copy the iframe HTML or preview it. `/embed/v1?proposal=demo-housing` renders a
+static accessible card; `/embed/v1` lists samples. Missing samples return 404.
+The v1 URL pins the card contract, not an immutable content revision.
+
+Only fictional beta scenarios are supported. Existing editorial background sources
+and their review dates are preserved; currently unchecked sources are explicitly
+labeled, not represented as reviewed evidence or official proposal text. Real
+advisory records, citizen inputs, votes and model simulations are never loaded.
+
+The dedicated route permits HTTP/HTTPS framing using its own restrictive CSP
+sandbox: no scripts, forms, storage code, API calls, images or analytics. Links open
+new tabs with no opener/referrer so full-app participation requires leaving the
+card. The iframe snippet also has a sandbox, no-referrer policy, lazy loading,
+accessible title and a scrollable fixed height. Hosts must allow the Civic origin
+in their own `frame-src`; do not loosen the host's other CSP rules. Ordinary app
+routes keep their existing frame policy. HTTP requests still reach hosting logs;
+this is not an anonymous-network guarantee. No asynchronous loading state or
+animation is introduced: the browser loads one complete document. Native links
+support keyboard and touch; reduced-motion users receive the same static card.
+
 ## Sample evidence packets
 
 Sample proposal source panels offer a citation-only evidence JSON export, with
@@ -758,6 +781,25 @@ explicit; links receive safe HTTPS syntax checks, not reachability verification.
 No journals, ballots or source full text are included. Citizen/official proposal
 exports, claim-level evidence and reviewed conflicting cases remain pending.
 See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
+
+The `/outcomes#source-health` console reads the existing outcome snapshot, exposing
+recorded fetch dates, missing sources, conflicts and retained-data fetch incidents.
+It does not probe providers or certify starter fixture values. Schema monitoring
+and human-review history are currently unrecorded. A 30-day freshness warning is
+an editorial threshold, not a provider SLA. Copyable JSON provides an export/print
+fallback. See [SHE-688 scope and remaining acceptance](docs/reviews/SHE-688.md).
+
+## Personal evidence notebook
+
+Use **Save claim** on the selected fictional proposal or a synthetic outcome
+measurement, then open `/account#evidence-notebook`. Clips freeze the claim,
+citation, access timestamp and optional note in this browser profile only. They
+are not sent to the service or included in votes. Shared-device users can read
+them; clearing browser storage removes them. Export Markdown before clearing.
+Revisiting a changed app source record marks its original clips stale without
+rewriting notes. External source pages are not monitored. No change observed
+is not a freshness guarantee. Synthetic measurements cite their fixture module,
+not real-world evidence. See [SHE-537 validation](docs/reviews/SHE-537.md).
 
 ## Sample advisory share cards
 
@@ -991,3 +1033,14 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Launch operator health
+
+`/admin/health` is a read-only operator panel using the existing `ADMIN_TOKEN`
+authentication (Basic user `admin`, or Bearer header). It fails closed when unset.
+Never put tokens in URLs. The panel has release identity, JSON write queue pressure,
+in-flight idea designs, five minute API counts and 5xx route templates, a fixed
+authenticated Fly logs destination, and human rollback guidance. Refresh before
+acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
+saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
+minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).

@@ -1,10 +1,14 @@
+import PrivateJourney from './PrivateJourney';
 import { CivicPassport } from './CivicPassport';
+import { EvidenceNotebook } from './EvidenceNotebook';
 import { ParticipationNotice } from './ParticipationNotice';
 import './workflow.css';
 export default function AccountScreen() {
   return <div className="civic-shell workflow-shell"><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
+    <PrivateJourney />
+    <EvidenceNotebook />
     <CivicPassport />
     <section className="panel"><h2>Unverified browser votes — advisory</h2>
       <p>No identity verification is required to take part. Your signed browser cookie saves your choice so you can change it. Clearing cookies can create another browser identity; these counts do not measure unique people.</p>
