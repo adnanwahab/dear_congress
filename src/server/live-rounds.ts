@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { LiveQuestions, type QuestionAction } from './live-questions';
 import { DEMO_ITEMS } from '../engine/demo';
 import { PublicInputError } from './public-security';
 export class LiveRounds {
-  private rounds = new Map<string, { code: string; proposalId: string; owner: string; startedAt: number; expiresAt: number; endedAt?: number; voters: Map<string, number>; pulses: number[]; listeners: Set<() => void>; timer?: ReturnType<typeof setTimeout> }>();
+  private rounds = new Map<string, { code: string; proposalId: string; owner: string; startedAt: number; expiresAt: number; endedAt?: number; voters: Map<string, number>; pulses: number[]; listeners: Set<() => void>; board: LiveQuestions; timer?: ReturnType<typeof setTimeout> }>();
   constructor(private now = Date.now) {}
   private hash(id: string) { return createHash('sha256').update(id).digest('hex'); }
   start(proposalId: string, owner: string) {
@@ -11,7 +12,7 @@ export class LiveRounds {
     if (this.rounds.size >= 1000) throw new PublicInputError('Live rounds are busy', 503);
     let code: string; do { code = randomBytes(4).toString('hex'); } while(this.rounds.has(code));
     const startedAt = this.now();
-    this.rounds.set(code, { code, proposalId, owner: this.hash(owner), startedAt, expiresAt: startedAt + 7200000, voters: new Map(), pulses: [0,0,0], listeners: new Set() });
+    this.rounds.set(code, { code, proposalId, owner: this.hash(owner), startedAt, expiresAt: startedAt + 7200000, voters: new Map(), board: new LiveQuestions(), pulses: [0,0,0], listeners: new Set() });
     return this.snapshot(code, owner);
   }
   private get(code: string) {
@@ -22,7 +23,7 @@ export class LiveRounds {
   snapshot(code: string, voter: string) {
     const r = this.get(code), counts = { support: 0, oppose: 0, unsure: 0 };
     for (const stance of r.voters.values()) counts[stance===1?'support':stance===-1?'oppose':'unsure']++;
-    return { code, item: { ...DEMO_ITEMS.find(p=>p.id===r.proposalId)!, ...counts }, startedAt:r.startedAt, expiresAt:r.expiresAt, endedAt:r.endedAt, total:r.voters.size, choice:r.voters.get(this.hash(voter)), canEnd:r.owner===this.hash(voter), pulses:[...r.pulses] };
+    return { board: r.board.snapshot(this.hash(voter), r.owner===this.hash(voter)), code, item: { ...DEMO_ITEMS.find(p=>p.id===r.proposalId)!, ...counts }, startedAt:r.startedAt, expiresAt:r.expiresAt, endedAt:r.endedAt, total:r.voters.size, choice:r.voters.get(this.hash(voter)), canEnd:r.owner===this.hash(voter), pulses:[...r.pulses] };
   }
   private notify(code: string) {
     const r=this.get(code); if(r.timer)return;
@@ -35,6 +36,13 @@ export class LiveRounds {
     if(!r.voters.has(id)&&r.voters.size>=10000)throw new PublicInputError('Round is full',503);
     if(r.voters.get(id)!==stance){r.voters.set(id,stance);r.pulses[stance===1?0:stance===-1?1:2]!++;this.notify(code);}
     return this.snapshot(code,voter);
+  }
+  question(code: string, voter: string, action: QuestionAction) {
+    const r = this.get(code);
+    if (r.endedAt) throw new PublicInputError('This round has ended', 409);
+    r.board.act(action, this.hash(voter), r.owner === this.hash(voter));
+    this.notify(code);
+    return this.snapshot(code, voter);
   }
   end(code: string, voter: string) {
     const r=this.get(code);if(r.owner!==this.hash(voter))throw new PublicInputError('Only the starting browser can end this round',403);
