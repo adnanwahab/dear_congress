@@ -4,6 +4,7 @@ import { boundedJson, createPublicSecurity, securityHeaders } from "./public-sec
 export function createStatsHTTP(options: {
   stats: LaunchStats; token: string; healthy: () => boolean;
   record: (run: () => unknown) => void;
+  operations?: () => string;
   env?: Record<string, string | undefined>;
 }) {
   // Independent from voting budgets. This limiter never issues an identity/cookie.
@@ -17,7 +18,19 @@ export function createStatsHTTP(options: {
       const headers = { "x-robots-tag": "noindex, nofollow" };
       if (!statsAuthorized(req, options.token)) return finish(new Response("Admin authentication required", { status: 401, headers: { ...headers, "www-authenticate": 'Basic realm="Launch stats", charset="UTF-8"' } }));
       if (req.method !== "GET" && req.method !== "HEAD") return finish(new Response("Method not allowed", { status: 405, headers: { ...headers, allow: "GET, HEAD" } }));
-      return finish(new Response(req.method === "HEAD" ? null : statsPage(options.stats.snapshot(), options.healthy()), { headers: { ...headers, "content-type": "text/html; charset=utf-8" } }));
+      return finish(new Response(req.method === "HEAD" ? null : statsPage(options.stats.snapshot(), options.healthy()).replace("</main>", `${options.operations?.() ?? ""}</main>`), { headers: { ...headers, "content-type": "text/html; charset=utf-8" } }));
+    },
+    async saveOutcome(req: Request, peer: string, record: (outcome: 'saved' | 'failed' | 'blocked') => void) {
+      if (req.method !== 'POST') return finish(new Response(null, { status: 405 }));
+      if (req.headers.get('origin') !== security.origin(req)) return finish(new Response(null, { status: 403 }));
+      const limited = security.check(req, peer, 'save-outcomes', false);
+      if (limited) return finish(limited);
+      try {
+        const body = await boundedJson(req, 256);
+        if (Object.keys(body).length !== 1 || !['saved', 'failed', 'blocked'].includes(body.outcome as string)) return finish(new Response(null, { status: 400 }));
+        record(body.outcome as 'saved' | 'failed' | 'blocked');
+        return finish(new Response(null, { status: 204 }));
+      } catch { return finish(new Response(null, { status: 400 })); }
     },
     async pageView(req: Request, peer: string) {
       if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));

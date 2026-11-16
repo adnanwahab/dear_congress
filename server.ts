@@ -1,3 +1,4 @@
+import { ServiceSLOs, observeServiceHandler } from "./src/server/service-slos";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -11,7 +12,7 @@ import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/sh
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
-import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
+import { LaunchStats, statsRoute, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
 import { publicEntry } from "./src/shared/moderation";
 import { contactReasons, isPublicEntry, moderate, moderationAuthorized, moderationPage, moderationScript } from "./src/server/moderation";
 import { boundedJson, PublicInputError } from "./src/server/public-security";
@@ -869,6 +870,7 @@ if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser 
 const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
+const serviceSLOs = new ServiceSLOs();
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
 let statsHealthy = true;
 // Metrics failures must never turn a persisted vote into an apparent failed vote.
@@ -877,7 +879,7 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
-const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
+const statsHTTP = createStatsHTTP({ operations: () => serviceSLOs.html(), stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   // Bun defaults to 10s, which is shorter than our quiet SSE streams.
@@ -900,6 +902,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
+    "/api/save-outcome": (req, bunServer) => statsHTTP.saveOutcome(req, bunServer.requestIP(req)?.address ?? "unknown", outcome => serviceSLOs.save(outcome)),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
     "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },
@@ -1859,6 +1862,15 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
     };
   }
 }
+// Observe after security classification; route templates never contain request IDs or queries.
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (path.startsWith('/admin/') || path === '/api/page-view' || path === '/api/save-outcome') continue;
+  if (typeof route === 'function') (serverOptions.routes as Record<string, unknown>)[path] = observeServiceHandler(serviceSLOs, path, route);
+  else if (route && typeof route === 'object') for (const [method, handler] of Object.entries(route)) {
+    if (typeof handler === 'function') (route as Record<string, unknown>)[method] = observeServiceHandler(serviceSLOs, `${method} ${path}`, handler);
+  }
+}
+serverOptions.fetch = observeServiceHandler(serviceSLOs, req => statsRoute(new URL(req.url).pathname) ?? 'asset / unmatched', serverOptions.fetch!) as typeof serverOptions.fetch;
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);

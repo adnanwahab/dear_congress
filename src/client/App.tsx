@@ -1,3 +1,4 @@
+import { advisoryFetch } from "./advisory-save-signal";
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
@@ -90,7 +91,7 @@ interface AppState {
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
 async function api<T>(path: string, body?: unknown, method?: string, signal?: AbortSignal): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
-  const res = await fetch(path, {
+  const res = await advisoryFetch(path, {
     method: resolvedMethod,
     signal,
     headers: {

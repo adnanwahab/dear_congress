@@ -494,6 +494,14 @@ Click a selected civic choice again to withdraw; option changes require
 are separate and unchanged. See [SHE-284 review](docs/reviews/SHE-284.md) for
 source alignment and verification limitations.
 
+## Service SLOs (SHE-968)
+
+The authenticated `/admin/stats` operations panel shows trailing 10-minute route
+p95, server error rates/request availability and main civic client save failures.
+Thresholds, owner, blocked-write classification, coverage and live acceptance
+requirements are published in [docs/service-slos.md](docs/service-slos.md).
+External alert delivery remains unverified.
+
 ## Launch-day metrics (SHE-286)
 
 Open `/admin/stats` using username `admin` and the existing `ADMIN_TOKEN` as the
