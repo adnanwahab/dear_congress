@@ -1,0 +1,12 @@
+.county-event-panel { margin-block: 24px; padding: 20px; border: 1px solid var(--muted); border-radius: 12px; }
+.county-event-controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.county-event-controls label { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.county-event-controls button, .county-event-table button { min-height: 44px; }
+.county-event-panel svg { width: 100%; max-height: 480px; }
+.county-event-table { max-height: 320px; overflow: auto; }
+.county-event-table table { width: 100%; text-align: left; }
+.county-event-table td, .county-event-table th { padding: 8px; }
+.county-event-key { display: inline-block; padding: 2px 8px; border: 1px solid currentColor; }
+.county-event-key.one { background: #c26715; color: white; }
+#county-event-example { overflow-wrap: anywhere; }
+@media (forced-colors: active) { .county-event-panel svg { display: none; } }

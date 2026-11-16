@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { getByLabelText, getByRole } from '@testing-library/dom';
+import { ProposalCredits } from '../src/client/ProposalCredits';
+import { citizenProposalView, publishCitizenProposal, creditCitizenProposal, type CitizenProposalStore } from '../src/server/citizen-proposals';
+const dom = new Window({ url: 'http://localhost/proposals/test' });
+for (const key of ['window', 'document', 'navigator', 'FormData']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const db: CitizenProposalStore = { entries: [] };
+const { record } = publishCitizenProposal(db, 'publishing-browser', { title: 'Access', problem: 'Steps', proposedChange: 'Ramp', jurisdiction: 'city', confirmedPublic: true, idempotencyKey: crypto.randomUUID() });
+const container = dom.document.createElement('div');
+dom.document.body.append(container);
+const root = createRoot(container as any);
+let fail = true;
+function render() {
+  root.render(<ProposalCredits proposal={citizenProposalView(record, 'publishing-browser')} submit={async value => {
+    if (fail) throw Error('Offline; retry');
+    creditCitizenProposal(db, record.id, 'publishing-browser', value);
+    render();
+  }} />);
+}
+await act(async () => render());
+const field = (label: string) => getByLabelText(container as any, label) as any;
+field('Attribution preference').value = 'pseudonym';
+field('Pseudonym (only used when selected)').value = '<script>unsafe()</script>';
+field('I contributed and opt in to public credit for this version with my chosen preference.').checked = true;
+const save = getByRole(container as any, 'button', { name: 'Save my credit' }) as any;
+await act(async () => save.click());
+assert.match(getByRole(container as any, 'alert').textContent!, /Offline/);
+assert.equal(dom.document.activeElement, getByRole(container as any, 'alert'));
+assert.equal(field('Pseudonym (only used when selected)').value, '<script>unsafe()</script>');
+fail = false;
+await act(async () => save.click());
+assert.equal(record.credits!.length, 1);
+assert.equal(container.querySelectorAll('script').length, 0);
+assert.match(container.textContent!, /unsafe/);
+await act(async () => (getByRole(container as any, 'button', { name: 'Request removal of my credit now' }) as any).click());
+assert.equal(record.credits![0]!.alias, undefined);
+assert.doesNotMatch(container.textContent!, /unsafe/);
+assert.equal(record.credits![0]!.events.length, 2);
+await act(async () => root.unmount());
+await dom.happyDOM.close();
+console.log('PASS credits form');
