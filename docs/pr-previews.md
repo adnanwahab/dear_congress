@@ -47,3 +47,96 @@ it intentionally does not consume this PR gallery or change its vote handlers.
 Governance remains as documented in launch-merge-policy.md: disabled/dry-run
 source defaults, quorum 10, 24-hour exposure, current-head approval/check gates,
 active kill switch, and separate browser advisory ballots. No policy is changed.
+
+## Readiness diagnostics (SHE-610)
+
+Each PR list card and detail offers a native, keyboard-operable **Preview readiness**
+expander. Opening it fetches the selected repository's existing read-only detail
+endpoint; Refresh diagnostics repeats that GET. While expanded and visible it polls
+at 30-second intervals, with no synthetic progress or build-start action. Closing,
+changing revisions or leaving the page cancels the request and interval. This is
+polling of actual GitHub receipts, not a GitHub event subscription. `LiveRound`
+continues to stream civic round votes independently.
+
+The typed client interpretation is `Readiness` / `Diagnostic` in
+`src/client/preview-readiness.ts`. The additive optional `Evidence.receipt` includes
+observation time, protection-read permission, completeness, exact required check
+contexts, required approval count and strict/up-to-date rule from GitHub's branch
+protection response. Older cached evidence explicitly has no receipt timestamp.
+A denied/unavailable protection lookup retains fetched checks while protection
+eligibility stays unknown and fails closed. The panel distinguishes configured
+`allowedBases` / `requiredChecks` policy from GitHub branch protection rules; it
+cannot claim to enumerate organization rulesets that this source does not fetch.
+
+Check results bind to the displayed head, and the panel identifies repository ID,
+PR number, head and base SHA. A newly observed revision is shown only in diagnostics;
+existing ballot controls retain their source revision until the page source is
+refreshed. Stale responses and failed refreshes display unknown readiness. Source
+permissions are distinct from the existing signed-in/approved voter status.
+Review-ready describes code receipts only, independently of ballot quorum,
+exposure and preview availability. It never authorizes a merge. Exact-head operator
+registry entries remain the only authority for Explore links; images do not prove
+deployment. The panel uses no animation, has wrapped long identifiers and native
+summary/button focus behavior, and does not depend on motion preferences.
+
+Governance remains disabled/dry-run by default, quorum 10, 24-hour exposure, at least
+one current-head review, empty base/check allowlists failing closed, active kill
+switch and fixed advisory pilot auto-merge lock. No configuration or records change.
+See [launch merge policy](launch-merge-policy.md) for human review and release rules.
+
+## Draft patch stories (SHE-622)
+
+PR details include a read-only, native disclosure accordion ordered by GitHub file
+and hunk order. Each step pairs removed/added lines with exact base/head source
+links. The typed local status separates loading, error, blocked, checks-pending,
+review-ready and pending. Review-ready describes available current-head check
+receipts only; it is not merge eligibility or human acceptance. Permission wording
+uses the existing viewer/roster state. Refresh errors retain the displayed revision.
+
+Interpretations remain labeled draft and there is no publication action. Generic
+add/replace/remove summaries are a starting point for human interpretation, not
+verified semantic behavior explanations. Screenshots are revision-wide evidence,
+not claims that a particular file caused a visual change. Only exact base/head
+attachments are included, and contributor provenance remains explicit. The operator
+registry supplies the exact-head fallback; missing before/after captures stay
+pending. No screenshots are synthesized or captured by browsing this control.
+
+Native details support keyboard disclosure without a custom key handler. Paired
+code stacks on mobile; opening content uses the shared motion scale and respects
+reduced motion and motion=off. LiveRound remains civic-only because its snapshot
+contains no repository PR identity. Story browsing has no write callbacks, network
+mutations, voting actions, or publication endpoint. Existing quorum 10, exposure,
+checks, roster/auth/CSRF, advisory lock and disabled/dry-run policies are unchanged;
+see launch-merge-policy.md for the full configured policy and human release rules.
+
+## Civic patch playtest station (SHE-617)
+
+PR detail pages include a page-local exploratory checklist for desktop, mobile,
+keyboard and reduced motion. The station shows repository, repository ID (in the
+report), head SHA, base, revision and advisory review status independently of
+preview availability. Only the existing operator registry's exact-head,
+deployment-verified HBL Fly origins launch; no contributor URL or other repository
+can supply a preview. Missing deployments remain explicitly unavailable. Opening
+is a separate tab with no opener/referrer; no iframe, build or deployment occurs.
+No new preview origins or deployments were registered by this change.
+
+A participant supplies environment, reproduction steps, expected and actual
+behavior and explicitly consents before recording a public report. Nothing is
+autosaved or automatically collected from the browser. Reports serialize this
+structured context into existing feedback text so the durable revision-bound
+feedback/outbox/receipt pipeline remains compatible. Authenticated approved-roster,
+CSRF, source freshness, server revision checks, input/privacy limits and publication
+configuration continue to apply. Retrying an unchanged uncertain submission reuses
+its idempotency key. Editing starts a new report attempt. Changing revision resets
+the station; checklist and unfinished reports are lost on navigation/reload.
+
+Saved feedback is separate from GitHub delivery and task intake; their pending,
+failed and deep-link states appear in Feedback and follow-up. These reports never
+change ballots, approval evidence, eligibility, quorum or merge authority. The
+station intentionally does not integrate LiveRound: its anonymous civic votes are
+a different data source and cannot be treated as playtest feedback or approval.
+
+Run `bun test src/client/playtest.test.tsx` and
+`bun scripts/verify-playtest-ui.tsx` for the station's focused checks, in addition
+to all required repository checks. Real desktop/mobile browser layout and keyboard
+and reduced-motion review remain part of human acceptance.
