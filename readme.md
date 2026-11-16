@@ -1190,3 +1190,12 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## After an advisory choice
+
+On `/votes`, a confirmed or previously saved browser choice offers See trade-offs,
+Compare a possible future, and Share this explanation for that sample proposal.
+The comparison is hypothetical current/proposed text, not a forecast or measured
+outcome. Copying excludes the personal stance and browser identity; a read-only
+text field supports manual copying. The non-binding cookie identity limit stays
+visible for every stance. Nothing is posted, sent to an office or enacted.
