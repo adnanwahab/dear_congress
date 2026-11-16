@@ -4,6 +4,7 @@ test('fixture brush supports keyboard thresholds without public submissions', as
   const posts: { path: string; preview?: boolean }[] = [];
   page.on('request', request => { if (request.method() === 'POST') posts.push({ path: new URL(request.url()).pathname, preview: request.postDataJSON()?.preview }); });
   await page.goto('/synth');
+  await page.getByText('Advanced synthesis, scoring and frozen plan comparisons', { exact: true }).click();
   await page.getByRole('button', { name: 'Compare rule in sandbox' }).click();
   await expect(page.getByText('Fixture comparison ready.', { exact: true })).toBeVisible();
   await page.locator('summary').filter({ hasText: 'Balanced · spend' }).click();
@@ -28,6 +29,7 @@ test('fixture brush supports keyboard thresholds without public submissions', as
 test('failed fixture request recovers and navigation discards an interrupted request', async ({ page }) => {
   await page.route('**/api/synthesis-rule-preview', route => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Fixture preview unavailable' }) }));
   await page.goto('/synth');
+  await page.getByText('Advanced synthesis, scoring and frozen plan comparisons', { exact: true }).click();
   await page.getByRole('button', { name: 'Compare rule in sandbox' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Fixture preview unavailable' })).toBeVisible();
   await expect(page.getByRole('slider', { name: 'Sweep score boundary' })).toHaveCount(0);
