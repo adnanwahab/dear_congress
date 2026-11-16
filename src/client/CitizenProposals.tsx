@@ -1,7 +1,8 @@
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { LawBehaviorExplorer } from './LawBehaviorExplorer';
-import { ProposalFollow } from './ProposalFollow';
+import { ProposalFollow } from './ProposalFollow';import { ProposalWorkshop } from "./ProposalWorkshop";
+
 import { ProposalObjections } from "./ProposalObjections";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
@@ -358,7 +359,8 @@ function ProposalDetail({ id }: { id: string }) {
       </div>
       <WorldPortal title={proposal.title} source={`Citizen proposal · ${proposal.id} · published ${proposal.publishedAt}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal>
       {proposal.ownVote && !voting && !voteError && <SaveToJourney category="Explicit votes" kind="Citizen advisory activity" text={JSON.stringify({ source: "citizen-proposal-advisory", proposalId: proposal.id, title: proposal.title, proposedChange: proposal.proposedChange, choice: proposal.ownVote, note: "Current choice read from server; editable local snapshot, not a verified ballot receipt. Later changes or withdrawal do not update this copy." }, null, 2)} />}
-      <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />
+      <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />      <ProposalWorkshop key={`workshop:citizen:${proposal.id}`} source={proposal} />
+
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
       <ProposalObjections proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/objections`, body);
