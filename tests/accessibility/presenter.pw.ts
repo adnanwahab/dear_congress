@@ -14,7 +14,7 @@ test('presenter reveals, advances chapters and never submits', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Zoom text' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('link', { name: 'Next slide' }).click();
   await expect(page).toHaveURL(/\/votes\?.*presenter=1/);
-  await expect(page.getByRole('status')).toContainText('Slide 3 of 6');
+  await expect(page.locator('.presenter').getByRole('status')).toContainText('Slide 3 of 6');
   expect(writes).toEqual([]);
 });
 
