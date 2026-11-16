@@ -1190,3 +1190,15 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Consent-based discussion invitations
+
+In Feed, **Compare this proposal with someone** opens a reviewable invitation
+for the selected fictional sample. It invites reading reasons for and concerns
+on Published without requesting a vote or agreement. Only explicit device-share
+or copy actions export the preview; unsupported or denied APIs leave selectable
+text. Cancellation never falls back to sending or copying. No contacts, mass
+sends, stance rewards, referral parameters or participation analytics are added.
+The invitation retains source repository/sample identity and beta/advisory limits;
+linked samples may change and some lack reviewed arguments. Sharing establishes
+neither comprehension nor meaningful participation.

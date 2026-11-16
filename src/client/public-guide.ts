@@ -199,5 +199,7 @@ Review [data-source health](/outcomes#source-health) for recorded fetch dates, r
 
 ### Sharing a sample decision
 
+In Feed, **Compare this proposal with someone** lets you review a fictional sample invitation before choosing device share or copy. It asks readers to compare reasons for and concerns without voting or agreeing. It identifies the independently operated non-binding beta and sample limits. No contacts, automatic messages, stance rewards or referral tracking are used. If sharing is unavailable, select and copy the preview text manually. Copies sent to others cannot be withdrawn. Sharing does not establish comprehension or participation.
+
 Share preview beside the sample advisory choices creates a downloadable card and copyable alt text. Review it before downloading. It includes the public fictional proposal, a content version and background-source limitations. Chosen stance is off by default and optional. No identity, journals, vote receipt identifiers, tallies or live-round information are included. The card is non-binding, not an official election, and not proof of a saved vote. Downloaded copies cannot be withdrawn from other people.
 `;
