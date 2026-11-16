@@ -1038,3 +1038,34 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+## Public read caching (SHE-926)
+
+`GET /api/legislation`, `/api/audit-samples` (index only), and
+`/api/sample-proposals` support weak content ETags and `If-None-Match` (304).
+The sample-proposal projection contains fictional text/background references,
+`kind: fictional-sample` and `participation: unavailable`; it excludes fictional
+support/oppose/unsure tallies and all browser choices. This new endpoint does not
+replace the dashboard's personalized `/api/demo` request.
+
+`PUBLIC_READ_CACHE_MODE` controls a reversible rollout at process startup:
+
+- `validate` (default): `public, no-cache`, recompute/revalidate every request.
+- `short`: opt-in `public, max-age=15, s-maxage=15, must-revalidate`; coalesced
+  process-local reads, at most three entries of at most 1 MiB each. `Age` prevents
+  a downstream cache from starting a new 15-second lifetime on an older entry.
+- `off`: original shared security wrapper and `no-store`; restart to roll back.
+
+Allowlisted producers are independent of cookie/auth/origin and ignore query
+parameters. They issue no identity cookie and use `Vary: Accept-Encoding`.
+No cross-origin read access is added. Request `no-cache` forces refresh;
+`no-store` also prevents retention of that response. Errors are never cached,
+and expired entries are never served on failure. Short mode may delay visibility
+of an archive update or failure by up to 15 seconds; it is not a source freshness
+or legal-status guarantee. Existing metadata timestamps and provenance remain intact.
+
+Account HTML is `private, no-store`. State, demo, citizen advisory choices,
+ballots, journal-owner reads, authentication and streams remain outside the
+allowlist with their existing `no-store` policies. Bundled editorial bills are
+still browser assets, not a new legislation API or official participation.
+See [local measurements and rollout limits](docs/reviews/SHE-926.md).
