@@ -27,8 +27,7 @@ test('failed lazy summary keeps the real link available without submission', asy
   // JavaScript requests *after* the app boots, rather than assuming a source
   // filename appears in the built URL. A blocked lazy chunk must fail safely.
   let blockedChunks = 0;
-  // Only the stage-summary module should fail. Aborting every JS request also
-  // destroys unrelated lazy routes and can unmount the app before navigation.
+  // Only the stage-summary module should fail. Keep unrelated lazy routes working.
   await page.route('**/*.js', async route => {
     const response = await route.fetch();
     const script = await response.text();
@@ -45,7 +44,7 @@ test('failed lazy summary keeps the real link available without submission', asy
   expect(blockedChunks).toBeGreaterThan(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.stage-peek-window')).toHaveCount(0);
-  // Verify a real keyboard-activated link survives the failed preview chunk.
+  // Native keyboard activation remains usable even when the summary script fails.
   await link.focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/votes$/);

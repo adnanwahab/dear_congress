@@ -18,6 +18,10 @@ Tokens in styles.css (normal timing):
 | `--motion-plan` | 700 ms | Plan row movement/entry |
 | `--ease-out` | cubic-bezier(.2,.8,.2,1) | Navigation easing |
 
+In-page types include `priority-history` for the read-only `/needs` time machine.
+It cancels superseded transitions and invalidates pending callbacks on unmount;
+recorded selection and chapter navigation remain independent of animation.
+
 In-page types: `time-zoom` (outcome range changes), `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
 Cross-document types: `forward`, `backward`; other navigation retains the default
 crossfade. Sponsor movement disables only its own root crossfade. Plan exits use
@@ -361,3 +365,16 @@ records a fallback when the immediate update or route is actually used.
 
 No observation is sent without affirmative first-party opt-in. See
 [experience quality](experience-quality.md) for the schema, retention and limits.
+
+Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
+view switch and `prepareStageMorph` for ordinary chapter links. The flat default
+uses no 3D transforms. Orbit is an explicit range input, with no autonomous
+animation, render loop, WebGL dependency or navigation interception. Reduced
+motion, motion-off and forced colors remove transforms. Failed snapshots cannot
+block the view switch or stage navigation. See the README for storage/focus limits.
+
+Existing merge policy is unchanged: disabled/dry-run defaults, quorum 10,
+24-hour exposure, current-head checks and approval, protected-base evidence,
+active default kill switch and human review. Browser choices are advisory;
+production requires a human-published tagged release. This implementation does
+not inspect or attest live protection/environment configuration.

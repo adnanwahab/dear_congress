@@ -1,3 +1,4 @@
+import { recordPriorities } from "./src/server/priority-history";
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
@@ -409,8 +410,9 @@ const operatorHealth = new OperatorHealth();
 let pendingWrites = 0;
 let writeFailures = 0;
 let saveQueue: Promise<unknown> = Promise.resolve();
-const save = () => {
+const save = (recordHistory = true) => {
   demoCache = null;
+  if (recordHistory) recordPriorities(db, OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined);
   const snapshot = JSON.stringify(db, null, 2);
   pendingWrites++;
   const write = saveQueue.then(async () => {
@@ -430,7 +432,7 @@ function dashboardState(voterId: string) {
   const votes = Object.fromEntries(Object.entries(db.votesByVoter[voterId] ?? {}).filter(([id]) => DEMO_ITEMS.some(item => item.id === id)).map(([id, vote]) => [id, vote.stance]));
   return { ...demoCache.payload, votes };
 }
-await save();
+await save(false);
 
 function state(voterId = "anon") {
   const measuredOutcomes = OUTCOMES_MODE === "on" ? measuredNeedsOutcomes(outcomesFile) : undefined;
@@ -973,6 +975,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
+    },
+    "/api/priority-history": {
+      GET: () => Response.json({ samples: db.priorityHistory ?? [] }, { headers: { "cache-control": "no-store" } }),
     },
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),

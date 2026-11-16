@@ -1287,3 +1287,10 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 @keyframes peek-in { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 600px) { .stage-peek:has(.secondary-destination) { display: none; } .more-destinations .stage-peek { display: block; } .stage-peek-window { bottom: 90px; } }
 @media (prefers-reduced-motion: reduce) { .stage-peek-window { animation: none; } }
+
+.priority-history { margin-block: 1rem; }
+.priority-history select { max-width: 100%; }
+.priority-history table { width: 100%; }
+html:is(:active-view-transition-type(priority-history), [data-motion-type="priority-history"])::view-transition-group(*) {
+  animation-duration: calc(260ms * var(--motion-scale, 1));
+}
