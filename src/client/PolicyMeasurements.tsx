@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { SourceRevisionAlert } from './SourceRevisionAlert';
 import { DatasetImportWorkbench } from './DatasetImportWorkbench';
 import { ProvenanceBadge } from './ProvenanceBadge';
@@ -6,15 +7,17 @@ import { EVIDENCE_EXAMPLES } from '../shared/claim-provenance';
 import { EvidenceCalendar } from './EvidenceCalendar';
 import { ContradictionCompass } from './ContradictionCompass';
 import { StudyQualityMatrix } from './StudyQualityMatrix';
-import { UncertaintyStack } from './UncertaintyStack';
+
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
+
+const UncertaintyStack = lazy(() => import('./UncertaintyStack').then(module => ({ default: module.UncertaintyStack })));
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
   return <><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
     <p>No verified implemented policy or measured policy effects are registered. Replies and committee milestones are activity, not evidence of policy benefit.</p>
     <DatasetImportWorkbench />
-    <UncertaintyStack />
+    <Suspense fallback={<p role="status">Loading uncertainty scenarios…</p>}><UncertaintyStack /></Suspense>
     <details><summary>Explore synthetic measurement prototype</summary>
       <p>Fictional transit pilot · synthetic data only · assessed as of {asOf}. These values do not describe a real policy or enter synthesis.</p>
       {SYNTHETIC_METRICS.map(metric => {
