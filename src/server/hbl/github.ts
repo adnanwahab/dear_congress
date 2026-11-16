@@ -44,7 +44,7 @@ export class GitHubSource {
   }
   private pull(p:Json):Pull {
     if(p.base?.repo?.id!==this.repositoryId || p.base?.repo?.full_name?.toLowerCase()!==this.repository) throw new GitHubError('rejected');
-    return {links:evidenceLinks(p.body),number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
+    return {branchSource:{headRepository:p.head.repo?.full_name??null,headRef:p.head.ref??''},links:evidenceLinks(p.body),number:p.number,repositoryId:this.repositoryId!,title:p.title,body:p.body??'',author:p.user?.login??'',url:p.html_url,updatedAt:p.updated_at,headSha:p.head.sha,base:p.base.ref,draft:!!p.draft,state:p.state,version:`${this.repositoryId}:${p.number}:${p.head.sha}:${p.base.ref}`,firstSeenAt:Date.now(),labels:(p.labels??[]).map((l:Json)=>l.name)};
   }
   private issue(p:Json):Pull {
     if(p.pull_request)throw new GitHubError('rejected');
@@ -62,6 +62,7 @@ export class GitHubSource {
     if(this.options.kind==='issue')return this.issue(await this.request(`/issues/${number}`));
     const raw=await this.request(`/pulls/${number}`), pull=this.pull(raw);
     const files=await this.pages(`/pulls/${number}/files`);
+    try { const commits=await this.pages(`/pulls/${number}/commits`); if(commits.length<250) pull.commitShas=commits.map(c=>c.sha); } catch { /* Dependency metadata unavailable; never infer absence. */ }
     if(files.length>=3000 || (typeof raw.changed_files==='number' && files.length!==raw.changed_files)) throw new GitHubError('unknown');
     pull.files=files.map(f=>({filename:f.filename,status:f.status,additions:f.additions,deletions:f.deletions,patch:f.patch}));
     const evidence:Evidence={checks:[],reviews:[],requestedReviewers:(raw.requested_reviewers??[]).length+(raw.requested_teams??[]).length,mergeable:raw.mergeable??null,mergeableState:raw.mergeable_state??'unknown',baseSha:raw.base.sha,protectionsKnown:false,protectedBase:false,sensitive:files.some(f=>/(^|\/)(\.github|auth|security|migrations|server|infra|governance)(\/|$)|(?:lock|package\.json|config\.[^/]+)$|(?:vot|policy|roster|migration|docker|terraform)/i.test(f.filename) || f.status==='removed'),maintainerApproved:false};
@@ -70,6 +71,7 @@ export class GitHubSource {
     try {
       const [runs,statuses,reviews,protection,commits]=await Promise.all([this.pages(`/commits/${pull.headSha}/check-runs`,'check_runs'),this.pages(`/commits/${pull.headSha}/statuses`),this.pages(`/pulls/${number}/reviews`),this.request(`/branches/${encodeURIComponent(pull.base)}/protection`).catch(error=>{if(error instanceof GitHubError && [401,403].includes(error.status)) evidence.receipt!.permission='denied';return null;}),this.pages(`/pulls/${number}/commits`)]);
       if(commits.length>=250) throw new GitHubError('unknown');
+      if(pull.branchSource)pull.branchSource.commits=commits.map(c=>({sha:c.sha,parents:(c.parents??[]).map((parent:Json)=>parent.sha)}));
       if([...this.openHeads].some(([n,sha])=>n!==number && commits.some(c=>c.sha===sha))) evidence.mergeableState='blocked';
       evidence.checks=runs.map(c=>({name:c.name,status:c.status,conclusion:c.conclusion,sha:c.head_sha}));
       const seen=new Set<string>();

@@ -1,3 +1,4 @@
+import { StateFeedback } from './StateFeedback';
 import { useState } from 'react';
 
 export const MAP_TIMEOUT_MS = 10_000;
@@ -30,7 +31,7 @@ export function useMapAvailability(styleUrl?: string) {
 
 export function MapAvailability({ status, retry, configured }: { status: MapStatus; retry: () => void; configured: boolean }) {
   return <div className="optional-map-status">
-    <p role="status" className="muted s">{status === 'loading' ? 'Map visualization loading; explore needs below.' : status === 'unavailable' ? 'Map visualization unavailable; explore needs below.' : 'Map visualization available. Needs and jurisdiction summaries are also listed as text.'}</p>
+    <p role="status" className="muted s"><StateFeedback state={status === 'loading' ? 'syncing' : status === 'unavailable' ? 'unavailable' : 'updated'}>{status === 'loading' ? 'Map visualization loading; explore needs below.' : status === 'unavailable' ? 'Map visualization unavailable; explore needs below.' : 'Map visualization available. Needs and jurisdiction summaries are also listed as text.'}</StateFeedback></p>
     {configured && <button type="button" className="ghost" disabled={status !== 'unavailable'} onClick={retry}>Retry map visualization</button>}
   </div>;
 }

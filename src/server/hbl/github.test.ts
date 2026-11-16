@@ -28,3 +28,21 @@ test('diagnostics retain check receipts when protection read permission is denie
  const pull=await source.detail(7);expect(pull.evidence!.checks[0]?.name).toBe('bun test');expect(pull.evidence!.protectionsKnown).toBe(false);expect(pull.evidence!.receipt).toMatchObject({status:'unavailable',permission:'denied'});
  denied=false;const complete=await source.detail(7);expect(complete.evidence!.receipt).toMatchObject({status:'complete',permission:'readable',strict:true,requiredApprovals:1,requiredChecks:['bun test','route smoke test']});expect(complete.evidence!.checks.find(c=>c.name==='route smoke test')?.status).toBe('unknown');
 });
+test('read-only PR metadata retains fork identity and GitHub commit parents without changing revision binding',async()=>{
+ const sha='a'.repeat(40),parent='b'.repeat(40);
+ const methods:string[]=[];
+ const source=new GitHubSource({repoKey:'dear_congress',fetch:(async(input,init)=>{
+  methods.push(init?.method??'GET');
+  const path=new URL(String(input)).pathname;
+  if(path.endsWith('/dear_congress'))return Response.json({id:123,full_name:'adnanwahab/dear_congress'});
+  if(path.endsWith('/pulls/7'))return Response.json({number:7,title:'Feature',head:{sha,ref:'feature',repo:{full_name:'contributor/fork'}},base:{sha:parent,ref:'main',repo:{id:123,full_name:'adnanwahab/dear_congress'}},state:'open'});
+  if(path.endsWith('/protection'))return Response.json({required_status_checks:{strict:true}});
+  if(path.endsWith('/commits'))return Response.json([{sha,parents:[{sha:parent}]}]);
+  if(path.endsWith('/check-runs'))return Response.json({check_runs:[]});
+  return Response.json([]);
+ }) as typeof fetch});
+ const p=await source.detail(7);
+ expect(p.branchSource).toEqual({headRepository:'contributor/fork',headRef:'feature',commits:[{sha,parents:[parent]}]});
+ expect(p.version).toBe(`123:7:${sha}:main`);
+ expect(methods.every(m=>m==='GET')).toBe(true);
+});
