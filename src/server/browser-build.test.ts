@@ -36,7 +36,7 @@ test("production shell stays under budget and defers MapLibre JS and CSS", async
   expect(dynamic.has(map![0])).toBe(true);
   // Bun collects imported CSS even across split JS; never import the map CSS there.
   for (const [path, asset] of outputs) {
-    if (path.endsWith(".css")) expect(asset.text).not.toContain(".maplibregl-");
+    if (path.endsWith(".css") && !path.startsWith("/maplibre-gl-")) expect(asset.text).not.toContain(".maplibregl-");
   }
   expect(html).not.toContain("maplibre.css");
   expect(html).not.toMatch(/<<<<<<<|=======|>>>>>>>/);

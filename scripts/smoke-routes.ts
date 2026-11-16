@@ -21,6 +21,29 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  const shellResponse = await get('/');
+  assert.equal(shellResponse.headers.get('cache-control'), 'no-cache');
+  const shellHTML = await shellResponse.text();
+  const entry = shellHTML.match(/<script[^>]+src="([^"]+)"/)![1]!;
+  const baseline = await get(entry);
+  const baselineBytes = (await baseline.arrayBuffer()).byteLength;
+  assert.equal(baseline.headers.get('cache-control'), 'no-cache');
+  process.env.IMMUTABLE_ASSETS = '1';
+  const enabled = await get(entry);
+  assert.equal(enabled.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  assert.equal((await enabled.arrayBuffer()).byteLength, baselineBytes);
+  const conditional = await fetch(new URL(entry, server!.url), { headers: { 'if-none-match': enabled.headers.get('etag')! } });
+  assert.equal(conditional.status, 304);
+  assert.equal((await conditional.arrayBuffer()).byteLength, 0);
+  assert.equal((await fetch(new URL(entry, server!.url), { method: 'HEAD' })).status, 200);
+  assert.equal((await fetch(new URL(entry, server!.url), { method: 'POST' })).status, 405);
+  const missingAsset = await get('/old-release-missing.js');
+  assert.equal(missingAsset.status, 404);
+  assert.equal(missingAsset.headers.get('cache-control'), 'no-store');
+  process.env.IMMUTABLE_ASSETS = '0';
+  assert.equal((await get(entry)).headers.get('cache-control'), 'no-cache');
+  console.log(`Asset cache local measurement: baseline body ${baselineBytes} bytes; conditional body 0 bytes; missing old asset 404 (never HTML)`);
+
   for (const topic of ['transit', 'housing', 'childcare']) {
     const page = await get(`/topics/${topic}`);
     assert.equal(page.status, 200);
