@@ -41,6 +41,7 @@ export interface CitizenProposalView extends CitizenProposalInput {
   comments: CitizenProposalComment[];
   canRespondToObjections: boolean;
   objections: ProposalObjection[];
+  credits?: ProposalCreditsView;
 }
 
 export interface CitizenProposalComment {
@@ -66,6 +67,7 @@ export interface CitizenProposalRecord extends CitizenProposalInput {
   votesByVoterHash: Record<string, AdvisoryChoice>;
   comments: CitizenProposalCommentRecord[];
   objections?: ProposalObjectionRecord[];
+  credits?: ProposalCreditRecord[];
 }
 
 /** Bound to the existing immutable published proposal; constituency is self-described. */
@@ -81,3 +83,31 @@ export interface ProposalObjectionRecord extends ProposalObjection {
   submitKeyHash: string;
   bodyHash: string;
 }
+
+
+export const CONTRIBUTION_ROLES = ["coauthor", "research", "editing", "accessibility"] as const;
+export type ContributionRole = typeof CONTRIBUTION_ROLES[number];
+export interface CreditEvent {
+  version: number;
+  action: "opt-in" | "remove";
+  role: ContributionRole;
+  preference: "pseudonym" | "unnamed";
+  createdAt: string;
+}
+/** Alias is replaceable/removable; the append-only event history never contains names. */
+export interface ProposalCreditRecord {
+  ownerHash: string;
+  alias?: string;
+  events: CreditEvent[];
+}
+export interface ProposalCreditsView {
+  revision: string;
+  version: number;
+  contributors: { alias: string; role: ContributionRole }[];
+  history: CreditEvent[];
+  ownActive: boolean;
+}
+export type ProposalCreditInput = { expectedVersion: number; revision: string } & (
+  { action: "remove" } |
+  { action: "opt-in"; confirmedPublic: true; role: ContributionRole; preference: "pseudonym" | "unnamed"; alias?: string }
+);

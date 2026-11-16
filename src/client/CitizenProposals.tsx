@@ -3,8 +3,7 @@ import { WorldPortal } from './WorldPortal';
 import { LawBehaviorExplorer } from './LawBehaviorExplorer';
 import { ProposalFollow } from './ProposalFollow';import { ProposalWorkshop } from "./ProposalWorkshop";
 
-import { ProposalObjections } from "./ProposalObjections";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
   type AdvisoryChoice, type CitizenProposalInput, type CitizenProposalView, type ProposalJurisdiction,
@@ -14,6 +13,9 @@ import ProposalWorkspace from "./ProposalWorkspace";
 import AmendmentEditor from "./AmendmentEditor";
 import { ProposalReadingHelp } from "./ProposalReadingHelp";
 import { DiscussionGuide, discussionCommentId } from "./DiscussionGuide";
+
+const ProposalCredits = lazy(() => import("./ProposalCredits").then(mod => ({ default: mod.ProposalCredits })));
+const ProposalObjections = lazy(() => import("./ProposalObjections").then(mod => ({ default: mod.ProposalObjections })));
 
 const API = "/api/citizen-proposals";
 const DRAFTS_KEY = "civic_synthesis_proposal_drafts_v1";
@@ -362,10 +364,14 @@ function ProposalDetail({ id }: { id: string }) {
       <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />      <ProposalWorkshop key={`workshop:citizen:${proposal.id}`} source={proposal} />
 
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
-      <ProposalObjections proposal={proposal} submit={async body => {
+      <Suspense fallback={<p role="status">Loading contributor credits…</p>}><ProposalCredits key={proposal.id} proposal={proposal} submit={async body => {
+        const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/credits`, body);
+        setProposal(result.proposal);
+      }} /></Suspense>
+      <Suspense fallback={<p role="status">Loading proposal objections…</p>}><ProposalObjections proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/objections`, body);
         setProposal(result.proposal);
-      }} />
+      }} /></Suspense>
       <section className="cp-panel cp-discussion" aria-labelledby="cp-discussion-title"><div className="cp-section-heading"><div><p className="cp-eyebrow">MAKE THE PROPOSAL CLEARER</p><h2 id="cp-discussion-title">Public discussion</h2></div><span className="cp-total">{proposal.comments.length} comment{proposal.comments.length === 1 ? "" : "s"}</span></div><p className="cp-discussion-intro">Ask a question, offer a source, or explain a benefit or concern. Keep the conversation about the proposed change.</p>{proposal.comments.length ? <ol className="cp-comments">{proposal.comments.map(comment => <li key={comment.id} id={discussionCommentId(comment.id)} tabIndex={-1}><div><b>{comment.displayName}</b><time dateTime={comment.createdAt}>{dateLabel(comment.createdAt)}</time></div><p>{comment.text}</p></li>)}</ol> : <p className="cp-no-comments">No comments yet. Start the conversation.</p>}<DiscussionGuide key={proposal.id} comments={proposal.comments} /><form onSubmit={postComment} className="cp-comment-form"><fieldset disabled={commenting || voting}><label className="cp-field" htmlFor="comment-name"><span>Display name <small>Optional</small></span><input id="comment-name" aria-label="Display name" maxLength={80} value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Participant" /></label><label className="cp-field" htmlFor="comment-text"><span>Your comment</span><textarea id="comment-text" aria-describedby="comment-text-hint" aria-label="Your comment" required maxLength={2000} rows={4} value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="What would help people understand this proposal?" /><small id="comment-text-hint">Your comment and display name will be public. Avoid personal or identifying information.</small></label><button type="submit" className="cp-button" disabled={commenting || voting || !commentText.trim()}>{commenting ? "Posting…" : "Post public comment"}</button></fieldset>{commentError && <Notice error>{commentError}</Notice>}<p role="status" className="cp-save-status">{commentStatus}</p></form></section>
       <div className="cp-after-detail"><p>Have another change in mind?</p><a className="cp-button cp-button-secondary" href="/proposals/new">＋ Propose a law</a></div>
     </>}
