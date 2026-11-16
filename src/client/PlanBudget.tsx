@@ -20,8 +20,8 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
     <PlanWorkbench proposals={proposals} lane={lane} />
     <h4>Where does the budget go?</h4>
     <p>USD billions per year, across the jurisdictions named below. All amounts are simulated model assumptions, not independently sourced estimates. One-time costs are not separately modeled.</p>
-    <p>Program cost is the model’s annual allocation. Existing spending and net incremental spending are unknown. Contingency: $0 modeled reserve; real-world contingency and uncertainty ranges are unknown. Costs stay fixed in this ledger; the budget and synthesis weights are adjustable above.</p>
-    <p><b>{budgetMoney(ledger.total)}</b> allocated + <b>{budgetMoney(ledger.unallocated)}</b> unallocated = {budgetMoney(ledger.budget)} budget. Precision: $1 million.</p>
+    <p>Program cost is the model’s annual allocation. Existing spending and net incremental spending are unknown. Contingency: $0 modeled reserve; real-world contingency and uncertainty ranges are unknown. These are not appropriated dollars or exact predictions. Per-policy sensitivity controls below explore local cost assumptions without changing this ledger. Costs stay fixed in this ledger; the budget and synthesis weights are adjustable above.</p>
+    <p><b>{budgetMoney(ledger.total)}</b> allocated + <b>{budgetMoney(ledger.unallocated)}</b> unallocated = {budgetMoney(ledger.budget)} budget. Arithmetic resolution: $1 million; this does not indicate estimate accuracy.</p>
     {!!baseline.displayRounding && <p>The synthesis headline rounds to $0.01B: {budgetMoney(baseline.total)} + {budgetMoney(baseline.displayRounding)} rounding adjustment = {budgetMoney(baseline.total + baseline.displayRounding)}. Rounding is not spending.</p>}
     {revision && <p role="status">Local plan revision committed for this ledger only. Original synthesis selections are preserved. <button onClick={() => { setRevision(null); setCandidate(''); }}>Restore original ledger</button></p>}
     <label>Filter ledger items <input value={filter} onChange={e => setFilter(e.target.value)} /></label>

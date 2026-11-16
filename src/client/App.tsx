@@ -2,6 +2,7 @@ import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
+import { FiscalAssumption } from "./FiscalAssumption";
 import { BudgetPuzzle } from "./BudgetPuzzle";
 import { motionDisabled, motionDuration } from "./motion";
 import { PageSkeleton } from "./LoadingSkeleton";
@@ -1846,12 +1847,13 @@ function PlanRow({ it, state, simulatedEffect, onSelect, transitionName, movemen
           <small>{it.needLabel} · {p.authority} · {state.changeLevels[p.changeLevel]}</small>
         </div>
         <div className="plan-nums">
-          <span>{money(p.costB)}{(p.costEstimate === "provisional" || p.costEstimate === "citizen" || p.costEstimate === "designed") && <small className="muted" title="Citizen idea, not yet reviewed: estimated cost."> est.</small>}</span>
+          <span>{money(p.costB)} assumption{(p.costEstimate === "provisional" || p.costEstimate === "citizen" || p.costEstimate === "designed") && <small className="muted" title="Citizen idea, not yet reviewed: estimated cost."> est.</small>}</span>
           <Split s={it.stats} />
         </div>
         <span className="chev" aria-hidden>{open ? "−" : "+"}</span>
       </button>
 
+      <FiscalAssumption key={`${p.id}:${p.costB}:${p.costEstimate}`} proposal={p} />
       {open && (
         <div className="why">
           <div className="why-grid">
