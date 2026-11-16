@@ -1,4 +1,3 @@
-import { useRoomReturn } from './civic-house-return';
 import { GlossaryText } from './CivicGlossary';
 import { CivicTimeline } from './CivicTimeline';
 import { PublicNumericClaim } from './ProvenanceBadge';
@@ -58,6 +57,7 @@ const CitizenJury = lazy(() => import('./CitizenJury').then(module => ({ default
 const ProposalDuet = lazy(() => import('./ProposalDuet').then(mod => ({ default: mod.ProposalDuet })));
 const JurisdictionComparison = lazy(() => import('./JurisdictionComparison').then(m=>({default:m.JurisdictionComparison})));
 const CooperativeMission = lazy(() => import('./CooperativeMission').then(m=>({default:m.CooperativeMission})));
+const RoomReturn = lazy(() => import('./civic-house-return').then(m => ({default:m.RoomReturn})));
 const ResponsibilityExplorer = lazy(() => import('./ResponsibilityExplorer').then(mod => ({ default: mod.ResponsibilityExplorer })));
 const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 const PolicyMeasurements = lazy(() => import('./PolicyMeasurements').then(module => ({ default: module.PolicyMeasurements })));
@@ -128,7 +128,6 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     return () => window.cancelAnimationFrame(frame);
   }, [loading, journey]);
   const meta = STAGES[stage];
-  useRoomReturn(meta.route, !loading);
   const load = () => request<DemoPayload>('/api/demo').then(value => { saveProposalSnapshot(value); setData(value); });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -191,7 +190,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
   const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
-  return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
+  return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><Suspense fallback={null}><RoomReturn route={meta.route} ready={!loading} /></Suspense><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
     {!new URLSearchParams(window.location.search).has('demo') && <CivicCrossword />}
     {stage === 'votes' && <CouncilRoleplay />}
