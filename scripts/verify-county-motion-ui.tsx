@@ -35,7 +35,7 @@ while (!container.querySelector('.county-completion-sweep')) {
   await click('Improve one revision');
 }
 const sweep = container.querySelector('.county-completion-sweep');
-assert(container.querySelector('[role=status]')!.textContent!.startsWith('Simulation complete.'));
+assert(container.querySelector('.county-status[role=status]')!.textContent!.startsWith('Simulation complete.'));
 assert(container.querySelector('.county-live')!.textContent!.includes('Simulation complete'));
 // Counts update atomically with the revision; animation must not invent interim totals.
 assert.equal(metrics()[2], '3,144 / 3,144');
