@@ -753,6 +753,13 @@ No journals, ballots or source full text are included. Citizen/official proposal
 exports, claim-level evidence and reviewed conflicting cases remain pending.
 See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
 
+The `/outcomes#source-health` console reads the existing outcome snapshot, exposing
+recorded fetch dates, missing sources, conflicts and retained-data fetch incidents.
+It does not probe providers or certify starter fixture values. Schema monitoring
+and human-review history are currently unrecorded. A 30-day freshness warning is
+an editorial threshold, not a provider SLA. Copyable JSON provides an export/print
+fallback. See [SHE-688 scope and remaining acceptance](docs/reviews/SHE-688.md).
+
 ### Public-data gaps atlas
 
 `/outcomes#data-gaps-atlas` includes a bundled, read-only research inventory with
@@ -995,3 +1002,14 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Launch operator health
+
+`/admin/health` is a read-only operator panel using the existing `ADMIN_TOKEN`
+authentication (Basic user `admin`, or Bearer header). It fails closed when unset.
+Never put tokens in URLs. The panel has release identity, JSON write queue pressure,
+in-flight idea designs, five minute API counts and 5xx route templates, a fixed
+authenticated Fly logs destination, and human rollback guidance. Refresh before
+acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
+saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
+minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
