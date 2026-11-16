@@ -388,6 +388,31 @@ records a fallback when the immediate update or route is actually used.
 No observation is sent without affirmative first-party opt-in. See
 [experience quality](experience-quality.md) for the schema, retention and limits.
 
+## County map / list continuity
+
+`/map` keeps county FIPS selection, search, status filters, plan revision and
+synthetic metric labels in one component across Map view / List view switches.
+The typed `geography-mode` transition shares `county-model-<FIPS>` between the
+selected public county boundary and its selected data row. Only one endpoint
+owns that name in either mode. List view unmounts the SVG and focuses the data
+row; Map view restores focus to its mode button. Searchable native buttons remain
+available in both modes, including without the visual API or with reduced motion.
+The selected row remains available outside search/status filters with an explicit
+notice; it does not silently change those filters or their denominator.
+
+Newer switches and page exit invalidate pending visual callbacks. Snapshot/API
+failure falls back to the requested view. Chapter links in Navigation remain
+ordinary links; neither animation completion nor mode selection submits data.
+Only bundled Census county boundaries and synthetic FIPS model values are used;
+this interaction requests no resident locations, geolocation or participation API.
+
+`bun test src/client/MapScreen.test.tsx src/client/county-motion.test.ts src/client/motion.test.ts`
+checks the DOM lifecycle and shared motion fallbacks. Native browser journeys
+(success and visual failure, with no writes) are in
+`tests/accessibility/geography-continuity.pw.ts` and use the existing desktop,
+mobile, reduced-motion, forced-colors and reflow projects. Screen reader speech
+and physical touch operation still require manual verification.
+
 Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
 view switch and `prepareStageMorph` for ordinary chapter links. The flat default
 uses no 3D transforms. Orbit is an explicit range input, with no autonomous
