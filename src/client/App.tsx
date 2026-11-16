@@ -1,3 +1,4 @@
+import { writeFailure } from './write-failure';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
@@ -614,6 +615,8 @@ export function JournalView({
   const [undoLeft, setUndoLeft] = useState(0);
   const [confirmedPublic, setConfirmedPublic] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const journalSending = useRef(false);
+  const journalAttempt = useRef<{ signature: string; key: string } | null>(null);
 
   useEffect(() => {
     if (!text.trim()) {
@@ -640,15 +643,18 @@ export function JournalView({
   }, [undo]);
 
   async function submit() {
-    if (!text.trim() || !confirmedPublic || busy) return;
+    if (!text.trim() || !confirmedPublic || journalSending.current) return;
+    journalSending.current = true;
     setBusy(true);
     setSubmitError("");
     try {
+    const body = { text, author, labels: preview?.labels ?? [] };
+    const signature = JSON.stringify(body);
+    if (journalAttempt.current?.signature !== signature) journalAttempt.current = { signature, key: crypto.randomUUID() };
     const published = await api<{ status?: "pending"; message?: string; entry_id: string; fork_id: string; entry: JournalEntry }>("/api/entries", {
-      text,
-      author,
-      labels: preview?.labels ?? [],
-    });
+      ...body, idempotencyKey: journalAttempt.current.key,
+    }, "POST", AbortSignal.timeout(15000));
+    journalAttempt.current = null;
     if (published.status === "pending") { setSubmitError(published.message ?? "Held for review."); setText(""); setConfirmedPublic(false); return; }
     onPublishStart(published.fork_id);
     setEntry(published.entry);
@@ -671,8 +677,8 @@ export function JournalView({
     es.onerror = () => es.close();
     setConfirmedPublic(false);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Could not publish. Please try again.");
-    } finally { setBusy(false); }
+      setSubmitError(`${writeFailure(error, error instanceof Error && error.name === "TimeoutError")} Publication is unconfirmed. Your text remains here; retry the same text.`);
+    } finally { journalSending.current = false; setBusy(false); }
   }
 
   async function removeEntry(id: string) {

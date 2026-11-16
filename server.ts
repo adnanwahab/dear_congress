@@ -1,3 +1,4 @@
+import { journalRetries } from "./src/server/journal-retry";
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
@@ -422,6 +423,7 @@ const save = () => {
   void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
+const retryJournal = journalRetries(() => db, save);
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 function dashboardState(voterId: string) {
   const day = new Date().toISOString().slice(0, 10);
@@ -1800,6 +1802,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
         // Resetting sample synthesis data must not erase public proposals or their votes.
         const citizenProposals = db.citizenProposals;
+        const journalRetryRecords = db.journalRetries;
         const journalOwners = db.journalOwners;
         const journalReports = db.journalReports;
         const journalModerationLog = db.journalModerationLog;
@@ -1809,6 +1812,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
         db.citizenProposals = citizenProposals;
+        db.journalRetries = journalRetryRecords;
         db.journalOwners = journalOwners;
         db.journalReports = journalReports;
         db.journalModerationLog = journalModerationLog;
@@ -1849,6 +1853,7 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
     if (typeof handler !== "function") continue;
     (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
       return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
+        const execute = async () => {
         // Run after shared validation/limits and before extraction or answer creation.
         if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {
           const body = await boundedJson(req.clone());
@@ -1873,6 +1878,12 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
           statsHealthy = false;
           console.error("[STATS_ERROR] Metrics observation failed");
         });
+        };
+        if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {
+          const input = await req.clone().json();
+          if (!input.kind || input.kind === "journal") return retryJournal(req, resolveVoterId(req), execute);
+        }
+        return execute();
       }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
   }

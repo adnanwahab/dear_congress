@@ -1,3 +1,4 @@
+import { writeFailure } from './write-failure';
 import { MutationError, type MutationState } from './mutation-status';
 export type VoteDraft = { proposalId: string; title: string; stance: number; revision?: string };
 type Stored = { draft: VoteDraft; confirmed: boolean };
@@ -43,7 +44,7 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
         const seconds = header && /^\d+$/.test(header) ? Number(header) * 1000 : NaN;
         retryAt = Number.isFinite(seconds) ? Date.now() + seconds : Math.max(Date.now(), Date.parse(header ?? '') || Date.now() + 60000);
       }
-      emit({ phase: 'failed', message: `We could not confirm whether your advisory choice for ${stored.draft.title} was saved.${retryAt > Date.now() ? ` Too many requests; wait until ${new Date(retryAt).toLocaleTimeString()} before retrying.` : ' Retry sends the same choice to the same proposal.'}${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
+      emit({ phase: 'failed', message: `${writeFailure(error, controller.signal.aborted)} We could not confirm whether your advisory choice for ${stored.draft.title} was saved.${retryAt > Date.now() ? ` Too many requests; wait until ${new Date(retryAt).toLocaleTimeString()} before retrying.` : ' Retry sends the same choice to the same proposal.'}${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
       return false;
     } finally { clearTimeout(timer); locked = false; }
   }
