@@ -1,3 +1,4 @@
+import { recordActivation } from "./activation-events";
 import { useId, useRef, useState } from 'react';
 import { AudioBriefing } from './AudioBriefing';
 import type { DemoItem } from '../engine/demo';
@@ -62,7 +63,7 @@ function Tabletop({ item, namespace, evidenceConditions }: { item: DemoItem; nam
             const clause = event.currentTarget.ownerDocument.getElementById(`${prefix}-clause`);
             if (clause?.parentElement?.tagName === 'DETAILS') (clause.parentElement as HTMLDetailsElement).open = true;
           }}>Proposal clause 1</a>
-          <details><summary>Why this matters</summary><p>This {id === 'claim' ? 'claim' : 'counterargument'} raises a question about {point.id === 'for' ? 'evening access and service reliability' : 'operating costs and service trade-offs'}. Comparing local access, reliability and budget evidence would help assess the proposal; this example does not establish the result.</p><p><strong>Uncertainty:</strong> {point.limits}</p></details>
+          <details onToggle={event => { if (event.currentTarget.open) recordActivation("argument_opened"); }}><summary>Why this matters</summary><p>This {id === 'claim' ? 'claim' : 'counterargument'} raises a question about {point.id === 'for' ? 'evening access and service reliability' : 'operating costs and service trade-offs'}. Comparing local access, reliability and budget evidence would help assess the proposal; this example does not establish the result.</p><p><strong>Uncertainty:</strong> {point.limits}</p></details>
           {id === 'claim' && <p><strong>What would change my mind:</strong> {point.condition}</p>}
           <div className="argument-card-actions">{(['up', 'down'] as const).map(direction => <button type="button" key={direction}
             aria-label={`Move ${point.title} ${id} ${direction}`} aria-disabled={direction === 'up' ? index === 0 : index === order[point.id].length - 1}

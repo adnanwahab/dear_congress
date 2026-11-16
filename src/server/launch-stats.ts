@@ -1,3 +1,4 @@
+import { ACTIVATION_EVENTS, type ActivationEvent } from "../shared/activation-events";
 import { Database } from "bun:sqlite";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
@@ -46,6 +47,7 @@ export class LaunchStats {
       CREATE TABLE IF NOT EXISTS stats_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS stats_votes(day TEXT NOT NULL,identity TEXT NOT NULL,scope TEXT NOT NULL,target TEXT NOT NULL,PRIMARY KEY(day,identity,scope,target));
       CREATE TABLE IF NOT EXISTS stats_journals(id TEXT PRIMARY KEY,day TEXT NOT NULL,origin TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS stats_activation(day TEXT NOT NULL,event TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(day,event));
       CREATE TABLE IF NOT EXISTS stats_views(day TEXT NOT NULL,route TEXT NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(day,route));`);
     this.db.query("INSERT OR IGNORE INTO stats_meta VALUES('startedAt',?)").run(new Date(now()).toISOString());
   }
@@ -62,6 +64,11 @@ export class LaunchStats {
     this.db.query("INSERT INTO stats_views VALUES(?,?,1) ON CONFLICT(day,route) DO UPDATE SET count=count+1").run(statsDay(this.now()), normalized);
     return true;
   }
+  activation(event: ActivationEvent) {
+    if (!Object.hasOwn(ACTIVATION_EVENTS, event)) return false;
+    this.db.query("INSERT INTO stats_activation VALUES(?,?,1) ON CONFLICT(day,event) DO UPDATE SET count=count+1").run(statsDay(this.now()), event);
+    return true;
+  }
   snapshot() {
     const day = statsDay(this.now());
     const counts = this.db.query("SELECT count(*) votes,count(DISTINCT identity) uniqueVoters FROM stats_votes WHERE day=?").get(day) as { votes: number; uniqueVoters: number };
@@ -71,6 +78,7 @@ export class LaunchStats {
       ...counts, returningVoters: returning.count,
       votesByScope: this.db.query("SELECT scope,count(*) votes,count(DISTINCT identity) uniqueVoters FROM stats_votes WHERE day=? GROUP BY scope ORDER BY scope").all(day),
       journals: { real: 0, sample: 0, simulated: 0, ...Object.fromEntries((this.db.query("SELECT origin,count(*) count FROM stats_journals WHERE day=? GROUP BY origin").all(day) as {origin:string;count:number}[]).map(r => [r.origin,r.count])) },
+      activation: Object.fromEntries(Object.keys(ACTIVATION_EVENTS).map(event => [event, (this.db.query("SELECT count FROM stats_activation WHERE day=? AND event=?").get(day, event) as {count:number} | null)?.count ?? 0])) as Record<ActivationEvent, number>,
       pageViews: this.db.query("SELECT route,count FROM stats_views WHERE day=? ORDER BY count DESC,route").all(day) as {route:string;count:number}[],
     };
   }
@@ -78,7 +86,8 @@ export class LaunchStats {
 }
 export function statsPage(stats: ReturnType<LaunchStats["snapshot"]>, healthy: boolean) {
   const rows = stats.pageViews.map(r => `<tr><td>${escapeHTML(r.route)}</td><td>${r.count}</td></tr>`).join("");
-  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="robots" content="noindex,nofollow"><title>Launch stats</title><style>body{font:18px/1.5 system-ui;max-width:64rem;margin:3rem auto;padding:1rem}table{border-collapse:collapse}td,th{text-align:left;padding:.5rem 1rem;border-bottom:1px solid #ccc}dt{font-weight:bold}dd{margin:0 0 1rem}</style><main><h1>Launch stats</h1><p>${stats.day} · ${stats.timezone}. Refresh to update.</p>${healthy ? "" : '<p role="alert">Metrics recording failed in this process. Counts may be incomplete.</p>'}<dl><dt>Unique voter identities</dt><dd>${stats.uniqueVoters}</dd><dt>Votes</dt><dd>${stats.votes}</dd><dt>Returning voter identities</dt><dd>${stats.returningVoters}</dd><dt>Real journal posts</dt><dd>${stats.journals.real}</dd><dt>Sample journal posts</dt><dd>${stats.journals.sample}</dd><dt>Simulated journal posts</dt><dd>${stats.journals.simulated}</dd></dl><h2>Page views by route</h2><table><tr><th>Route</th><th>Views</th></tr>${rows || '<tr><td colspan="2">No views recorded today</td></tr>'}</table><h2>Vote sources</h2><pre>${escapeHTML(JSON.stringify(stats.votesByScope, null, 2))}</pre><p>Collection began ${escapeHTML(stats.startedAt)}. Earlier activity is not backfilled: historic votes have no reliable daily provenance.</p><p>Votes count distinct identity + target + revision saved each day, including changed choices once. Withdrawals do not erase participation. Returning means a saved vote yesterday and today. Browser identities are not verified people; clearing cookies or using different voting systems can count a person more than once. Automated submissions cannot be distinguished from human submissions.</p><p>Only new accepted votes and journal publications are counted. Sample fixtures and simulated populations never enter voter counts. Journal simulation flags are preserved. Page views are first-party browser route events, including reloads and back/forward; blocked JavaScript, bots, delivery failures and rate limits affect coverage. No visitor identity is stored with a page view.</p></main></html>`;
+  const activationRows = Object.entries(ACTIVATION_EVENTS).map(([event, label]) => `<tr><th scope="row">${label}</th><td>${stats.activation[event as ActivationEvent]}</td></tr>`).join("");
+  return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="robots" content="noindex,nofollow"><title>Launch stats</title><style>body{font:18px/1.5 system-ui;max-width:64rem;margin:3rem auto;padding:1rem}table{border-collapse:collapse}td,th{text-align:left;padding:.5rem 1rem;border-bottom:1px solid #ccc}dt{font-weight:bold}dd{margin:0 0 1rem}</style><main><h1>Launch stats</h1><p>${stats.day} · ${stats.timezone}. Refresh to update.</p>${healthy ? "" : '<p role="alert">Metrics recording failed in this process. Counts may be incomplete.</p>'}<dl><dt>Unique voter identities</dt><dd>${stats.uniqueVoters}</dd><dt>Votes</dt><dd>${stats.votes}</dd><dt>Returning voter identities</dt><dd>${stats.returningVoters}</dd><dt>Real journal posts</dt><dd>${stats.journals.real}</dd><dt>Sample journal posts</dt><dd>${stats.journals.sample}</dd><dt>Simulated journal posts</dt><dd>${stats.journals.simulated}</dd></dl><h2>Anonymous aggregate activation actions</h2><table><tr><th>Action</th><th>Count today</th></tr>${activationRows}</table><p>Independent, non-binding beta. These are event counts, not unique people or first sessions. Self-selection and bots affect every count; repeats and retries can inflate counts, blocked scripts and delivery failures can reduce them. No session linkage or conversion rate is inferred. Proposal read means sample text displayed, not proven reading or comprehension. Arguments and sharing cover the sample flow; accepted choice actions include civic proposal stances and citizen advisory responses, excluding goals, allocations and repository ballots. Saves include repeated or changed choices; withdrawals count accepted removal requests, even if already absent. Synthetic fixture totals never enter these counters. Opening a share preview does not prove sharing or meaningful participation.</p><h2>Page views by route</h2><table><tr><th>Route</th><th>Views</th></tr>${rows || '<tr><td colspan="2">No views recorded today</td></tr>'}</table><h2>Vote sources</h2><pre>${escapeHTML(JSON.stringify(stats.votesByScope, null, 2))}</pre><p>Collection began ${escapeHTML(stats.startedAt)}. Earlier activity is not backfilled: historic votes have no reliable daily provenance.</p><p>Votes count distinct identity + target + revision saved each day, including changed choices once. Withdrawals do not erase participation. Returning means a saved vote yesterday and today. Browser identities are not verified people; clearing cookies or using different voting systems can count a person more than once. Automated submissions cannot be distinguished from human submissions.</p><p>Only new accepted votes and journal publications are counted. Sample fixtures and simulated populations never enter voter counts. Journal simulation flags are preserved. Page views are first-party browser route events, including reloads and back/forward; blocked JavaScript, bots, delivery failures and rate limits affect coverage. No visitor identity is stored with a page view.</p></main></html>`;
 }
 
 export async function observePublicResponse(launchStats: LaunchStats, req: Request, response: Response, onError: () => void) {
@@ -92,11 +101,13 @@ export async function observePublicResponse(launchStats: LaunchStats, req: Reque
     if (path === "/api/votes") {
       const body = await req.clone().json();
       recordStats(() => {
-        for (const vote of body.votes ?? []) launchStats.vote({ identity: voter, scope: "civic/stance", target: vote.proposalId });
+        for (const vote of body.votes ?? []) { launchStats.vote({ identity: voter, scope: "civic/stance", target: vote.proposalId }); launchStats.activation("choice_saved"); }
+        for (const id of body.withdrawVotes ?? []) launchStats.activation("choice_withdrawn");
         for (const id of Object.keys(body.goalVotes ?? {})) launchStats.vote({ identity: voter, scope: "civic/goal", target: id });
         if (Object.keys(body.allocation ?? {}).length) launchStats.vote({ identity: voter, scope: "civic/allocation", target: "priority-budget" });
       });
     } else if (path.endsWith("/vote")) {
+      if (result.proposal) recordStats(() => launchStats.activation(result.proposal.ownVote == null ? "choice_withdrawn" : "choice_saved"));
       if (result.proposal?.ownVote != null) recordStats(() => launchStats.vote({ identity: voter, scope: "citizen/advisory", target: result.proposal.id }));
     } else {
       const entry = path === "/api/journal" ? result : result.entry;

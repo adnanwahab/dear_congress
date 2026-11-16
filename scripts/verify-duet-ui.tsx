@@ -7,7 +7,16 @@ for (const key of ['window','document','navigator','HTMLElement','HTMLInputEleme
 }
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 let requests = 0;
-globalThis.fetch = (async () => { requests++; throw new Error('No network allowed'); }) as any;
+let displays = 0;
+globalThis.fetch = (async (url: string, init?: RequestInit) => {
+  if (url === '/api/activation-event') {
+    assert.deepEqual(JSON.parse(String(init?.body)), { event: 'proposal_read' });
+    assert.equal(init?.credentials, 'omit');
+    displays++;
+    return new Response(null, { status: 204 });
+  }
+  requests++; throw new Error('No network allowed');
+}) as typeof fetch;
 const React = await import('react');
 const { act } = React;
 const { createRoot } = await import('react-dom/client');
@@ -50,9 +59,12 @@ try {
   const request = async <T,>(path: string): Promise<T> => { assert.equal(path, '/api/demo'); return { items: DEMO_ITEMS, votes: {}, updatedAt: '2026-11-13', closesAt: '2026-11-14' } as T; };
   for (const stage of ['draft', 'votes'] as const) {
     await act(async () => { root.render(<WorkflowScreen key={stage} stage={stage} request={request} />); });
+    const beforeDuet = displays;
     await click('Duet · propose an alternative');
+    assert.equal(displays, beforeDuet, 'private duet actions emit no events');
     assert(q().getByRole('heading', { name: 'Build on this idea respectfully' }));
   }
   assert.equal(requests, 0);
-  console.log('PASS duet provenance, comparison, validation, source isolation, escaped text and zero network/storage writes');
+  assert.equal(displays, 2, 'only public proposal stage displays are counted');
+  console.log('PASS duet provenance, comparison, validation, source isolation, escaped text and zero private network/storage writes');
 } finally { await act(async () => { root.unmount(); }); await dom.happyDOM.close(); }

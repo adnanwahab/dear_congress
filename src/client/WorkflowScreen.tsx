@@ -1,3 +1,4 @@
+import { recordActivation } from "./activation-events";
 import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
@@ -156,6 +157,9 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     }
   }, [item?.id, stage]);
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
+  useEffect(() => {
+    if (item && (stage === 'votes' || stage === 'draft' || stage === 'feed')) recordActivation('proposal_read');
+  }, [item?.id, stage]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
   function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); }); }
