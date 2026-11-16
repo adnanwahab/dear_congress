@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { DemoItem } from '../engine/demo';
 import './advisory-vote-bars.css';
 import { AdvisoryShare } from './AdvisoryShare';
+import { stageRoute } from '../shared/civic-stages';
 
 const OPTIONS = [['Support', 1, 'support'], ['Oppose', -1, 'oppose'], ['Not sure', 0, 'unsure']] as const;
 
@@ -89,7 +90,8 @@ export function AdvisoryVoteBars({ item, choice, busy, confirmation, onVote, liv
         <span className="advisory-value" aria-hidden="true">{(reduced ? count : shown[index]!).toLocaleString()} · {percentage}</span>
         <span className="advisory-track" aria-hidden="true"><span style={{ '--vote-share': reduced || visible ? share : 0 } as CSSProperties} /></span>
       </button>;
-    })}</div>
+    })}<a className="advisory-skip" href={stageRoute('draft', item.id)}>Skip — read without voting</a></div>
+    <p>Voting is optional. Skip opens the sample draft without recording a vote or changing an existing choice.</p>
     {!live && <AdvisoryShare key={item.id} id={item.id} choice={choice} />}
   </div>;
 }

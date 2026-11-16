@@ -44,6 +44,12 @@ test('acknowledged Support, Oppose and Not sure receive the same confirmation; c
       const render = (confirmation: number) => <AdvisoryVoteBars key={choice} item={DEMO_ITEMS[0]!} choice={choice} busy={false} confirmation={confirmation} onVote={stance => clicks.push(stance)} />;
       await act(async () => root.render(render(0)));
       expect(document.querySelectorAll('.vote-confirmed')).toHaveLength(0);
+      const skip = document.querySelector<HTMLAnchorElement>('.advisory-skip')!;
+      expect(skip.getAttribute('href')).toBe(`/draft?proposal=${encodeURIComponent(DEMO_ITEMS[0]!.id)}`);
+      const beforeSkip = clicks.length;
+      await act(async () => skip.click());
+      expect(clicks.length).toBe(beforeSkip);
+      expect(document.querySelectorAll('[aria-pressed="true"]')).toHaveLength(1);
       await act(async () => (document.querySelectorAll('button')[index] as HTMLButtonElement).click());
       expect(clicks.at(-1)).toBe(choice);
       expect(document.querySelectorAll('.vote-confirmed')).toHaveLength(0);
@@ -58,4 +64,19 @@ test('acknowledged Support, Oppose and Not sure receive the same confirmation; c
     await dom.happyDOM.close();
     for (const [key, descriptor] of Object.entries(previous)) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }
   }
+});
+
+test('reading starts with no default stance and an ordinary keyboard reachable skip link', () => {
+  const dom = new Window();
+  try {
+    dom.document.body.innerHTML = renderToStaticMarkup(<AdvisoryVoteBars item={DEMO_ITEMS[0]!} busy={false} confirmation={0} onVote={() => { throw Error('Reading must never vote'); }} />);
+    expect(dom.document.querySelectorAll('[aria-pressed="true"]')).toHaveLength(0);
+    const controls = dom.document.querySelectorAll('.advisory-bars > button, .advisory-bars > a');
+    expect(controls).toHaveLength(4);
+    for (const control of controls) {
+      expect(control.hasAttribute('autofocus')).toBe(false);
+      expect(control.hasAttribute('tabindex')).toBe(false);
+    }
+    expect(controls[3]?.textContent).toBe('Skip — read without voting');
+  } finally { void dom.happyDOM.close(); }
 });

@@ -33,6 +33,8 @@ Votes also offers a mini citizen-jury rehearsal for three opt-in seats sharing o
 
 ## Does my vote count?
 
+Voting is optional. Support, Oppose, Not sure and Skip are available together in the advisory controls. No new choice is selected by default. Skip — read without voting opens the sample draft, records no vote and leaves any saved choice unchanged. Reading and skipping do not count as votes.
+
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
 
 Local sample filters, comparisons, sponsor-card moves, household presets and synthesis sliders offer **Undo local change** for 20 seconds. A new action replaces the previous Undo. Focus or hover pauses expiry; leaving gives another 20 seconds. Undo history clears on navigation or reload. Restoring synthesis settings creates an unsaved preview. Public posts and advisory votes use separate explicit workflows.
