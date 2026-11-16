@@ -1190,3 +1190,8 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+The [media kit](/documentation#media-kit) provides editorial summary copy,
+source/replay links, dated demo screenshots and public maintainer contact.
+No logo reuse permission is verified; logo clearance and human comprehension
+review remain outstanding. See [SHE-838](docs/reviews/SHE-838.md).

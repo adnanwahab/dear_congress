@@ -84,3 +84,12 @@
 .provenance-flag { display: inline-block; border: 1px solid currentColor; padding: 3px 8px; margin: 0 8px 8px 0; border-radius: 5px; }
 .provenance-flag[data-status="stale"] { border-style: dashed; }
 .provenance-flag[data-status="missing"] { border-style: double; border-width: 3px; }
+
+.media-kit { scroll-margin-top: 24px; border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 28px; overflow-wrap: anywhere; }
+.media-kit h2 { font-size: clamp(24px, 3vw, 34px); line-height: 1.2; }
+.media-kit p, .media-kit figcaption { line-height: 1.7; }
+.media-kit-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.media-kit figure { margin: 0; min-width: 0; }
+.media-kit img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+.media-kit figcaption { font-size: 14px; margin-top: 8px; }
+@media (max-width: 600px) { .media-kit-images { grid-template-columns: 1fr; } }
