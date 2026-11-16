@@ -27,7 +27,7 @@ test('discovery buttons, touch cancellation, persistence and history remain read
     await act(async () => { pointer('pointerdown', 0); pointer('pointerup', 100); });
     expect(host.querySelector('h3')!.textContent).toBe(items[1]!.title);
     expect(JSON.parse(win.localStorage.getItem('civic_sample_discovery_v1')!).saved).toEqual([items[0]!.id]);
-    await act(async () => host.querySelector('button')!.click());
+    await act(async () => host.querySelector('.workflow-card-actions button')!.click());
     expect(host.querySelector('h3')!.textContent).toBe(items[2]!.title);
     await act(async () => { win.history.replaceState(null, '', `?discover=${items[0]!.id}`); win.dispatchEvent(new win.Event('popstate')); });
     expect(host.querySelector('h3')!.textContent).toBe(items[0]!.title);
