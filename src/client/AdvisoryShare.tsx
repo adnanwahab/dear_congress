@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ShareSampleLink } from './ShareSampleLink';
 import { decisionCard } from './advisory-share';
 
 type Card = Awaited<ReturnType<typeof decisionCard>>;
@@ -20,6 +21,7 @@ export function AdvisoryShare({ id, choice }: { id: string; choice?: number }) {
   }, [open, id, stance, attempt]);
   function close() { setOpen(false); setIncludeStance(false); setResult(undefined); }
   return <section className="advisory-share" aria-label="Share advisory decision card">
+    <ShareSampleLink key={id} id={id} />
     <button type="button" className="outline" aria-expanded={open} onClick={() => open ? close() : setOpen(true)}>Share preview</button>
     {open && <div>
       <p>Review before downloading. Only this public fictional scenario and its background references are shared. Identity, journals and vote receipt identifiers are excluded.</p>
