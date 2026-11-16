@@ -458,3 +458,39 @@ controls with visible focus and no drag requirement. Styles wrap long content,
 stack at mobile widths and disable motion under reduced-motion preferences.
 Native mobile, keyboard/screen-reader and visual verification remains required;
 DOM tests do not establish native accessibility acceptance.
+
+## Sharing an evidence question (SHE-836)
+
+Feed/Votes cards link **Share an evidence question** to `/proposals/:id#evidence`.
+The always-visible evidence section retains the original supporting information,
+including an explicit empty state. The reader selects one unresolved factual
+question (400 characters maximum), previews the complete payload, then explicitly
+copies it. Importance and unresolved status are the sharer's judgment; there is
+no automatic ranking or verified open-question registry.
+
+The payload allowlists the original citizen proposal title/ID, repository and
+item kind, the selected question and safe HTTPS links extracted from supporting
+information. Citation URLs are unverified author-supplied links, not claims of
+support. Missing citations remain explicit. Counts, browser stance, comments,
+journals, identities and receipts are not read by the share builder. User-written
+question/title/source URLs are retained as public text, not independently vetted.
+Sample advisory cards remain a separate feature and retain their fiction labels.
+
+The link uses `?evidenceQuestion=…#evidence`; after the asynchronous proposal load,
+the evidence section receives focus and scrolls into view. Reader-supplied text
+remains escaped, editable and clearly distinct from the immutable original.
+Question text is public in URLs/history/hosting logs; the UI warns before copy.
+There is no question persistence, publication, native share dialog, contact access,
+tracking, external message or write endpoint. Failed clipboard access retains a
+selectable text fallback. No automatic action follows a recipient opening a link.
+
+Validation: `bun test src/client/evidence-question-share.test.ts` includes an
+isolated actual detail-route DOM test for landing focus, payload isolation,
+clipboard denial, preview invalidation and zero writes. Native browser layout,
+screen-reader comprehension and usefulness still require human review. Copying
+or opening a question does not establish meaningful participation.
+
+Governance remains as documented in `launch-merge-policy.md`: disabled/dry-run
+merge defaults, quorum 10, 24-hour exposure, current-head approval/check binding,
+active default kill switch and human review. No governance configuration changes
+are part of this feature; live environment values/protections are not verified.

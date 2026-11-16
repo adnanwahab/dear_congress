@@ -1190,3 +1190,12 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Share an evidence question
+
+Feed citizen-proposal cards offer **Share an evidence question**. Select one
+unresolved factual question, preview the original proposal and available citation
+links, then copy the text. The recipient opens the evidence section. No counts
+or stance are added; citations and unresolved status remain unverified. The
+question is public in its URL, browser history and hosting logs. No message is
+sent automatically. See [the flow and limits](docs/citizen-proposals.md#sharing-an-evidence-question-she-836).

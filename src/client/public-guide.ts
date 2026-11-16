@@ -42,6 +42,8 @@ The optional [private civic passport](/account) is a demo / sandbox awaiting rev
 
 On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
 
+On the [proposal feed](/feed), **Share an evidence question** opens a citizen proposal’s evidence section. Choose one unresolved factual question, review the preview and copy it yourself. The share includes the original proposal and available author-supplied HTTPS citations, without adding response counts or a stance. Questions and citations are unverified; the sharer chooses importance. The question is public in the link, browser history and hosting logs, so leave out personal information. Opening a shared link focuses evidence and never casts a vote. No message is sent automatically. Civic Synthesis is an independently operated, non-binding beta with no governmental authority.
+
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
 ## Export a sample evidence packet
