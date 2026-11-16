@@ -1,3 +1,4 @@
+import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -401,10 +402,14 @@ let outcomesFile = await loadOutcomesFile(OUTCOMES_PATH);
 let demoCache: { day: string; payload: DemoPayload } | null = null;
 // Serialize snapshots so an older concurrent write cannot replace a newer vote.
 // Atomic rename also keeps a process interruption from leaving a partial JSON DB.
+const operatorHealth = new OperatorHealth();
+let pendingWrites = 0;
+let writeFailures = 0;
 let saveQueue: Promise<unknown> = Promise.resolve();
 const save = () => {
   demoCache = null;
   const snapshot = JSON.stringify(db, null, 2);
+  pendingWrites++;
   const write = saveQueue.then(async () => {
     await mkdir(dirname(DB_PATH), { recursive: true });
     const temporaryPath = `${DB_PATH}.${process.pid}.tmp`;
@@ -412,6 +417,7 @@ const save = () => {
     await rename(temporaryPath, DB_PATH);
   });
   saveQueue = write.catch(() => {});
+  void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
@@ -900,6 +906,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
+    "/admin/health": (req) => operatorHealth.handle(req, ADMIN_TOKEN, { writes: pendingWrites, designs: designInFlight.size, writeFailures }),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
     "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },
@@ -1857,6 +1864,21 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
         });
       }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
+  }
+}
+// Observe after existing auth/validation wrappers; never inspect request content.
+for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (!path.startsWith('/api/') || !route) continue;
+  const wrap = (handler: Function) => async (...args: unknown[]) => {
+    try {
+      const response = await handler(...args);
+      if (response instanceof Response) operatorHealth.record(path, response.status);
+      return response;
+    } catch (error) { operatorHealth.record(path, 500); throw error; }
+  };
+  if (typeof route === 'function') (serverOptions.routes as Record<string, unknown>)[path] = wrap(route);
+  else if (typeof route === 'object') for (const [method, handler] of Object.entries(route)) {
+    if (typeof handler === 'function') (route as Record<string, unknown>)[method] = wrap(handler);
   }
 }
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
