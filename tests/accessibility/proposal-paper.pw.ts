@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('paper disclosure preserves route, selection and separate public actions', async ({ page }) => {
   const writes: string[] = [];
   page.on('request', r => { if (!['GET', 'HEAD'].includes(r.method())) writes.push(r.url()); });
-  await page.goto('/feed?demo=1');
+  await page.goto('/feed?proposal=demo-housing');
   const paper = page.locator('.proposal-paper').first();
   const summary = paper.locator(':scope > summary');
   await expect(summary).toBeVisible();
@@ -34,7 +34,7 @@ test('failed snapshot still opens document and interrupted navigation stays usab
   await page.addInitScript(() => {
     document.startViewTransition = (() => { throw new Error('snapshot unavailable'); }) as typeof document.startViewTransition;
   });
-  await page.goto('/feed?demo=1');
+  await page.goto('/feed?proposal=demo-housing');
   const paper = page.locator('.proposal-paper').first();
   await paper.locator(':scope > summary').click();
   await expect(paper).toHaveAttribute('open', '');
