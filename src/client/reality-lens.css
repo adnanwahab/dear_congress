@@ -63,3 +63,14 @@
     max-width: 100%;
   }
 }
+
+/* In the 390px Outcomes route, a second native filter outside .panel-head
+   can keep its intrinsic 360px width and run beyond the viewport. Restrict
+   native control width to available viewport space, without clipping the
+   proposal tables' deliberately scrollable content. */
+@media (max-width: 680px) {
+  .workflow-shell main select {
+    min-width: 0;
+    max-width: min(100%, calc(100vw - 80px));
+  }
+}
