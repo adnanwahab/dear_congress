@@ -1,0 +1,5 @@
+.side-quest { margin-block: 1rem; overflow-wrap: anywhere; }
+.side-quest-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.side-quest button, .side-quest-actions a { min-height: 44px; padding: .65rem .9rem; }
+.side-quest :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+/* Static presentation: no animation, including with reduced motion. */

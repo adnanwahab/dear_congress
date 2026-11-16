@@ -1,3 +1,4 @@
+import { useLocalUndo } from "./LocalUndo";
 import { useState } from 'react';
 import type { DemoItem } from '../engine/demo';
 import { ArgumentMap } from './ArgumentMap';
@@ -35,8 +36,14 @@ export function readComparison(search: string, items: DemoItem[]): { items: Demo
 export function ProposalCompare({ items, current, search }: { items: DemoItem[]; current?: DemoItem; search: string }) {
   const linked = readComparison(search, items);
   const [ids, setIds] = useState<string[]>(() => linked.items.map(item => item.id));
+  const undo = useLocalUndo();
+  function change(next: string[]) {
+    const previous = ids;
+    setIds(next);
+    undo.record('comparison selection and order', () => setIds(previous));
+  }
   const selected = ids.map(id => items.find(item => item.id === id)).filter((item): item is DemoItem => !!item);
-  function toggle(id: string) { setIds(ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id].slice(0, 3)); }
+  function toggle(id: string) { change(ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id].slice(0, 3)); }
   return <section id="proposal-comparison" className="panel proposal-compare" aria-label="Compare proposals">
     <h2>Compare proposals before an advisory vote</h2>
     <p>Choose 2–3 fictional proposals. Reading, selecting and reordering cast no vote. Compare the stated goal; a shared topic does not establish the same need.</p>
@@ -46,9 +53,10 @@ export function ProposalCompare({ items, current, search }: { items: DemoItem[];
     </fieldset>
     {current && <button disabled={!ids.includes(current.id) && ids.length >= 3} onClick={() => toggle(current.id)}>{ids.includes(current.id) ? 'Remove viewed proposal from comparison' : 'Add viewed proposal to comparison'}</button>}
     <p role="status">{selected.length} of 3 selected. {selected.length < 2 ? 'Select at least two proposals.' : 'Comparison ready.'}</p>
+    {undo.control}
     {selected.length >= 2 && <>
       <a href={comparisonLink(selected)}>Open shareable comparison snapshot</a>
-      <ol>{selected.map((item, index) => <li key={item.id}>{item.title} <button disabled={index === 0} onClick={() => setIds(previous => { const next = [...previous]; [next[index - 1], next[index]] = [next[index]!, next[index - 1]!]; return next; })}>Move {item.title} earlier</button></li>)}</ol>
+      <ol>{selected.map((item, index) => <li key={item.id}>{item.title} <button disabled={index === 0} onClick={() => { const next = [...ids]; [next[index - 1], next[index]] = [next[index]!, next[index - 1]!]; change(next); }}>Move {item.title} earlier</button></li>)}</ol>
       <div className="proposal-compare-scroll" role="region" aria-label="Proposal criteria table; scroll horizontally on small screens" tabIndex={0}>
         <table><caption>Fictional draft snapshots · {scope} · exact editorial bytes bound in share link</caption>
           <thead><tr><th scope="col">Criterion</th>{selected.map(item => <th scope="col" key={item.id}>{item.title}</th>)}</tr></thead>

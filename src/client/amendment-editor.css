@@ -11,6 +11,44 @@
 .amendment-comparison ins { color: var(--good-ink); background: var(--good-bg); }
 .amendment-marker { font-weight: bold; }
 @media (max-width: 700px) { .amendment-comparison { grid-template-columns: minmax(0,1fr); } }
+.redline-detective { margin-bottom: 1rem; }
+.redline-detective summary { cursor: pointer; padding: .75rem; min-height: 44px; box-sizing: border-box; }
+.redline-detective label { padding: .65rem; min-height: 44px; box-sizing: border-box; cursor: pointer; }
+.redline-detective button { min-height: 44px; }
+.redline-detective fieldset { min-width: 0; border: 1px solid var(--line); }
+.redline-detective a { display: inline-block; padding: .65rem; }
+/* This exercise has no animation or timed interaction, including reduced motion. */
+.clause-reader { margin-block: 1rem; }
+.clause-source { white-space: pre-wrap; }
+.clause-reader .clause-source button { display: inline; min-height: 44px; margin: 0; padding: .15rem .25rem; font: inherit; text-align: start; color: var(--ink); background: var(--card); border: 1px solid var(--line); text-decoration: underline; text-underline-offset: .2em; }
+.clause-reader .clause-source button[aria-pressed="true"] { border-color: var(--accent); }
+html:active-view-transition-type(clause-explain)::view-transition-group(*) { animation-duration: 350ms; }
+html[data-motion="slow"]:active-view-transition-type(clause-explain)::view-transition-group(*) { animation-duration: 1750ms; }
+@media (prefers-reduced-motion: reduce) {
+  html:active-view-transition-type(clause-explain)::view-transition-group(*) { animation: none; }
+}
+.amendment-editor select { display: block; width: 100%; min-height: 44px; font: inherit; color: var(--ink); background: var(--card); }
+.amendment-editor button { min-height: 44px; }
+.amendment-editor h5, .amendment-editor h6 { font-size: 1rem; margin: .8rem 0; }
+.amendment-editor blockquote { margin: .5rem 0; }
+.amendment-editor a { display: inline-block; padding: .6rem 0; overflow-wrap: anywhere; }
+
+.amendment-tree { list-style: none; padding-left: 1rem; }
+.amendment-tree li { position: relative; border-left: 3px solid var(--accent); padding: .75rem 1rem; margin-bottom: .5rem; animation: amendment-branch calc(260ms * var(--motion-scale, 1)) ease-out; }
+.amendment-tree li::before { content: ''; position: absolute; left: 0; top: 1.5rem; width: .7rem; border-top: 2px solid var(--accent); }
+.amendment-tree a { display: inline-block; padding: .6rem; overflow-wrap: anywhere; }
+.amendment-tree a[aria-current] { font-weight: bold; text-decoration-thickness: 3px; }
+.amendment-editor select { max-width: 100%; font: inherit; padding: .6rem; }
+@keyframes amendment-branch { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .amendment-tree li { animation: none; } }
+html[data-motion="off"] .amendment-tree li { animation: none; }
+.amendment-graph { display: block; width: min(100%, 240px); color: var(--ink); overflow: visible; }
+.amendment-graph path { fill: none; stroke: currentColor; stroke-width: 2; animation: amendment-branch calc(260ms * var(--motion-scale, 1)) ease-out; }
+.amendment-graph circle { fill: var(--card); stroke: currentColor; stroke-width: 2; }
+.amendment-graph text { fill: currentColor; font-size: 11px; }
+@media (prefers-reduced-motion: reduce) { .amendment-graph path { animation: none; } }
+html[data-motion="off"] .amendment-graph path { animation: none; }
+
 .clause-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; border-top: 1px solid var(--line); padding-block: 1rem; }
 .clause-row > * { min-width: 0; }
 .clause-row article { border-inline-start: 3px solid var(--line); padding-inline-start: .75rem; margin-block: .75rem; }

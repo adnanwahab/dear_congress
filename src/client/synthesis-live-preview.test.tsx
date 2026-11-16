@@ -36,6 +36,13 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
       expect(requests.length).toBe(before + 1);
       expect(requests.at(-1)!.body.preview).toBe(true);
     }
+    const undo = host.querySelector<HTMLButtonElement>('.controls .local-undo button')!;
+    await act(async () => undo.click());
+    expect(sliders.at(-1)!.value).toBe('40');
+    await act(async () => { await Bun.sleep(210); });
+    expect(requests.at(-1)!.body.preview).toBe(true);
+    expect(requests.at(-1)!.body.budget).toBe(40);
+    expect(host.textContent).toContain('Restored synthesis weights, penalty and budget');
     expect(requests[1]!.signal.aborted).toBe(true);
     await settle(1, true);
     expect(host.textContent).not.toContain('obsolete failure');
