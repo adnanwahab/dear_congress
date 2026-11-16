@@ -1,3 +1,4 @@
+import PrivateJourney from './PrivateJourney';
 import { CivicPassport } from './CivicPassport';
 import { EvidenceNotebook } from './EvidenceNotebook';
 import { ParticipationNotice } from './ParticipationNotice';
@@ -6,6 +7,7 @@ export default function AccountScreen() {
   return <div className="civic-shell workflow-shell"><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
+    <PrivateJourney />
     <EvidenceNotebook />
     <CivicPassport />
     <section className="panel"><h2>Unverified browser votes — advisory</h2>

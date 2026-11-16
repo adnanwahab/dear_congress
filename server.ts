@@ -1,3 +1,4 @@
+import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
@@ -1814,6 +1815,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   },
   fetch(req) {
     const path = new URL(req.url).pathname;
+    if (path === '/embed/v1') {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return securityHeaders(new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } }));
+      return proposalEmbed(req);
+    }
     const asset = browserAssets.get(path);
     if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
     if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
