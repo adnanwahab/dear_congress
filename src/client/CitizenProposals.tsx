@@ -14,6 +14,8 @@ import AmendmentEditor from "./AmendmentEditor";
 import { ProposalReadingHelp } from "./ProposalReadingHelp";
 import { DiscussionGuide, discussionCommentId } from "./DiscussionGuide";
 
+const ProposalDuet = lazy(() => import("./ProposalDuet").then(mod => ({ default: mod.ProposalDuet })));
+const CooperativeMission = lazy(() => import("./CooperativeMission").then(m=>({default:m.CooperativeMission})));
 const ProposalCredits = lazy(() => import("./ProposalCredits").then(mod => ({ default: mod.ProposalCredits })));
 const ProposalObjections = lazy(() => import("./ProposalObjections").then(mod => ({ default: mod.ProposalObjections })));
 
@@ -361,8 +363,10 @@ function ProposalDetail({ id }: { id: string }) {
       </div>
       <WorldPortal title={proposal.title} source={`Citizen proposal · ${proposal.id} · published ${proposal.publishedAt}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal>
       {proposal.ownVote && !voting && !voteError && <SaveToJourney category="Explicit votes" kind="Citizen advisory activity" text={JSON.stringify({ source: "citizen-proposal-advisory", proposalId: proposal.id, title: proposal.title, proposedChange: proposal.proposedChange, choice: proposal.ownVote, note: "Current choice read from server; editable local snapshot, not a verified ballot receipt. Later changes or withdrawal do not update this copy." }, null, 2)} />}
+      <Suspense fallback={<p role="status">Loading design workshop…</p>}><CooperativeMission key={`mission:citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} /></Suspense>
       <ProposalFollow source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange }} />      <ProposalWorkshop key={`workshop:citizen:${proposal.id}`} source={proposal} />
 
+      <Suspense fallback={<p role="status">Loading private duet…</p>}><ProposalDuet key={`duet:citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}`, supportingInfo: proposal.supportingInfo, sourceEntryId: proposal.sourceEntryId }} /></Suspense>
       <AmendmentEditor key={`citizen:${proposal.id}`} source={{ kind: "citizen", id: proposal.id, title: proposal.title, text: proposal.proposedChange, jurisdiction: placeLabel(proposal), origin: `Published ${proposal.publishedAt}${proposal.sourceEntryId ? ` · journal:${proposal.sourceEntryId}` : " · citizen submission"}` }} />
       <Suspense fallback={<p role="status">Loading contributor credits…</p>}><ProposalCredits key={proposal.id} proposal={proposal} submit={async body => {
         const result = await request<{ proposal: CitizenProposalView }>(`${API}/${encodeURIComponent(id)}/credits`, body);
