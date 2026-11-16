@@ -744,6 +744,15 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Sample evidence packets
+
+Sample proposal source panels offer a citation-only evidence JSON export, with
+copy/print fallback after loading. Unknown source dates and human review remain
+explicit; links receive safe HTTPS syntax checks, not reachability verification.
+No journals, ballots or source full text are included. Citizen/official proposal
+exports, claim-level evidence and reviewed conflicting cases remain pending.
+See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
+
 ### Public-data gaps atlas
 
 `/outcomes#data-gaps-atlas` includes a bundled, read-only research inventory with
