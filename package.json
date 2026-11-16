@@ -18,6 +18,7 @@
     "clusters:pilot": "bun src/server/need-clusters/run.ts",
     "audit:replay": "bun scripts/audit-replay.ts",
     "test:a11y": "cd tests/accessibility && npm test",
+    "test:motion": "cd tests/performance && npm test",
     "test:visual": "cd tests/visual && npm test",
     "typecheck:visual": "cd tests/visual && npm run typecheck"
   },

@@ -55,7 +55,9 @@ It is bundled as text only when the lazy catalog screen loads.
 
 `LegislativeMarkdown` intentionally supports headings, paragraphs and unordered
 lists only. Text is escaped through React; HTML and link syntax are never
-executed, and no source URL is fetched. Inline formatting is displayed literally.
+executed, and no source URL is fetched. Inline formatting is displayed literally. Recognized civic terms in paragraphs
+and list items render as glossary buttons with labeled editorial examples; the
+original supplement text and source identity remain unchanged.
 Future expanded syntax should use an explicitly safe parser and new security
 fixtures rather than HTML injection. Later supplements need an explicit source
 mapping and review, not implicit runtime file discovery.
@@ -122,3 +124,11 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Optional fictional budget exercise
+
+The catalog includes an opt-in budget shock sandbox, also available in workflow
+screens and the active guided tour. Its invented tokens and protected minimums
+have no relationship to catalog cost assessments or participation. Choices stay
+in component memory and show tradeoff receipts; see
+[the SHE-663 review](reviews/SHE-663.md) for validation limits.

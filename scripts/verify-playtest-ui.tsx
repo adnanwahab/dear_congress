@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+const dom=new Window({url:'http://localhost/vote/happybearlandia/pr/2'});
+for(const key of ['window','document','navigator','HTMLElement','Element','Node','Event','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:key==='window'?dom:(dom as any)[key]});
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
+const {act}=await import('react');
+const {createRoot}=await import('react-dom/client');
+const {fireEvent,within}=await import('@testing-library/dom');
+const {PatchPlaytest}=await import('../src/client/PatchPlaytest');
+const {previewFor}=await import('../src/server/hbl/previews');
+const {PLAYTEST_CHECKS}=await import('../src/client/playtest');
+const p:any={number:2,repositoryId:1364565814,title:'Patch',headSha:'a4fdefa0e44d5b9c0c2ed595ea719cc11cd1636e',base:'test',version:'v1',state:'open',eligibility:{state:'blocked',reason:'Base blocked'}};
+p.preview=previewFor(p.number,p.headSha);
+const calls:{path:string;init:any}[]=[];let fail=true,saved=0;
+const originalFetch=globalThis.fetch;
+globalThis.fetch=(async(path:any,init:any)=>{calls.push({path:String(path),init});return Response.json({}, {status:fail?503:201});}) as typeof fetch;
+const root=createRoot(document.body.appendChild(document.createElement('div')));
+const render=(version='v1',disabledReason='')=>root.render(<PatchPlaytest key={version} pull={{...p,version}} repository="adnanwahab/happybearlandia" api="/api/hbl/pulls" csrf="csrf" disabledReason={disabledReason} onSaved={()=>saved++}/>);
+try {
+ await act(async()=>render());const q=within(document.body);
+ assert.equal(calls.length,0);
+ await act(async()=>fireEvent.click(q.getByRole('checkbox',{name:PLAYTEST_CHECKS[0]})));
+ assert.equal(calls.length,0);
+ const fields=['Environment (browser, OS, viewport and motion preference)','Steps to reproduce','Expected behavior','Actual behavior'];
+ for(const field of fields)await act(async()=>fireEvent.input(q.getByRole('textbox',{name:field}),{target:{value:'Sample '+field}}));
+ const button=()=>q.getByRole('button',{name:'Record public bug report'}) as HTMLButtonElement;
+ assert.equal(button().disabled,true);
+ await act(async()=>fireEvent.click(q.getByRole('checkbox',{name:/I consent/})));
+ assert.equal(button().disabled,false);
+ await act(async()=>fireEvent.submit(document.querySelector('form')!));
+ assert.match(q.getByRole('alert').textContent!,/could not be saved/);
+ const first=JSON.parse(calls[0]!.init.body);assert.equal(first.consent,true);assert.match(first.text,/Head: a4fdef/);assert.match(first.text,/Sample Environment/);
+ fail=false;await act(async()=>fireEvent.submit(document.querySelector('form')!));
+ assert.equal(JSON.parse(calls[1]!.init.body).idempotencyKey,first.idempotencyKey);assert.equal(saved,1);
+ assert.equal(button().disabled,true);
+ for(const call of calls){assert.equal(call.path,'/api/hbl/pulls/2/feedback');assert.equal(call.init.method,'POST');assert.equal(call.init.headers['X-CSRF-Token'],'csrf');}
+ await act(async()=>render('v2','Refresh current source data before participating.'));
+ assert.equal((q.getByRole('textbox',{name:fields[0]}) as HTMLTextAreaElement).value,'');assert.equal(q.queryByRole('link',{name:/Open isolated/})!==null,true);
+ assert.equal(calls.length,2);
+ console.log('PASS checklist has no writes; explicit consent; structured revision report; retry identity; receipt; revision reset; feedback-only endpoint');
+}finally{await act(async()=>root.unmount());globalThis.fetch=originalFetch;await dom.happyDOM.close();}

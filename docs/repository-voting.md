@@ -39,7 +39,7 @@ Exact allowlist: Dear Congress (`adnanwahab/dear_congress`), HappyBearLandia (`a
 
 - `/vote` preserves the existing civic voting screen; repository voting is available through direct tester links. `/vote/:repoKey?view=prs|issues` selects a list.
 - `/vote/:repoKey/pr/:number` and `/vote/:repoKey/issue/:number` select details. Existing HBL PR links are preserved.
-- `/api/hbl/repos/:repoKey/pulls` and `/api/hbl/repos/:repoKey/issues`, optionally followed by `/:number`, serve the selected source. Lists retain the additive `hbl-governance.v1` `pulls` array field for compatibility; `kind` identifies the actual item type. Issues are never PR merge candidates.
+- `/api/hbl/repos/:repoKey/pulls` and `/api/hbl/repos/:repoKey/issues`, optionally followed by `/:number`, serve the selected source. Lists retain the additive `hbl-governance.v2` `pulls` array field for compatibility; `kind` identifies the actual item type. Issues are never PR merge candidates.
 - `/:number/ballot` (PUT) and `/:number/feedback` (POST) use the existing authenticated approved-roster, origin, CSRF, input bounds and idempotency protections. Ballots bind PR head SHA and base. Issue priorities bind stable repository ID + issue number and survive description updates.
 - `/api/hbl/pulls/...`, `/api/hbl/auth/...`, the existing batch and HBL webhook endpoints remain compatible. Existing browser community votes remain advisory and separate from verified ballots. New scopes require verified roster identity.
 
@@ -70,3 +70,94 @@ Public written feedback requires explicit submit and consent. Delivery uses the 
 - Screenshots: [desktop](evidence/she-251-desktop.png), [mobile](evidence/she-251-mobile.png). Both are synthetic contract-fixture captures of actual rendered UI, not live repository data.
 
 No production deployment, live GitHub comment, merge, external issue mutation, roster change, or Symphony dispatch was performed. Production's previously diagnosed missing single-writer configuration still needs explicit deployment approval. Live OAuth, bot publication and companion integration require operator configuration and remain unverified.
+
+## PR review queue discovery — SHE-624
+
+PR lists compose eligibility status and text search with checks, current-head
+review evidence, exact blocked reason, GitHub feature labels and age since the
+original GitHub update. Missing metadata stays unknown. Detail navigation uses
+the existing read API to fetch evidence; lists do not eagerly fetch every PR.
+Source sync time does not establish evidence freshness. Filter changes and clear
+only change local discovery state. They never submit a vote, merge or review.
+See [SHE-624 implementation and validation](reviews/SHE-624.md).
+
+## Merge-train diorama (SHE-605)
+
+PR list and detail cards render a stationary, read-only railway with typed stops
+for the actual base branch, checks, reviews, merge queue and hold/safety gate.
+Native disclosure controls support keyboard inspection; five desktop columns
+stack vertically on mobile. No motion is used, including under reduced motion.
+Source status, last sync, stale/loading/error, repository ID, full head/version,
+base SHA and viewer permissions accompany the stops. Existing trusted issue links
+remain beside the diorama and its GitHub receipt link binds the selected repository
+and PR number. Issue cards and advisory civic LiveRound votes have no merge train.
+
+Checks and approvals are distinguished by current head. Missing detail evidence
+is unknown; open PR details to fetch it. The existing API has no queue receipt,
+so membership and position explicitly remain unknown. Reported checks/reviews
+are observations, never merge authorization. Native stop expansion has no write
+handler. Existing ballots, revision isolation and governance are unchanged:
+quorum 10 and 24-hour exposure defaults, protected-base/current-head evidence,
+required reviews/checks and the automatic-merge pilot lock remain in force.
+
+## Source flip cards — SHE-603
+
+PR list cards expose a read-only source back through a native button (Enter/Space
+and touch), with expanded state, an accessible file index, focusable scrolling
+patches and a reduced-motion fallback. The title/detail link and ballot remain
+outside the flipping content. Issues and live civic rounds retain their existing
+interfaces. Source backs load the existing detail GET lazily and reject a response
+whose repository ID, item number/kind, version, head, base or canonical URL differs
+from the displayed PR. Missing file summaries, partial patches, inaccessible
+protection evidence, loading, denied access and retryable errors are explicit.
+Checks display their reported commit; absent or mismatched evidence is unverified.
+A completed check receipt still requires human review and never authorizes merging.
+
+The advisory lock, configured quorum 10 / 24-hour exposure defaults, protected-base
+and current-head review requirements, repository/kind isolation, existing ballots,
+receipts and records are unchanged. Runtime configuration and GitHub protections
+were not changed or verified. Desktop/mobile visual and real-browser keyboard QA
+remain required before acceptance.
+
+## Keyboard patch comparison (SHE-615)
+
+PR lists include a read-only review carousel. Focus its region and use Left/Right
+or the Previous/Next buttons; Summary/Files/Checks implement keyboard tabs with
+Left/Right and Home/End. Selection is deep-linked as `review=<PR>&tab=<section>`
+on the existing repository list URL, with browser back/forward support. Repository
+and issue switches clear that selection. No live-round control is repurposed:
+`LiveRound` remains a separate advisory civic voting surface.
+
+Receipts load through the existing permission-checked detail endpoint. Repository
+ID, PR number, version, head and base must match the selected list revision;
+changed revisions require source refresh. Loading, missing selection, unavailable
+evidence and permission failures are explicit. Contributor text remains plain
+text. Explicit links open the existing PR detail/voting page or GitHub. Carousel
+navigation only reads; it has no ballot, feedback, merge or civic-vote mutation.
+Controls wrap on small screens and use no animation, including reduced motion.
+
+The configured merge policy is preserved: the pilot lock disables automatic
+merging, non-HBL scopes stay disabled/dry-run, and browser choices confer no merge
+authority. Existing quorum, exposure, approval, checks, auth, CSRF and revision
+requirements are unchanged. See `launch-merge-policy.md` for source defaults and
+human review/release requirements; this feature does not verify production values.
+
+## Code change microscope — SHE-613
+
+PR details include a read-only file-role guide grouped into UI, Model, Data, Tests
+and Operations, with documented ordered path heuristics, confidence and caveats.
+Added-line receipts pin the source repository and full head SHA. Deleted-line
+receipts require merge-base identity and are explicitly unavailable in the current
+payload; missing patches and renames likewise never fabricate line receipts.
+The guide exposes source/revision/loading/error/stale/permission states separately
+from governance and never submits a vote or approves a merge. See
+[scope, verification and remaining acceptance](reviews/SHE-613.md).
+
+## Branch subway relationships — SHE-607
+
+The repository browser includes a read-only graph and searchable keyboard-accessible
+relationship table. Source description links remain unverified references. GitHub
+head/base refs and reported commit parents provide revision/ancestry context;
+a PR's base target does not prove ancestry. Missing detail metadata is explicit.
+The graph never casts votes, submits feedback or changes merge policy. See
+[verification and remaining acceptance](reviews/SHE-607.md).
