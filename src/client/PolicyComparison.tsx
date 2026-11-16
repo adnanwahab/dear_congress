@@ -3,7 +3,38 @@ import { EVIDENCE_QUESTIONS, PILOT_SCOPE, PILOT_TEXT, evidenceUpdateUrl } from "
 import "./evidence-conditions.css";
 import type { PolicyComparison } from "../server/policy-comparison";
 
-export function PolicyComparisonPanel() {
+import type { PackageResult, Weights } from "../engine/types";
+import { DEFAULT_WEIGHTS } from "../engine/engine";
+import { WEIGHT_KEYS } from "../shared/synthesis-rule";
+
+type ChosenInputs = { weights: Weights; lambda: number; budget: number; packages: PackageResult[] | null; pending: boolean };
+
+export function InputDifferences({ chosen, comparison }: { chosen: ChosenInputs; comparison: PolicyComparison | null }) {
+  const rows = [
+    ...WEIGHT_KEYS.map(key => ({ label: `${key} weight`, chosen: chosen.weights[key], demo: DEFAULT_WEIGHTS[key] })),
+    { label: "Institutional-change penalty", chosen: chosen.lambda, demo: 0.25 },
+    { label: "Budget (illustrative national USD billions)", chosen: chosen.budget, demo: 40 },
+  ];
+  return <div style={{ overflowX: "auto" }}>
+    <table><caption>Chosen synthesis settings versus default demo capture settings</caption>
+      <thead><tr><th scope="col">Input</th><th scope="col">Chosen settings</th><th scope="col">Default demo</th><th scope="col">Exact difference (chosen − default)</th></tr></thead>
+      <tbody>{rows.map(row => <tr key={row.label}><th scope="row">{row.label}</th><td>{row.chosen}</td><td>{row.demo}</td><td>{Number((row.chosen - row.demo).toFixed(12)) || "Same"}</td></tr>)}
+        <tr><th scope="row">Journal inputs</th><td>Real-only package; blended alternative shown separately</td><td>Real only</td><td>Same for real-only package; synthetic prior fallbacks can still apply</td></tr>
+      </tbody>
+    </table>
+    <p role="status">{chosen.pending ? "Chosen settings changed or calculation pending. Previous packages do not represent these inputs." : "Chosen synthesis calculation complete. This is a policy calculation, not a future simulation."} Frozen capture never runs the edited inputs. Model execution is unavailable; future outcomes remain unknown.</p>
+    {comparison && <table><caption>Exact policy differences from captured default packages</caption><thead><tr><th scope="col">Captured world</th><th scope="col">Chosen real-only package</th><th scope="col">Frozen default demo package</th><th scope="col">Exact difference</th></tr></thead>
+      <tbody>{comparison.content.worlds.map((world, index) => {
+        const current = chosen.pending ? null : chosen.packages?.find(pkg => pkg.id === world.id);
+        const ids = world.items.map(item => item.proposal.id);
+        const list = (items: typeof world.items) => items.map(item => `${item.proposal.title} [${item.proposal.id}]`).join("; ") || "None";
+        return <tr key={index}><th scope="row">World {index === 0 ? "A" : "B"}: {world.name}</th><td>{current ? list(current.items) : "Unavailable until current calculation completes"}</td><td>{list(world.items)}</td><td>{current ? `Chosen only: ${list(current.items.filter(item => !ids.includes(item.proposal.id)))}. Frozen only: ${list(world.items.filter(item => !current.items.some(other => other.proposal.id === item.proposal.id)))}` : "Unknown"}</td></tr>;
+      })}</tbody></table>}
+    <p>Captured packages retain their original source revision and inputs. Differences may also reflect source data or plan history changes; matching settings alone do not prove matching packages.</p>
+  </div>;
+}
+
+export function PolicyComparisonPanel({ chosen }: { chosen?: ChosenInputs }) {
   const [a, setA] = useState("A");
   const [b, setB] = useState("B");
   const [seed, setSeed] = useState("42");
@@ -28,6 +59,7 @@ export function PolicyComparisonPanel() {
   return <section className="card" aria-label="Policy comparison pilot">
     <h3>Compare frozen policy inputs</h3>
     <p>Simulation, not forecast. Advisory only. This pilot captures two packages using default settings (budget 40, real voices); it does not use the customized plan above.</p>
+    {chosen && <InputDifferences chosen={chosen} comparison={comparison} />}
     <fieldset disabled={busy}>
       <legend>Choose comparison inputs</legend>
       {([["World A", a, setA], ["World B", b, setB]] as const).map(([label, value, setter]) => <label key={label}>{label} <select value={value} onChange={e => setter(e.target.value)}>

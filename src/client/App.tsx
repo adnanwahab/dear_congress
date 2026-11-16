@@ -1566,6 +1566,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
 
   const [livePreview, setLivePreview] = useState(false);
   const [settingsRevision, setSettingsRevision] = useState(0);
+  const [calculationPending, setCalculationPending] = useState(true);
   const requestVersion = useRef(0);
   const requestController = useRef<AbortController | null>(null);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1587,6 +1588,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     invalidateRequest();
     setBusy(false);
     setLivePreview(true);
+    setCalculationPending(true);
     change();
     setSettingsRevision(revision => revision + 1);
   }
@@ -1595,6 +1597,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     const version = requestVersion.current;
     const controller = new AbortController();
     requestController.current = controller;
+    setCalculationPending(true);
     setBusy(!preview);
     setSynthError(null);
     try {
@@ -1603,6 +1606,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       await updatePlan(() => {
         // View Transition callbacks can run after a newer setting/request.
         if (version !== requestVersion.current) return;
+        setCalculationPending(false);
         setPreviousPlans(visiblePlans.current);
         visiblePlans.current = { real: payload.real ?? [], blended: payload.blended ?? [] };
         setShowPlanChanges(true);
@@ -1738,7 +1742,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">
-      <PolicyComparisonPanel />
+      <PolicyComparisonPanel chosen={{ weights, lambda, budget, packages: realPkgs, pending: calculationPending }} />
       <section className="card controls">
         <h2>Synthesis settings</h2>
         {livePreview && <p className="note" role="status">Live preview · not saved</p>}
