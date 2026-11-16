@@ -1,7 +1,7 @@
 .response-composition label { display: block; margin-block: 1rem; }
 .response-composition select, .response-composition textarea { max-width: 100%; width: 100%; }
 .response-composition textarea { box-sizing: border-box; font: inherit; }
-.response-composition input[type=range] { display: block; width: 100%; min-height: 44px; }
+.response-composition input[type=range] { display: block; width: 100%; min-height: 44px; min-width: 0; max-width: 100%; box-sizing: border-box; touch-action: pan-y; }
 .response-composition button, .response-composition select { min-height: 44px; }
 .composition-groups { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 1rem; }
 .composition-groups fieldset { min-width: 0; }
