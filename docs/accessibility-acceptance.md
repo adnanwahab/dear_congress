@@ -19,7 +19,7 @@ no inherited service credentials and merge disabled/dry-run/kill switch active.
 It refuses to reuse an existing listener. SIGINT/SIGTERM remove its temporary state.
 Never substitute a production URL or production database for this runner.
 
-CI checks all 13 named public routes at 1440px, 390px, reduced motion, forced colors
+CI checks all 14 named public routes (including `/bills`) at 1440px, 390px, reduced motion, forced colors
 and 720px reflow (the CSS viewport of a 1440px screen at 200% zoom). Reflow testing
 is not actual browser magnification: perform actual 200% zoom manually as well.
 Each route checks one main, one top heading, keyboard skip activation and the next
@@ -28,6 +28,16 @@ all other findings are retained for review. No rules or elements are excluded.
 A separate Tab/Enter journey searches sample proposals, reads the evidence-bearing
 vote page, saves one advisory choice, checks confirmation and returns without an
 extra vote. These checks do not establish that all controls are reachable.
+
+`key-journeys.pw.ts` adds keyboard Home navigation (mobile More modal containment,
+Escape and focus return), Journal exact-excerpt preview/consent/cancel, Map county
+search/selection/revision, and Synth range endpoints/increment/stale-result status.
+These inspection journeys block and fail attempted non-GET/HEAD requests. They
+attach full axe results and screenshots for their final dynamic states in every
+configured project. The catalog journey uses Tab/Enter for category and proposal
+links as well as search. The existing Feed → Vote journey remains the isolated
+server-confirmed advisory-write check. Semantic roles/names/status assertions are
+screen-reader prerequisites, not a test of spoken announcements.
 
 Download the CI `accessibility-evidence` artifact: JSON summary, HTML report,
 per-route full axe JSON, screenshots and failure traces. Attachments identify
@@ -47,6 +57,15 @@ Record commit SHA, date, reviewer, OS, browser/version, screen reader/version,
 viewport/zoom, pass/fail notes and screenshot/report paths. Use VoiceOver with
 Safari or NVDA with Firefox; a second combination is recommended. Do not mark a
 review complete based on automated scans, screenshots or simulated DOM tests.
+
+For SHE-976, record a VoiceOver/Safari or Android TalkBack/Chrome pass using the
+same seven journeys: Home, Feed, Vote, 100 Bills, Journal, Map, Synth. Record the
+Android device and TalkBack version if used. On `/bills`, search HFL-051, change
+category and return, open its detail and read source identity and unavailable
+advisory participation. In Synth, adjust implementation strength without running
+the remote model and verify the changed-input status is spoken. For Journal use
+synthetic text, review the exact excerpt, toggle consent and cancel; confirm the
+working draft stays private. Note speech, focus and recovery failures explicitly.
 
 1. Start the isolated runner above. Open `/`, use only Tab/Shift-Tab/Enter/Space
    and screen-reader navigation. Hear the page title, activate Skip to main
