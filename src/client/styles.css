@@ -1295,3 +1295,10 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 .county-evidence-table { width: 100%; border-collapse: collapse; margin-block: 1rem; background: var(--card); }
 .county-evidence-table th, .county-evidence-table td { padding: .65rem; border: 1px solid var(--line); text-align: left; overflow-wrap: anywhere; }
 .county-evidence-table:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.priority-history { margin-block: 1rem; }
+.priority-history select { max-width: 100%; }
+.priority-history table { width: 100%; }
+html:is(:active-view-transition-type(priority-history), [data-motion-type="priority-history"])::view-transition-group(*) {
+  animation-duration: calc(260ms * var(--motion-scale, 1));
+}
