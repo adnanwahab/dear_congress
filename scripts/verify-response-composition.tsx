@@ -11,6 +11,8 @@ const root = createRoot(container as any);
 let fail!: (reason: Error) => void;
 const pending = new Promise<never>((_, reject) => { fail = reject; });
 await act(async () => { root.render(<WorkflowScreen stage="outcomes" request={() => pending} />); });
+// Wait for the independently split component to hydrate, not for the proposal API.
+await act(async () => { await import('../src/client/ResponseComposition'); });
 const simulator = () => container.querySelector('.response-composition')!;
 assert(simulator(), 'available during proposal loading');
 await act(async () => { fail(new Error('Offline')); });
