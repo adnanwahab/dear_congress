@@ -1,3 +1,4 @@
+import { samplePermalink } from '../shared/permalinks';
 import { DEMO_ITEMS } from '../engine/demo';
 import { provenanceText } from './ProposalProvenance';
 
@@ -13,7 +14,7 @@ export async function decisionCard(id: string, stance?: number) {
   const version = `sha256:${Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('')}`;
   const chosen = stance === undefined ? undefined : STANCES.get(stance);
   const text = [SHARE_NOTICE, 'Fictional sample proposal · no live activity, illustrative tallies or model simulation results included.',
-    'Source repository: adnanwahab/dear_congress · kind: sample scenario', `Proposal: ${item.id}`, item.title,
+    'Source repository: adnanwahab/dear_congress · kind: sample scenario', `Proposal: ${item.id}`, item.title, `Shareable page: https://civic-synthesis.fly.dev${samplePermalink(item.id)}`,
     `Content version: ${version}`, item.summary, `Proposed text: ${item.proposedText}`, provenanceText(item),
     ...(chosen ? [`Optional chosen stance: ${chosen}. This card is not proof of a saved vote.`] : [])].join('\n\n');
   return { text, version, svg: cardSvg(text) };

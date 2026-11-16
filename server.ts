@@ -1,3 +1,4 @@
+import { permalinkPage } from './src/server/permalink-page';
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
@@ -1819,7 +1820,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
   },
-  fetch(req) {
+  async fetch(req) {
     const path = new URL(req.url).pathname;
     if (path === '/embed/v1') {
       if (req.method !== 'GET' && req.method !== 'HEAD') return securityHeaders(new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } }));
@@ -1829,7 +1830,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
     if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
     if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
-    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const response = await permalinkPage(shell, path, process.env.LEGISLATION_PATH ?? "data/legislation") ?? renderPage(shell, path, db.citizenProposals ?? []);
     const secured = securityHeaders(response);
     if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;

@@ -70,7 +70,7 @@ export async function refreshBill(root: string, congress: number, type: string, 
     throw new Error('Bill metadata refresh failed; last-good evidence retained');
   }
 }
-export async function readBills(root: string): Promise<BillObservation[]> {
+export async function readBills(root: string, revision?: string): Promise<BillObservation[]> {
   let files: string[];
   try { files = await readdir(join(root, 'attempts')); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
@@ -84,7 +84,7 @@ export async function readBills(root: string): Promise<BillObservation[]> {
   const bills: BillObservation[] = [];
   for (const attempts of groups.values()) {
     attempts.sort((a, b) => Date.parse(b.checkedAt) - Date.parse(a.checkedAt) || Number(a.sourceHash !== null) - Number(b.sourceHash !== null));
-    const good = attempts.find(a => a.sourceHash !== null);
+    const good = attempts.find(a => a.sourceHash !== null && (!revision || a.sourceHash === revision));
     if (!good) continue;
     const raw = await readFile(join(root, 'raw', `${good.sourceHash}.json`), 'utf8');
     if (hash(raw) !== good.sourceHash) throw new Error('Archive integrity failure');

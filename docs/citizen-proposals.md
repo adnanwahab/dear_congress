@@ -458,3 +458,14 @@ controls with visible focus and no drag requirement. Styles wrap long content,
 stack at mobile widths and disable motion under reduced-motion preferences.
 Native mobile, keyboard/screen-reader and visual verification remains required;
 DOM tests do not establish native accessibility acceptance.
+
+## Canonical sharing (SHE-830)
+
+Published citizen proposals retain `/proposals/:id`. Feed sample cards now expose
+an **Open shareable sample page** link at `/samples/:id/:sha256`; this read-only
+page includes the frozen title, sample text, revision and background-source notice.
+The checked-in `src/generated/sample-permalinks.json` is a retained snapshot
+archive: preserve old entries when evolving samples. Advisory card exports include
+the public page URL without browser choices. Official metadata has separate
+source/hash-bound snapshot links; editorial drafts retain `/bills/:id`.
+See [validation and limits](reviews/SHE-830.md) before claiming acceptance.
