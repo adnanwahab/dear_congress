@@ -1,0 +1,12 @@
+.presenter { background: #11151c; color: #f3f5fa; min-height: 100dvh; padding: clamp(16px, 4vw, 60px); overflow: auto; }
+.presenter a { color: #bbdcff; }
+.presenter nav { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.presenter button { min-height: 44px; padding: 8px 16px; }
+.presenter :focus-visible { outline: 3px solid #ffdc85; outline-offset: 4px; }
+.presenter-screen { margin-top: 24px; padding: clamp(16px, 4vw, 56px); border: 1px solid currentColor; font-size: 1.25rem; max-width: 100%; overflow-wrap: anywhere; }
+.presenter-screen h3 { font-size: clamp(1.8rem, 4vw, 3.4rem); }
+.presenter-screen.is-zoom { font-size: 1.8rem; }
+.presenter-screen.is-black { background: black; min-height: 55vh; border-color: black; }
+html:is(:active-view-transition-type(presenter-reveal), [data-motion-type="presenter-reveal"])::view-transition-new(root) { animation: presenter-reveal calc(480ms * var(--motion-scale, 1)) ease-out; }
+@keyframes presenter-reveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { html:is(:active-view-transition-type(presenter-reveal), [data-motion-type="presenter-reveal"])::view-transition-new(root) { animation: none; } }

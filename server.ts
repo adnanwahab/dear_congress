@@ -914,6 +914,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
     "/admin/stats": (req) => statsHTTP.admin(req),
     "/admin/health": (req) => operatorHealth.handle(req, ADMIN_TOKEN, { writes: pendingWrites, designs: designInFlight.size, writeFailures }),
+    "/api/experience-quality": (req, bunServer) => statsHTTP.quality(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
     "/admin/moderation.js": { GET: () => securityHeaders(new Response(moderationScript, { headers: { "content-type": "text/javascript", "cache-control": "no-store" } })) },

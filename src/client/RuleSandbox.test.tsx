@@ -53,7 +53,7 @@ test('preview interaction recovers from errors and discards responses after sett
     expect(host.querySelector('table')).toBeNull();
     await click();
     await act(async () => pending[2]!.resolve(previewSynthesisRule({ weights: DEFAULT_WEIGHTS, lambda: .25, budget: 0 })));
-    expect(getByRole(host, 'status').textContent).toBe('Fixture comparison ready.');
+    expect(host.querySelector('section[aria-label="Scoring rule sandbox"] > [role=status]')?.textContent).toBe('Fixture comparison ready.');
     expect(host.querySelectorAll('table').length).toBe(3);
     await render(40); expect(host.querySelector('table')).toBeNull();
   } finally {

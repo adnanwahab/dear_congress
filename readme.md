@@ -340,6 +340,10 @@ actual outcomes, real votes and resident records.
 with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
 changes across all three packages using public sample journals and deterministic
 simulated residents. It does not use live resident inputs or approve/activate rules.
+Each package comparison includes a decision boundary brush over distinct deterministic
+engine scores, with inclusive thresholds, rounding details and separate actual
+inclusion changes. It is a read-only score exploration, not an inferred causal
+weight tipping point. See [SHE-599 implementation and validation](docs/reviews/SHE-599.md).
 See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 ### `POST /api/synthesize` notes
@@ -1261,6 +1265,13 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+Optional experience-quality signals extend the same launch store and protected
+`/admin/stats` dashboard. The shared shell offers **Experience metrics & privacy**;
+collection defaults off, honors DNT/GPC, and retains only capability-segmented daily
+counts and latency buckets for 30 UTC dates. See [schema, consent, retention and
+measurement limits](docs/experience-quality.md). Existing vote/journal metrics,
+records and governance configuration are unchanged.
 
 ## Civic House
 
