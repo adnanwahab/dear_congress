@@ -1,3 +1,4 @@
+import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
@@ -332,6 +333,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     {error&&<p role="alert" className="note warn">Model data unavailable: {error}. The paired snapshot links above remain available.</p>}
     {receipt?.status==='mechanism-unavailable'&&<p role="status">No reviewed behavior mapping: {receipt.reason||'Effects unavailable.'}</p>}
     {receipt?.status==='completed'&&frames.length>0&&<>
+      {!dirty && !busy && !error && <SaveToJourney category="Sandbox runs" kind="Model simulation" text={JSON.stringify({ source: 'hbl-law-behavior-receipt.v1', law: receipt.law, amendment, revision, engine: receipt.engine, manifest: receipt.manifest, unit: receipt.unit, limitations: receipt.limitations, note: 'Completed synthetic run metadata only; actor frames are not copied. No legal effect or civic ballot.' }, null, 2)} />}
       <p className="civic-law-provenance" role="status">Recorded model: {receipt.manifest?.modelVersion||'version unavailable'}
         {' · '}seed {formatted(receipt.manifest?.seed)}
         {' · '}{receipt.manifest?.population} synthetic actors
