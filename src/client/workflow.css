@@ -203,3 +203,13 @@
 .discovery-deck article { touch-action: pan-y pinch-zoom; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
 .discovery-deck .workflow-card-actions { margin-top: 16px; align-items: center; }
 .discovery-deck button, .discovery-deck a { min-height: 44px; }
+
+/* Keep reading and the three equal advisory choices ahead of optional activities. */
+.votes-title { margin-block: 0 8px; }
+.votes-intro .vote-panel { padding: 16px; }
+.votes-intro .vote-panel p { margin-block: 8px; }
+.votes-intro .workflow-detail-title { font-size: 1.25rem; margin-block: 10px; }
+.votes-intro .advisory-bars { display: flex; flex-wrap: wrap; gap: 8px; }
+.civic-shell .votes-intro .advisory-bars button { flex: 1; min-height: 44px; padding: 10px; display: block; }
+.votes-intro details { margin-block: 16px; }
+.votes-intro summary { cursor: pointer; }
