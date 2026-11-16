@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { PlanWorkbench } from './PlanWorkbench';
+import { lazy, Suspense, useState } from 'react';
+const PlanRoom = lazy(() => import('./PlanRoom').then(mod => ({ default: mod.PlanRoom })));
+
 import type { PackageResult, Proposal } from '../engine/types';
 import { budgetAlternative, budgetMoney, budgetSummary, budgetUnits, planLedger } from '../shared/plan-budget';
 
@@ -16,6 +19,7 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
   const rows = ledger.rows.filter(r => `${r.title} ${r.jurisdiction}`.toLowerCase().includes(filter.toLowerCase()));
   const exportText = budgetSummary(ledger, pkg.id, lane);
   return <section className="budget-ledger" aria-label="Plan budget ledger">
+    <PlanWorkbench proposals={proposals} lane={lane} />
     <h4>Where does the budget go?</h4>
     <p>USD billions per year, across the jurisdictions named below. All amounts are simulated model assumptions, not independently sourced estimates. One-time costs are not separately modeled.</p>
     <p>Program cost is the model’s annual allocation. Existing spending and net incremental spending are unknown. Contingency: $0 modeled reserve; real-world contingency and uncertainty ranges are unknown. Costs stay fixed in this ledger; the budget and synthesis weights are adjustable above.</p>
@@ -44,5 +48,6 @@ export function PlanBudget({ pkg, proposals, lane }: { pkg: PackageResult; propo
       </div>}</>}
     <p><a download={`plan-budget-v1-${lane}-${pkg.id}.json`} href={`data:application/json;charset=utf-8,${encodeURIComponent(exportText)}`}>Download shareable versioned budget summary</a></p>
     <p className="muted">This fiscal snapshot contains item titles, costs and assumptions only. It does not verify outcomes, enact policy, save votes or reproduce synthesis from changing private inputs.</p>
+    <Suspense fallback={<p role="status">Loading collaborative plan lab…</p>}><PlanRoom seed={{ packageId: pkg.id, lane, budget: ledger.budget, rows: ledger.rows.map(({ id, title, jurisdiction, source, amount }) => ({ id, title, jurisdiction, source, amount })) }} /></Suspense>
   </section>;
 }
