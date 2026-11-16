@@ -19,7 +19,7 @@ export function DataGapsAtlas() {
     <p>Missing evidence means unknown, never good outcomes. This small research inventory is not a comprehensive coverage map. All entries await human review.</p>
     <p>Bundled inventory · revision atlas-v1 · 2026-11-14. Available after page load without network requests; external sources may be unavailable offline. No live refresh or loading measurement is implied.</p>
     <div className="gap-controls">
-      {(['jurisdiction', 'topic', 'category'] as const).map(key => <label key={key}>{key === 'category' ? 'Gap category' : key === 'topic' ? 'Topic' : 'Jurisdiction'}<select value={filters[key]} onChange={e => setFilters({ ...filters, [key]: e.target.value })}><option value="">All</option>{[...new Set(DATA_GAPS.map(row => row[key]))].map(value => <option key={value}>{value}</option>)}</select></label>)}
+      {(['jurisdiction', 'topic', 'category'] as const).map(key => <label key={key}>{key === 'category' ? 'Gap category' : key === 'topic' ? 'Topic' : 'Jurisdiction'}<select aria-label={key === 'category' ? 'Gap category' : key === 'topic' ? 'Topic' : 'Jurisdiction'} value={filters[key]} onChange={e => setFilters({ ...filters, [key]: e.target.value })}><option value="">All</option>{[...new Set(DATA_GAPS.map(row => row[key]))].map(value => <option key={value}>{value}</option>)}</select></label>)}
       <label>Metric or research question<input type="search" value={filters.query} onChange={e => setFilters({ ...filters, query: e.target.value })} /></label>
       <button type="button" onClick={() => setFilters({ jurisdiction: '', topic: '', category: '', query: '' })}>Reset filters</button>
     </div>
