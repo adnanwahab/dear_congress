@@ -124,3 +124,11 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Optional fictional budget exercise
+
+The catalog includes an opt-in budget shock sandbox, also available in workflow
+screens and the active guided tour. Its invented tokens and protected minimums
+have no relationship to catalog cost assessments or participation. Choices stay
+in component memory and show tradeoff receipts; see
+[the SHE-663 review](reviews/SHE-663.md) for validation limits.

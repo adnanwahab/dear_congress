@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { JurisdictionComparison } from '../src/client/JurisdictionComparison';
+import { LOCAL_POLICY_PAIRS } from '../src/shared/jurisdiction-comparison';
+const dom = new Window({ url: 'http://localhost/map' });
+for (const key of ['window', 'document', 'navigator']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { createRoot } = await import('react-dom/client');
+const host = dom.document.createElement('div'); dom.document.body.append(host);
+const root = createRoot(host as any);
+let calls = 0;
+let resolve: (value: typeof LOCAL_POLICY_PAIRS) => void = () => {};
+const load = () => { calls++; return calls === 1 ? Promise.reject(new Error('offline')) : new Promise<typeof LOCAL_POLICY_PAIRS>(r => { resolve = r; }); };
+await act(async () => root.render(<JurisdictionComparison load={load} />));
+assert(host.textContent!.includes('No comparable data')); assert.equal(calls, 0);
+await act(async () => (host.querySelector('input') as any).click());
+assert(host.querySelector('[role=alert]'));
+await act(async () => (host.querySelector('button') as any).click());
+assert(host.textContent!.includes('Loading comparison examples'));
+await act(async () => resolve(LOCAL_POLICY_PAIRS));
+assert(host.querySelector('dl'));
+assert(host.textContent!.indexOf('Confounders:') < host.textContent!.indexOf('Descriptive comparison'));
+const select = host.querySelector('select')!;
+for (const value of ['incompatible', 'missing']) {
+  await act(async () => { select.value = value; select.dispatchEvent(new dom.Event('change', { bubbles: true })); });
+  assert(!host.querySelector('dl')); assert(host.textContent!.includes('Numeric comparison withheld'));
+}
+await act(async () => (host.querySelector('input') as any).click());
+assert(!host.querySelector('article')); assert(host.textContent!.includes('No verified jurisdiction'));
+await act(async () => root.unmount());
+console.log('PASS comparison loading, retry, selection and withholding');

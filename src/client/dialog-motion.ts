@@ -1,3 +1,4 @@
+import { motionDisabled } from './motion';
 /** Keep focus trapped in the modal until its shared CSS exit has finished. */
 export function closeDialog(dialog: HTMLDialogElement, afterClose: () => void): () => void {
   let cancelled = false;
@@ -10,7 +11,7 @@ export function closeDialog(dialog: HTMLDialogElement, afterClose: () => void): 
   const view = dialog.ownerDocument.defaultView;
   if (!view?.CSS?.supports('transition-behavior', 'allow-discrete') ||
       !view.CSS.supports('overlay', 'auto') ||
-      view.matchMedia('(prefers-reduced-motion: reduce)').matches || !dialog.getAnimations) {
+      (motionDisabled() || view.matchMedia('(prefers-reduced-motion: reduce)').matches) || !dialog.getAnimations) {
     finish();
     return () => {};
   }

@@ -1,3 +1,4 @@
+import { motionDisabled } from './motion';
 /** Progressive enhancement: CSS drives frames; observers only enroll and retire cards. */
 export function installScrollReveals(root: HTMLElement) {
   if (!['/', '/needs', '/journal', '/journals', '/documentation', '/docs'].includes(window.location.pathname)
@@ -21,7 +22,7 @@ export function installScrollReveals(root: HTMLElement) {
     for (const element of root.querySelectorAll(selector)) {
       if (seen.has(element)) continue;
       seen.add(element);
-      if (!preference.matches && element.getBoundingClientRect().top >= window.innerHeight) {
+      if (!motionDisabled() && element.getBoundingClientRect().top >= window.innerHeight) {
         element.classList.add('scroll-reveal');
         observer.observe(element);
       }
