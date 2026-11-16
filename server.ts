@@ -1811,7 +1811,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     if (asset) return securityHeaders(new Response(asset, { headers: { "Content-Type": asset.type } }));
     if (path.startsWith("/api/")) return securityHeaders(Response.json({ error: "Not found" }, { status: 404 }));
     if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
-    const response = renderPage(shell, path, db.citizenProposals ?? []);
+    const response = renderPage(shell, path, db.citizenProposals ?? [], code => liveRounds.exists(code));
     const secured = securityHeaders(response);
     if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;

@@ -106,7 +106,7 @@ try {
   assert.equal(proposals.status, 200);
   assert.match(proposals.headers.get('content-type') ?? '', /application\/json/);
   await proposals.json();
-  for (const path of ['/missing-route', '/proposals/missing', '/api/missing-route']) {
+  for (const path of ['/missing-route', '/proposals/missing', '/api/missing-route', '/live/00000000']) {
     assert.equal((await get(path)).status, 404, path);
   }
   console.log('Route smoke test passed (production HTML, bundled assets, read API, 404s).');
