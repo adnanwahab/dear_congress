@@ -7,6 +7,7 @@ import { JurisdictionPicker, sampleMatchesJurisdiction, useJurisdiction } from '
 import { CivicHeader } from './CivicHeader';
 import './topic-hubs.css';
 import { TopicAnnotations } from './TopicAnnotations';
+import { CuriosityConstellation } from './CuriosityConstellation';
 
 export function TopicHubs({ request }: { request: <T>(path: string) => Promise<T> }) {
   const id = window.location.pathname.split('/')[2] ?? '';
@@ -44,6 +45,7 @@ export function TopicHubs({ request }: { request: <T>(path: string) => Promise<T
     {!TOPICS.some(t => t.label.toLowerCase().includes(query.toLowerCase())) && <p>No topics match this search.</p>}
     {topic && <><section className="panel"><h2>Public human experiences</h2><p>Not yet available. Legacy journal records do not retain explicit topic-curation consent; their text is excluded.</p></section>
       {error ? <p role="alert">Topic data unavailable. <button onClick={() => retry(n => n + 1)}>Retry</button></p> : !hub ? <p role="status">Loading topic…</p> : <>
+        <CuriosityConstellation key={hub.topic.id} hub={hub} />
         <TopicAnnotations annotations={hub.annotations} />
         <section className="panel"><h2>Sample experiences and recorded lineage</h2><p>Fictional repository samples. Need labels and proposal links below come from stored extraction, not new classification.</p>
           {!hub.stories.length && <p>Not yet available.</p>}{hub.stories.map(s => <article key={s.id}><p>{s.text}</p><small>Source entry: {s.id}</small><p><a href={`/api/citizen-proposals/journal/${encodeURIComponent(s.id)}`}>Inspect original public source record</a></p><p>{s.needIds.map(n => <a key={n} href={`/needs?${new URLSearchParams({ need: n, entry: s.id, topic: id })}`}>Recorded need: {n}</a>)}</p><p>{s.proposalIds.length ? s.proposalIds.map(p => <a key={p} href={`#policy-${p}`}>Recorded proposal: {p}</a>) : 'Source-to-proposal link not yet available.'}</p></article>)}</section>

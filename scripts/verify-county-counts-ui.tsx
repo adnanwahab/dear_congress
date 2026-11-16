@@ -52,6 +52,19 @@ for (let revision = 1; revision <= 10; revision++) {
   plan = improvePlan(plan, ids);
 }
 assert(panel.textContent!.includes('3,144 / 3,144 county models meet all four'));
+const heatmap = container.querySelector('.county-event-panel')!;
+assert(heatmap.textContent!.includes('Revision 1: 0 synthetic status-change events'));
+await click('Play events / step with reduced motion');
+assert(heatmap.textContent!.includes('Revision 2: 3,144 synthetic status-change events'));
+assert.equal(heatmap.querySelectorAll('tbody tr').length, counties.length);
+const eventButton = heatmap.querySelector('tbody button')!;
+await act(async () => { (eventButton as any).click(); });
+assert(heatmap.querySelector('#county-event-example')!.textContent!.includes(`county-fips-v1:r2:${counties[0]!.id}`));
+assert(container.querySelector('.county-selected')!.textContent!.includes(counties[0]!.id));
+const tableToggle = [...heatmap.querySelectorAll('label')].find(l => l.textContent === 'Table only')!.querySelector('input')!;
+await act(async () => { (tableToggle as any).click(); });
+assert(heatmap.textContent!.includes('Map unavailable or table selected'));
+assert.equal(heatmap.querySelectorAll('tbody tr').length, counties.length);
 const before = panel.textContent;
 await click('Hypothetical model agrees3,144 / 3,144');
 const search = container.querySelector('input[type=search]')!;
@@ -65,6 +78,7 @@ assert.equal(panel.textContent, before, 'search and filters must not redefine th
 await click('Restart');
 assert(panel.textContent!.includes('Revision 1: 0 / 3,144 county models meet all four'));
 assert(panel.hasAttribute('open'), 'revision and restart retain the open explanation');
+assert.equal(heatmap.querySelectorAll('tbody tr').length, 0, 'restart clears replayed events');
 await act(async () => { root.unmount(); });
 await dom.happyDOM.close();
 console.log('PASS county counts: revisions, filters, restart and unavailable real observations');
