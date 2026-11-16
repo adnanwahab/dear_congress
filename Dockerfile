@@ -10,7 +10,8 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 ARG BUILD_COMMIT
-RUN BUILD_COMMIT="$BUILD_COMMIT" bun scripts/write-build-identity.ts
+ARG BUILD_RELEASE
+RUN BUILD_RELEASE="$BUILD_RELEASE" BUILD_COMMIT="$BUILD_COMMIT" bun scripts/write-build-identity.ts
 
 ENV NODE_ENV=production
 EXPOSE 8000

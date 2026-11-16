@@ -1,10 +1,15 @@
 import { readFileSync } from "node:fs";
 
+export function sanitizeRelease(value: unknown): string | null {
+  return typeof value === "string" && /^v[a-zA-Z0-9][a-zA-Z0-9._-]{0,126}$/.test(value) ? value : null;
+}
+
 export function sanitizeBuild(value: unknown) {
   const input = value && typeof value === "object" ? value as Record<string, unknown> : {};
   return Object.freeze({
     commit: typeof input.commit === "string" && /^[a-f0-9]{40}$/.test(input.commit) ? input.commit : null,
     builtAt: typeof input.builtAt === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(input.builtAt) && Number.isFinite(Date.parse(input.builtAt)) ? input.builtAt : null,
+    release: sanitizeRelease(input.release),
     repository: "https://github.com/adnanwahab/dear_congress",
     mode: "demo",
   });

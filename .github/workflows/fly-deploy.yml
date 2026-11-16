@@ -48,13 +48,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
-      - run: flyctl deploy --remote-only --build-arg BUILD_COMMIT="$RELEASE_COMMIT"
+      - run: flyctl deploy --remote-only --build-arg BUILD_COMMIT="$RELEASE_COMMIT" --build-arg BUILD_RELEASE="$RELEASE_TAG"
         env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Verify deployed release identity
-        run: bun scripts/verify-release.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT"
+        run: bun scripts/verify-release.ts https://civic-synthesis.fly.dev "$RELEASE_COMMIT" "$RELEASE_TAG"
         env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
       - name: Install isolated parity browser
         run: |

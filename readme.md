@@ -603,10 +603,12 @@ includes a small Build link using that same identity outside the React root.
 Source checkouts without a manifest explicitly show unknown build identity.
 
 Docker builds require `--build-arg BUILD_COMMIT=<full lowercase git SHA>`.
+Tagged builds also pass `--build-arg BUILD_RELEASE=<public v-prefixed tag>`;
+`release` is image-baked and null when unavailable, separate from runtime `flyRelease`.
 The image generates `build-identity.json`; runtime environment variables cannot
 override its SHA/date. Do not use a newly generated date as an old image's date.
 The existing human-published tagged-release workflow supplies its validated SHA
-and runs `bun scripts/verify-release.ts https://civic-synthesis.fly.dev <SHA>`
+and runs `bun scripts/verify-release.ts https://civic-synthesis.fly.dev <SHA> <TAG>`
 after deployment. Mismatches fail the workflow; they do not trigger a rollback.
 Keep the existing production release gate disabled until the recovery/go-no-go
 owners authorize it. No release is authorized by these diagnostics.
