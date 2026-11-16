@@ -21,3 +21,9 @@ export function useRoomReturn(route: string, ready: boolean) {
     (id ? document.getElementById(id) : null)?.focus();
   }, [route, ready]);
 }
+
+/** Mount return handling only inside civic stage workflows. */
+export function RoomReturn({ route, ready }: { route: string; ready: boolean }) {
+  useRoomReturn(route, ready);
+  return null;
+}
