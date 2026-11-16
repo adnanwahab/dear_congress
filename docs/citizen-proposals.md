@@ -322,3 +322,14 @@ Links do not publish, sync or transfer drafts. Proposal drafts are never enacted
 law, verified participation or approval evidence. There is no new API or loading
 request: reads are synchronous browser storage. See the SHE-454 review for checks
 and remaining native browser acceptance.
+
+## Personal learning notes (SHE-533)
+
+`/account` offers an explicitly saved browser-local learning log, with separate
+Topics, Drafts, Sandbox runs and Explicit votes note categories. Source screens offer explicit copies of saved drafts, proposal topics,
+current citizen advisory choices and completed synthetic model run metadata.
+It does not reconstruct past events or copy model actor frames. Each entry
+has a self-declared activity source and local saved date; neither proves civic
+eligibility or verified activity. JSON export, selective delete and confirmed
+reset affect only this log. Drafts, follows, public records and actual votes
+stay in their original stores. See [scope and validation](reviews/SHE-533.md).
