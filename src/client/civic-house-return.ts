@@ -16,9 +16,15 @@ export function useRoomReturn(route: string, ready: boolean) {
     return () => window.removeEventListener('pagehide', save);
   }, [route]);
   useEffect(() => {
-    if (!ready || !document.referrer.includes('/?house=1')) return;
+    if (!ready) return;
+    let enteredFromHouse = false;
+    try {
+      enteredFromHouse = sessionStorage.getItem('civic-house-pending-stage') === route;
+      if (enteredFromHouse) sessionStorage.removeItem('civic-house-pending-stage');
+    } catch { /* Storage is optional; the ordinary route still works. */ }
+    if (!enteredFromHouse && !document.referrer.includes('/?house=1')) return;
     const id = savedRoom(route).focus;
-    (id ? document.getElementById(id) : null)?.focus();
+    (document.getElementById(id) ?? document.getElementById('stage-heading'))?.focus();
   }, [route, ready]);
 }
 
