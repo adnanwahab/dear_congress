@@ -28,7 +28,7 @@ export function PlanNumber({ value, format }: { value: number; format: (n: numbe
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     let frame = 0;
     const finish = () => { cancelAnimationFrame(frame); current.current = value; setDisplay(value); };
-    if (motionDisabled()) { finish(); return; }
+    if (motionDisabled() || current.current === value) { finish(); return; }
     const from = current.current;
     const start = performance.now();
     const tick = (now: number) => {

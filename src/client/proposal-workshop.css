@@ -1,0 +1,8 @@
+.proposal-workshop { margin-block: 24px; overflow-wrap: anywhere; }
+.proposal-workshop ol { padding-inline-start: 24px; }
+.proposal-workshop li { margin-block: 18px; }
+.proposal-workshop textarea, .proposal-workshop input { box-sizing: border-box; width: 100%; min-width: 0; }
+.proposal-workshop input[type=checkbox] { width: auto; }
+.proposal-workshop .cp-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 18px; }
+.proposal-workshop button { white-space: normal; min-height: 44px; }
+.proposal-workshop :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

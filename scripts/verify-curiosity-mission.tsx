@@ -1,0 +1,43 @@
+/** Isolated DOM regression checks; viewport layout still needs browser QA. */
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+const dom = new Window({ url: 'http://localhost/draft' });
+for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage', 'sessionStorage']) {
+  Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+}
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { act } = await import('react');
+const { createRoot } = await import('react-dom/client');
+const { within, fireEvent } = await import('@testing-library/dom');
+const { CuriosityMission } = await import('../src/client/CuriosityMission');
+const { demoPayload } = await import('../src/engine/demo');
+const payload = demoPayload({}, 'test');
+const root = createRoot(document.body.appendChild(document.createElement('div')));
+const q = () => within(document.body);
+await act(async () => root.render(<CuriosityMission data={null} failed={false} />));
+assert.ok(q().getByRole('status').textContent?.includes('Loading'));
+await act(async () => root.render(<CuriosityMission data={null} failed />));
+assert.ok(q().getByRole('status').textContent?.includes('unavailable'));
+await act(async () => root.render(<CuriosityMission data={payload} failed={false} />));
+assert.ok(q().getByRole('status').textContent?.includes('not yet completed'));
+const first = q().getByRole('heading', { level: 3 }).textContent;
+payload.votes = Object.fromEntries(payload.items.map(i => [i.id, 1]));
+await act(async () => root.render(<CuriosityMission data={{ ...payload }} failed={false} />));
+assert.ok(q().getByRole('status').textContent?.includes('not yet completed'));
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'Learn more' })));
+assert.ok(q().getByRole('heading', { name: 'Sample proposed change' }));
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'I’ve read the mission' })));
+assert.ok(q().getByRole('status').textContent?.includes('completed by reading'));
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'Shuffle' })));
+assert.notEqual(q().getByRole('heading', { level: 3 }).textContent, first);
+assert.ok(q().getByRole('status').textContent?.includes('not yet completed'));
+assert.equal(q().queryByRole('button', { name: 'I’ve read the mission' }), null);
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'Skip', exact: true })));
+assert.ok(q().getByRole('status').textContent?.includes('skipped'));
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'Resume mission' })));
+await act(async () => fireEvent.change(q().getByRole('combobox'), { target: { value: 'Housing' } }));
+assert.ok(!q().getByRole('heading', { level: 3 }).textContent?.includes('cottages'));
+assert.ok(document.querySelector('.topic-chip'));
+await act(async () => root.unmount());
+await dom.happyDOM.close();
+console.log('Curiosity mission: loading, failure, reading, shuffle, skip and vote independence passed');
