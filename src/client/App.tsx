@@ -1,4 +1,3 @@
-import { PriorityHistory } from "./PriorityHistory";
 import { GlossaryText } from './CivicGlossary';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
@@ -160,6 +159,7 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ default: m.PriorityHistory })));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
