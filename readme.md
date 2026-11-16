@@ -47,6 +47,12 @@ Game-loop neutrality and consent review, regression coverage, and pending human
 privacy/minors/accessibility checks are tracked in [SHE-544](docs/reviews/SHE-544.md).
 New rewards must extend that checklist and its stance-parity tests.
 
+The guide's evidence layers explorer connects the existing synthetic policy
+measurements to claim, source identity, measurement, transformation and UI layers.
+It exports Markdown methodology without private inputs and links to all six stages.
+Stale and missing fixtures remain explicit; there is no archived real-source or
+dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
@@ -1137,3 +1143,25 @@ its logged paired outcomes. It labels creative text and says **Simulated fiction
 not prediction** on the card and local HTML export. The export attaches seed,
 actual horizon, assumption and checkpoint receipts; the provider supplies no
 causal event IDs. See [the contract and limits](docs/live-law-behavior-loop.md#possible-2035-letter-she-494).
+
+### Collaborative plan lab (SHE-499)
+
+Each Synthesize budget ledger can create or join an invitation-only, one-hour
+sandbox room. Copy its invitation privately; recipients paste it into a plan lab
+on `/synth`. Opening a link alone does not join or publish anything. Invitations
+are random 256-bit bearer capabilities carried in fragments and POST bodies,
+never API URLs. A separate random session capability is required to read history
+or suggest changes. Guest pseudonyms are assigned per session; they do not verify
+identity. Presence updates every 15 seconds and becomes away after 45 seconds.
+
+Only the displayed fiscal snapshot (item IDs, titles, jurisdiction, source labels,
+annual allocations, package ID and lane) is shared after explicit Create. No
+journals, vote data or private scoring inputs are sent. Individual suggestions are
+append-only and can conflict; they never apply to a package or official synthesis.
+The service has no persistence or DB dependencies: restart loses rooms. Expired
+rooms are purged on the next request. Limits: 200 rooms, 12 sessions per room,
+100 fiscal items and 200 suggestions; request bodies are bounded to 32 KB.
+An invitation can be forwarded by its holder. There is no individual revocation,
+verified-person identity, durable recovery or joint package approval. Leave drops
+local access and presence becomes away; the room history remains until expiry.
+Native disclosure, labels and form controls need no motion or pointer gestures.
