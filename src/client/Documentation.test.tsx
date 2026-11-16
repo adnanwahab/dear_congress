@@ -47,6 +47,7 @@ test('public guide explains trust limits and keeps historical planning collapsed
   for (const text of ['50 days', 'Jan 1', '9:00 AM', 'electorate is undefined']) expect(guide.textContent).not.toContain(text);
   for (const link of Array.from(document.querySelectorAll('a[href^="#"]'))) expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
   for (const link of Array.from(guide.querySelectorAll('a[href^="/"]'))) {
+    if (link.querySelector('img')) continue; // Bundled full-resolution media asset, not an application page.
     const path = new URL(link.getAttribute('href')!, 'https://civic-synthesis.fly.dev').pathname;
     if (['/version', '/healthz'].includes(path)) continue; // Dedicated HTTP handlers, outside renderPage.
     expect(renderPage('<title>Test</title><div id="root"></div>', path, []).status).toBe(200);
@@ -54,5 +55,23 @@ test('public guide explains trust limits and keeps historical planning collapsed
   const missing = renderPage('<title>Test</title><div id="root"></div>', '/missing-guide-page', []);
   expect(missing.status).toBe(404);
   expect(await missing.text()).toContain('Page not found');
+  window.happyDOM.abort();
+});
+
+test('media kit retains demo labels, repository identity and permission limits', () => {
+  const window = new Window();
+  window.document.body.innerHTML = renderToStaticMarkup(<Documentation />);
+  const kit = window.document.querySelector('#media-kit')!;
+  expect(kit.textContent).toContain('independently operated, non-binding public beta');
+  expect(kit.textContent).toContain('Not a government service');
+  expect(kit.textContent).toContain('No downloadable logo with verified reuse permission');
+  expect(kit.querySelectorAll('figure').length).toBe(2);
+  for (const figure of kit.querySelectorAll('figure')) {
+    expect(figure.querySelector('figcaption')!.textContent).toContain('Demo —');
+    expect(figure.querySelector('img')!.getAttribute('alt')).toContain('Demo');
+    expect(figure.querySelector('a')!.getAttribute('href')).toBe(figure.querySelector('img')!.getAttribute('src'));
+  }
+  expect(kit.querySelector('a[href="https://github.com/adnanwahab/dear_congress/issues/new"]')).not.toBeNull();
+  expect(kit.querySelectorAll('form, iframe').length).toBe(0);
   window.happyDOM.abort();
 });
