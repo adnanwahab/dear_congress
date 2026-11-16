@@ -1,0 +1,112 @@
+{
+  "runtime": "1.4.2",
+  "counties": 3144,
+  "scope": "Local Bun compute/worker microbenchmark; excludes React, layout and browser input latency",
+  "measurements": [
+    {
+      "mode": "before-sync",
+      "run": 0,
+      "elapsedMs": 1.9556670000000054,
+      "heartbeatTicks": 0,
+      "maxHeartbeatGapMs": 2.172333999999992
+    },
+    {
+      "mode": "before-sync",
+      "run": 1,
+      "elapsedMs": 0.9366660000000024,
+      "heartbeatTicks": 0,
+      "maxHeartbeatGapMs": 0.9383750000000077
+    },
+    {
+      "mode": "before-sync",
+      "run": 2,
+      "elapsedMs": 0.9320419999999956,
+      "heartbeatTicks": 0,
+      "maxHeartbeatGapMs": 0.9330420000000004
+    },
+    {
+      "mode": "before-sync",
+      "run": 3,
+      "elapsedMs": 1.7105839999999972,
+      "heartbeatTicks": 0,
+      "maxHeartbeatGapMs": 1.712208000000004
+    },
+    {
+      "mode": "before-sync",
+      "run": 4,
+      "elapsedMs": 1.1848750000000052,
+      "heartbeatTicks": 0,
+      "maxHeartbeatGapMs": 1.1898750000000007
+    },
+    {
+      "mode": "after-fallback",
+      "run": 0,
+      "elapsedMs": 59.66270800000001,
+      "heartbeatTicks": 50,
+      "maxHeartbeatGapMs": 1.3476670000000013
+    },
+    {
+      "mode": "after-fallback",
+      "run": 1,
+      "elapsedMs": 56.34829199999999,
+      "heartbeatTicks": 50,
+      "maxHeartbeatGapMs": 1.1671249999999986
+    },
+    {
+      "mode": "after-fallback",
+      "run": 2,
+      "elapsedMs": 56.975457999999975,
+      "heartbeatTicks": 50,
+      "maxHeartbeatGapMs": 1.54933299999999
+    },
+    {
+      "mode": "after-fallback",
+      "run": 3,
+      "elapsedMs": 56.63091700000001,
+      "heartbeatTicks": 50,
+      "maxHeartbeatGapMs": 1.1554590000000076
+    },
+    {
+      "mode": "after-fallback",
+      "run": 4,
+      "elapsedMs": 59.38291700000002,
+      "heartbeatTicks": 50,
+      "maxHeartbeatGapMs": 2.0699579999999855
+    },
+    {
+      "mode": "after-worker",
+      "run": 0,
+      "elapsedMs": 99.08254199999999,
+      "heartbeatTicks": 85,
+      "maxHeartbeatGapMs": 3.3058750000000146
+    },
+    {
+      "mode": "after-worker",
+      "run": 1,
+      "elapsedMs": 68.24437500000005,
+      "heartbeatTicks": 59,
+      "maxHeartbeatGapMs": 1.83237500000007
+    },
+    {
+      "mode": "after-worker",
+      "run": 2,
+      "elapsedMs": 71.56629099999998,
+      "heartbeatTicks": 62,
+      "maxHeartbeatGapMs": 1.6335000000000264
+    },
+    {
+      "mode": "after-worker",
+      "run": 3,
+      "elapsedMs": 73.53979200000003,
+      "heartbeatTicks": 64,
+      "maxHeartbeatGapMs": 1.2014169999999922
+    },
+    {
+      "mode": "after-worker",
+      "run": 4,
+      "elapsedMs": 71.48116699999991,
+      "heartbeatTicks": 62,
+      "maxHeartbeatGapMs": 1.2853749999999309
+    }
+  ]
+}

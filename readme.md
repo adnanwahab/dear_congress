@@ -1015,3 +1015,13 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+### County evaluation rollout (SHE-942)
+
+`/map?countyWorker=on` opts into local Web Worker revision evaluation with progress
+and cancellation. The default and `countyWorker=off` use yielding batches; worker
+errors or unsupported browsers also fall back to those batches. A pending revision
+keeps the last completed plan and counts visible. Pause/cancel abandons pending
+work, and Restart clears completed synthetic transitions. No resident data or votes
+are sent or recorded. See [SHE-942 evidence and rollout limits](docs/reviews/SHE-942.md)
+for measurements and required native-browser review before default enablement.

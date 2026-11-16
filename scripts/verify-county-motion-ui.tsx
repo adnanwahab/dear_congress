@@ -19,7 +19,7 @@ const container = dom.document.createElement('div');
 dom.document.body.append(container);
 const root = createRoot(container as any);
 await act(async () => { root.render(<MapScreen />); });
-const click = async (label: string) => { await act(async () => { const b = [...container.querySelectorAll('button')].find(b => b.textContent === label)!; assert(b && !(b as any).disabled); (b as any).click(); }); };
+const click = async (label: string) => { await act(async () => { const b = [...container.querySelectorAll('button')].find(b => b.textContent === label)!; assert(b && !(b as any).disabled); (b as any).click(); }); if (label === 'Improve one revision') await act(async () => { await new Promise(resolve => setTimeout(resolve, 150)); }); };
 const metrics = () => [...container.querySelectorAll('.county-metrics strong')].map(n => n.textContent);
 await click('Improve one revision');
 assert.equal(metrics()[3], 'Unavailable');
