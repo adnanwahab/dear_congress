@@ -19,6 +19,7 @@ test('discovery buttons, touch cancellation, persistence and history remain read
     await render(false, true); expect(host.textContent).toContain('Discovery unavailable');
     await render(false, false, []); expect(host.textContent).toContain('No proposals match');
     await render(); expect(host.textContent).toContain('Swiping never casts');
+    expect(win.location.pathname + win.location.search).toBe('/feed'); // Passive mount must preserve route URL.
     const pointer = (type: string, x: number, y = 0) => host.querySelector('article')!.dispatchEvent(new win.PointerEvent(type, { bubbles: true, pointerType: 'touch', isPrimary: true, pointerId: 1, clientX: x, clientY: y }) as unknown as Event);
     await act(async () => { pointer('pointerdown', 100); pointer('pointercancel', 0); pointer('pointerup', 0); });
     expect(host.querySelector('h3')!.textContent).toBe(items[0]!.title);

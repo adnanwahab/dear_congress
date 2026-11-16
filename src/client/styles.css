@@ -1202,3 +1202,7 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
   .claim-evidence a[href^="https:"]::after { content: " (" attr(href) ")"; }
   .claim-evidence mark { background: transparent; color: inherit; font-weight: bold; }
 }
+
+.surprise-explorer { margin-block: 1rem; overflow-wrap: anywhere; }
+.surprise-explorer button, .surprise-explorer a { min-height: 44px; display: inline-flex; align-items: center; }
+.surprise-explorer article { margin-block: 1rem; }

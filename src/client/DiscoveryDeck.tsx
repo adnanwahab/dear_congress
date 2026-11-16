@@ -27,8 +27,7 @@ export function DiscoveryDeck({ items, loading, failed, fullUrl }: { items: Demo
     if (loading || failed || !current) return;
     const next = { ...read(), cursor: current.id };
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { setNotice('Storage unavailable: progress lasts only on this page.'); }
-    const url = new URL(window.location.href); url.searchParams.set('discover', current.id);
-    window.history.replaceState(window.history.state, '', url);
+    // Do not rewrite a passive visit to /feed. Explicit card actions own URL history.
   }, [current?.id, loading, failed]);
   function advance(save: boolean) {
     if (!current) return;
