@@ -1593,6 +1593,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     }
     invalidateRequest();
     setBusy(false);
+    setRealPkgs(null); setBlendedPkgs(null); setMeasuredPreview({});
     setLivePreview(true);
     change();
     setSettingsRevision(revision => revision + 1);
@@ -1603,6 +1604,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     const controller = new AbortController();
     requestController.current = controller;
     setBusy(!preview);
+    setRealPkgs(null); setBlendedPkgs(null); setMeasuredPreview({});
     setSynthError(null);
     try {
       const payload = await api<ComparePayload>("/api/synthesize", { weights, lambda, budget: over.budget ?? budget, compare: true, preview }, undefined, controller.signal);
@@ -1748,7 +1750,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
-        {livePreview && <p className="note" role="status">Live preview · not saved</p>}
+        {livePreview && <p className="note" role="status">{realPkgs === null ? "Updating customized plan — previous results hidden" : "Live preview · not saved"}</p>}
         {synthError && <p role="alert">{synthError}</p>}
         <p className="muted">Experimental settings, not an approved community governance rule.</p>
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
