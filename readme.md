@@ -777,6 +777,17 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Fact-check detective practice
+
+The exact-revision transit argument map (`/votes?proposal=demo-transit`, also on
+Published and proposal comparison) offers four local classification exercises
+about historical H.R. 3684. Each answer reveals a pinned Congress.gov source,
+passage locator, enactment date and editorial reasoning. These are separate from
+the fictional transit proposal and all civic votes. No score, persistence, API or
+participation receipt is created. Bundled content has no loading dependency;
+opening the full original source requires connectivity. See
+[verification and remaining review](docs/reviews/SHE-459.md).
+
 ## Live audience question wall
 
 Live QR rounds include a separate, temporary question board. Anonymous questions
