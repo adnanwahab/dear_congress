@@ -1190,3 +1190,12 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+### Journal public review checkpoint (SHE-800)
+
+The final preview shows the normalized excerpt, display name, chosen categories,
+origin and public-data/removal notice. Sharing requires an unchecked-by-default
+confirmation; edits and cancellation invalidate it. The current Journal feed loads
+browser ownership and offers Delete my entry through the existing authorized
+endpoint, including after reload. No API compatibility or governance policy changed.
+See [SHE-800 review](docs/reviews/SHE-800.md) for validation and release limits.

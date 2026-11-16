@@ -13,15 +13,20 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
   const { fireEvent, within } = await import('@testing-library/dom');
   const { default: JournalScreen } = await import('./JournalScreen');
   const root = createRoot(document.body.appendChild(document.createElement('div')));
-  const calls: { path: string; body?: unknown }[] = [];
+  const calls: { path: string; body?: unknown; method?: string }[] = [];
   let outcome = 'pending';
-  const request = async <T,>(path: string, body?: unknown): Promise<T> => {
-    calls.push({ path, body });
-    if (path.startsWith('/api/entries')) return { entries: [], nextCursor: null } as T;
-    if (path.includes('schema')) return { version: 2, needs: [] } as T;
+  let publicEntry: any = null;
+  let failDelete = false;
+  const request = async <T,>(path: string, body?: unknown, method?: string): Promise<T> => {
+    calls.push({ path, body, ...(method ? { method } : {}) });
+    if (path === '/api/state') return { ownEntryIds: publicEntry ? ['public'] : [] } as T;
+    if (path.startsWith('/api/journal/')) { if (failDelete) throw Error('denied'); publicEntry = null; return { ok: true } as T; }
+    if (path.startsWith('/api/entries')) return { entries: publicEntry ? [publicEntry] : [], nextCursor: null } as T;
+    if (path.includes('schema')) return { version: 2, needs: [{ id: 'transit', label: 'Reliable transit' }] } as T;
     if (outcome === 'failure') throw Error('sensitive server error must not be reflected');
     if (outcome === 'pending') return { status: 'pending', entryId: 'held' } as T;
-    return { entry: { id: 'public', text: 'Safe excerpt', author: 'Public name', extraction: { needs: [] } } } as T;
+    publicEntry = { id: 'public', text: 'Safe excerpt', author: 'Public name', createdAt: '2026-11-16T12:00:00Z', extraction: { needs: [] } };
+    return { entry: publicEntry } as T;
   };
   const q = () => within(document.body);
   const click = async (name: string) => { await act(async () => { fireEvent.click(q().getByRole('button', { name })); }); };
@@ -36,8 +41,19 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     expect(calls.length).toBe(baseline);
     await click('Review public excerpt');
     expect((q().getByRole('button', { name: 'Share publicly' }) as HTMLButtonElement).disabled).toBe(true);
+    const preview = within(q().getByRole('region', { name: 'Exact public preview' }));
+    expect(preview.getByText('Safe excerpt')).toBeTruthy();
+    expect(preview.getByText('Public name')).toBeTruthy();
+    expect(preview.getByText(/feed and API/).textContent).toContain('Delete my entry');
+    expect(preview.getByText('No categories selected.')).toBeTruthy();
     await click('Cancel sharing');
     expect(calls.length).toBe(baseline);
+    await confirm();
+    await act(async () => { fireEvent.click(q().getByRole('checkbox', { name: 'Reliable transit' })); });
+    expect(q().queryByRole('region', { name: 'Exact public preview' })).toBeNull();
+    await click('Review public excerpt');
+    expect(q().getByText('Categories: Reliable transit')).toBeTruthy();
+    await act(async () => { fireEvent.click(q().getByRole('checkbox', { name: 'Reliable transit' })); });
     await confirm();
     await edit('Working draft (not uploaded)', 'PRIVATE_SENTINEL revised unshared details');
     expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
@@ -76,6 +92,24 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     expect(document.body.textContent).toContain('Entry ID: public');
     expect(JSON.stringify(calls)).not.toContain('PRIVATE_SENTINEL');
     expect(dom.localStorage.length).toBe(0);
+    await act(async () => { root.render(<JournalScreen key="reload" request={request} />); });
+    Object.defineProperty(dom, 'confirm', { configurable: true, value: () => false });
+    await click('Delete my entry');
+    expect(calls.some(c => c.path.startsWith('/api/journal/'))).toBe(false);
+    Object.defineProperty(dom, 'confirm', { configurable: true, value: () => true });
+    failDelete = true;
+    await click('Delete my entry');
+    expect(document.body.textContent).toContain('Deletion could not be confirmed');
+    expect(q().getByRole('button', { name: 'Delete my entry' })).toBeTruthy();
+    failDelete = false;
+    await click('Delete my entry');
+    expect(calls.filter(c => c.path.startsWith('/api/journal/')).every(c => c.method === 'DELETE')).toBe(true);
+    expect(document.body.textContent).toContain('Entry deleted from the active public feed.');
+    expect(q().queryByRole('button', { name: 'Delete my entry' })).toBeNull();
+    await click('Use a sample experience');
+    await click('Review public excerpt');
+    expect(q().getByText(/Origin: Simulated/).textContent).toContain('civic-synthesis-demo');
+    expect((q().getByRole('button', { name: 'Share publicly' }) as HTMLButtonElement).disabled).toBe(true);
   } finally {
     await act(async () => { root.unmount(); });
     for (const key of keys) { const descriptor = previous.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }

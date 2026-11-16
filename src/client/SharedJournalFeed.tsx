@@ -5,14 +5,15 @@ import { groupJournalEntries } from './journal-groups';
 import { needTransitionName, needUrl } from './journal-motion';
 import { motionDuration } from './motion';
 
-type Props = { entries: JournalEntry[]; needs: { id: string; label: string }[]; loading: boolean; publishedId?: string };
-export function SharedJournalFeed({ entries, needs, loading, publishedId }: Props) {
+type Props = { entries: JournalEntry[]; needs: { id: string; label: string }[]; loading: boolean; publishedId?: string; ownEntryIds?: string[]; onDelete?: (id: string) => void; deleting?: boolean };
+export function SharedJournalFeed({ entries, needs, loading, publishedId, ownEntryIds = [], onDelete, deleting }: Props) {
   function story(e: JournalEntry) {
     const isNew = publishedId === e.id;
     return <article key={e.id} id={`story-${e.id}`} tabIndex={-1} data-entry-id={e.id} className={isNew ? 'journal-story-new' : undefined}>
       <div className="journal-entry-meta"><strong>{e.author || 'Participant'}</strong><time dateTime={e.createdAt}>{Number.isNaN(Date.parse(e.createdAt)) ? 'Date unavailable' : new Date(e.createdAt).toLocaleString('en-US', { timeZone: 'UTC', timeZoneName: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></div>
       <span className="sample-tag">{journalOrigin(e) === 'public' ? 'Public submission' : journalOrigin(e) === 'sample' ? 'Sample' : 'Simulated'}</span><span> · {Date.parse(e.createdAt) <= Date.now() && Date.parse(e.createdAt) >= Date.now() - 7 * 86400000 ? 'Posted in the past 7 days' : 'Outside the past 7 days or date unavailable'}</span><a href={`/journal?entry=${encodeURIComponent(e.id)}`}>Permalink</a><p>{e.text}</p>
       <div className="journal-need-tags">{e.extraction.needs.map((n, index) => <a key={n.id} href={needUrl(n.id, e.id)} style={isNew ? { animationDelay: `${motionDuration(260 + index * 160)}ms`, viewTransitionName: needTransitionName(n.id) } : undefined}>{needs.find(v => v.id === n.id)?.label ?? n.id}<span className="journal-need-link"> · See it in Needs →</span></a>)}</div>
+    {ownEntryIds.includes(e.id) && onDelete && <button type="button" className="outline" disabled={deleting} onClick={() => onDelete(e.id)}>Delete my entry</button>}
     </article>;
   }
   return <>
