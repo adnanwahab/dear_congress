@@ -88,13 +88,18 @@ interface AppState {
 }
 
 const JOURNAL_CREATE_ENDPOINTS = ["/api/journal", "/api/entries", "/api/publish_draft"];
+const pendingMutationKeys = new Map<string, string>();
 async function api<T>(path: string, body?: unknown, method?: string, signal?: AbortSignal): Promise<T> {
   const resolvedMethod = (method ?? (body === undefined ? "GET" : "POST")).toUpperCase();
+  const retryable = resolvedMethod === "POST" && [...JOURNAL_CREATE_ENDPOINTS, "/api/votes"].includes(path);
+  const attempt = `${path}\n${JSON.stringify(body)}`;
+  if (retryable && !pendingMutationKeys.has(attempt)) pendingMutationKeys.set(attempt, crypto.randomUUID());
   const res = await fetch(path, {
     method: resolvedMethod,
     signal,
     headers: {
       "content-type": "application/json",
+      ...(retryable ? { "Idempotency-Key": pendingMutationKeys.get(attempt)! } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -113,6 +118,7 @@ async function api<T>(path: string, body?: unknown, method?: string, signal?: Ab
     throw new MutationError(msg || "Request failed", res.status, res.headers.get("Retry-After"));
   }
 
+  if (retryable) pendingMutationKeys.delete(attempt);
   if (resolvedMethod === "POST" && JOURNAL_CREATE_ENDPOINTS.some((p) => path.startsWith(p))) {
     window.dispatchEvent(new CustomEvent("journal:created", { detail: { path } }));
   }
