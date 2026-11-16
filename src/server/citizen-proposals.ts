@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import {
-  ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
+  CONTRIBUTION_ROLES, ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
   type AdvisoryChoice, type CitizenProposalInput, type CitizenProposalRecord,
   type CitizenProposalView, type ProposalJurisdiction,
 } from "../shared/citizen-proposals";
@@ -98,6 +98,7 @@ export function citizenProposalView(record: CitizenProposalRecord, voterId?: str
     ...(record.jurisdictionName ? { jurisdictionName: record.jurisdictionName } : {}),
     ...(record.supportingInfo ? { supportingInfo: record.supportingInfo } : {}),
     ...(record.sourceEntryId ? { sourceEntryId: record.sourceEntryId } : {}),
+    credits: proposalCreditsView(record, voterId),
     status: "published",
     advisory: true,
     createdAt: record.createdAt,
@@ -243,6 +244,49 @@ export function objectCitizenProposal(store: CitizenProposalStore, id: string, v
   return record;
 }
 
+/** Revision binds credits to the immutable citizen text, never a journal or repository ballot. */
+export function proposalCreditRevision(record: CitizenProposalRecord) {
+  return hash(JSON.stringify(["citizen", record.id, record.proposedChange]));
+}
+function proposalCreditsView(record: CitizenProposalRecord, voterId?: string) {
+  const credits = record.credits ?? [];
+  return {
+    revision: proposalCreditRevision(record),
+    version: credits.reduce((sum, c) => sum + c.events.length, 0),
+    contributors: credits.flatMap(c => {
+      const latest = c.events.at(-1);
+      return latest?.action === "opt-in" ? [{ alias: latest.preference === "pseudonym" ? c.alias! : "Unnamed contributor", role: latest.role }] : [];
+    }),
+    history: credits.flatMap(c => c.events.map(({ version, action, role, preference, createdAt }) => ({ version, action, role, preference, createdAt }))).sort((a,b) => a.version - b.version),
+    ownActive: !!voterId && credits.some(c => c.ownerHash === voterHash(voterId) && c.events.at(-1)?.action === "opt-in"),
+  };
+}
+export function creditCitizenProposal(store: CitizenProposalStore, id: string, voterId: string, input: unknown) {
+  const record = findCitizenProposal(store, id);
+  const owner = voterHash(voterId);
+  const body = objectBody(input);
+  const view = proposalCreditsView(record, voterId);
+  if (body.revision !== view.revision || body.expectedVersion !== view.version) throw new CitizenProposalError("Credits or proposal revision changed. Reload before saving.", 409);
+  const existing = record.credits?.find(c => c.ownerHash === owner);
+  const previous = existing?.events.at(-1);
+  if (body.action === "remove") {
+    if (!existing || previous?.action !== "opt-in") throw new CitizenProposalError("No active credit belongs to this browser.", 403);
+    existing.events.push({ ...previous, version: view.version + 1, action: "remove", createdAt: new Date().toISOString() });
+    delete existing.alias;
+    return record;
+  }
+  if (body.action !== "opt-in" || body.confirmedPublic !== true) throw new CitizenProposalError("Explicit consent is required for public credit.");
+  if (!CONTRIBUTION_ROLES.includes(body.role as typeof CONTRIBUTION_ROLES[number]) || (body.preference !== "pseudonym" && body.preference !== "unnamed")) throw new CitizenProposalError("Choose a contribution role and attribution preference.");
+  const alias = body.preference === "pseudonym" && typeof body.alias === "string" ? body.alias.trim() : undefined;
+  if (body.preference === "pseudonym" && (!alias || alias.length > 80 || /[\x00-\x1f\x7f]/.test(alias))) throw new CitizenProposalError("Choose a pseudonym of 1–80 characters without control characters.");
+  if (view.version >= 500) throw new CitizenProposalError("Credit history is full. Removal remains available.", 409);
+  const credit = existing ?? { ownerHash: owner, events: [] };
+  credit.alias = alias;
+  credit.events.push({ version: view.version + 1, action: "opt-in", role: body.role as typeof CONTRIBUTION_ROLES[number], preference: body.preference, createdAt: new Date().toISOString() });
+  if (!existing) (record.credits ??= []).push(credit);
+  return record;
+}
+
 async function readBody(req: Request) {
   // These small text forms have no reason to accept an unbounded request body.
   const maxBytes = 64 * 1024;
@@ -334,6 +378,18 @@ export function createCitizenProposalHandlers(deps: {
         const record = voteCitizenProposal(store, id, voter, body);
         try { await deps.save(); }
         catch (error) { record.votesByVoterHash = previous; throw error; }
+        return { proposal: citizenProposalView(record, voter) };
+      });
+    }),
+    credit: (req: Request, id: string) => handle(async () => {
+      const voter = requestVoter(req, true)!;
+      const body = await readBody(req);
+      return serialized(async () => {
+        const record = findCitizenProposal(deps.getStore(), id);
+        const previous = structuredClone(record.credits);
+        creditCitizenProposal(deps.getStore(), id, voter, body);
+        try { await deps.save(); }
+        catch (error) { record.credits = previous; throw error; }
         return { proposal: citizenProposalView(record, voter) };
       });
     }),
