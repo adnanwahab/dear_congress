@@ -25,3 +25,14 @@ test('untrusted metadata cannot inject markup or a source navigation', async () 
   expect(html).not.toContain('href="javascript:');
   expect(html).toContain('Source unavailable');
 });
+test('public arguments retain both sides, uncertainty and sample revision isolation', async () => {
+  const html = await proposalEmbed(request('?proposal=demo-transit')).text();
+  for (const text of ['Source label:', 'Transit planning', 'demo-transit', 'Reasons for', 'Concerns', 'Counterargument:', 'Evidence missing:', 'unverified assertions', 'No governmental authority']) expect(html).toContain(text);
+  expect(html).not.toMatch(/<script|<form|<button|<img|<link|<iframe/);
+  const transit = DEMO_ITEMS.find(item => item.id === 'demo-transit')!;
+  const changed = await proposalEmbed(request('?proposal=demo-transit'), [{ ...transit, proposedText: 'Changed revision' }]).text();
+  expect(changed).toContain('No arguments available for this sample revision.');
+  expect(changed).not.toContain('More frequent evening service');
+  const housing = await proposalEmbed(request('?proposal=demo-housing')).text();
+  expect(housing).toContain('No arguments available for this sample revision.');
+});
