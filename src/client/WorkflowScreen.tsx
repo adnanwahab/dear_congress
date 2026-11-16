@@ -32,12 +32,12 @@ import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSe
 import { advisoryMutation, type VoteRequest } from './advisory-mutation';
 import { MutationStatus, type MutationState } from './mutation-status';
 import { DailyQuestion } from './DailyQuestion';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import AmendmentEditor from './AmendmentEditor';
 import { OutcomeTimeline } from './OutcomeTimeline';
-import { ResponseComposition } from './ResponseComposition';
+
 import { EvidenceDocket } from './EvidenceDocket';
 import { PolicyMeasurements } from './PolicyMeasurements';
 import { OfficialBills } from './OfficialBills';
@@ -48,6 +48,8 @@ import { ProposalProvenance, provenanceText } from './ProposalProvenance';
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const ResponseComposition = lazy(() => import('./ResponseComposition').then(module => ({ default: module.ResponseComposition })));
+
 const route = (stage: Stage, proposal?: string | null) => {
   const topic = topicById(new URLSearchParams(window.location.search).get('topic') ?? '');
   return topic ? topicStageUrl(stage, topic.id, proposal ?? undefined) : stageRoute(stage, proposal);
@@ -204,7 +206,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
-    {stage === 'outcomes' && <ResponseComposition />}
+    {stage === 'outcomes' && <Suspense fallback={<p role="status">Loading illustrative response composition…</p>}><ResponseComposition /></Suspense>}
     {loading && !data && <WorkflowSkeleton stage={stage} />}
     {['feed', 'votes', 'draft'].includes(stage) && data && !loading && !loadError && <ProposalCompare key={window.location.search} items={items} current={item} search={window.location.search} />}
     {['published', 'feed', 'outcomes'].includes(stage) && <OfficialBills request={request} />}
