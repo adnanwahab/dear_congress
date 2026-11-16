@@ -37,6 +37,6 @@ test('proposal loading and failure never fabricate a practice result', async ({ 
   await expect(page.getByRole('alert').filter({ hasText: 'Could not load sample proposals' })).toBeVisible();
   await expect(page.locator('.fact-check-game')).toHaveCount(0);
   await page.unroute('**/api/demo*');
-  await page.getByRole('button', { name: /Retry/ }).click();
+  await page.getByRole('button', { name: 'Retry loading proposals', exact: true }).click();
   await expect(page.locator('.fact-check-game')).toBeVisible();
 });
