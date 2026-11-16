@@ -1,4 +1,3 @@
-import { SaveClaim } from './EvidenceNotebook';
 import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
@@ -33,7 +32,7 @@ import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSe
 import { advisoryMutation, type VoteRequest } from './advisory-mutation';
 import { MutationStatus, type MutationState } from './mutation-status';
 import { DailyQuestion } from './DailyQuestion';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import AmendmentEditor from './AmendmentEditor';
@@ -48,6 +47,7 @@ import { ProposalProvenance, provenanceText, sourceUrl } from './ProposalProvena
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 const route = (stage: Stage, proposal?: string | null) => {
   const topic = topicById(new URLSearchParams(window.location.search).get('topic') ?? '');
   return topic ? topicStageUrl(stage, topic.id, proposal ?? undefined) : stageRoute(stage, proposal);
@@ -201,7 +201,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </section>}
     {item && !loading && !loadError && <ProposalExplainer key={JSON.stringify([item.id, item.summary, item.proposedText, item.jurisdiction])} item={item} />}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
-    {item && !loading && !loadError && sourceUrl(item) && <SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} />}
+    {item && !loading && !loadError && sourceUrl(item) && <Suspense fallback={null}><SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} /></Suspense>}
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
