@@ -1,4 +1,5 @@
 import { SaveClaim } from './EvidenceNotebook';
+import { SourceHealth } from './SourceHealth';
 import { SourceRevisionAlert } from './SourceRevisionAlert';
 import { DatasetImportWorkbench } from './DatasetImportWorkbench';
 import { ProvenanceBadge } from './ProvenanceBadge';
@@ -10,7 +11,7 @@ import { StudyQualityMatrix } from './StudyQualityMatrix';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
-  return <><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
+  return <><SourceHealth /><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
     <p>No verified implemented policy or measured policy effects are registered. Replies and committee milestones are activity, not evidence of policy benefit.</p>
     <DatasetImportWorkbench />

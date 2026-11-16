@@ -157,6 +157,10 @@ This independent prototype explores how everyday needs can inform discussion and
 This guide uses plain English. Human-reviewed Spanish and broader plain-language access remain pending under [SHE-318](https://linear.app/shel-bernstein/issue/SHE-318/access-human-reviewed-spanish-translation-and-plain-language-civic). No approved Spanish translation is available here yet. Changes to vote, publication, source and deletion wording need the same translation review before they can be labeled reviewed.
 
 
+## Data-source health
+
+Review [data-source health](/outcomes#source-health) for recorded fetch dates, retained-data incidents and missing sources. This is a snapshot, not a live availability probe. Schema changes and human review remain unknown unless recorded. Starter fixtures and synthetic estimates are not verified measurements; source links alone do not prove a claim. Source health does not establish policy effects. Use Show export / print text to copy the dated report.
+
 ### Sharing a sample decision
 
 Share preview beside the sample advisory choices creates a downloadable card and copyable alt text. Review it before downloading. It includes the public fictional proposal, a content version and background-source limitations. Chosen stance is off by default and optional. No identity, journals, vote receipt identifiers, tallies or live-round information are included. The card is non-binding, not an official election, and not proof of a saved vote. Downloaded copies cannot be withdrawn from other people.

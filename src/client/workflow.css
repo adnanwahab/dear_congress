@@ -135,6 +135,15 @@
   .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
 }
 
+.source-health { overflow-wrap: anywhere; }
+.source-health button { min-height: 44px; margin-block: 4px; }
+.source-health button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+@media print {
+  .source-health button { display: none; }
+  .source-health { color: black; background: white; }
+  .source-health .card { break-inside: avoid; }
+}
+
 .evidence-notebook { min-width: 0; overflow-wrap: anywhere; }
 .evidence-notebook label { display: block; }
 .evidence-notebook textarea { display: block; box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; }

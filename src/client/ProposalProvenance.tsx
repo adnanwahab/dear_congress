@@ -58,6 +58,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
     {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
     {(!url || !item.background?.publisher) && <div role="note">Unsupported source — a safe HTTPS original and publisher are required.</div>}
     <div>{freshness(item)}</div>
+    <div role="note">Editorial background; successful fetch and schema monitoring are not recorded.</div>
     <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
     <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
     {claims.length > 0 && <ClaimEvidence claims={claims} />}
