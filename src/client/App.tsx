@@ -33,11 +33,18 @@ import type {
 import { IDEA_STAGES } from "../engine/types";
 import { livingCityUrl } from "./living-city-link";
 import { constitutionCityUrl } from "./constitution-city-link";
-import { CitizenProposalsApp, isCitizenProposalPath } from "./CitizenProposals";
+
 import { loadMapLibre } from "./maplibre";
 import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
 import { LawBehaviorExplorer } from "./LawBehaviorExplorer";
+
+// Lazy-load citizen proposal routes to keep editor dependencies out of the initial shell.
+const CitizenProposalsApp = lazy(() => import("./CitizenProposals").then(m => ({ default: m.CitizenProposalsApp })));
+const isCitizenProposalPath = (pathname: string) => {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  return path === "/votes" || path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+$/.test(path);
+};
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
 type StageStatus = "idle" | "running" | "done" | "error";

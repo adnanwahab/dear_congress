@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from "react";
+import { NegotiationTabletop } from "./NegotiationTabletop";
 import { EVIDENCE_QUESTIONS, PILOT_SCOPE, PILOT_TEXT, evidenceUpdateUrl } from "./evidence-conditions";
 import "./evidence-conditions.css";
 import type { PolicyComparison } from "../server/policy-comparison";
@@ -25,7 +26,7 @@ export function PolicyComparisonPanel() {
     if (id) void load(`/api/policy-comparisons/${encodeURIComponent(id)}`);
   }, []);
   const valid = seed.trim() !== "" && Number.isInteger(Number(seed)) && Number(seed) >= 0 && Number(seed) <= 0xffffffff;
-  return <section className="card" aria-label="Policy comparison pilot">
+  return <><NegotiationTabletop /><section className="card" aria-label="Policy comparison pilot">
     <h3>Compare frozen policy inputs</h3>
     <p>Simulation, not forecast. Advisory only. This pilot captures two packages using default settings (budget 40, real voices); it does not use the customized plan above.</p>
     <fieldset disabled={busy}>
@@ -40,7 +41,7 @@ export function PolicyComparisonPanel() {
     {!valid && <p role="alert">Seed must be a whole number from 0 to 4,294,967,295.</p>}
     {error && <p role="alert">{error}</p>}
     {comparison && <ComparisonDetails comparison={comparison} />}
-  </section>;
+  </section></>;
 }
 
 export function ComparisonDetails({ comparison }: { comparison: PolicyComparison }) {

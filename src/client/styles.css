@@ -1206,3 +1206,20 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 .surprise-explorer { margin-block: 1rem; overflow-wrap: anywhere; }
 .surprise-explorer button, .surprise-explorer a { min-height: 44px; display: inline-flex; align-items: center; }
 .surprise-explorer article { margin-block: 1rem; }
+
+.plan-room { margin-block: 1rem; padding: .75rem; border: 1px solid currentColor; }
+.plan-room input, .plan-room select { max-width: 100%; box-sizing: border-box; }
+.plan-room label { display: block; margin-block: .75rem; overflow-wrap: anywhere; }
+.plan-room li, .plan-room p { overflow-wrap: anywhere; }
+
+/* Dedicated handles leave horizontal scrollers and public controls untouched. */
+.chapter-edge { position: fixed; top: 42%; width: 24px; min-height: 56px; padding: 0; z-index: 40; touch-action: pan-y; font-size: 28px; }
+.chapter-edge-left { left: 0; }
+.chapter-edge-right { right: 0; }
+.chapter-edge:focus-visible { outline: 3px solid currentColor; outline-offset: -3px; }
+.chapter-peek { position: fixed; top: 25%; width: min(300px, calc(100vw - 64px)); max-height: 60vh; overflow: auto; padding: 16px; background: Canvas; color: CanvasText; border: 2px solid currentColor; border-radius: 12px; z-index: 39; box-shadow: 0 8px 32px #0003; }
+.chapter-peek-left { left: 30px; }
+.chapter-peek-right { right: 30px; }
+.chapter-preview { pointer-events: none; }
+.chapter-peek a, .chapter-peek button { display: block; margin-top: 12px; }
+.chapter-peek-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

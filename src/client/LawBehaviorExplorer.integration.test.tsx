@@ -67,6 +67,8 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Receipt checks passed');
     expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
+    expect(host.textContent).toContain('Simulated fiction, not prediction');
+    expect(host.querySelector('a[download]')).not.toBeNull();
     expect(host.textContent).toContain('World B · edited law');
     expect(host.textContent).toContain('What modeled residents did differently');
     expect(host.textContent).toContain('Resident 1');
@@ -118,6 +120,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     expect(host.querySelector('#law-outcome-trace')).toBeNull();
     expect(host.textContent).toContain('The input has changed');
+    expect(host.querySelector('a[download]')).toBeNull();
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
     expect(requests[1]?.body.implementationStrength).toBe(.5);
@@ -167,6 +170,7 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>resolve!(Response.json(mismatch)));
   expect(host.textContent).toContain('does not match this request');
   expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  expect(host.querySelector('a[download]')).toBeNull();
   browser.location.href='https://civic-synthesis.fly.dev/synth?civicContext=1&simulationShare=1&lawId=83&implementationStrength=1&seed=42&population=24&revision=1&modelVersion=old.v1&parameter=implementationStrength&horizon=720&clock=minute';
   await act(async()=>root.render(<LawBehaviorExplorer key="shared" seed={99} hblOrigin="https://happybearlandia.fly.dev"/>));
   expect(host.textContent).toContain('Shared model version: old.v1');

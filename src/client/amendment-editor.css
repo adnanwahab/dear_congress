@@ -48,3 +48,9 @@ html[data-motion="off"] .amendment-tree li { animation: none; }
 .amendment-graph text { fill: currentColor; font-size: 11px; }
 @media (prefers-reduced-motion: reduce) { .amendment-graph path { animation: none; } }
 html[data-motion="off"] .amendment-graph path { animation: none; }
+
+.clause-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; border-top: 1px solid var(--line); padding-block: 1rem; }
+.clause-row > * { min-width: 0; }
+.clause-row article { border-inline-start: 3px solid var(--line); padding-inline-start: .75rem; margin-block: .75rem; }
+.amendment-editor code { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .clause-row { grid-template-columns: minmax(0, 1fr); } }
