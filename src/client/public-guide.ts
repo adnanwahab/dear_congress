@@ -141,6 +141,8 @@ Acceptance is a self-reported local review of the exact draft. Any data or metad
 
 The [evidence challenge docket](/outcomes#evidence-docket) demonstrates sourced, conflicting and missing-source cases. Prepare a local draft tied to an exact claim revision and source; include new evidence, dates, limitations and the requested correction. The prototype sends nothing and loses drafts on reload. Export before leaving. Example decisions are not verified human reviews. A live private intake, moderator review and independent appeal service remain unavailable. Never include personal details in public evidence.
 
+The [public-data gaps atlas](/outcomes#data-gaps-atlas) lists a sourced metric definition and clearly labeled fictional conflicting and missing-source research cases. Missing evidence means unknown, never good outcomes. Filter by jurisdiction, topic, category or metric; export visible cases with dates, limitations and pending human-review history, or use the text/print fallback. Source inspection dates are not measurement dates. The bundled inventory remains readable after loading while offline; linked agencies and sources require a connection.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
