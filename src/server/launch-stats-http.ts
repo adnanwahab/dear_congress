@@ -28,7 +28,10 @@ export function createStatsHTTP(options: {
         const body = await boundedJson(req, 1024);
         if (typeof body.path !== "string" || body.path.length > 250 || body.path.includes("?") || body.path.includes("#")) return finish(new Response(null, { status: 400 }));
         let accepted = false;
-        options.record(() => { accepted = options.stats.view(body.path as string); });
+        options.record(() => {
+          accepted = options.stats.view(body.path as string);
+          if (accepted && body.distribution) options.stats.distribution(body.distribution, "landing");
+        });
         return finish(new Response(null, { status: accepted ? 204 : options.healthy() ? 400 : 503 }));
       } catch { return finish(new Response(null, { status: 400 })); }
     },

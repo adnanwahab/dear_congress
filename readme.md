@@ -1190,3 +1190,23 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Optional distribution attribution (SHE-835)
+
+Launch links can include `?cs_source=newsletter&cs_campaign=launch` (combine with
+existing query parameters normally). Sources: community, newsletter, social,
+direct. Campaigns: launch, comprehension, usefulness. Arbitrary campaign strings
+are rejected. The browser removes these two parameters and offers Allow / No
+thanks. No campaign request is sent before consent. Consent is page-memory only,
+expires after 30 minutes, ends on reload, and has a Stop control. No campaign ID
+or marker is joined to identities, ballot targets, journal IDs or contacts.
+
+The authenticated `/admin/stats` dashboard shows daily source/campaign/normalized
+landing-route aggregates for consenting landings and first accepted real journal
+publication or civic sandbox vote through the shared App request helper. Other
+participation surfaces are not instrumented. This is approximate page-session
+activity, not unique visitors, representative participation, understanding or
+causal conversion. Concurrent actions, reloads, forged headers and failed delivery
+can skew counts; no cryptographic or human verification is claimed. Query markers
+are removed client-side, so the initial hosting request/logs can still contain
+them. Avoid personal details in links. Aggregates have no automatic expiry.
