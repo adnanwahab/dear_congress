@@ -4,7 +4,7 @@ import { PROVENANCE_AS_OF, PROVENANCE_LIMIT, exportMethodology, provenanceClaims
 export default function ProvenanceExplorer() {
   const claims = provenanceClaims();
   const methodology = exportMethodology(claims, PROVENANCE_AS_OF);
-  return <section id="provenance-explorer" aria-labelledby="provenance-title" className="provenance-explorer">
+  return <section id="provenance-details" aria-labelledby="provenance-title" className="provenance-explorer">
     <h3 id="provenance-title">Peel back the evidence layers</h3>
     <p>{PROVENANCE_LIMIT}</p>
     <p>Follow claim → source document → extracted measurement → transformation → UI. Open each layer with Enter or Space; Tab reaches source links in reading order. This local example needs no network request. Source links may change on main; fixture versions below identify this example, not an immutable archive.</p>
