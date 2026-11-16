@@ -6,7 +6,15 @@ import { Window } from 'happy-dom';
 import { ArgumentMap } from './ArgumentMap';
 import { BRIEFING_CHAPTERS } from './AudioBriefing';
 import { DEMO_ITEMS } from '../engine/demo';
-const item = DEMO_ITEMS.find(i => i.id === 'demo-transit')!;
+// Exercise the pinned historical script revision; newly edited summaries fail closed.
+const { keyCaveat, ...current } = DEMO_ITEMS.find(i => i.id === 'demo-transit')!;
+const item = { ...current, summary: 'Pilot 15-minute bus service on three high-demand corridors until 10 p.m. Measure missed trips, access to jobs, and ridership before expanding.' };
+
+test('new summary revision does not silently reuse the pinned briefing', () => {
+  const html = renderToStaticMarkup(<ArgumentMap item={DEMO_ITEMS.find(i => i.id === 'demo-transit')!} />);
+  expect(html).toContain('No briefing is available for this source revision');
+  expect(html).not.toContain('Play briefing');
+});
 
 test('briefing is readable without speech, symmetric, cited and bound to source revision', () => {
   const html = renderToStaticMarkup(<ArgumentMap item={item} />);
