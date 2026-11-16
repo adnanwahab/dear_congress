@@ -35,7 +35,7 @@ test('dropdown and pointer moves share saved stages; cancelled drags and reduced
     const handle = host.querySelector('button')!;
     handle.setPointerCapture = () => {};
     document.elementFromPoint = () => host.querySelector('[data-sponsor-lane="3"]');
-    const pointer = (type: string) => handle.dispatchEvent(new win.PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, clientX: 20, clientY: 20 }) as unknown as Event);
+    const pointer = (type: string) => handle.dispatchEvent(new win.PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, pointerType: 'touch', clientX: 20, clientY: 20 }) as unknown as Event);
     await act(async () => { pointer('pointerdown'); });
     await act(async () => { pointer('pointermove'); });
     await act(async () => { pointer('pointercancel'); });
@@ -44,6 +44,10 @@ test('dropdown and pointer moves share saved stages; cancelled drags and reduced
     await act(async () => { pointer('pointermove'); });
     await act(async () => { pointer('pointerup'); });
     expect(saved).toEqual([2, 3]);
+    await act(async () => { (host.querySelector('.local-undo button') as HTMLButtonElement).click(); });
+    expect(saved).toEqual([2, 3, 2]);
+    expect(host.querySelector('[data-sponsor-lane="2"] article')).not.toBeNull();
+    expect(host.textContent).toContain('Restored Sample to Replied');
     let snapshots = 0;
     document.startViewTransition = ((options: { update: () => void; types: string[] }) => { expect(options.types).toEqual(['sponsor-move']); snapshots++; options.update(); return { ready: Promise.resolve() }; }) as any;
     let updates = 0;

@@ -1,0 +1,6 @@
+.civic-festival { margin-bottom: 24px; min-width: 0; overflow-wrap: anywhere; }
+.festival-sessions { display: grid; gap: 12px; }
+.civic-festival details { border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.civic-festival summary { cursor: pointer; min-height: 44px; align-content: center; }
+.civic-festival a { display: inline-block; padding-block: 10px; }
+.civic-festival :is(summary, a, button):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

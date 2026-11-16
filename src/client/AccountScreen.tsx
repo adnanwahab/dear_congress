@@ -1,3 +1,4 @@
+import { CivicPassport } from './CivicPassport';
 import { EvidenceNotebook } from './EvidenceNotebook';
 import { ParticipationNotice } from './ParticipationNotice';
 import './workflow.css';
@@ -6,6 +7,7 @@ export default function AccountScreen() {
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
     <EvidenceNotebook />
+    <CivicPassport />
     <section className="panel"><h2>Unverified browser votes — advisory</h2>
       <p>No identity verification is required to take part. Your signed browser cookie saves your choice so you can change it. Clearing cookies can create another browser identity; these counts do not measure unique people.</p>
       <p>Anonymous does not mean secret from the service: current advisory choices are stored with a browser identifier. Do not submit identity documents or eligibility credentials. This page collects none.</p>
