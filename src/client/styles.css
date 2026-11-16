@@ -1276,6 +1276,17 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 .civic-shell :is(.workflow-two, .workflow-feed-layout, .workflow-feed-list, .workflow-feed-item, .panel) { min-width: 0; }
 .sound-control details[open] button { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
 
+.stage-peek { position: relative; min-width: 0; }
+.stage-peek-link { display: block; }
+.stage-peek-toggle { position: absolute; top: 0; right: 0; border: 0; border-radius: 50%; background: #f0ebff; color: #493b80; width: 24px; height: 24px; font-size: 18px; }
+.stage-peek-window { position: fixed; z-index: 110; bottom: 145px; left: 50%; transform: translateX(-50%); width: min(360px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--border, #aaa); border-radius: 18px; background: var(--surface, Canvas); color: var(--text, CanvasText); box-shadow: 0 12px 48px #0005; animation: peek-in 150ms ease-out; }
+.stage-peek-window strong { display: block; font-size: 20px; margin: 8px 0; }
+.stage-peek-window p { line-height: 1.5; }
+.stage-peek-caption { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.stage-peek-window button { display: block; margin-top: 12px; }
+@keyframes peek-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 600px) { .stage-peek:has(.secondary-destination) { display: none; } .more-destinations .stage-peek { display: block; } .stage-peek-window { bottom: 90px; } }
+@media (prefers-reduced-motion: reduce) { .stage-peek-window { animation: none; } }
 
 .decision-boundary { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); }
 .decision-boundary input[type=range] { display: block; width: 100%; min-height: 44px; }
