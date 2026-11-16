@@ -20,10 +20,10 @@ export function readProposalSnapshot(): DemoPayload | null {
       i && typeof i.id === 'string' && typeof i.title === 'string' && Array.isArray(i.sponsors) &&
       ['summary', 'currentText', 'proposedText', 'source', 'sourceUrl', 'topic', 'jurisdiction'].every(key => typeof i[key] === 'string') &&
       ['support', 'oppose', 'unsure'].every(key => typeof i[key] === 'number')) &&
-      value.votes && typeof value.closesAt === 'string') return value;
+      value.votes && typeof value.closesAt === 'string') return { ...value, votes: {}, browserCounts: {} };
   } catch {}
   return null;
 }
 export function saveProposalSnapshot(value: DemoPayload) {
-  try { sessionStorage.setItem(SNAPSHOT, JSON.stringify(value)); } catch {}
+  try { sessionStorage.setItem(SNAPSHOT, JSON.stringify({ ...value, votes: {}, browserCounts: {} })); } catch {}
 }

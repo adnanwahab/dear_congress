@@ -18,7 +18,7 @@ const request: any = async (path: string, body: any) => {
   if (path === '/api/state') return { needs: [], user: { allocation: {} } };
   // Reads succeed until a vote is sent; refreshes after a vote fail (other panels such as
   // today's question may also read /api/demo, so count by phase rather than by call).
-  if (path === '/api/demo') { if (refreshFails) throw new Error('refresh failed'); return payload; }
+  if (path === '/api/demo') { if (refreshFails) throw new Error('refresh failed'); return structuredClone(payload); }
   posts++; bodies.push(body); refreshFails = true; return pending;
 };
 async function mount() {
@@ -49,6 +49,22 @@ await act(async () => resolve({ ok: true }));
 assert.ok(document.body.textContent!.includes('Server confirmed advisory choice for'));
 assert.ok(q().getByRole('alert').textContent!.includes('Updated proposal counts could not be loaded'));
 assert.equal(q().queryByRole('button', { name: 'Retry exact advisory choice' }), null);
+assert.ok(document.body.textContent!.includes('Snapshot may be stale'));
+assert.equal(document.querySelector('.advisory-bars [aria-pressed="true"]'), null);
+// The next fetch repairs both the browser choice and its separate tally.
+refreshFails = false;
+payload.votes['demo-transit'] = -1;
+payload.browserCounts['demo-transit'] = { support: 0, oppose: 1, unsure: 0 };
+await act(async () => fireEvent.click(q().getByRole('button', { name: 'Refresh advisory counts' })));
+assert.ok(q().getByRole('button', { name: /Cast advisory vote: Oppose, selected/ }));
+assert.ok(document.body.textContent!.includes('Support: 0 · Oppose: 1 · Not sure: 0'));
+assert.ok(document.body.textContent!.includes('Snapshot fetched at'));
+// A withdrawal in another tab is reconciled when this tab regains focus.
+delete payload.votes['demo-transit'];
+payload.browserCounts['demo-transit'] = { support: 0, oppose: 0, unsure: 0 };
+await act(async () => { window.dispatchEvent(new Event('focus')); });
+assert.equal(document.querySelector('.advisory-bars [aria-pressed="true"]'), null);
+assert.ok(document.body.textContent!.includes('Support: 0 · Oppose: 0 · Not sure: 0'));
 await act(async () => root.unmount());
 refreshFails = false;
 await mount();

@@ -333,3 +333,19 @@ has a self-declared activity source and local saved date; neither proves civic
 eligibility or verified activity. JSON export, selective delete and confirmed
 reset affect only this log. Drafts, follows, public records and actual votes
 stay in their original stores. See [scope and validation](reviews/SHE-533.md).
+
+## Ordinary `/votes` tally freshness (SHE-939)
+
+The sample workflow keeps illustrative totals separate from unverified browser
+counts. Browser choices/counts are not restored from the motion cache. They are
+read together from `/api/demo` on entry, every 30 seconds while visible, on
+focus/visibility return, on reconnect and after a vote attempt. **Refresh advisory
+counts** requests a new snapshot. Failed refreshes retain labeled stale counts
+and hide the saved-choice highlight until the next successful fetch. Successful
+reads show their fetch time and warn that other choices may have changed since.
+Older in-flight responses cannot replace newer reads or cross a vote attempt.
+The daily question on `/votes` shares the same snapshot. These periodic counts
+are neither verified turnout nor an instantaneous public poll. Hidden/offline
+browser timers do not guarantee a refresh deadline. The older citizen proposal
+board and temporary SSE LiveRound keep their separate API and refresh contracts.
+See [SHE-939](reviews/SHE-939.md) for reliability measurements and staged rollout.
