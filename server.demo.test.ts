@@ -94,6 +94,21 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     expect(changed.items).toEqual(DEMO_ITEMS);
     expect(changed.browserCounts['demo-housing']).toEqual({ support: 12, oppose: 1, unsure: 0 });
     expect(changed.verified).toEqual({ status: 'unavailable' });
+    // Concurrent replacements, withdrawals and an unsure choice must reconcile
+    // from persisted records, never from illustrative totals or cached reads.
+    const updates = await Promise.all([
+      post('alice', { withdrawVotes: ['demo-housing'] }),
+      post('parallel-0', { votes: [{ ...vote, stance: 0 }] }),
+      post('parallel-1', { votes: [{ ...vote, stance: -1 }] }),
+      post('parallel-2', { withdrawVotes: ['demo-housing'] }),
+    ]);
+    for (const response of updates) expect(response.status).toBe(200);
+    const withdrawn = await (await get('alice')).json() as DemoPayload;
+    expect(withdrawn.votes).toEqual({});
+    expect(withdrawn.browserCounts['demo-housing']).toEqual({ support: 9, oppose: 1, unsure: 1 });
+    const disk = await Bun.file(path).json();
+    expect(demoPayload(disk.votesByVoter, 'unrelated').browserCounts).toEqual(withdrawn.browserCounts);
+    expect(withdrawn.items).toEqual(DEMO_ITEMS);
   } finally {
     server?.stop(true);
     for (const [key,value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
