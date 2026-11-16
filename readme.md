@@ -771,6 +771,15 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+### Neighborhood budget demo
+
+`/map` includes a fictional nine-block public-project sandbox. Drag projects or
+select and place with native buttons (touch and keyboard); switch to a vertical
+list for linear reading. A fixed 100-credit budget, replacements/refunds and
+unique-block coverage use `neighborhood-budget-v1` assumptions disclosed in the
+section. Allocations exist only in component memory, with no API or persistence,
+and never feed voting, synthesis or actual budget decisions.
+
 ## Community learning embed (v1)
 
 In `/feed`, select a sample and expand “Embed this sample on a community website”

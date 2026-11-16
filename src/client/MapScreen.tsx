@@ -1,4 +1,5 @@
 import { CountyEventHeatmap } from "./CountyEventHeatmap";
+import { NeighborhoodBudget } from "./NeighborhoodBudget";
 import { CivicHeader } from "./CivicHeader";
 import { motionDisabled, motionDuration } from "./motion";
 import { tourState } from './demo-tour';
@@ -58,6 +59,7 @@ export default function MapScreen() {
     <CivicHeader stage="National sandbox" />
     <main id="main-content" tabIndex={-1} className="civic-main map-main">
       <section className="map-heading"><div><p className="map-eyebrow">Illustrative county sandbox</p><h1>Explore a modeled county plan.</h1><p>County shapes show synthetic requirements, not constituent votes. Improve the sample plan to explore modeled support.</p></div><div className="county-live"><span className={running ? 'pulse' : ''} />{complete ? 'Simulation complete' : running ? 'Simulation running' : 'Simulation ready'}</div></section>
+      <NeighborhoodBudget />
       <HeaderMetrics agreed={agreed} round={round} />
       <p className="county-disclosure">Real verified county participation: unavailable. Actual participating people and organizations: unavailable; no verified source or observation timestamp exists. No verified county participation feed is connected. Real county support and its measured denominator are also unavailable.</p>
       <CountyCountMethodology supported={agreed} total={counties.length} revision={round} />
