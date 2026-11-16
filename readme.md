@@ -709,6 +709,14 @@ illustrative catalog edges remain separate; metric nodes are targets only.
 Official bills and verified measurements remain unavailable until reviewed source
 bindings exist. See [SHE-531 review](docs/reviews/SHE-531.md).
 
+Topic hubs also offer four optional community annotation layers in a read-only
+beta: research questions, lived experience, corrections and implementation notes.
+Layers default off and separate reviewed references from individual accounts.
+No annotation records or public write/report endpoints are registered. Contributions
+remain closed pending consent/withdrawal, private reporting and authenticated
+moderator operations; existing comments are never imported as annotations.
+See [SHE-527 scope and rollout gates](docs/reviews/SHE-527.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic

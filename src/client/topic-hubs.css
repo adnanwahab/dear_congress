@@ -4,6 +4,11 @@
 .topic-hubs article p a { display: inline-block; margin-right: 1rem; }
 .topic-hubs input { max-width: 100%; display: block; }
 .topic-return { display: block; padding: 1rem; }
+
+.topic-annotations label { display: flex; align-items: center; gap: .6rem; min-height: 44px; padding: .25rem; }
+.topic-annotations input[type="checkbox"] { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+.topic-annotations fieldset { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.topic-annotations select { max-width: 100%; min-height: 44px; }
 .constellation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
 .constellation button { min-height: 44px; max-width: 100%; min-width: 0; white-space: normal; overflow-wrap: anywhere; text-align: left; }
 .constellation li { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
