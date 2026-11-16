@@ -1,0 +1,10 @@
+.evidence-docket { overflow-wrap: anywhere; }
+.evidence-docket label { display: block; margin-block: 1rem; }
+.evidence-docket textarea, .evidence-docket select { display: block; width: 100%; max-width: 100%; box-sizing: border-box; min-height: 44px; }
+.evidence-docket textarea { min-height: 100px; }
+.evidence-docket button { min-height: 44px; margin-block: .5rem; }
+.docket-print { display: none; }
+@media print {
+  .evidence-docket form, .evidence-docket button, .evidence-docket > label, .evidence-docket article { display: none; }
+  .docket-print { display: block; white-space: pre-wrap; font: inherit; }
+}
