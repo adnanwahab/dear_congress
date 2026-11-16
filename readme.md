@@ -97,6 +97,9 @@ The `/outcomes` page separates simulated outreach activity from policy measureme
 Its expandable measurement prototype uses explicitly synthetic transit metrics,
 including mixed results, pinned baseline/source history and missing or stale data.
 The read-only time explorer offers day/month/year/decade scales with UTC range links, keyboard controls, Ctrl + wheel and touch pinch. Historical measurements, planned demo milestones and synthetic future scenarios occupy separate labeled lanes; no historical policy measurements are supplied. See [docs/outcome-timeline.md](docs/outcome-timeline.md).
+The browser watchlist offers saved-text inspection, explicit per-item refresh,
+last successful check time, removal and export. No background checks, email, web
+alerts or cross-device synchronization occur; failed refreshes retain saved text.
 No verified implemented policy is registered. These fixtures never feed synthesis.
 See [SHE-315 scope and remaining acceptance](docs/reviews/SHE-315.md).
 The evidence freshness calendar adds a monthly agenda and dated ledger with

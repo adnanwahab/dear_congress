@@ -32,3 +32,46 @@ test('corrupt and blocked storage fail without replacing existing data', () => {
  const blocked={getItem:()=>null,setItem:()=>{throw Error('denied');}};
  expect(()=>toggleFollow(blocked,source)).toThrow('denied');
 });
+
+test('manual refresh checks unchanged text, retains change history and projects public fields only', async () => {
+ const { refreshFollow } = await import('./proposal-follows');
+ const storage=memory(); toggleFollow(storage,source);
+ const request = (async (url: string, init: RequestInit) => {
+  expect(url).toBe('/api/demo'); expect(init).toMatchObject({method:'GET',cache:'no-store',credentials:'omit'});
+  return Response.json({items:[{id:source.id,title:source.title,proposedText:source.text,accountId:'secret'}]});
+ });
+ await refreshFollow(storage,source,request);
+ expect(readFollows(storage)[0]!.lastCheckedAt).toBeString();
+ expect(readFollows(storage)[0]!.observedAt).toBeNull();
+ expect(storage.getItem(FOLLOW_KEY)).not.toContain('secret');
+ const before=storage.getItem(FOLLOW_KEY);
+ await expect(refreshFollow(storage,source,(async()=>new Response('',{status:404})))).rejects.toThrow();
+ expect(storage.getItem(FOLLOW_KEY)).toBe(before);
+ await expect(refreshFollow(storage,source,(async()=>Response.json({items:[]})))).rejects.toThrow();
+ expect(storage.getItem(FOLLOW_KEY)).toBe(before);
+});
+
+test('refresh binds citizen identity and cannot resurrect removed entries', async () => {
+ const { refreshFollow } = await import('./proposal-follows');
+ const storage=memory(), citizen={...source,kind:'citizen' as const}; toggleFollow(storage,citizen);
+ const before=storage.getItem(FOLLOW_KEY);
+ await expect(refreshFollow(storage,citizen,(async()=>Response.json({proposal:{id:'other',title:'Wrong',proposedChange:'Wrong'}})))).rejects.toThrow();
+ expect(storage.getItem(FOLLOW_KEY)).toBe(before);
+ await refreshFollow(storage,citizen,(async(url: string)=>{
+  expect(url).toBe('/api/citizen-proposals/same');
+  toggleFollow(storage,citizen);
+  return Response.json({proposal:{id:citizen.id,title:'Current',proposedChange:'Current text'}});
+ }));
+ expect(readFollows(storage)).toEqual([]);
+});
+
+test('legacy saves read without mutation; failed persistence preserves snapshots and check time', async () => {
+ const { refreshFollow } = await import('./proposal-follows');
+ const storage=memory(); toggleFollow(storage,source);
+ const before=storage.getItem(FOLLOW_KEY);
+ expect(readFollows(storage)[0]!.lastCheckedAt).toBeNull();
+ expect(storage.getItem(FOLLOW_KEY)).toBe(before);
+ const blocked={getItem:storage.getItem,setItem:()=>{throw Error('denied');}};
+ await expect(refreshFollow(blocked,source,async()=>Response.json({items:[{id:source.id,title:source.title,proposedText:'Changed'}]}))).rejects.toThrow('denied');
+ expect(storage.getItem(FOLLOW_KEY)).toBe(before);
+});

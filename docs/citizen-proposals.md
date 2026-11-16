@@ -220,8 +220,13 @@ Navigation → Watchlist opens `/outcomes#watchlist`, with unfollow, JSON export
 local deletion. Following is independent of votes. Public text snapshots are stored
 in `civic_proposal_follows_v1`, isolated by sample/citizen kind and ID. This is
 browser-profile storage, without account recovery or cross-device synchronization.
-Revisiting a followed proposal can show its last two observed text versions;
-observation time is not a source update date. No background monitoring or notification
+Inspect saved text works without a network request. **Refresh saved proposal**
+explicitly reads the matching public sample or citizen source, without cookies,
+and records **Last checked** only after a successful read. Revisiting alone does
+not update snapshots. Legacy saves show Never until checked. Failed or missing
+sources retain saved text and the last successful check, without inferring status.
+The last two changed text versions remain inspectable; check and observation
+times are local, not source update dates. No background monitoring or notification
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
