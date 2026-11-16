@@ -1,0 +1,4 @@
+.world-portal { width: min(960px, 94vw); max-height: 90dvh; padding: 1rem; color: var(--text, CanvasText); background: var(--bg, Canvas); border: 2px solid currentColor; border-radius: 1rem; }
+.world-portal::backdrop { background: #0009; }
+.world-portal-source { position: sticky; top: -1rem; z-index: 1; padding: 1rem; background: var(--bg, Canvas); border-bottom: 1px solid currentColor; }
+.world-portal-source h2 { margin-block: .5rem; }
