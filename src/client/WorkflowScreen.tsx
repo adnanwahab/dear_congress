@@ -1,3 +1,4 @@
+import { CivicTimeline } from './CivicTimeline';
 import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
@@ -219,6 +220,11 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {item && !loading && !loadError && <PolicyActions key={`policy-actions:${item.id}`} item={item} />}
     {item && !loading && !loadError && sourceUrl(item) && <Suspense fallback={null}><SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} /></Suspense>}
     {stage === 'outcomes' && <ProposalWatchlist />}
+    {stage === 'outcomes' && !loading && !loadError && item && <CivicTimeline key={item.id} points={[
+      { id: 'published', label: 'Published chapter', evidence: 'fictional', href: route('published', item.id) },
+      { id: 'reviewed', label: 'Review draft chapter', evidence: 'fictional', href: route('draft', item.id) },
+      { id: 'delivered', label: 'Sponsor walkthrough', evidence: 'fictional', href: route('sponsors', item.id) },
+    ]} />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
     {stage === 'outcomes' && <Suspense fallback={<p role="status">Loading illustrative response composition…</p>}><ResponseComposition /></Suspense>}
