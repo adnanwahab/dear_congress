@@ -395,3 +395,15 @@ error focus and live loading/status announcements. It adds no motion. Automated
 DOM coverage verifies consent, failure recovery, escaped markup and immediate
 removal; native keyboard, screen reader, mobile/zoom and reduced-motion visual
 acceptance remain manual review tasks.
+
+## Private civic duet (SHE-503)
+
+**Duet · propose an alternative** opens a page-memory copy on citizen details and
+sample Draft/Votes screens. Review the original attribution, unverified supporting
+information and Added/Removed comparison; explain how the alternate builds on the
+idea. **Keep private copy on this page** retains a snapshot and allows another
+copy with root and immediate-parent attribution. Copies never edit the original
+or carry its votes. They are lost on leaving/reloading; no storage or API is used.
+Do not include personal content without permission. Publishing is unavailable
+pending server permission and moderation safeguards. See
+[remaining acceptance and verification](reviews/SHE-503.md).
