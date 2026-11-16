@@ -141,3 +141,23 @@ merging, non-HBL scopes stay disabled/dry-run, and browser choices confer no mer
 authority. Existing quorum, exposure, approval, checks, auth, CSRF and revision
 requirements are unchanged. See `launch-merge-policy.md` for source defaults and
 human review/release requirements; this feature does not verify production values.
+
+## Code change microscope — SHE-613
+
+PR details include a read-only file-role guide grouped into UI, Model, Data, Tests
+and Operations, with documented ordered path heuristics, confidence and caveats.
+Added-line receipts pin the source repository and full head SHA. Deleted-line
+receipts require merge-base identity and are explicitly unavailable in the current
+payload; missing patches and renames likewise never fabricate line receipts.
+The guide exposes source/revision/loading/error/stale/permission states separately
+from governance and never submits a vote or approves a merge. See
+[scope, verification and remaining acceptance](reviews/SHE-613.md).
+
+## Branch subway relationships — SHE-607
+
+The repository browser includes a read-only graph and searchable keyboard-accessible
+relationship table. Source description links remain unverified references. GitHub
+head/base refs and reported commit parents provide revision/ancestry context;
+a PR's base target does not prove ancestry. Missing detail metadata is explicit.
+The graph never casts votes, submits feedback or changes merge policy. See
+[verification and remaining acceptance](reviews/SHE-607.md).

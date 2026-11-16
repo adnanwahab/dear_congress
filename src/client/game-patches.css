@@ -42,3 +42,10 @@ html[data-motion="off"] .gp-story-content{animation:none}
 .gp-carousel [aria-selected="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
 .gp-carousel:focus-visible, .gp-carousel :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .gp-carousel [role="tabpanel"] { min-width: 0; }
+.gp-microscope article{border-left:3px solid var(--line,#d9dfe1);padding:0 16px;margin:16px 0;overflow-wrap:anywhere}.gp-microscope h3{overflow-wrap:anywhere}.gp-microscope summary{min-height:44px}.gp-microscope a{display:inline-block;padding:8px 0}.gp-microscope{animation:none;transition:none}
+
+.gp-rehearsal { overflow-wrap: anywhere; }
+.gp-rehearsal select { max-width: 100%; min-height: 44px; }
+.gp-rehearsal li { margin-block: 1.5rem; }
+.gp-rehearsal button { min-height: 44px; margin-block: .25rem; }
+.gp-rehearsal :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

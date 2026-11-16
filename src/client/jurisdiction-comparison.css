@@ -1,0 +1,7 @@
+.jurisdiction-comparison { margin-block: 1.5rem; overflow-wrap: anywhere; }
+.jurisdiction-comparison label { display: block; margin-block: 1rem; }
+.jurisdiction-comparison select { display: block; max-width: 100%; margin-top: .5rem; }
+.local-policy-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.local-policy-pair article { border: 1px solid var(--line, currentColor); border-radius: .5rem; padding: 1rem; min-width: 0; }
+.jurisdiction-comparison dd { margin: .25rem 0 1rem; }
+@media (max-width: 640px) { .local-policy-pair { grid-template-columns: minmax(0, 1fr); } }

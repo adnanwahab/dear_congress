@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+const dom = new Window({ url: 'http://localhost/draft' });
+for (const key of ['window', 'document', 'navigator', 'localStorage', 'HTMLElement', 'HTMLInputElement', 'HTMLTextAreaElement', 'Event']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { act } = await import('react');
+const { createRoot } = await import('react-dom/client');
+const { getByLabelText, getByRole } = await import('@testing-library/dom');
+const { CooperativeMission } = await import('../src/client/CooperativeMission');
+const { missionKey, readMission, missionProgress } = await import('../src/shared/cooperative-missions');
+const source = { kind: 'sample' as const, id: 'transit', title: 'Transit sample', text: 'Original sample policy' };
+const container = document.createElement('div'); document.body.append(container);
+const root = createRoot(container);
+let requests = 0;
+globalThis.fetch = (async () => { requests++; throw Error('Workshop must not make requests'); }) as any;
+const field = (name: string) => getByLabelText(container, name) as HTMLInputElement;
+async function fill(name: string, value: string) {
+  const el = field(name);
+  await act(async () => {
+    const prototype = el.tagName === 'TEXTAREA' ? dom.HTMLTextAreaElement.prototype : el.tagName === 'SELECT' ? dom.HTMLSelectElement.prototype : dom.HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(el, value);
+    el.dispatchEvent(new dom.Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }) as any);
+  });
+}
+async function click(name: string) { await act(async () => (getByRole(container, 'button', { name }) as HTMLElement).click()); }
+await act(async () => root.render(<CooperativeMission source={source} />));
+assert.match(container.textContent!, /self-declared workshop agreements/);
+await fill('Participant name', 'Researcher'); await fill('Optional role', 'research'); await click('Add or update participant');
+await fill('Current participant', 'Researcher');
+await fill('Finding', '<script>Finding</script>'); await fill('Citation URL (HTTP or HTTPS, unverified)', 'https://example.org/report');
+await fill('How this evidence supports the proposal', 'Service gap supports longer hours');
+await fill('Limitation, uncertainty or trade-off', 'Weekend demand unknown');
+await click('Record evidence contribution');
+assert.equal(container.querySelectorAll('script').length, 0);
+assert.equal(readMission(localStorage.getItem(missionKey(source)), source).contributions.length, 1);
+assert.deepEqual(missionProgress(readMission(localStorage.getItem(missionKey(source)), source)), []);
+await fill('Current participant', 'Facilitator');
+await fill('Evidence review reason (source relevance, reasoning and limitations)', 'Source is relevant; uncertainty is clear');
+await click('Mark evidence ready · contribution 1');
+assert.match(container.textContent!, /Shared progress: 1 of 4/);
+await fill('New unresolved question', 'What is the cost?'); await click('Add question');
+await fill('Reason for resolving a question', 'Estimate added with limitations'); await click('Resolve question 1 with reason');
+assert.match(container.textContent!, /Questions · 0 unresolved/);
+await fill('Shared workshop draft', 'Revised collaborative text'); await click('Save shared draft revision');
+// A failed write retains both the previous ledger and unsaved text for retry.
+const prior = localStorage.getItem(missionKey(source));
+const realStorage = localStorage;
+Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: realStorage.getItem.bind(realStorage), setItem: () => { throw Error('Storage full'); } } });
+await fill('Shared workshop draft', 'Retry after full storage'); await click('Save shared draft revision');
+assert.match(getByRole(container, 'alert').textContent!, /Storage full/);
+assert.equal(localStorage.getItem(missionKey(source)), prior);
+assert.equal(field('Shared workshop draft').value, 'Retry after full storage');
+Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: realStorage });
+await fill('Shared workshop draft', 'Revised collaborative text'); await click('Save shared draft revision');
+field('Current participant').focus(); assert.equal(document.activeElement, field('Current participant'));
+const raw = localStorage.getItem(missionKey(source))!;
+assert.equal(JSON.parse(raw).source.text, 'Original sample policy');
+assert.equal(JSON.parse(raw).draft, 'Revised collaborative text');
+assert.match(field('Copy saved workshop JSON').value, /Estimate added with limitations/);
+await fill('Participant name', 'Reader'); await fill('Workshop permission', 'observer'); await click('Add or update participant');
+await fill('Current participant', 'Reader');
+assert.equal((getByRole(container, 'button', { name: 'Save shared draft revision' }).closest('fieldset') as HTMLFieldSetElement).disabled, true);
+await fill('Current participant', 'Facilitator');
+// A stale tab must not overwrite a newer ledger; pending text remains recoverable.
+localStorage.setItem(missionKey(source), raw);
+await fill('Shared workshop draft', 'Unsaved pending text'); await click('Save shared draft revision');
+assert.match(getByRole(container, 'alert').textContent!, /Another tab/);
+assert.equal(field('Shared workshop draft').value, 'Unsaved pending text');
+await click('Reload saved workshop');
+assert.equal(field('Shared workshop draft').value, 'Revised collaborative text');
+await act(async () => root.render(<CooperativeMission key="revision" source={{ ...source, text: 'Changed source revision' }} />));
+assert.match(getByRole(container, 'alert').textContent!, /different source revision/);
+assert.equal(localStorage.getItem(missionKey(source)), raw);
+await act(async () => root.unmount());
+assert.equal(requests, 0);
+await dom.happyDOM.close();
+console.log('PASS cooperative mission editing, review, permissions, conflict, source binding and zero requests');

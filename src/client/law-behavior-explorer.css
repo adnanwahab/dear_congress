@@ -81,3 +81,8 @@
 .civic-scenario-gallery button:disabled{opacity:.6;cursor:wait}
 .civic-scenario-gallery p{grid-column:1/-1}
 .civic-law-behavior>button{min-height:44px;padding:8px 14px}
+
+.civic-future-letter{margin-top:18px;padding:14px;border:1px solid currentColor;border-radius:9px;min-width:0;overflow-wrap:anywhere}
+.civic-future-letter pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem;max-width:100%}
+.civic-future-letter li{margin-block:10px}
+.civic-future-letter a{display:inline-block;padding-block:6px}
