@@ -1177,3 +1177,16 @@ Corrections enter only an append-only page-memory demo queue bound to the select
 project/evidence revision. Nothing is published or delivered to a real moderator.
 No verified project feed or shared correction API is connected. Reload clears the
 queue. See [SHE-467 scope and remaining acceptance](docs/reviews/SHE-467.md).
+
+### Negotiation tabletop (SHE-457)
+
+`/synth` includes a page-local fictional six-household tabletop above frozen
+policy comparisons. Drag/tap native sliders or use arrow keys to change annual
+budget, grant and income ceiling; Undo retains the last 100 changes and Reset
+restores initial assumptions. Cost is qualifying households × grant. An
+over-budget draft does not select or deny households. Each tile discloses
+possible gains, losses and missing evidence. Export downloads an unsigned JSON
+draft with its fixture, assumptions and source identity; copyable JSON remains
+if download fails. No server API, legal text, recorded vote or stored plan is
+changed. This is demo activity, never verified civic participation. See
+`docs/reviews/SHE-457.md`.
