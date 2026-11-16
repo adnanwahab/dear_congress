@@ -39,9 +39,9 @@ test('failed evidence load retries without turning an unsafe missing source into
     return route.fulfill({ json: payload });
   });
   await page.goto('/votes?proposal=demo-food');
-  await expect(page.getByRole('alert')).toContainText('Could not load sample proposals');
+  await expect(page.getByRole('alert').filter({ hasText: 'Could not load sample proposals' })).toContainText('Could not load sample proposals');
   fail = false;
-  await page.getByRole('alert').getByRole('button').click();
+  await page.getByRole('alert').filter({ hasText: 'Could not load sample proposals' }).getByRole('button').click();
   const evidence = page.locator('section[aria-label="Scenario and background source"]').first();
   await expect(evidence).toContainText('Source not available / not checked');
   await expect(evidence.locator('a')).toHaveCount(0);

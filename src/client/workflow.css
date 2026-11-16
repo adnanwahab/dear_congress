@@ -30,8 +30,8 @@
 .workflow-detail-meta span { padding: 3px 10px; background: var(--bg); border-radius: 20px; }
 .workflow-reference { display: block; margin-top: 18px; font-size: 14px; font-weight: 600; }
 .workflow-two { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
-.workflow-select { display: grid; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
-.workflow-select select { font-size: 15px; font-weight: 400; }
+.workflow-select { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 700; margin: 18px 0; }
+.workflow-select select { min-width: 0; width: 100%; max-width: 100%; box-sizing: border-box; font-size: 15px; font-weight: 400; }
 .workflow-body-muted { color: var(--muted); margin-top: 12px !important; }
 .workflow-action-stack { display: grid; gap: 12px; }
 .workflow-action-stack a { font-size: 14px; font-weight: 700; }
@@ -96,7 +96,7 @@
    Native summary supplies keyboard activation and expanded/collapsed semantics. */
 .workflow-card-actions { min-width: 0; width: 100%; }
 .workflow-provenance-compact { min-width: 0; max-width: 100%; padding: 0; font-weight: 400; }
-.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: nowrap; overflow-x: auto; list-style: none; }
+.workflow-provenance-compact > summary { cursor: pointer; padding: 8px; font-size: 12px; white-space: normal; overflow-wrap: anywhere; min-height: 44px; list-style: none; }
 .workflow-provenance-compact > summary::-webkit-details-marker { display: none; }
 .workflow-provenance-compact > summary::before { content: none; }
 .workflow-source-status { font-weight: 600; }
@@ -115,3 +115,91 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }
+
+.civic-sampler { margin-block: 1rem; }
+.sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+.sampler-actions button, .sampler-actions a { min-height: 44px; }
+
+.journey-ribbon input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--accent, #496fc4); }
+.journey-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .35rem; padding: 0; list-style: none; }
+.journey-steps button { width: 100%; min-height: 44px; padding: .5rem .25rem; }
+.journey-steps button[aria-pressed="true"] { outline: 3px solid currentColor; outline-offset: 2px; }
+.journey-artifact { padding: 1rem; margin-block: 1rem; border: 1px solid currentColor; border-radius: 12px; overflow-wrap: anywhere; }
+.journey-artifact h3, .journey-artifact h4 { margin-block: .4rem; }
+@media (max-width: 600px) {
+  .journey-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: .85rem; }
+  .journey-ribbon { padding: .85rem; }
+}
+.council-roleplay { overflow-wrap: anywhere; }
+.council-roleplay details { margin-block: 1rem; }
+.council-roleplay summary { cursor: pointer; padding-block: .75rem; }
+.council-choice { display: block; padding: .75rem; min-height: 44px; }
+.council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.council-controls button { min-height: 44px; }
+
+/* Retained revision records remain readable on narrow screens and in print. */
+.source-revision-alert { min-width: 0; overflow-wrap: anywhere; }
+.source-revision-alert button { min-height: 44px; }
+.source-revision-print { display: none; }
+@media print {
+  .source-revision-alert button { display: none; }
+  .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+
+.source-health { overflow-wrap: anywhere; }
+.source-health button { min-height: 44px; margin-block: 4px; }
+.source-health button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+@media print {
+  .source-health button { display: none; }
+  .source-health { color: black; background: white; }
+  .source-health .card { break-inside: avoid; }
+}
+
+.evidence-notebook { min-width: 0; overflow-wrap: anywhere; }
+.evidence-notebook label { display: block; }
+.evidence-notebook textarea { display: block; box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; }
+.evidence-notebook button, .evidence-notebook summary { min-height: 44px; }
+.evidence-notebook :is(button, textarea, summary, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+ 
+.private-journey form, .private-journey label { display: grid; gap: .5rem; }
+.private-journey form { gap: 1rem; }
+.private-journey select, .private-journey textarea { width: 100%; max-width: 100%; min-width: 0; font: inherit; }
+.private-journey button, .private-journey select { min-height: 44px; }
+.private-journey-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.private-journey li { margin-bottom: 1.5rem; }
+
+/* Keep the outcomes filter within the 390px viewport while preserving native controls. */
+@media (max-width: 680px) {
+  .workflow-shell .workflow-select { grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; }
+  .workflow-shell .workflow-select select { display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head:has(> label > select) { flex-wrap: wrap; min-width: 0; }
+  .workflow-shell .panel-head:has(> label > select) > * { min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head > label:has(> select) { flex: 1 1 100%; min-width: 0; max-width: 100%; }
+  .workflow-shell .panel-head > label > select { display: block; box-sizing: border-box; min-width: 0; width: 100%; max-width: 100%; }
+}
+
+/* At phone width, an Outcomes native filter outside the panel-heading picker
+   can retain a 360px intrinsic width; leave room for its container margins
+   rather than letting it create horizontal document scrolling. */
+@media (max-width: 680px) {
+  .workflow-shell main select {
+    min-width: 0;
+    max-width: min(100%, calc(100vw - 80px));
+  }
+}
+
+/* Static action cards share global focus styles and need no motion. */
+.policy-actions { overflow-wrap: anywhere; }
+.policy-actions ul { padding-inline-start: 1.25rem; }
+.policy-actions li { margin-block: 1rem; }
+.policy-actions a { display: inline-flex; align-items: center; min-height: 44px; padding-block: .5rem; }
+
+.discovery-deck { margin-bottom: 24px; }
+.discovery-deck article { touch-action: pan-y pinch-zoom; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.discovery-deck .workflow-card-actions { margin-top: 16px; align-items: center; }
+.discovery-deck button, .discovery-deck a { min-height: 44px; }

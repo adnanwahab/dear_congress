@@ -40,3 +40,28 @@ test('redline reconstructs both exact inputs, including repeated clauses, Unicod
   }
   expect(redline(source.text, fields.replacement)).toMatchObject({ removed: '2', added: '8' });
 });
+test('lineage retains forks and both merge parents without rewriting snapshots', () => {
+  const storage = memory();
+  const first = saveAmendment(storage, source, source, fields)[0]!;
+  const fork = saveAmendment(storage, source, source, { ...fields, replacement: 'A fork' }, { event: 'fork', parents: [first.id] })[1]!;
+  const compromise = saveAmendment(storage, source, source, { ...fields, replacement: 'A compromise' }, { event: 'compromise', parents: [first.id, fork.id] })[2]!;
+  const rows = saveAmendment(storage, source, source, { ...fields, replacement: 'Merged proposal' }, { event: 'merge', parents: [fork.id, compromise.id] });
+  expect(readAmendments(storage, source)).toEqual(rows);
+  expect(rows[0]).toEqual(first);
+  const snapshot = storage.getItem(amendmentKey(source));
+  for (const lineage of [{ event: 'fork' as const, parents: [] }, { event: 'merge' as const, parents: [first.id, first.id] }, { event: 'revision' as const, parents: ['missing'] }]) {
+    expect(() => saveAmendment(storage, source, source, fields, lineage)).toThrow('parent');
+  }
+  expect(storage.getItem(amendmentKey(source))).toBe(snapshot);
+  expect(() => saveAmendment(storage, { ...source, origin: 'other' }, { ...source, origin: 'other' }, fields, { event: 'fork', parents: [first.id] })).toThrow('parent');
+});
+test('legacy ancestry stays unknown and corrupt relationships fail without storage mutation', () => {
+  const storage = memory(); const first = saveAmendment(storage, source, source, fields)[0]!;
+  delete first.lineage;
+  storage.setItem(amendmentKey(source), JSON.stringify([first]));
+  expect(readAmendments(storage, source)[0]!.lineage).toBeUndefined();
+  const corrupt = JSON.stringify([{ ...first, lineage: { event: 'fork', parents: [first.id] } }]);
+  storage.setItem(amendmentKey(source), corrupt);
+  expect(() => readAmendments(storage, source)).toThrow('relationships');
+  expect(storage.getItem(amendmentKey(source))).toBe(corrupt);
+});
