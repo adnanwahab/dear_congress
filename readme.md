@@ -1190,3 +1190,36 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+### Aggregate activation actions (SHE-855)
+
+`/admin/stats` also shows six daily action counters in America/Chicago:
+
+| Event | Trigger |
+|---|---|
+| `landing` | Accepted existing browser page-view for `/` |
+| `proposal_read` | Selected sample proposal displayed on Feed, Votes or Draft; once per selected ID/stage mount, not polling |
+| `argument_opened` | A sample argument's “Why this matters” details opens; reopening counts again |
+| `choice_saved` | Accepted civic proposal stance or citizen advisory save, per submitted proposal |
+| `choice_withdrawn` | Accepted civic proposal withdrawal or citizen advisory removal, per submitted proposal |
+| `share_opened` | Sample advisory share preview opens; closing does not count |
+
+These describe anonymous aggregate **actions**, not unique people, first sessions,
+linked funnel cohorts or conversion rates. Display is a reading opportunity, not
+proof of reading or comprehension. Share preview opening establishes neither
+actual sharing nor meaningful participation. Self-selection, bots, repeated saves,
+retries, blocked scripts and failed delivery affect counts. Accepted withdrawals
+can include already absent choices. Goals, priority allocations and repository
+ballots are excluded from activation choice counters; existing participation
+metrics retain their original deduplication and source/revision boundaries.
+Synthetic tally fixtures and simulation runs never add activation events.
+
+The new SQLite table stores only Chicago day, fixed event name and count, with
+no content, stance, proposal ID, identity or session identifier. No backfill occurs.
+The first-party `/api/activation-event` accepts only the three browser event names
+and rejects extra fields. It uses the existing metrics same-origin check, 1 KiB
+body bound and shared 120/IP/ten-minute metrics budget, omits credentials and
+issues no cookies. Landing reuses page-view delivery; choice events use the
+successful-save observer. Metric failures preserve the application response and
+mark the admin dashboard incomplete. These counters do not establish anonymity
+of infrastructure logs or replace a human privacy review.

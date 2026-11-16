@@ -1,3 +1,4 @@
+import { BROWSER_ACTIVATION_EVENTS, type ActivationEvent } from "../shared/activation-events";
 import { LaunchStats, statsAuthorized, statsPage } from "./launch-stats";
 import { boundedJson, createPublicSecurity, securityHeaders } from "./public-security";
 
@@ -19,6 +20,18 @@ export function createStatsHTTP(options: {
       if (req.method !== "GET" && req.method !== "HEAD") return finish(new Response("Method not allowed", { status: 405, headers: { ...headers, allow: "GET, HEAD" } }));
       return finish(new Response(req.method === "HEAD" ? null : statsPage(options.stats.snapshot(), options.healthy()), { headers: { ...headers, "content-type": "text/html; charset=utf-8" } }));
     },
+    async activation(req: Request, peer: string) {
+      if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));
+      if (req.headers.get("origin") !== security.origin(req)) return finish(new Response(null, { status: 403 }));
+      const limited = security.check(req, peer, "page-views", false);
+      if (limited) return finish(limited);
+      try {
+        const body = await boundedJson(req, 1024);
+        if (Object.keys(body).length !== 1 || !BROWSER_ACTIVATION_EVENTS.includes(body.event as typeof BROWSER_ACTIVATION_EVENTS[number])) return finish(new Response(null, { status: 400 }));
+        options.record(() => options.stats.activation(body.event as ActivationEvent));
+        return finish(new Response(null, { status: options.healthy() ? 204 : 503 }));
+      } catch { return finish(new Response(null, { status: 400 })); }
+    },
     async pageView(req: Request, peer: string) {
       if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));
       if (req.headers.get("origin") !== security.origin(req)) return finish(new Response(null, { status: 403 }));
@@ -28,7 +41,7 @@ export function createStatsHTTP(options: {
         const body = await boundedJson(req, 1024);
         if (typeof body.path !== "string" || body.path.length > 250 || body.path.includes("?") || body.path.includes("#")) return finish(new Response(null, { status: 400 }));
         let accepted = false;
-        options.record(() => { accepted = options.stats.view(body.path as string); });
+        options.record(() => { accepted = options.stats.view(body.path as string); if (accepted && body.path === "/") options.stats.activation("landing"); });
         return finish(new Response(null, { status: accepted ? 204 : options.healthy() ? 400 : 503 }));
       } catch { return finish(new Response(null, { status: 400 })); }
     },
