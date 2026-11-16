@@ -47,6 +47,14 @@ Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
 
+Synthesis assumption changes reuse `plan-rerank` and its guarded request version.
+The assumption diagram connects the edited value to matching real/blended package
+spending and support figures only after a successful comparable calculation.
+Unchanged values do not start counters. Its single growing connector respects
+motion scale, off mode and reduced motion; the polite changed-field announcement
+is independent of animation. Pending/error states infer no impact. Chapter links
+and navigation remain ordinary routes, independent of diagram state.
+
 Six-stage native navigation stores presentation state under `history.state.civicJourney`.
 Each entry retains its stage, direction (when NavigationActivation is available),
 proposal, search/topic/outcome/jurisdiction filters, focus path and window scroll.

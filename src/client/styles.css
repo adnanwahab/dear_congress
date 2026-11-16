@@ -1120,6 +1120,16 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
 
+.assumption-diagram { border: 1px solid currentColor; border-radius: .5rem; padding: .75rem; overflow-wrap: anywhere; }
+.assumption-source { font-weight: bold; margin-bottom: 0; }
+.assumption-link { border-left: 2px solid currentColor; margin-left: 1rem; padding: .25rem .5rem; }
+.assumption-diagram ul { padding-left: 1.25rem; }
+.assumption-diagram [data-changed] { border-left: 3px solid currentColor; padding-left: .4rem; }
+.assumption-link[data-connected] { animation: assumption-connect calc(700ms * var(--motion-scale, 1)) ease-out; transform-origin: top; }
+@keyframes assumption-connect { from { transform: scaleY(.2); } to { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { .assumption-link[data-connected] { animation: none; } }
+html[data-motion="off"] .assumption-link[data-connected] { animation: none; }
+
 .budget-receipt { border: 1px solid var(--border, #888); border-radius: .5rem; padding: 1rem; margin-block: 1rem; overflow-wrap: anywhere; }
 .budget-receipt select { max-width: 100%; min-width: 0; }
 .budget-receipt dt { font-weight: bold; }
