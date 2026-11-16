@@ -244,6 +244,8 @@ export interface SimulationSnapshot {
 }
 
 export interface DB {
+  /** Private retry receipts; never included in public state. */
+  mutationReceipts?: Record<string, import("../server/mutation-retries").MutationReceipt>;
   journalReports?: { id: string; entryId: string; reason: string; createdAt: string; reporterId: string }[];
   journalModerationLog?: { entryId: string; status: "hidden" | "published"; reason: string; decidedAt: string }[];
   /** Incremented when one-time data migrations are applied. */

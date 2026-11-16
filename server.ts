@@ -1,3 +1,4 @@
+import { mutationRetries } from './src/server/mutation-retries';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
@@ -408,6 +409,7 @@ let pendingWrites = 0;
 let writeFailures = 0;
 let saveQueue: Promise<unknown> = Promise.resolve();
 const save = () => {
+  if (retries.deferred()) return Promise.resolve();
   demoCache = null;
   const snapshot = JSON.stringify(db, null, 2);
   pendingWrites++;
@@ -421,6 +423,7 @@ const save = () => {
   void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
+const retries = mutationRetries(() => db, () => save(), previous => { db = previous; demoCache = null; });
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 function dashboardState(voterId: string) {
   const day = new Date().toISOString().slice(0, 10);
@@ -555,6 +558,9 @@ function entriesPayload(origin?: string | null) {
 }
 
 function emitEntriesUpdate() {
+  retries.effect(emitEntriesUpdateNow);
+}
+function emitEntriesUpdateNow() {
   const payload = entriesPayload();
   for (const send of entryListeners) send(payload);
 }
@@ -1283,7 +1289,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         forks.set(forkId, fork);
 
         emitForkEvent(fork, { stage: "journal", status: "done", entry_id: entry.id, labels: fork.labels });
-        void runPipeline(forkId);
+        retries.effect(() => { void runPipeline(forkId); });
 
         return Response.json({ entry_id: entry.id, fork_id: forkId, entry: publicJournal(entry) });
       },
@@ -1801,7 +1807,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const moderatedEntries = db.entries.filter(e => e.moderation || reportedIds.has(e.id));
         const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
         const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
+        const mutationReceipts = db.mutationReceipts;
         db = seed();
+        db.mutationReceipts = mutationReceipts;
         db.citizenProposals = citizenProposals;
         db.journalOwners = journalOwners;
         db.journalReports = journalReports;
@@ -1842,7 +1850,7 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
   for (const [method, handler] of Object.entries(route)) {
     if (typeof handler !== "function") continue;
     (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
-      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
+      return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", () => retries.run(req, path, method, async () => {
         // Run after shared validation/limits and before extraction or answer creation.
         if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {
           const body = await boundedJson(req.clone());
@@ -1867,7 +1875,7 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
           statsHealthy = false;
           console.error("[STATS_ERROR] Metrics observation failed");
         });
-      }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
+      }), body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
   }
 }
