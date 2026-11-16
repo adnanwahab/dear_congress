@@ -709,6 +709,14 @@ illustrative catalog edges remain separate; metric nodes are targets only.
 Official bills and verified measurements remain unavailable until reviewed source
 bindings exist. See [SHE-531 review](docs/reviews/SHE-531.md).
 
+Topic hubs also offer four optional community annotation layers in a read-only
+beta: research questions, lived experience, corrections and implementation notes.
+Layers default off and separate reviewed references from individual accounts.
+No annotation records or public write/report endpoints are registered. Contributions
+remain closed pending consent/withdrawal, private reporting and authenticated
+moderator operations; existing comments are never imported as annotations.
+See [SHE-527 scope and rollout gates](docs/reviews/SHE-527.md).
+
 ### Plan budget ledger
 
 Synthesize includes an annual allocation table and cumulative waterfall. Arithmetic
@@ -1057,3 +1065,16 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+
+## Optional related reading
+
+The dashboard and civic workflow show at most one optional source read for the
+selected fictional sample. Housing, food access and medical-price samples have
+fixed editorial associations; other samples show an honest empty state. Each
+suggestion explains its relation, publisher, review date and limited scope.
+These background pages do not substantiate fictional clauses or predicted effects.
+Dismissal never queues a replacement. Dismiss and turn-off choices persist only
+in this browser (`civic_optional_reads_v1`); blocked storage retains them for the
+mounted page. A turn-on control remains available. No vote, posting volume,
+profile, reward, tracking request or model ranking determines a suggestion.

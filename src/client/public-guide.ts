@@ -71,6 +71,8 @@ The fictional transit argument map on [Votes](/votes?proposal=demo-transit) offe
 
 The optional household demo in [Civic plans](/synth) follows one synthetic household through two local budget ledgers. Each line shows a logged event and modeled balance, with matching population, seed and common assumptions in both futures. The demo credit is an illustrative assumption, not an effect of the selected policy package. It uses no resident data and saves no choices.
 
+Topic hubs offer optional research-question, lived-experience, correction and implementation-note annotation layers. They default off. This read-only beta has no registered annotations and contributions remain closed pending consent, withdrawal, private abuse reporting and moderation. Individual accounts are separate from reviewed sources; samples and simulations are excluded.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 The optional Steelman challenge on the fictional transit argument map is a sandbox self-review. Add an opposing summary and a source passage, then check fidelity, evidence and completeness. AI scoring is off; models can misread context and cannot certify truth or fairness. Skip or clear the exercise at any time. Responses stay in page memory, are lost on navigation, and never change saved votes or model projections. Supplied sources are not verified.
@@ -110,6 +112,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. Its s
 [Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
 
 The [response-composition exercise](/outcomes#response-composition) lets you reweight fictional groups. All inputs are illustrative; self-selection and missing groups prevent a representative public poll. It works offline after the page loads. Export or copy its report to retain dated provenance, limitations and pending human-review history; changes otherwise disappear on reload.
+
+Optional related reading on the dashboard and sample journey offers one source read when a reviewed association is available. Each suggestion explains why it appears and what the source does and does not establish. Dismiss it without receiving a replacement, or turn related reading off and back on. These preferences stay in this browser; if storage is blocked, they last only on the open page. Suggestions use the viewed sample, never your vote or public posting activity.
 
 ## Sources and methodology
 
