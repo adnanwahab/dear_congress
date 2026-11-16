@@ -1,0 +1,119 @@
+{
+  "timezone": "America/Chicago",
+  "revisions": [
+    {
+      "revisionId": "sha256:3f872be168380b0daa843d87f3e49d30331b71f79f1571755a4a2b229dfe1bec",
+      "content": {
+        "proposalId": "demo-housing",
+        "title": "Allow backyard cottages near frequent transit",
+        "summary": "Let homeowners add one small rental home on eligible residential lots near transit. Keep existing safety standards and publish a clear permit checklist.",
+        "sourceUrl": "https://www.houstontx.gov/planning/",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:fd5800163cb8f87edf0e8cf65142149e0e90ac93bb9d7816d1987b60699e0894",
+      "content": {
+        "proposalId": "demo-childcare",
+        "title": "Cap childcare copays for working families",
+        "summary": "Limit eligible families’ childcare copays and fund providers to cover the difference. Publish enrollment and wait-list measures each quarter.",
+        "sourceUrl": "https://www.acf.hhs.gov/occ",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:cc0ff3ecb46a901316e4624779bbe7f3f1cc6761156ea1350b179b24bae71177",
+      "content": {
+        "proposalId": "demo-transit",
+        "title": "Run frequent buses on evenings and weekends",
+        "summary": "Pilot 15-minute bus service on three high-demand corridors until 10 p.m. Measure missed trips, access to jobs, and ridership before expanding.",
+        "sourceUrl": "https://www.ridemetro.org/",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:30814a3abf25c84e457a4ffa8d6e2ed6f279588bb97c2bec2d23c65f23c218c2",
+      "content": {
+        "proposalId": "demo-flood",
+        "title": "Prioritize drainage work around repeatedly flooded homes",
+        "summary": "Rank drainage projects by repeat flooding, household vulnerability, and expected risk reduction. Publish the ranking and progress every quarter.",
+        "sourceUrl": "https://www.hcfcd.org/",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:46e9a1bdc1dd281bfcb60bd295313b132cd84b6cf1263a370bd37080dc12f7d3",
+      "content": {
+        "proposalId": "demo-health",
+        "title": "Publish the full price before routine medical care",
+        "summary": "Give patients an understandable cost estimate before scheduled care. Include facility and clinician charges and explain how to dispute a surprise bill.",
+        "sourceUrl": "https://www.cms.gov/priorities/key-initiatives/hospital-price-transparency",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:16b97f85b5c7223e51a270b3a06bd95f6112b524b0d6ed4d0b932ab70af1cd9a",
+      "content": {
+        "proposalId": "demo-streets",
+        "title": "Make school crossings safer before the next school year",
+        "summary": "Improve twenty high-risk school crossings with visible markings, shorter crossings, and accessible signals. Publish before-and-after speed and safety data.",
+        "sourceUrl": "https://www.houstontx.gov/visionzero/",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    },
+    {
+      "revisionId": "sha256:254107723a1ad92c5fe326f051cbc45a19ad0184f34058c9810fde9f7d04ef00",
+      "content": {
+        "proposalId": "demo-food",
+        "title": "Bring affordable groceries to underserved neighborhoods",
+        "summary": "Pilot weekly mobile grocery stops and discounted delivery in neighborhoods with limited supermarket access. Track household reach and the price of a basic basket.",
+        "sourceUrl": "https://www.ers.usda.gov/data-products/food-access-research-atlas",
+        "sourceStatus": "Fictional scenario; institutional background only; link and claim verification unavailable",
+        "sourceCheckedAt": null
+      }
+    }
+  ],
+  "schedule": [
+    {
+      "date": "2026-11-16",
+      "revisionId": "sha256:3f872be168380b0daa843d87f3e49d30331b71f79f1571755a4a2b229dfe1bec",
+      "approval": null
+    },
+    {
+      "date": "2026-11-17",
+      "revisionId": "sha256:fd5800163cb8f87edf0e8cf65142149e0e90ac93bb9d7816d1987b60699e0894",
+      "approval": null
+    },
+    {
+      "date": "2026-11-18",
+      "revisionId": "sha256:cc0ff3ecb46a901316e4624779bbe7f3f1cc6761156ea1350b179b24bae71177",
+      "approval": null
+    },
+    {
+      "date": "2026-11-19",
+      "revisionId": "sha256:30814a3abf25c84e457a4ffa8d6e2ed6f279588bb97c2bec2d23c65f23c218c2",
+      "approval": null
+    },
+    {
+      "date": "2026-11-20",
+      "revisionId": "sha256:46e9a1bdc1dd281bfcb60bd295313b132cd84b6cf1263a370bd37080dc12f7d3",
+      "approval": null
+    },
+    {
+      "date": "2026-11-21",
+      "revisionId": "sha256:16b97f85b5c7223e51a270b3a06bd95f6112b524b0d6ed4d0b932ab70af1cd9a",
+      "approval": null
+    },
+    {
+      "date": "2026-11-22",
+      "revisionId": "sha256:254107723a1ad92c5fe326f051cbc45a19ad0184f34058c9810fde9f7d04ef00",
+      "approval": null
+    }
+  ]
+}
