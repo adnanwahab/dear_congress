@@ -10,7 +10,10 @@ test('account route explains all tracks without collecting identity or implying 
   expect(html).toContain('href="/votes"');
   expect(html).toContain('href="/privacy"');
   expect(html).not.toContain('<input');
-  expect(html).not.toContain('<form');
+  expect(html).toContain('Your private civic journey');
+  expect(html).toContain('not evidence of verified civic eligibility');
+  expect(html).not.toContain('type="file"');
+  expect(html).not.toContain('type="password"');
   expect(renderToStaticMarkup(<ParticipationNotice />)).toContain('No verified participant count is reported');
   const response = renderPage('<title>App</title><div id="root"></div>', '/account', []);
   expect(response.status).toBe(200);

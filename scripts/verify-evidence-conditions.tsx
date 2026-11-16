@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+const dom = new Window({ url: 'http://localhost/votes?proposal=demo-transit' });
+for (const key of ['window', 'document', 'navigator', 'HTMLElement', 'Event']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+const { act } = await import('react');
+const { createRoot } = await import('react-dom/client');
+const { getByLabelText, getByRole, fireEvent } = await import('@testing-library/dom');
+const { ArgumentMap, PILOT_TEXT } = await import('../src/client/ArgumentMap');
+const { DEMO_ITEMS } = await import('../src/engine/demo');
+const item = DEMO_ITEMS.find(x => x.id === 'demo-transit')!;
+const before = JSON.stringify(DEMO_ITEMS);
+let requests = 0;
+globalThis.fetch = (() => { requests++; throw Error('Sandbox must not send data'); }) as typeof fetch;
+for (const key of ['localStorage', 'sessionStorage']) Object.defineProperty(globalThis, key, { configurable: true, get() { throw Error('Sandbox must not persist private conditions'); } });
+const container = dom.document.createElement('div'); dom.document.body.append(container);
+const root = createRoot(container as any);
+await act(async () => root.render(<ArgumentMap item={item} evidenceConditions />));
+const sandbox = container.querySelector('.evidence-conditions')!;
+const details = sandbox.querySelector('details')!;
+assert.equal(details.open, false);
+await act(async () => details.open = true);
+const button = (name: string) => getByRole(sandbox as any, 'button', { name }) as any;
+await act(async () => button('Use access template').click());
+const field = (name: string) => getByLabelText(sandbox as any, name) as any;
+const edit = async (name: string, value: string) => {
+  await act(async () => fireEvent.input(field(name), { target: { value } }));
+  assert.equal(field(name).value, value);
+};
+await edit('My evidence threshold', 'At least 20% fewer missed trips for evening riders over 12 months. <script>unsafe()</script>');
+await act(async () => button('Link published update privately').click());
+assert.match(getByRole(sandbox as any, 'alert').textContent!, /edits are retained/);
+assert.match(field('My evidence threshold').value, /20%/);
+await edit('Published update title', 'Quarterly corridor report');
+await edit('Published update URL', 'javascript:alert(1)');
+await edit('Publication date, passage or table locator', '2027-03-01, table 4');
+await act(async () => button('Link published update privately').click());
+assert.equal(sandbox.querySelector('a'), null);
+await edit('Published update URL', 'https://example.org/report');
+await act(async () => button('Link published update privately').click());
+assert.equal(sandbox.querySelector('a')!.getAttribute('href'), 'https://example.org/report');
+assert.equal(sandbox.querySelector('a')!.getAttribute('rel'), 'noopener noreferrer');
+assert.match(getByRole(sandbox as any, 'status').textContent!, /no vote changed/);
+await edit('Published update title', 'Corrected report');
+assert.equal(sandbox.querySelector('a'), null); // Never retain a stale citation after edits.
+await act(async () => button('Use funding template').click());
+assert.equal(sandbox.querySelectorAll('textarea').length, 2);
+await act(async () => button('Discard access card').click());
+assert.equal(sandbox.querySelectorAll('textarea').length, 1);
+assert.match(sandbox.querySelector('textarea')!.value, /funding source/);
+assert.equal(container.querySelector('script'), null);
+// Changing proposal, namespace or exact text never exposes another scope's conditions.
+for (const props of [{ item: { ...item, proposedText: PILOT_TEXT + ' Revised.' } }, { item, namespace: 'citizen' }, { item: DEMO_ITEMS[0]! }]) {
+  await act(async () => root.render(<ArgumentMap {...props} evidenceConditions />));
+  assert.equal(container.querySelector('.evidence-conditions'), null);
+}
+await act(async () => root.render(<ArgumentMap item={item} evidenceConditions />));
+assert.equal(container.querySelector('textarea'), null);
+assert.equal(requests, 0);
+assert.equal(JSON.stringify(DEMO_ITEMS), before);
+await act(async () => root.unmount()); await dom.happyDOM.close();
+console.log('PASS private evidence cards: edit, failure, safe links, discard, revision isolation, zero requests/storage');
