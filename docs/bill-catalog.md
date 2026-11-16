@@ -130,3 +130,45 @@ screens and the active guided tour. Its invented tokens and protected minimums
 have no relationship to catalog cost assessments or participation. Choices stay
 in component memory and show tradeoff receipts; see
 [the SHE-663 review](reviews/SHE-663.md) for validation limits.
+
+## Human editorial gate (SHE-878)
+
+`content/bill-collections/eudaimonia-100-reviews.json` is the review ledger: exactly
+one record per stable HFL ID, pinned to the existing catalog SHA-256 and proposed
+jurisdiction. All 100 records begin with author/editor unassigned, legal/evidence/
+fiscal reviews pending and publication blocked. Source authorship is not verified;
+unassigned is an explicit gap, not an invented person or an approval.
+
+For each draft, a human maintainer follows this repeatable review path:
+
+1. Identify the actual author and accountable human editor. Record their names or
+   durable repository identities in `author` and `editor`; do not infer sponsorship.
+2. Verify the proposed jurisdiction and exact source text. Reimport via the commands
+   above after edits. Retain previous review evidence in Git; reset decisions to
+   pending for changed text and pin the new digest only as part of renewed review.
+3. Obtain independent legal/authority, evidence/uncertainty and fiscal reviews.
+   Each decision uses `pending`, `changes_requested` or `approved`, with a named
+   human `reviewer` and a durable `record` path or review URL documenting findings,
+   sources, limitations and the exact digest. Unknown fiscal effects stay unknown.
+4. The human editor records an explicit publication decision in `publication`
+   using the same decision fields. Submit the ledger and review records for human
+   PR review, then run the required checks. A self-entered name or passing check
+   is not authenticated human approval; GitHub human review remains mandatory.
+
+`src/shared/bill-editorial.ts` derives readiness and fails closed for missing or
+ambiguous records, stale digests, jurisdiction changes, missing assignments,
+incomplete reviews and decisions without a reviewer or review record. Tests
+require complete ledger coverage. Detail pages expose assignments, review statuses,
+current digest and blockers; cards always expose the blocked publish gate.
+Review evidence is repository-managed, not a public write API.
+
+Even a complete editorial record does **not** open advisory publication:
+`advisoryPublicationAllowed` remains false. There is no catalog-to-ballot API.
+Citizen submissions remain independently authored records; their API does not
+import catalog provenance. Future catalog participation must introduce separately
+authorized immutable snapshots and server-enforced source-kind/revision binding,
+consume this gate and preserve prior votes/receipts. Never wire catalog records
+straight into existing citizen, sample-engine, official-bill or repository ballots.
+The HFL-051 supplement is excluded from the catalog digest and requires a separate
+reviewed snapshot before any participation transition. Review completion does not
+make a concept introduced legislation, verified evidence or a modeled outcome.

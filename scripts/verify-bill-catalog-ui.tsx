@@ -14,6 +14,7 @@ globalThis.fetch = async () => { writes++; throw new Error('Catalog must not fet
 await act(async () => root.render(<BillCatalog />));
 assert.equal(container.querySelectorAll('article').length, 100);
 assert.equal(container.querySelectorAll('[aria-pressed]').length, 11);
+for (const card of container.querySelectorAll('article')) assert.match(card.textContent!, /Publish gate: blocked/);
 const input = container.querySelector('input')!;
 input.focus();
 await act(async () => { fireEvent.input(input, { target: { value: 'HFL-051' } }); });
@@ -35,7 +36,7 @@ await act(async () => root.unmount());
 window.history.replaceState(null, '', '/bills/HFL-051');
 const detailRoot = createRoot(container);
 await act(async () => detailRoot.render(<BillCatalog />));
-for (const text of ['Third Places for Everyone Act', 'Unknown until assessed', 'Statutory text', 'Proposed funding scenarios', 'Con arguments', 'Evidence plan', 'Review before participation', 'Immutable catalog revision']) assert(container.textContent!.includes(text), text);
+for (const text of ['Third Places for Everyone Act', 'Unknown until assessed', 'Statutory text', 'Proposed funding scenarios', 'Con arguments', 'Evidence plan', 'Review before participation', 'Immutable catalog revision', 'Human editorial review gate', 'Author unassigned', 'Human editor unassigned', 'legal review requires', 'evidence review requires', 'fiscal review requires', 'publication review requires']) assert(container.textContent!.includes(text), text);
 assert.equal(container.querySelectorAll('input,form').length, 0);
 assert.equal(writes, 0);
 await act(async () => detailRoot.unmount());

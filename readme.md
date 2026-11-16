@@ -768,7 +768,10 @@ Automated results do not establish full WCAG conformance or human acceptance.
 `/bills` browses 100 curated, unreviewed draft concepts across ten categories;
 `/bills/HFL-051` includes a separate legislative discussion supplement. These are
 independent of citizen submissions, official bill records, sample scoring and
-ballots. Search/filter URLs are shareable. See [catalog import, validation and
+ballots. Each has a revision-bound human editorial ledger with explicit unassigned
+authorship/editorship and pending legal, evidence and fiscal review. Advisory
+publication remains blocked, including after editorial readiness; see the review
+workflow in the catalog documentation. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
 ## Community learning embed (v1)
