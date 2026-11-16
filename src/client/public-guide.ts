@@ -35,6 +35,12 @@ On [advisory votes](/votes), distribute a personal budget of 100 priority points
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
 
+## Export a sample evidence packet
+
+Open a sample proposal's source details and choose Evidence packet. Export evidence JSON saves a public snapshot with background citations, assumptions, missing dates and review status. Show copy / print fallback lets you select the JSON if downloads fail. Export works offline once the proposal is loaded; it cannot recover a proposal that never loaded.
+
+The packet excludes journals, votes and source full text. Safe HTTPS syntax is checked, but link reachability and source content are unverified. These samples have no reviewed claim-level evidence or upstream evidence revision history. Export time is not a source date or human approval. Citizen proposals and official bill records do not yet have this export.
+
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
 
 The fictional transit sample includes two argument tracks with unreviewed claims and counterarguments. Drag within a track or use Move up and Move down to change your personal reading order. Each card discloses its source limits and quality status and expands Why this matters. This order lasts only while the map is open; it never changes public rankings or votes and is not verified participation. No claim-level citations have been supplied.
