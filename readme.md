@@ -1190,3 +1190,22 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+### Public-write retries (SHE-808)
+
+The journal sharing form keeps the reviewed excerpt and UUID key for explicit retry
+after offline, timeout, rate-limit or server failures. Working drafts remain in page
+memory only. No automatic retry occurs. Journal API clients should send a UUID v4
+`idempotencyKey` and reuse the exact body, endpoint and signed cookie. Legacy
+requests without keys remain compatible but are not deduplicated. Durable claims
+serialize concurrent attempts; completed retries reuse the original entry. A crash
+between claiming and recording a result returns an explicit uncertain-outcome 409
+rather than create another post. Deleted entries are never recreated by replay.
+Claims retain hashes and response metadata, not journal text or coordinates. The
+existing single-process writer and durable JSON volume remain required.
+
+Sample advisory choices already retry an exact proposal upsert and only issue a
+receipt after server acknowledgement. Their errors now distinguish timeout, offline,
+429 and 5xx; Retry-After remains enforced. These are non-binding browser choices.
+Governance defaults and human review/tagged-release policy in
+[launch merge policy](docs/launch-merge-policy.md) are unchanged.

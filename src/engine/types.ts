@@ -244,6 +244,7 @@ export interface SimulationSnapshot {
 }
 
 export interface DB {
+  journalRetries?: Record<string, import("../server/journal-retry").JournalRetryRecord>;
   journalReports?: { id: string; entryId: string; reason: string; createdAt: string; reporterId: string }[];
   journalModerationLog?: { entryId: string; status: "hidden" | "published"; reason: string; decidedAt: string }[];
   /** Incremented when one-time data migrations are applied. */

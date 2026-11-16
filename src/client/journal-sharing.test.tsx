@@ -51,13 +51,16 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     await edit('Public display name (optional)', 'Public name');
     await confirm();
     await click('Share publicly');
-    expect(calls.filter(c => c.body)).toEqual([{ path: '/api/publish_draft', body: { kind: 'journal', text: 'Safe excerpt', author: 'Public name', inference: 'none', labels: [] } }]);
+    expect(calls.filter(c => c.body)).toEqual([{ path: '/api/publish_draft', body: { kind: 'journal', text: 'Safe excerpt', author: 'Public name', inference: 'none', labels: [], idempotencyKey: expect.any(String) } }]);
     expect(document.body.textContent).toContain('Excerpt held for moderation review');
     expect((q().getByLabelText('Working draft (not uploaded)') as HTMLTextAreaElement).value).toContain('PRIVATE_SENTINEL');
     expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
     outcome = 'failure';
     await confirm(); await click('Share publicly');
-    expect(document.body.textContent).toContain('retrying may duplicate');
+    expect(document.body.textContent).toContain('Retry sends the same excerpt with the same key');
+    const failedBody = calls.at(-1)!.body;
+    await click('Retry exact excerpt');
+    expect(calls.at(-1)!.body).toEqual(failedBody);
     expect(document.body.textContent).not.toContain('sensitive server error');
     const count = calls.length;
     Object.defineProperty(dom.navigator, 'onLine', { configurable: true, value: false });
