@@ -14,7 +14,7 @@ export function DataGapsAtlas() {
       const created = url; setTimeout(() => URL.revokeObjectURL(created), 1000); setExportError('');
     } catch { if (url) URL.revokeObjectURL(url); setExportError('Download unavailable. Open the export text below and save it, or use your browser’s Print command.'); }
   }
-  return <section className="panel data-gaps" aria-labelledby="data-gaps-title" id="data-gaps-atlas">
+  return <section className="panel data-gaps" aria-labelledby="data-gaps-title" id="data-gaps-atlas" tabIndex={-1}>
     <h2 id="data-gaps-title">Public-data gaps atlas</h2>
     <p>Missing evidence means unknown, never good outcomes. This small research inventory is not a comprehensive coverage map. All entries await human review.</p>
     <p>Bundled inventory · revision atlas-v1 · 2026-11-14. Available after page load without network requests; external sources may be unavailable offline. No live refresh or loading measurement is implied.</p>

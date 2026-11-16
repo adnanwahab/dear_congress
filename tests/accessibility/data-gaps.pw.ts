@@ -5,8 +5,10 @@ test('atlas keyboard filtering, offline reading, download and print', async ({ p
   const atlas = page.locator('#data-gaps-atlas');
   await expect(atlas.locator('.gap-grid > li')).toHaveCount(3);
   const jurisdiction = atlas.getByLabel('Jurisdiction', { exact: true });
+  // Start from the focused atlas landmark, then verify the first filter is
+  // reachable with a real Tab. Avoid traversing every preceding page control.
+  await atlas.focus();
   await page.keyboard.press('Tab');
-  for (let i = 0; i < 60 && !(await jurisdiction.evaluate(el => el === document.activeElement)); i++) await page.keyboard.press('Tab');
   await expect(jurisdiction).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(atlas.getByLabel('Topic', { exact: true })).toBeFocused();
