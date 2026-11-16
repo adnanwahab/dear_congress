@@ -1038,3 +1038,8 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+Route mobile lab budgets and the report-only CI rollout are documented in
+[the SHE-940 review](docs/reviews/SHE-940.md). `bun run test:vitals` captures
+local production-route LCP, CLS, interaction proxy and browser traces after the
+separate performance dependencies and Chromium are installed.

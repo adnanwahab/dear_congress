@@ -55,3 +55,35 @@ jobs:
           name: accessibility-evidence
           path: artifacts/accessibility
           if-no-files-found: error
+
+  mobile-vitals:
+    name: mobile vitals lab (report-only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: npm install --prefix tests/performance --ignore-scripts --package-lock=false
+      - run: cd tests/performance && npx playwright install --with-deps chromium
+      - name: Measure route budgets (staged report-only)
+        id: vitals
+        continue-on-error: true
+        run: node tests/performance/vitals.mjs
+      - name: Record measurement outcome
+        if: always()
+        run: echo 'Mobile lab outcome is ${{ steps.vitals.outcome }}. Review summary.json and traces; report-only is not acceptance.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-vitals-evidence
+          path: artifacts/vitals
+          retention-days: 14
+          if-no-files-found: error
