@@ -392,6 +392,12 @@ Launch monitoring: see [health checks, alert setup and on-call evidence](docs/la
 
 ## Public-write security
 
+Public text stays plain text and is encoded at HTML/XML rendering boundaries.
+`bun test src/client/public-text-boundaries.test.tsx` runs the deterministic
+seed-947 adversarial corpus across publication, API readback, journal rendering,
+import parsing, rich previews and SVG cards. Coverage limits, local measurements
+and staged review requirements are recorded in [SHE-947](docs/reviews/SHE-947.md).
+
 Before starting production, set `ANON_COOKIE_SECRET` to a persistent random secret
 of at least 32 characters (for example, generated with `openssl rand -hex 32`).
 Production fails closed without it. The server issues an anonymous signed

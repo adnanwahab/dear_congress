@@ -22,7 +22,7 @@ export async function decisionCard(id: string, stance?: number) {
 function escapeXml(text: string) {
   return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]!));
 }
-function cardSvg(text: string) {
+export function cardSvg(text: string) {
   // Fixed-length wrapping also bounds unbroken version digests and URLs.
   const lines = text.split('\n').flatMap(line => line.match(/.{1,64}/gu) ?? ['']);
   const height = 64 + lines.length * 25;
