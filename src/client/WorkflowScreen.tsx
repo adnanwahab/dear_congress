@@ -221,6 +221,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {item && !loading && !loadError && <PolicyActions key={`policy-actions:${item.id}`} item={item} />}
     {item && !loading && !loadError && sourceUrl(item) && <Suspense fallback={null}><SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} /></Suspense>}
     {stage === 'outcomes' && <ProposalWatchlist />}
+    {stage === 'outcomes' && <p><a href="/synth">Explore the alternate futures gallery</a> · Separate hypothetical law models; this sample proposal is not applied.</p>}
     {stage === 'outcomes' && !loading && !loadError && item && <CivicTimeline key={item.id} points={[
       { id: 'published', label: 'Published chapter', evidence: 'fictional', href: route('published', item.id) },
       { id: 'reviewed', label: 'Review draft chapter', evidence: 'fictional', href: route('draft', item.id) },

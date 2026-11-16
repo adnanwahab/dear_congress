@@ -59,6 +59,15 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    await act(async()=>fireEvent.mouseOver(getByRole(host,'button',{name:/Current rules · hypothetical/})));
+    expect(host.textContent).toContain('Current rules preview:');
+    await act(async()=>getByRole(host,'button',{name:/Edited law · hypothetical/}).focus());
+    expect(host.textContent).toContain('Edited law preview:');
+    expect(requests).toHaveLength(1);
+    await act(async()=>getByRole(host,'button',{name:/Current rules · hypothetical/}).click());
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    await act(async()=>getByRole(host,'button',{name:/Edited law · hypothetical/}).click());
     const share=getByRole(host,'link',{name:'Reproducible scenario link'}) as HTMLAnchorElement;
     expect(share.search).toContain('simulationShare=1');
     expect(share.search).toContain('horizon=720');
@@ -124,8 +133,13 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
     expect(requests[1]?.body.implementationStrength).toBe(.5);
+    await act(async()=>getByRole(host,'button',{name:/Current rules · hypothetical/}).click());
+    await act(async()=>getByRole(host,'button',{name:/Edited law · hypothetical/}).click());
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
+    await act(async()=>getByRole(host,'button',{name:/Edited law · hypothetical/}).click());
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect(host.textContent).toContain('1/2 futures selected');
     await act(async()=>getByRole(host,'button',{name:'Restore 100% assumption'}).click());
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
     expect(requests).toHaveLength(2);
