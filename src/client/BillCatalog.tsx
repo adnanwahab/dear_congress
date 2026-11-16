@@ -4,6 +4,7 @@ import { BudgetShock } from './BudgetShock';
 import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
 import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
+import { GlossaryText } from './CivicGlossary';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
@@ -17,8 +18,8 @@ export function LegislativeMarkdown({ source }: { source: string }) {
     if (block.startsWith('### ')) return <h4 key={i}>{block.slice(4)}</h4>;
     if (block.startsWith('## ')) return <h3 key={i}>{block.slice(3)}</h3>;
     if (block.startsWith('# ')) return <h2 key={i}>{block.slice(2)}</h2>;
-    if (block.split('\n').every(line => line.startsWith('- '))) return <ul key={i}>{block.split('\n').map((line,j) => <li key={j}>{line.slice(2)}</li>)}</ul>;
-    return <p key={i}>{block}</p>;
+    if (block.split('\n').every(line => line.startsWith('- '))) return <ul key={i}>{block.split('\n').map((line,j) => <li key={j}><GlossaryText text={line.slice(2)} /></li>)}</ul>;
+    return <p key={i}><GlossaryText text={block} /></p>;
   })}</div>;
 }
 export default function BillCatalog() {

@@ -1,3 +1,4 @@
+import { GlossaryText } from './CivicGlossary';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { runViewTransition, motionDisabled, motionDuration } from './motion';
 import type { DemoItem } from '../engine/demo';
@@ -28,11 +29,11 @@ export function PatchChange({ item }: { item: Pick<DemoItem, 'id' | 'currentText
     }}>Play the change <span aria-hidden="true">↻</span></button>
     <div key={run} className={playing ? 'patch-sequence is-playing' : 'patch-sequence'}>
       <h3 className="patch-label">Current approach · illustrative</h3>
-      <div className="patch-code removed"><span className="patch-final">− {item.currentText}</span>{playing && <span className="patch-visual" aria-hidden="true">− <span className="patch-strike">{item.currentText}</span></span>}</div>
+      <div className="patch-code removed"><span className="patch-final">− {playing ? item.currentText : <GlossaryText text={item.currentText} />}</span>{playing && <span className="patch-visual" aria-hidden="true">− <span className="patch-strike">{item.currentText}</span></span>}</div>
       <h3 className="patch-label">Proposed text</h3>
-      <div className="patch-code added"><span className="patch-final">+ {item.proposedText}</span>{playing && <span className="patch-visual" aria-hidden="true">+ {phrases.map((phrase, index) => <span className="patch-phrase" key={index} style={{ '--phrase-delay': `${650 + index * 1450 / phrases.length}ms` } as CSSProperties}>{phrase}</span>)}</span>}</div>
+      <div className="patch-code added"><span className="patch-final">+ {playing ? item.proposedText : <GlossaryText text={item.proposedText} />}</span>{playing && <span className="patch-visual" aria-hidden="true">+ {phrases.map((phrase, index) => <span className="patch-phrase" key={index} style={{ '--phrase-delay': `${650 + index * 1450 / phrases.length}ms` } as CSSProperties}>{phrase}</span>)}</span>}</div>
       <h3 className="patch-label">Plain-English summary</h3>
-      <p className="patch-summary">{item.summary}</p>
+      <p className="patch-summary">{playing ? item.summary : <GlossaryText text={item.summary} />}</p>
     </div>
   </div>;
 }
