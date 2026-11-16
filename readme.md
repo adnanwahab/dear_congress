@@ -1127,3 +1127,9 @@ attached to the note history. These are explanatory line anchors, not verified
 legal clause IDs. Review sharing prepares a copyable excerpt only; no publication,
 review delivery or abuse-reporting service is connected. See
 [scope and validation](docs/reviews/SHE-502.md).
+
+The native law behavior sandbox can create a **Letter from a possible 2035** from
+its logged paired outcomes. It labels creative text and says **Simulated fiction,
+not prediction** on the card and local HTML export. The export attaches seed,
+actual horizon, assumption and checkpoint receipts; the provider supplies no
+causal event IDs. See [the contract and limits](docs/live-law-behavior-loop.md#possible-2035-letter-she-494).
