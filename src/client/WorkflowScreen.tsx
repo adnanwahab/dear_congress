@@ -1,4 +1,3 @@
-import { ResponsibilityExplorer } from './ResponsibilityExplorer';
 import { PublicNumericClaim } from './ProvenanceBadge';
 import { scenarioProvenance } from './ProposalProvenance';
 import { CivicCrossword } from './CivicCrossword';
@@ -50,6 +49,7 @@ import { ProposalProvenance, provenanceText, sourceUrl } from './ProposalProvena
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const ResponsibilityExplorer = lazy(() => import('./ResponsibilityExplorer').then(mod => ({ default: mod.ResponsibilityExplorer })));
 const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 const PolicyMeasurements = lazy(() => import('./PolicyMeasurements').then(module => ({ default: module.PolicyMeasurements })));
 const ResponseComposition = lazy(() => import('./ResponseComposition').then(module => ({ default: module.ResponseComposition })));
@@ -201,7 +201,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {stage === 'votes' && <><ParticipationNotice /><PersonalPriorities request={request} /></>}
     {stage === 'feed' && <CivicSampler items={items} loading={loading} failed={!!loadError} retry={() => setAttempt(n => n + 1)} />}
     <SideQuest item={item} loading={loading} failed={!!loadError} />
-    <ResponsibilityExplorer loading={loading} failed={!!loadError} proposal={item} />
+    <Suspense fallback={<p role="status">Loading responsibility explorer…</p>}><ResponsibilityExplorer loading={loading} failed={!!loadError} proposal={item} /></Suspense>
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
