@@ -1,6 +1,7 @@
+import { recordQuality, qualityAllowed } from './experience-quality';
 import { flushSync } from 'react-dom';
 
-export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme' | 'time-zoom' | 'clause-explain';
+export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme' | 'time-zoom' | 'clause-explain' | 'priority-history' | 'proposal-fold' | 'presenter-reveal' | 'score-boundary' | 'geography-mode';
 export type MotionPreset = 'playful' | 'calm' | 'off';
 export const MOTION_STORAGE_KEY = 'civic-motion';
 export function motionPreset(target: Window): MotionPreset {
@@ -76,6 +77,7 @@ const fallbackOwners = new WeakMap<HTMLElement, symbol>();
 /** `onStart` receives the live transition so callers can skip it when newer input arrives. */
 export async function runViewTransition(update: () => void, type: MotionType, onStart?: (transition: ViewTransition) => void) {
   if (typeof document === 'undefined' || !document.startViewTransition || motionDisabled()) {
+    if (typeof window !== 'undefined') recordQuality('accessibility_fallback');
     flushSync(update); return;
   }
   // Older implementations only accept a callback. Keep its selectors isolated too.
@@ -182,4 +184,43 @@ export function installMotionBudget(target: Window) {
     battery?.removeEventListener('chargingchange', apply);
     battery?.removeEventListener('levelchange', apply);
   };
+}
+
+
+/** Incoming route readiness: no persisted navigation/visitor linkage. */
+export function installRouteQuality(target: Window, emit: typeof recordQuality = recordQuality) {
+  let pending = false;
+  let generation = 0;
+  let revealed = false;
+  const start = () => { pending = qualityAllowed(target); generation++; };
+  start();
+  const finish = (failed = false, version = generation) => {
+    if (!pending || version !== generation) return;
+    pending = false;
+    emit(failed ? 'route_failed' : 'route_ready', target.performance.now(), target);
+    if (!target.document.startViewTransition || target.matchMedia?.('(prefers-reduced-motion: reduce)').matches || target.document.documentElement.dataset.motion === 'off') emit('accessibility_fallback', undefined, target);
+  };
+  // pagereveal precedes the first rendering opportunity. Observe its actual transition.
+  target.addEventListener('pagereveal', event => {
+    revealed = true;
+    const transition = (event as Event & { viewTransition?: { finished: Promise<void> } }).viewTransition;
+    const version = generation;
+    if (transition) void transition.finished.then(() => finish(false, version), () => finish(true, version));
+    else finish();
+  });
+  // Browsers without cross-document View Transitions still have a render fallback.
+  target.requestAnimationFrame(() => target.requestAnimationFrame(() => { if (!revealed) finish(); }));
+  target.addEventListener('pagehide', () => {
+    if (pending) emit('route_abandoned', undefined, target);
+    pending = false; generation++;
+  });
+  target.addEventListener('pageshow', event => {
+    if ((event as PageTransitionEvent).persisted) {
+      start();
+      // BFCache performance.now() includes time away: it is not route latency.
+      pending = false;
+    }
+  });
+  target.addEventListener('quality-consent', () => { pending = false; generation++; });
+  target.addEventListener('storage', () => { if (!qualityAllowed(target)) { pending = false; generation++; } });
 }

@@ -18,7 +18,14 @@ Tokens in styles.css (normal timing):
 | `--motion-plan` | 700 ms | Plan row movement/entry |
 | `--ease-out` | cubic-bezier(.2,.8,.2,1) | Navigation easing |
 
+In-page types include `priority-history` for the read-only `/needs` time machine.
+It cancels superseded transitions and invalidates pending callbacks on unmount;
+recorded selection and chapter navigation remain independent of animation.
+
 In-page types: `time-zoom` (outcome range changes), `sponsor-move`, `plan-rerank`, `proposal-change` (redline selection).
+`score-boundary` moves the sandbox brush between distinct rounded engine scores;
+rapid input skips the prior transition and unmount invalidates queued updates.
+Each brush gets its own component identity. Native chapter links are unchanged.
 Cross-document types: `forward`, `backward`; other navigation retains the default
 crossfade. Sponsor movement disables only its own root crossfade. Plan exits use
 500 ms and entries/moves use 700 ms. Default navigation timings are unchanged.
@@ -348,6 +355,109 @@ Tests: `bun test src/client/stage-preview.test.tsx`; browser success/failure cas
 The existing launch merge policy, disabled/dry-run governance defaults and human
 approval/tagged-release requirements are unchanged. This feature is not authority
 to merge or deploy. See [SHE-593 review](reviews/SHE-593.md) for validation limits.
+
+
+## Proposal paper disclosure (SHE-590)
+
+Feed sample cards expose a native details/summary document with current and
+proposed illustrative wording, existing source provenance and the chapter draft
+link. `ProposalPaper` uses the typed `proposal-fold` transition and a stable,
+CSS-safe `sample`-scoped identity. Only snapshots fold in perspective; live text
+remains selectable and wraps long clauses. Opening never changes history or
+scroll intentionally, replaces text nodes, submits content or casts a vote.
+Off/reduced motion commits immediately. Unsupported or throwing snapshot APIs
+retain the disclosure, newer toggles supersede older intent, and unmount skips
+the visual transition. Existing Navigation chapter links remain authoritative.
+
+Native browser coverage lives in `tests/accessibility/proposal-paper.pw.ts` for
+keyboard opening, route/history isolation, text selection, draft navigation and
+snapshot failure recovery across the existing viewport/motion projects. These
+checks still require an installed Playwright runtime. Manual screen-reader and
+touch review remains necessary; DOM tests do not establish that acceptance.
+
+## Optional experience-quality observations (SHE-563)
+
+`installRouteQuality` observes incoming route readiness through `pagereveal` and
+its transition's `finished` promise. Older browsers use two animation frames.
+Latency is navigation-start to incoming readiness, including load/render and any
+incoming animation; it is not an isolated animation benchmark. Failed transitions
+and leaving before readiness have separate counters. BFCache restores are excluded
+because their performance clock includes time away. Off/reduced/unsupported motion
+records a fallback when the immediate update or route is actually used.
+
+No observation is sent without affirmative first-party opt-in. See
+[experience quality](experience-quality.md) for the schema, retention and limits.
+
+## County map / list continuity
+
+`/map` keeps county FIPS selection, search, status filters, plan revision and
+synthetic metric labels in one component across Map view / List view switches.
+The typed `geography-mode` transition shares `county-model-<FIPS>` between the
+selected public county boundary and its selected data row. Only one endpoint
+owns that name in either mode. List view unmounts the SVG and focuses the data
+row; Map view restores focus to its mode button. Searchable native buttons remain
+available in both modes, including without the visual API or with reduced motion.
+The selected row remains available outside search/status filters with an explicit
+notice; it does not silently change those filters or their denominator.
+
+Newer switches and page exit invalidate pending visual callbacks. Snapshot/API
+failure falls back to the requested view. Chapter links in Navigation remain
+ordinary links; neither animation completion nor mode selection submits data.
+Only bundled Census county boundaries and synthetic FIPS model values are used;
+this interaction requests no resident locations, geolocation or participation API.
+
+`bun test src/client/MapScreen.test.tsx src/client/county-motion.test.ts src/client/motion.test.ts`
+checks the DOM lifecycle and shared motion fallbacks. Native browser journeys
+(success and visual failure, with no writes) are in
+`tests/accessibility/geography-continuity.pw.ts` and use the existing desktop,
+mobile, reduced-motion, forced-colors and reflow projects. Screen reader speech
+and physical touch operation still require manual verification.
+
+Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
+view switch and `prepareStageMorph` for ordinary chapter links. The flat default
+uses no 3D transforms. Orbit is an explicit range input, with no autonomous
+animation, render loop, WebGL dependency or navigation interception. Reduced
+motion, motion-off and forced colors remove transforms. Failed snapshots cannot
+block the view switch or stage navigation. See the README for storage/focus limits.
+
+Existing merge policy is unchanged: disabled/dry-run defaults, quorum 10,
+24-hour exposure, current-head checks and approval, protected-base evidence,
+active default kill switch and human review. Browser choices are advisory;
+production requires a human-published tagged release. This implementation does
+not inspect or attest live protection/environment configuration.
+
+## Read-only presenter (SHE-600)
+
+Use **More → Present sample proposals**, or `/feed?presenter=1`. The existing six
+chapter routes accept `presenter=1`; Previous/Next use ordinary links, retaining
+proposal/topic context. Exit removes the presenter flag and exposes the ordinary
+chapter as a separate action. The presenter mounts no advisory voting, draft
+submission, tracker, live-round or outreach controls and fetches only `/api/demo`.
+Synthetic labeling and source provenance remain visible. No tally determines
+animation, ordering or treatment.
+
+Blackout hides the audience slide from both display and accessibility tree while
+leaving controls reachable. Zoom increases text size with reflow. Fullscreen is
+requested only by its button and denial leaves a usable windowed presentation.
+Tab/Enter operate native controls. With the presentation itself focused, B toggles
+blackout and Escape reveals; focus is never moved automatically or trapped.
+`presenter-reveal` uses the typed transition helper, reduced/off preferences and
+slow timing. New input invalidates older callbacks and skips the prior transition;
+unmount aborts loading and prevents late visual callbacks from changing state.
+Animations never choose a route or trigger participation.
+
+Civic House (`/?house=1`) reuses the typed `filter` transition for its optional
+view switch and `prepareStageMorph` for ordinary chapter links. The flat default
+uses no 3D transforms. Orbit is an explicit range input, with no autonomous
+animation, render loop, WebGL dependency or navigation interception. Reduced
+motion, motion-off and forced colors remove transforms. Failed snapshots cannot
+block the view switch or stage navigation. See the README for storage/focus limits.
+
+Existing merge policy is unchanged: disabled/dry-run defaults, quorum 10,
+24-hour exposure, current-head checks and approval, protected-base evidence,
+active default kill switch and human review. Browser choices are advisory;
+production requires a human-published tagged release. This implementation does
+not inspect or attest live protection/environment configuration.
 
 The cinematic browser regression candidate runs with `bun run test:visual`.
 See [SHE-542 coverage and baseline review](reviews/SHE-542.md) for the four device/

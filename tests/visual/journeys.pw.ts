@@ -8,7 +8,7 @@ for (const stage of CIVIC_STAGES) test(`stage ribbon: ${stage.title}`, async ({ 
   await expect(page.locator('.demo-context')).toContainText('Demo activity date');
   await expect(page.locator('.demo-context')).toContainText('Fictional proposals');
   await capture(page, info, 'before', page.locator('.workflow-heading'));
-  const next = page.locator('.workflow-next');
+  const next = page.locator('.workflow-heading .workflow-next');
   await expect(next).toHaveAttribute('href', new RegExp(`proposal=${proposal.id}`));
   await activate(page, next, info);
   await expect(page).toHaveURL(url => url.pathname === `/${stage.next}` && url.searchParams.get('proposal') === proposal.id);
@@ -76,12 +76,18 @@ test('loading, error, retry and empty fixtures', async ({ page }, info) => {
 });
 
 test('proposal selection uses typed motion and world handoff stays external', async ({ page }, info) => {
-  await page.goto(`/draft?proposal=${proposal.id}&motion=normal`);
-  await expect(page.locator('.patch-change')).toBeVisible();
-  await page.getByLabel('Proposal', { exact: true }).selectOption(sample.items[1]!.id);
-  await expect(page).toHaveURL(new RegExp(`proposal=${sample.items[1]!.id}`));
-  await expect(page.locator('.patch-final').last()).toContainText(sample.items[1]!.proposedText);
+  // The draft route exposes a read-only proposal; selection happens in the feed.
+  const chosen = sample.items[1]!;
+  await page.goto(`/feed?proposal=${proposal.id}&motion=normal`);
+  const card = page.locator('.workflow-feed-item').filter({ has: page.getByRole('heading', { name: chosen.title, exact: true }) });
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'View proposal' }).click();
+  await expect(page).toHaveURL(url => url.pathname === '/feed' && url.searchParams.get('proposal') === chosen.id);
+  await expect(page.locator('.workflow-detail-title')).toHaveText(chosen.title);
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.motionType ?? '')).toBe('');
+  await page.goto(`/draft?proposal=${chosen.id}&motion=normal`);
+  await expect(page.locator('.patch-change')).toBeVisible();
+  await expect(page.locator('.patch-final').last()).toContainText(chosen.proposedText);
   await capture(page, info, 'selected-proposal', page.locator('.patch-change'));
   const world = page.getByRole('link', { name: 'HBL — HappyBearLandia (opens in a new tab)' });
   await expect(world).toHaveAttribute('href', 'https://happybearlandia.fly.dev/world');

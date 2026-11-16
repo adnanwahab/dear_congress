@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ArgumentMap, PILOT_TEXT } from '../src/client/ArgumentMap';
+import { FACT_CHECK_EXERCISES, FACT_CHECK_SOURCE } from '../src/client/FactCheckGame';
+import { DEMO_ITEMS } from '../src/engine/demo';
+const dom = new Window({ url: 'http://localhost/votes?proposal=demo-transit' });
+for (const key of ['window', 'document', 'navigator']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+// Any accidental transport or persistence from practice fails this test.
+const forbidden = () => { throw new Error('Practice must not write or fetch'); };
+globalThis.fetch = forbidden;
+for (const storage of [dom.localStorage, dom.sessionStorage]) storage.setItem = forbidden;
+const container = dom.document.createElement('div');
+dom.document.body.append(container);
+const root = createRoot(container as any);
+const item = DEMO_ITEMS.find(item => item.id === 'demo-transit')!;
+const before = JSON.stringify(DEMO_ITEMS);
+await act(async () => root.render(<ArgumentMap item={item} />));
+const game = () => container.querySelector('.fact-check-game')!;
+assert(game());
+assert(!game().querySelector('a'), 'source revealed only after classification');
+for (let index = 0; index < FACT_CHECK_EXERCISES.length; index++) {
+  assert.match(game().textContent!, new RegExp(`Case ${index + 1} of 4`));
+  assert(!game().querySelector('[role=status]')!.textContent);
+  const choices = [...game().querySelectorAll('fieldset button')];
+  assert.equal(choices.length, 4);
+  assert(choices.every(button => button.getAttribute('type') === 'button'));
+  // Deliberately choose Claim for every case, including mismatches: all reveal reasoning.
+  await act(async () => (choices[0] as any).click());
+  const feedback = game().querySelector('[role=status]')!;
+  assert.match(feedback.textContent!, new RegExp(`Teaching classification: ${FACT_CHECK_EXERCISES[index]!.classification}`));
+  assert(feedback.textContent!.includes(FACT_CHECK_EXERCISES[index]!.reasoning));
+  assert.equal(feedback.querySelector('a')!.getAttribute('href'), FACT_CHECK_SOURCE.url);
+  assert.equal(feedback.querySelector('time')!.getAttribute('datetime'), '2021-11-15');
+  assert.match(feedback.textContent!, /If Congress.gov is unavailable/);
+  assert(choices.every(button => (button as any).disabled));
+  const next = [...game().querySelectorAll('button')].find(button => !button.hasAttribute('disabled'))!;
+  assert(next);
+  await act(async () => (next as any).click());
+  assert.equal(dom.document.activeElement, game().querySelector('h4'));
+}
+assert.match(game().textContent!, /Case 1 of 4/);
+await act(async () => root.render(<ArgumentMap item={{ ...item, proposedText: `${PILOT_TEXT} Changed.` }} />));
+assert(!game(), 'stale proposal cannot inherit game');
+await act(async () => root.render(<ArgumentMap item={item} namespace="repository-pr" />));
+assert(!game(), 'another namespace cannot inherit game');
+await act(async () => root.render(<ArgumentMap item={item} />));
+assert.match(game().textContent!, /Case 1 of 4/);
+assert(!game().querySelector('[role=status]')!.textContent);
+assert.equal(JSON.stringify(DEMO_ITEMS), before);
+await act(async () => root.unmount());
+console.log('PASS: all classifications, citation reveal, retry guidance, reset, focus, scope isolation and no network/storage');

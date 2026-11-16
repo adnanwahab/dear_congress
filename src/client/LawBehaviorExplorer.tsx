@@ -1,6 +1,7 @@
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
+import { recordQuality } from './experience-quality';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
 import {lazy,Suspense} from 'react';
@@ -233,6 +234,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
+  const qualityFailed = useRef(false);
   async function run(){
     if(!Number.isInteger(effectiveSeed)||effectiveSeed<0||effectiveSeed>4294967295)return;
     const request=++generation.current;controller.current?.abort();
@@ -254,14 +256,20 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.status==='completed'&&(parsed.manifest?.start!==0||parsed.manifest?.end!==amendment.horizon||parsed.unit!==amendment.clock))throw Error('Model horizon changed. This scenario cannot be reproduced by this provider.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
+      if (parsed.status === 'completed') {
+        recordQuality('model_completed');
+        if (qualityFailed.current) recordQuality('model_recovered');
+        qualityFailed.current = false;
+      } else { qualityFailed.current = true; recordQuality('model_failed'); }
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
       setMetric(defaultMetric(parsed.frames,keys));
       if(parsed.status==='completed'&&strength===100)setReference(old=>old&&old.law.number===lawId?old:parsed);
     }catch(err){
       if(request!==generation.current)return;
-      if(timedOut){setError('The model exceeded the 45-second limit. Retry when the service is available.');return;}
+      if(timedOut){qualityFailed.current = true; recordQuality('model_failed');setError('The model exceeded the 45-second limit. Retry when the service is available.');return;}
       if(abort.signal.aborted)return;
+      qualityFailed.current = true; recordQuality('model_failed');
       setError(err instanceof Error?err.message:'Behavior model unavailable.');
     }finally{window.clearTimeout(timeout);if(request===generation.current)setBusy(false);}
   }

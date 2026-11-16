@@ -212,3 +212,12 @@
 .discovery-deck article { touch-action: pan-y pinch-zoom; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
 .discovery-deck .workflow-card-actions { margin-top: 16px; align-items: center; }
 .discovery-deck button, .discovery-deck a { min-height: 44px; }
+
+
+.proposal-paper { border: 1px solid var(--border); border-radius: 8px; margin-block: 1rem; padding: 1rem; }
+.proposal-paper summary { cursor: pointer; font-weight: 600; min-height: 44px; align-content: center; }
+.proposal-paper summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.proposal-paper-body { min-width: 0; overflow-wrap: anywhere; user-select: text; }
+.proposal-paper-body > p { white-space: pre-wrap; line-height: 1.7; }
+/* The typed snapshot owns folding; do not also animate native disclosure height. */
+.proposal-paper::details-content { transition: none; }

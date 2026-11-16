@@ -2,6 +2,7 @@ import { BudgetShock } from './BudgetShock';
 import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
 import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
+import { recordQuality } from './experience-quality';
 import { useEffect, useRef, useState } from 'react';
 import { TOUR_STOPS, tourState, tourUrl } from './demo-tour';
 
@@ -18,10 +19,12 @@ export function DemoTour() {
   const stop = TOUR_STOPS[step]!;
   const go = (next: number) => window.location.assign(tourUrl(next, paused));
   const exit = () => {
+    if (!finished) recordQuality('demo_exited');
     const url = new URL(window.location.href);
     for (const key of ['demo', 'step', 'paused']) url.searchParams.delete(key);
     window.location.assign(url.pathname + url.search + url.hash);
   };
+  useEffect(() => { if (active && step === 0) recordQuality('demo_started'); }, [active, step]);
   useEffect(() => {
     if (!active) return;
     if (window.location.pathname !== stop.route) { window.location.replace(tourUrl(step, paused)); return; }
@@ -34,7 +37,7 @@ export function DemoTour() {
     const start = performance.now();
     const timer = window.setTimeout(() => {
       if (step < TOUR_STOPS.length - 1) window.location.assign(tourUrl(step + 1));
-      else { setFinished(true); setPaused(true); }
+      else { recordQuality('demo_completed'); setFinished(true); setPaused(true); }
     }, remaining.current);
     return () => { window.clearTimeout(timer); remaining.current = Math.max(0, remaining.current - (performance.now() - start)); };
   }, [active, paused, finished, step, puzzleOpen, metricOpen]);
@@ -44,12 +47,12 @@ export function DemoTour() {
     // Initial entry still focuses the tour when focus is outside the overlay.
     if (!overlay.current?.contains(document.activeElement)) overlay.current?.focus();
     const click = (e: Event) => {
-      if (overlay.current?.contains(e.target as Node)) return;
+      if (overlay.current?.contains(e.target as Node) || (e.target as Element | null)?.closest?.('[data-experience-consent]')) return;
       e.preventDefault(); e.stopImmediatePropagation(); setPaused(true);
     };
     const key = (e: KeyboardEvent) => {
       if (puzzleOpen || metricOpen || (e.target as Element)?.closest?.('.budget-shock, .missing-voice, .policy-pinball, .outcome-metric-puzzle')) return;
-      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat || (e.target as Element | null)?.closest?.('[data-experience-consent]')) return;
       // Let native tour buttons handle Space/Enter exactly once.
       if ([' ', 'Enter'].includes(e.key) && overlay.current?.contains(e.target as Node) && (e.target as Element).closest?.('button')) return;
       if (e.key === 'Enter' && !overlay.current?.contains(e.target as Node)) { click(e); return; }

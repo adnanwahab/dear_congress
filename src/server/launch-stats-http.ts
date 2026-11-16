@@ -1,3 +1,4 @@
+import { validQualitySignal } from "../shared/experience-quality";
 import { LaunchStats, statsAuthorized, statsPage } from "./launch-stats";
 import { boundedJson, createPublicSecurity, securityHeaders } from "./public-security";
 
@@ -18,6 +19,20 @@ export function createStatsHTTP(options: {
       if (!statsAuthorized(req, options.token)) return finish(new Response("Admin authentication required", { status: 401, headers: { ...headers, "www-authenticate": 'Basic realm="Launch stats", charset="UTF-8"' } }));
       if (req.method !== "GET" && req.method !== "HEAD") return finish(new Response("Method not allowed", { status: 405, headers: { ...headers, allow: "GET, HEAD" } }));
       return finish(new Response(req.method === "HEAD" ? null : statsPage(options.stats.snapshot(), options.healthy()), { headers: { ...headers, "content-type": "text/html; charset=utf-8" } }));
+    },
+    async quality(req: Request, peer: string) {
+      if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));
+      if (req.headers.get("origin") !== security.origin(req)) return finish(new Response(null, { status: 403 }));
+      if (req.headers.get("dnt") === "1" || req.headers.get("sec-gpc") === "1") return finish(new Response(null, { status: 204 }));
+      const limited = security.check(req, peer, "experience-quality", false);
+      if (limited) return finish(limited);
+      try {
+        const body = await boundedJson(req, 256);
+        if (!validQualitySignal(body)) return finish(new Response(null, { status: 400 }));
+        let accepted = false;
+        options.record(() => { accepted = options.stats.quality(body); });
+        return finish(new Response(null, { status: accepted ? 204 : 503 }));
+      } catch { return finish(new Response(null, { status: 400 })); }
     },
     async pageView(req: Request, peer: string) {
       if (req.method !== "POST") return finish(new Response(null, { status: 405, headers: { allow: "POST" } }));

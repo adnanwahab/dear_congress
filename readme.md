@@ -59,6 +59,16 @@ It exports Markdown methodology without private inputs and links to all six stag
 Stale and missing fixtures remain explicit; there is no archived real-source or
 dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
 
+## Priority history
+
+The `/needs` Priority time machine reads `/api/priority-history`. Starting with
+this version, database saves capture changed shared-need model ranks and source
+counts, retaining the latest 365 changes. The first successful state-changing save records the initial baseline;
+there is no historical backfill. Date windows without records show unavailable,
+and one sample cannot establish change. The ranking keeps the existing simulated
+priors and optional measured-outcome contribution, explicitly labeled per sample.
+The viewer only reads; it never submits journals, allocations or votes.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
@@ -330,6 +340,10 @@ actual outcomes, real votes and resident records.
 with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
 changes across all three packages using public sample journals and deterministic
 simulated residents. It does not use live resident inputs or approve/activate rules.
+Each package comparison includes a decision boundary brush over distinct deterministic
+engine scores, with inclusive thresholds, rounding details and separate actual
+inclusion changes. It is a read-only score exploration, not an inferred causal
+weight tipping point. See [SHE-599 implementation and validation](docs/reviews/SHE-599.md).
 See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 ### `POST /api/synthesize` notes
@@ -776,6 +790,17 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Fact-check detective practice
+
+The exact-revision transit argument map (`/votes?proposal=demo-transit`, also on
+Published and proposal comparison) offers four local classification exercises
+about historical H.R. 3684. Each answer reveals a pinned Congress.gov source,
+passage locator, enactment date and editorial reasoning. These are separate from
+the fictional transit proposal and all civic votes. No score, persistence, API or
+participation receipt is created. Bundled content has no loading dependency;
+opening the full original source requires connectivity. See
+[verification and remaining review](docs/reviews/SHE-459.md).
 
 ## Live audience question wall
 
@@ -1240,3 +1265,30 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+Optional experience-quality signals extend the same launch store and protected
+`/admin/stats` dashboard. The shared shell offers **Experience metrics & privacy**;
+collection defaults off, honors DNT/GPC, and retains only capability-segmented daily
+counts and latency buckets for 30 UTC dates. See [schema, consent, retention and
+measurement limits](docs/experience-quality.md). Existing vote/journal metrics,
+records and governance configuration are unchanged.
+
+## Civic House
+
+`/?house=1` opens an optional six-room foyer from **More → Civic House**.
+The flat grid is the default and low-GPU/no-motion mode. The optional CSS 3D
+view has a touch/keyboard range control; reduced motion and `?motion=off`
+disable the spatial control. All six links and sample previews are shared across
+modes. Preview failures retain navigation and offer a read-only retry.
+
+Previews come from `/api/demo` and retain fictional/synthetic labels. Room
+position, visits and orbit angle imply no civic progress. Entering a room uses
+its existing native chapter route and View Transition enhancement. Same-tab
+stage URLs (including query/hash) and an existing focused element ID are saved
+in session storage; controls without IDs fall back to the stage heading. Storage
+failure leaves normal navigation usable. No vote, publication, outreach, tracker
+mutation or governance change is initiated by the foyer.
+
+Browser success/failure coverage: `cd tests/accessibility && npx playwright test
+civic-house.pw.ts --config playwright.config.ts`. Human screen-reader and touch
+acceptance remain required; see `docs/accessibility-acceptance.md`.

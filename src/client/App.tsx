@@ -1,6 +1,7 @@
 import { GlossaryText } from './CivicGlossary';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
+import { recordQuality } from './experience-quality';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { AssumptionDiagram } from './AssumptionDiagram';
 import { PlanBudget } from "./PlanBudget";
@@ -39,7 +40,7 @@ import { constitutionCityUrl } from "./constitution-city-link";
 import { loadMapLibre } from "./maplibre";
 import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
-import { LawBehaviorExplorer } from "./LawBehaviorExplorer";
+const LawBehaviorExplorer = lazy(() => import("./LawBehaviorExplorer").then(m => ({ default: m.LawBehaviorExplorer })));
 
 // Lazy-load citizen proposal routes to keep editor dependencies out of the initial shell.
 const CitizenProposalsApp = lazy(() => import("./CitizenProposals").then(m => ({ default: m.CitizenProposalsApp })));
@@ -159,6 +160,8 @@ const EMPTY_FLOW: PublishFlow = {
   notes: {},
 };
 
+const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ default: m.PriorityHistory })));
+const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
@@ -166,6 +169,7 @@ const JournalScreen = lazy(() => import("./JournalScreen"));
 const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
+const CivicHouse = lazy(() => import("./CivicHouse"));
 export function App() {
   if (window.location.pathname === "/" && new URLSearchParams(window.location.search).get("quest") === "1") return <CivicAdventure />;
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -173,6 +177,7 @@ export function App() {
   if (liveCode) return <LiveRound code={liveCode} presenter={path === '/votes'} />;
 
   const stages: Record<string, "published" | "feed" | "votes" | "draft" | "sponsors" | "outcomes"> = { "/published": "published", "/feed": "feed", "/votes": "votes", "/vote": "votes", "/draft": "draft", "/sponsors": "sponsors", "/outcomes": "outcomes" };
+  if (stages[path] && new URLSearchParams(window.location.search).get("presenter") === "1") return <Suspense fallback={<PageSkeleton path={path} />}><Presenter stage={stages[path]!} /></Suspense>;
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
@@ -182,6 +187,7 @@ export function App() {
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
+    : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
   return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
@@ -862,6 +868,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
       <section className="card">
         <JurisdictionPicker preference={jurisdiction} count={state.proposals.filter(p => !jurisdiction.value || p.jurisdiction === jurisdiction.value).length} />
         <h2>Shared needs</h2>
+        <Suspense fallback={<p role="status">Loading priority history…</p>}><PriorityHistory /></Suspense>
         <a href="/proposals/new?guided=1">Propose a change · private guided draft</a>
         <p className="muted">Jurisdiction filters policy options and jurisdiction priorities below. Shared need rankings, journal map and measured outcomes stay unchanged.</p>
         <p className="muted">Blends how often and how urgently people write about something with how they spend their priority points.</p>
@@ -1636,6 +1643,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     } finally { if (version === requestVersion.current) setBusy(false); }
   }
   useEffect(() => {
+    recordQuality('compare_opened');
     // Opening the screen must not advance the saved stability baseline either.
     void run({}, true);
     return invalidateRequest;
@@ -1752,7 +1760,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
     <div className="stack">
       <CoalitionQuest />
       <BudgetPuzzle />
-      <LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} />
+      <Suspense fallback={<p role="status">Loading behavior explorer…</p>}><LawBehaviorExplorer seed={42} hblOrigin={HBL_URL} /></Suspense>
       <details className="card"><summary>Advanced synthesis, scoring and frozen plan comparisons</summary>
       <div className="grid synth">
       <PolicyComparisonPanel />
