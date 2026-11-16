@@ -1,0 +1,23 @@
+import { useRef, useState } from 'react';
+import type { PublicPull } from '../shared/hbl-governance';
+import { approvedPlaytestUrl, PLAYTEST_CHECKS, playtestReport, playtestStatus } from './playtest';
+
+export function PatchPlaytest({pull, repository, api, csrf, disabledReason, onSaved}: {pull:PublicPull;repository:string;api:string;csrf?:string;disabledReason:string;onSaved:()=>void}) {
+ const [checks,setChecks]=useState<string[]>([]), [environment,setEnvironment]=useState(''), [steps,setSteps]=useState(''), [expected,setExpected]=useState(''), [actual,setActual]=useState(''), [consent,setConsent]=useState(false);
+ const [status,setStatus]=useState<'idle'|'saving'|'saved'|'error'>('idle'), [message,setMessage]=useState('');
+ const key=useRef<string|null>(null);
+ const url=approvedPlaytestUrl(pull,repository);
+ async function submit() {
+  if(disabledReason||!csrf||!consent||status==='saving'||![environment,steps,expected,actual].every(v=>v.trim()))return;
+  setStatus('saving');setMessage('');key.current??=crypto.randomUUID();
+  try {
+   const response=await fetch(`${api}/${pull.number}/feedback`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({version:pull.version,consent:true,idempotencyKey:key.current,text:playtestReport(pull,repository,environment,checks,steps,expected,actual)})});
+   if(!response.ok)throw Error(response.status===409?'Revision changed. Refresh before submitting.':response.status===403?'Permission denied. Sign in with an approved roster account and refresh.':'Report could not be saved. Check your connection and remove private content before retrying.');
+   setStatus('saved');setMessage('Report recorded. GitHub delivery and follow-up may still be pending; see Feedback and follow-up below.');onSaved();
+  }catch(e){setStatus('error');setMessage(e instanceof Error?e.message:'Report could not be saved.');}
+ }
+ function edit(){key.current=null;setStatus('idle');setMessage('');}
+ return <section className="gp-panel gp-playtest" aria-label="Civic patch playtest station"><h2>Playtest this patch</h2><p>Exploration is advisory. Opening a preview or completing this checklist never casts a vote, approves a PR or merges code.</p><p>Source: {repository} #{pull.number} · {playtestStatus(pull)} · {pull.eligibility.reason}</p><p className="gp-raw">Head: {pull.headSha} · Base: {pull.base} · Revision: {pull.version}</p>{url?<><a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">Open isolated revision preview ↗</a><p>Deployment verified {pull.preview?.deploymentVerifiedAt}. Preview availability does not establish review approval. This external preview uses separate temporary data; use sample inputs only.</p></>:<p role="status">Preview pending or unavailable: no approved deployment for this exact revision. Contributor links cannot launch a preview.</p>}
+ <fieldset disabled={status==='saving'} onChange={edit}><legend>Exploratory checklist · kept in this page until submission</legend>{PLAYTEST_CHECKS.map(check=><label className="gp-consent" key={check}><input type="checkbox" checked={checks.includes(check)} onChange={e=>setChecks(v=>e.target.checked?[...v,check]:v.filter(x=>x!==check))}/>{check}</label>)}</fieldset>
+ <form onSubmit={e=>{e.preventDefault();void submit();}} onChange={edit}><fieldset disabled={status==='saving'}><legend>Record a public bug report</legend><p>Do not include personal data or credentials. Your public alias and report may be published to GitHub and used for follow-up tasks. No automatic browser details are collected.</p>{([{label:'Environment (browser, OS, viewport and motion preference)',value:environment,set:setEnvironment},{label:'Steps to reproduce',value:steps,set:setSteps},{label:'Expected behavior',value:expected,set:setExpected},{label:'Actual behavior',value:actual,set:setActual}]).map(field=><label key={field.label}>{field.label}<textarea required maxLength={1500} rows={3} value={field.value} onChange={e=>field.set(e.target.value)}/></label>)}<label className="gp-consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>I consent to publishing this report under my public alias and using it for follow-up tasks.</label><p>{disabledReason||(!csrf?'Feedback permission unavailable. Refresh source.':'Approved roster feedback permission available.')}</p><button disabled={!!disabledReason||!csrf||!consent||status==='saving'||status==='saved'||![environment,steps,expected,actual].every(v=>v.trim())}>{status==='saving'?'Recording…':'Record public bug report'}</button></fieldset></form><p role={status==='error'?'alert':'status'}>{message}</p></section>;
+}
