@@ -15,6 +15,7 @@ import { CouncilRoleplay } from './CouncilRoleplay';
 import { ProposalExplainer } from './ProposalExplainer';
 import { SideQuest } from './SideQuest';
 import { DiscoveryDeck } from './DiscoveryDeck';
+import { PublicMeetings } from './PublicMeetings';
 import { ProposalCompare } from './ProposalCompare'; 
 import { PolicyActions } from './PolicyActions';
 import { MissingVoice } from './MissingVoice';
@@ -208,6 +209,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     <SideQuest item={item} loading={loading} failed={!!loadError} />
     <Suspense fallback={<p role="status">Loading responsibility explorer…</p>}><ResponsibilityExplorer loading={loading} failed={!!loadError} proposal={item} /></Suspense>
     <JurisdictionPicker preference={jurisdiction} count={loading || loadError ? null : filtered.length} />
+    {['published', 'feed', 'sponsors'].includes(stage) && <PublicMeetings request={request} jurisdiction={jurisdiction.value} />}
     {loadError && <div className="dashboard-alert" role="alert">{loadError} <button disabled={loading} onClick={() => setAttempt(n => n + 1)}>Retry loading proposals</button></div>}
     {deepStage && <section className="panel" aria-label="Proposal context" aria-busy={loading}>
       {loading ? <Skeleton /> : loadError ? <p>Proposal details are unavailable. Use Retry loading proposals above.</p> : !items.length ? <><h2>No sample proposals available</h2><p>When proposals are available, choose one here to review its draft, prepare a sponsor card and follow its simulated outcomes.</p><button onClick={() => setAttempt(n => n + 1)}>Check again</button><a className="workflow-reference" href="/feed">Explore the proposal feed →</a></> : <>{item && <TopicChip linked topic={item.topic} />}<h2>{item ? item.title : 'Choose a sample proposal'}</h2><p>{item ? 'Continue with this fictional sample, or choose another proposal below.' : 'This proposal link is unavailable. Select a sample below to enter this stage.'}</p>{stage === 'outcomes' || !item ? selectControl : null}{!item && filtered.length > 0 && <button onClick={() => choose(filtered[0]!.id)}>Open first sample proposal</button>}{item && <a className="workflow-reference" href={route('feed',item.id)}>Back to proposal →</a>}</>}

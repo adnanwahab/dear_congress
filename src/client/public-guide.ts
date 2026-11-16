@@ -105,6 +105,8 @@ The [outcomes demonstration](/outcomes#policy-measurements) links claims to reta
 [Map](/map) includes opt-in fictional project check-ins with dated example evidence, stalled and unknown states, and forecasts shown separately from observations. No verified neighborhood project feed is connected. Corrections go only to a page-memory demo queue: nothing is sent to a real moderator, facts stay unchanged, and reloading clears the queue. Use fictional text without personal details.
 
 
+Public meeting calendars on Feed, Published and Sponsors use separately imported, operator-reviewed notices. Coverage may be empty or incomplete. Check the organizer source and freshness warning before attending. Missing times and agendas are not inferred. Calendar downloads require a click; reminders default off and work only after you import the file into your calendar. Exports do not update automatically, and a download is not evidence of attendance or participation.
+
 ## Will my journal be public?
 
 Yes, if you publish it. Published text, display name, time, source labels and needs can be read by anyone, including through public APIs and copies made by other sites. Do not put addresses, contact details or sensitive information in the text. Approximate map handling cannot remove a location you type into a public entry.

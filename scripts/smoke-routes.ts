@@ -14,7 +14,7 @@ Object.assign(process.env, {
   NODE_ENV: 'production', PORT: '0', DB_PATH: join(directory, 'db.json'),
   HBL_DB_PATH: join(directory, 'governance.sqlite'), HBL_SINGLE_WRITER: '1',
   HBL_MERGE_ENABLED: '0', HBL_MERGE_DRY_RUN: '1', HBL_KILL_SWITCH: '1',
-  OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0',
+  MEETINGS_PATH: join(directory, 'meetings.json'), OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0',
   ANON_COOKIE_SECRET: crypto.randomUUID() + crypto.randomUUID(),
 });
 let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
@@ -39,6 +39,10 @@ try {
   assert.match(await proposalCard.text(), /Fictional demo · read-only/);
   assert.equal((await get('/embed/v1?proposal=missing')).status, 404);
   assert.equal((await fetch(new URL('/embed/v1', server!.url), { method: 'POST' })).status, 405);
+  const meetings = await get('/api/meetings');
+  assert.equal(meetings.status, 200);
+  assert.equal(meetings.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await meetings.json(), { meetings: [] });
   const auditIndex = await get('/api/audit-samples');
   assert.equal(auditIndex.status, 200);
   const { samples } = await auditIndex.json();

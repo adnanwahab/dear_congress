@@ -1,6 +1,7 @@
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
+import { meetingsResponse } from './src/server/meetings';
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -961,6 +962,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/audit-samples/:id": {
       GET: (req) => auditSampleResponse(req.params.id!),
     },
+    "/api/meetings": { GET: () => meetingsResponse() },
     "/api/legislation": {
       GET: async () => {
         const headers = { "cache-control": "no-store" };
