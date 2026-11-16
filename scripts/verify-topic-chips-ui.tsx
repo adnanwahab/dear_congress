@@ -9,7 +9,7 @@ for (const key of ['window', 'document', 'navigator', 'localStorage', 'sessionSt
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 const { createRoot } = await import('react-dom/client');
 const payload = demoPayload({}, 'test');
-const request = async <T,>(): Promise<T> => payload as T;
+const request = async <T,>(path: string): Promise<T> => (path === '/api/state' ? { needs: [], user: { allocation: {} } } : payload) as T;
 for (const stage of ['home', 'feed', 'published', 'votes', 'draft', 'sponsors', 'outcomes'] as const) {
   dom.history.replaceState(null, '', `/${stage}?proposal=demo-housing`);
   const container = dom.document.createElement('div'); dom.document.body.append(container);
