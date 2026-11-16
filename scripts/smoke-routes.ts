@@ -21,6 +21,18 @@ let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  // Crawler contracts only; these do not establish native platform preview acceptance.
+  for (const agent of ['LinkedInBot/1.0', 'Twitterbot/1.0', 'facebookexternalhit/1.1 Applebot/0.1']) {
+    const response: Response = await fetch(new URL('/votes?proposal=demo-housing&token=private-preview-token', server!.url), { headers: { 'User-Agent': agent } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('set-cookie'), null);
+    const html = await response.text();
+    assert.match(html, /Fictional sample: Allow backyard cottages near frequent transit/);
+    assert.match(html, /tallies are illustrative, not verified turnout/);
+    assert.match(html, /property="og:image"/);
+    assert.match(html, /name="twitter:card" content="summary_large_image"/);
+    assert.ok(!html.includes('private-preview-token'));
+  }
   for (const topic of ['transit', 'housing', 'childcare']) {
     const page = await get(`/topics/${topic}`);
     assert.equal(page.status, 200);
