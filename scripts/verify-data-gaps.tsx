@@ -11,6 +11,8 @@ const root = createRoot(host as any);
 let reject!: (reason: Error) => void;
 const request = <T,>() => new Promise<T>((_, fail) => { reject = fail; });
 await act(async () => root.render(<WorkflowScreen stage="outcomes" request={request} />));
+// Wait for the independently split component to hydrate, not for the proposal API.
+await act(async () => { await import('../src/client/DataGapsAtlas'); });
 const atlas = host.querySelector('#data-gaps-atlas')!;
 assert(atlas, 'Bundled atlas available while proposals load');
 assert.equal(atlas.querySelectorAll('.gap-grid > li').length, 3);
