@@ -407,3 +407,54 @@ or carry its votes. They are lost on leaving/reloading; no storage or API is use
 Do not include personal content without permission. Publishing is unavailable
 pending server permission and moderation safeguards. See
 [remaining acceptance and verification](reviews/SHE-503.md).
+
+
+## Cooperative policy-design missions (SHE-504)
+
+**Design together** appears on the six-stage workflow's sample Draft and loaded
+citizen proposal details. This is a same-device workshop for up to six people,
+not a remote collaboration service. Participants pass the device and select their
+self-declared name. Optional research/cost/fairness/implementation roles may be
+shared or left unassigned. The facilitator adds/updates participant roles and
+editor/observer permissions. Editors revise the separate shared draft, record
+cited findings with reasoning and limitations, and raise/resolve questions with
+reasons. Observers read/export. These permissions enforce UI/model operations,
+not identity: anyone with browser access can select an editor or edit storage.
+
+Progress awards at most one milestone per role after a different editor records
+a reasoned quality review. Reviewers consider source relevance/credibility,
+reasoning and limitations. A later “needs work” review revokes that contribution's
+readiness. Multiple ready contributions in a role still earn only one milestone.
+Saving a draft revision resets readiness until the evidence is reviewed again for
+that revision. Earlier reviews stay in the log. No political votes, popularity
+counts or posting-volume points are inputs. Names
+are unverified and no citation is fetched or independently verified; progress is
+not consensus, legal authority or acceptance.
+
+Browser storage uses `civic_cooperative_mission_v1:<kind>:<encoded-id>` and an
+exact source snapshot including text/title. Sample/citizen kind, ID and revision
+remain isolated. Changed sources and malformed/unknown-version logs block saves
+without overwriting old storage. The typed contract replays append-only events;
+derived draft/member/question state is reconstructed. Every saved change retains
+actor, timestamp and action. JSON export includes the source, draft, participants,
+contributions, reviews, resolved/unresolved questions and log. Copyable saved JSON
+is available if downloading fails. Get group consent before sharing this data.
+The ledger is capped at 300 changes and is not tamper-proof or authenticated.
+
+Each change persists before it appears successful; quota/blocked-storage failures
+retain form text for retry. Detected changes from another tab block writes and
+offer reload after copying unsaved text. This is not an atomic cross-tab database;
+use a single tab/device for the workshop. Form edits are lost on leaving or
+switching sources until explicitly saved. Storage clearing loses the workshop;
+there is no account backup, remote invite/sync, import/merge or publication path.
+Original proposal text, source journals, votes, repository identities and PRs are
+untouched. Existing governance is unchanged (see launch-merge-policy.md).
+
+Focused model and isolated Happy DOM tests cover quality-review milestones and
+revocation, permission/attribution validation, unsafe citation rejection, source
+isolation, replay/export, actual form editing, observer controls, save failure,
+stale-tab recovery and zero network requests. Fields have native labels and
+controls with visible focus and no drag requirement. Styles wrap long content,
+stack at mobile widths and disable motion under reduced-motion preferences.
+Native mobile, keyboard/screen-reader and visual verification remains required;
+DOM tests do not establish native accessibility acceptance.
