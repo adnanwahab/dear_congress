@@ -1,3 +1,4 @@
+import { playSound } from './civic-sound';
 import { DecisionBoundary } from './DecisionBoundary';
 import { useEffect, useRef, useState } from 'react';
 import type { Weights } from '../engine/types';
@@ -50,7 +51,7 @@ export function RuleSandbox({ weights, lambda, budget, request }: { weights: Wei
     {normalized ? <><p>Raw total: {normalized.total.toFixed(2)}. Each effective weight = raw weight ÷ raw total. Effective weights sum to 1 (display rounded).</p>
       <ul>{WEIGHT_KEYS.map(key => <li key={key}>{key}: {weights[key].toFixed(2)} ÷ {normalized.total.toFixed(2)} = {normalized.normalized[key].toFixed(4)}</li>)}</ul></> : <p role="alert">{validation}</p>}
     <p>Electorate, eligibility, quorum and grace period: not configured; approval is unavailable. Activation authority: no activation capability in this sandbox. Future activation requires explicit authorized maintainer action after verified approval.</p>
-    <button type="button" disabled={busy || !normalized} onClick={() => void compare()}>Compare rule in sandbox</button>
+    <button type="button" disabled={busy || !normalized} onClick={() => { playSound('sandbox'); void compare(); }}>Compare rule in sandbox</button>
     <p role="status" aria-live="polite">{busy ? 'Calculating fixture comparison…' : preview ? 'Fixture comparison ready.' : 'Changing settings clears the previous comparison.'}</p>
     {error && <p role="alert">{error} Retry with Compare rule in sandbox.</p>}
     {preview && <RuleComparison preview={preview} />}
