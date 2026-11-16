@@ -1,6 +1,6 @@
 import { flushSync } from 'react-dom';
 
-export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme' | 'time-zoom' | 'clause-explain' | 'priority-history' | 'presenter-reveal';
+export type MotionType = 'sponsor-move' | 'plan-rerank' | 'proposal-change' | 'filter' | 'theme' | 'time-zoom' | 'clause-explain' | 'priority-history' | 'proposal-fold' | 'presenter-reveal';
 export type MotionPreset = 'playful' | 'calm' | 'off';
 export const MOTION_STORAGE_KEY = 'civic-motion';
 export function motionPreset(target: Window): MotionPreset {
