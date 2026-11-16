@@ -63,7 +63,7 @@ dispute registry. See [SHE-497 scope and validation](docs/reviews/SHE-497.md).
 
 The `/needs` Priority time machine reads `/api/priority-history`. Starting with
 this version, database saves capture changed shared-need model ranks and source
-counts, retaining the latest 365 changes. Startup records today's baseline only;
+counts, retaining the latest 365 changes. The first successful state-changing save records the initial baseline;
 there is no historical backfill. Date windows without records show unavailable,
 and one sample cannot establish change. The ranking keeps the existing simulated
 priors and optional measured-outcome contribution, explicitly labeled per sample.
