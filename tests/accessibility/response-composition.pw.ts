@@ -29,7 +29,9 @@ test('touch sliders change illustrative composition', async ({ browser }) => {
   await page.goto('http://127.0.0.1:3107/outcomes');
   const slider = page.locator('#response-composition input').first();
   const box = (await slider.boundingBox())!;
-  await page.touchscreen.tap(box.x + box.width * .8, box.y + box.height / 2);
+  // Locator-driven taps auto-scroll the offscreen /outcomes exercise into view.
+  // Raw touchscreen coordinates may fall outside the viewport and never hit the slider.
+  await slider.tap({ position: { x: Math.round(box.width * .8), y: Math.round(box.height / 2) } });
   expect(Number(await slider.inputValue())).toBeGreaterThan(1);
   await expect(page.locator('#response-composition [role=status]')).not.toContainText('50.0%');
   await context.close();
