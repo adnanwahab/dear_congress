@@ -34,24 +34,24 @@ for (const stage of ['published', 'feed', 'votes'] as const) {
   failed = false;
   await act(async () => { (container.querySelector('[role=alert] button') as any).click(); });
   assert.match(container.textContent!, /2 applicable proposals/);
-  assert(!container.querySelector('.workflow-detail-title')?.textContent?.includes('groceries'));
+  assert.match(container.textContent!, /Showing the linked proposal/);
   assert.equal(dom.localStorage.getItem(JURISDICTION_KEY), 'Texas');
   assert.equal(writes.length, 0, 'Browsing must never submit a vote');
   if (stage === 'votes') {
     const selector = container.querySelector('.workflow-select select')!;
-    assert.equal(selector.children.length, 2);
-    assert([...selector.children].every(o => ['demo-insurance', 'demo-mental-health'].includes(o.getAttribute('value')!)));
+    assert.equal(selector.children.length, 3);
+    assert([...selector.children].every(o => ['demo-food', 'demo-insurance', 'demo-mental-health'].includes(o.getAttribute('value')!)));
     await act(async () => { (container.querySelector('.vote-options button') as any).click(); });
     // #53: failures are reported without echoing the server's error text.
     assert.match(container.textContent!, /could not confirm whether your advisory choice/);
-    assert.equal(writes[0].votes[0].proposalId, 'demo-mental-health');
+    assert.equal(writes[0].votes[0].proposalId, 'demo-food');
   }
   if (stage !== 'votes') {
     // Topic filter now lives in the shared ProposalSearch control.
     const search = container.querySelector('.proposal-search select')! as any;
     await act(async () => { search.value = 'Childcare'; search.dispatchEvent(new dom.Event('change', { bubbles: true })); });
     assert.match(container.textContent!, /0 applicable proposals/);
-    assert.equal(container.querySelector('a.dashboard-button'), null);
+    if (stage === 'feed') assert(container.querySelector('a.dashboard-button')?.getAttribute('href')?.includes('demo-food'));
   }
   await act(async () => { (container.querySelector('.jurisdiction-picker button') as any).click(); });
   assert.equal(dom.localStorage.getItem(JURISDICTION_KEY), null);

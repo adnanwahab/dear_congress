@@ -67,6 +67,15 @@ both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
 
+## Sample proposal links
+
+Explicit `?proposal=` links select that fictional sample across the workflow,
+including Votes, even when saved browsing filters exclude it. The selected title,
+details and advisory controls use the same ID. Changing the proposal adds a browser
+history entry; reload and Back/Forward retain the URL selection. Unknown or empty
+IDs show an unavailable notice without selecting a different voting target.
+Opening a link never casts a vote.
+
 ## Local discovery
 
 Home includes My area’s civic challenges: choose a browsing jurisdiction and policy
