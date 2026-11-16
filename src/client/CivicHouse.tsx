@@ -57,7 +57,7 @@ export default function CivicHouse({ request }: { request: <T>(path: string) => 
         const roomId = new URL(saved.url, window.location.origin).searchParams.get('proposal');
         const roomItem = roomId ? data?.items.find(i => i.id === roomId) : item;
         const href = saved.url === stage.route && item ? `${stage.route}?proposal=${encodeURIComponent(item.id)}` : saved.url;
-        return <article className="house-room stage-card" key={stage.route}><span className="house-number">0{stage.n}</span><h2>{stage.title}</h2><p>{stage.heading}</p><div className="house-preview">{roomItem && !failed ? <><strong>{roomItem.title}</strong><p>{preview(roomItem, stage.n)}</p></> : 'Preview unavailable until sample data loads. You can still enter this stage.'}</div><a id={`house-room-${stage.n}`} href={href} onClick={e => prepareStageMorph(e, stage.n)}>Enter {stage.title} →</a></article>;
+        return <article className="house-room stage-card" key={stage.route}><span className="house-number">0{stage.n}</span><h2>{stage.title}</h2><p>{stage.heading}</p><div className="house-preview">{roomItem && !failed ? <><strong>{roomItem.title}</strong><p>{preview(roomItem, stage.n)}</p></> : 'Preview unavailable until sample data loads. You can still enter this stage.'}</div><a id={`house-room-${stage.n}`} href={href} onClick={e => { try { sessionStorage.setItem('civic-house-pending-stage', stage.route); } catch {} prepareStageMorph(e, stage.n); }}>Enter {stage.title} →</a></article>;
       })}</div>
     </div><p><a href="/">Return to overview</a></p>
   </main></div>;
