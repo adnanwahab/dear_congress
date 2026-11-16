@@ -1,0 +1,13 @@
+.responsibility { margin-block: 1rem; overflow-wrap: anywhere; }
+.responsibility-controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.responsibility-controls select { display: block; max-width: 100%; }
+.responsibility-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; list-style: none; padding: 0; }
+.responsibility-flow li { border: 1px solid currentColor; border-radius: .5rem; padding: .85rem; }
+.responsibility li { min-width: 0; }
+.responsibility summary { cursor: pointer; }
+.responsibility li a { display: inline-block; margin-top: .75rem; }
+.responsibility :is(a, summary, select, input):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.responsibility-outline li { margin-block: 1rem; }
+@media (max-width: 800px) { .responsibility-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .responsibility-flow { grid-template-columns: minmax(0, 1fr); } }
+/* Static handoffs: no motion is required, including under prefers-reduced-motion. */
