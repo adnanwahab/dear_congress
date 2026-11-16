@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Window } from 'happy-dom';
 import { NeedsGeoMap, JurisdictionMap, NeedsView } from './App';
-import { mapAttempt } from './optional-map';
+import { MapAvailability, mapAttempt } from './optional-map';
 
 for (const View of [NeedsGeoMap, JurisdictionMap]) {
   test(`${View.name}: missing, configured, invalid tiles, retry and cleanup`, async () => {
@@ -123,7 +123,21 @@ test('rankings and jurisdiction alternatives remain text without a map', () => {
   expect(html).toContain('Housing');
   expect(html).toContain('Constituent priorities by jurisdiction');
   for (const place of ['Houston', 'Harris County', 'Texas', 'United States']) expect(html).toContain(place);
+  expect(html).toContain('Dependency observations');
+  expect(html).toContain('Last success: unknown');
+  expect(html).toContain('Opening a link does not confirm world loading');
   expect(html).toContain('Real voices');
   expect(html).toContain('Simulated residents');
   expect(html).not.toContain('MAP_STYLE_URL');
 });
+
+ test('map diagnostics separate local failures from ambiguous resource failures without inventing provider health', () => {
+  const render = (reason: 'initialization' | 'resource' | 'timeout') => renderToStaticMarkup(<MapAvailability status="unavailable" configured retry={() => {}} reason={reason} lastSuccess="2026-11-15T12:00:00.000Z" />);
+  expect(render('initialization')).toContain('Local map initialization failed; provider health is unknown.');
+  expect(render('resource')).toContain('provider outage, connectivity and browser policy cannot be distinguished');
+  expect(render('timeout')).toContain('provider and local rendering health are unknown');
+  expect(render('resource')).toContain('2026-11-15T12:00:00.000Z');
+  const unconfigured = renderToStaticMarkup(<MapAvailability status="unavailable" configured={false} retry={() => {}} />);
+  expect(unconfigured).toContain('Never observed');
+  expect(unconfigured).toContain('Map provider is not configured.');
+ });
