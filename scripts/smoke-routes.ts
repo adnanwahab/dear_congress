@@ -32,6 +32,13 @@ try {
   assert.equal((await get('/topics/unknown')).status, 404);
   assert.equal((await get('/bills/HFL-101')).status, 404);
   assert.equal((await get('/api/topics/unknown')).status, 404);
+  const proposalCard = await get('/embed/v1?proposal=demo-housing');
+  assert.equal(proposalCard.status, 200);
+  assert.match(proposalCard.headers.get('content-security-policy') ?? '', /script-src 'none'/);
+  assert.equal(proposalCard.headers.get('set-cookie'), null);
+  assert.match(await proposalCard.text(), /Fictional demo · read-only/);
+  assert.equal((await get('/embed/v1?proposal=missing')).status, 404);
+  assert.equal((await fetch(new URL('/embed/v1', server!.url), { method: 'POST' })).status, 405);
   const auditIndex = await get('/api/audit-samples');
   assert.equal(auditIndex.status, 200);
   const { samples } = await auditIndex.json();
