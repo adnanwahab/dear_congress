@@ -143,3 +143,9 @@
   .source-health { color: black; background: white; }
   .source-health .card { break-inside: avoid; }
 }
+
+.evidence-notebook { min-width: 0; overflow-wrap: anywhere; }
+.evidence-notebook label { display: block; }
+.evidence-notebook textarea { display: block; box-sizing: border-box; width: 100%; min-height: 96px; resize: vertical; font: inherit; }
+.evidence-notebook button, .evidence-notebook summary { min-height: 44px; }
+.evidence-notebook :is(button, textarea, summary, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

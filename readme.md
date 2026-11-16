@@ -760,6 +760,18 @@ and human-review history are currently unrecorded. A 30-day freshness warning is
 an editorial threshold, not a provider SLA. Copyable JSON provides an export/print
 fallback. See [SHE-688 scope and remaining acceptance](docs/reviews/SHE-688.md).
 
+## Personal evidence notebook
+
+Use **Save claim** on the selected fictional proposal or a synthetic outcome
+measurement, then open `/account#evidence-notebook`. Clips freeze the claim,
+citation, access timestamp and optional note in this browser profile only. They
+are not sent to the service or included in votes. Shared-device users can read
+them; clearing browser storage removes them. Export Markdown before clearing.
+Revisiting a changed app source record marks its original clips stale without
+rewriting notes. External source pages are not monitored. No change observed
+is not a freshness guarantee. Synthetic measurements cite their fixture module,
+not real-world evidence. See [SHE-537 validation](docs/reviews/SHE-537.md).
+
 ### Public-data gaps atlas
 
 `/outcomes#data-gaps-atlas` includes a bundled, read-only research inventory with

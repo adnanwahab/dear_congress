@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { SourceHealth } from './SourceHealth';
 import { SourceRevisionAlert } from './SourceRevisionAlert';
 import { DatasetImportWorkbench } from './DatasetImportWorkbench';
@@ -9,6 +10,8 @@ import { ContradictionCompass } from './ContradictionCompass';
 import { StudyQualityMatrix } from './StudyQualityMatrix';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
+const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
+
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
   return <><SourceHealth /><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
@@ -19,6 +22,7 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
       {SYNTHETIC_METRICS.map(metric => {
         const result = assessMetric(metric, asOf);
         return <article key={metric.id} className="card policy-measurement">
+          <Suspense fallback={null}><SaveClaim source={{kind: 'synthetic-outcome', id: metric.id, claim: `${metric.label}: ${result.movement} · ${result.freshness} · ${result.target}`, citation: 'Fictional transit pilot — synthetic fixture, no external evidence; causal attribution not established.', url: 'https://github.com/adnanwahab/dear_congress/blob/main/src/shared/policy-measurements.ts', revision: JSON.stringify(metric)}} /></Suspense>
           <h3>{metric.label} · synthetic</h3>
           <ProvenanceBadge provenance={{ origin: 'demo-fiction', date: null, jurisdiction: 'Fictional transit pilot', confidence: 'Synthetic fixture only', limitations: 'No real policy or measured effect. Assessment date is not an observation date. ' + metric.caveat, link: null }} />
           <p><strong>{result.movement}</strong> · {result.freshness} · {result.target}</p>

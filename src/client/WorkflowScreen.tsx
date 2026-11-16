@@ -37,20 +37,18 @@ import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import AmendmentEditor from './AmendmentEditor';
 import { OutcomeTimeline } from './OutcomeTimeline';
-
 import { EvidenceDocket } from './EvidenceDocket';
 import { OfficialBills } from './OfficialBills';
 import { JurisdictionPicker, useJurisdiction, sampleMatchesJurisdiction } from './JurisdictionPicker';
 import { ArgumentMap } from './ArgumentMap';
 import { ParticipationNotice } from './ParticipationNotice';
-import { ProposalProvenance, provenanceText } from './ProposalProvenance';
+import { ProposalProvenance, provenanceText, sourceUrl } from './ProposalProvenance';
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 const PolicyMeasurements = lazy(() => import('./PolicyMeasurements').then(module => ({ default: module.PolicyMeasurements })));
-
 const DataGapsAtlas = lazy(() => import('./DataGapsAtlas').then(module => ({ default: module.DataGapsAtlas })));
-
 const route = (stage: Stage, proposal?: string | null) => {
   const topic = topicById(new URLSearchParams(window.location.search).get('topic') ?? '');
   return topic ? topicStageUrl(stage, topic.id, proposal ?? undefined) : stageRoute(stage, proposal);
@@ -204,6 +202,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </section>}
     {item && !loading && !loadError && <ProposalExplainer key={JSON.stringify([item.id, item.summary, item.proposedText, item.jurisdiction])} item={item} />}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
+    {item && !loading && !loadError && sourceUrl(item) && <Suspense fallback={null}><SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} /></Suspense>}
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
     <p className="workflow-status" role="status" aria-live="polite">{status}</p>
