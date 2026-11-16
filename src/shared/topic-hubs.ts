@@ -1,5 +1,6 @@
 import { TOPICS, topicForNeed } from './topics';
 import type { JournalEntry, NeedDef, Proposal } from '../engine/types';
+import { publicTopicAnnotations } from './topic-annotations';
 import { isPublicEntry } from './moderation';
 
 export const topicById = (id: string) => TOPICS.find(t => t.id === id);
@@ -16,7 +17,7 @@ export function topicHub(id: string, needs: NeedDef[], proposals: Proposal[], en
       needIds: e.extraction.needs.filter(n => needIds.has(n.id)).map(n => n.id),
       proposalIds: e.extraction.proposalIds.filter(id => proposals.some(p => p.id === id && needIds.has(p.needId))),
     }));
-  return { topic, needs: selected.map(({ id, label, goal, metric }) => ({ id, label, goal, metric })), stories,
+  return { topic, annotations: publicTopicAnnotations(id, []), needs: selected.map(({ id, label, goal, metric }) => ({ id, label, goal, metric })), stories,
     proposals: proposals.filter(p => !p.emergent && needIds.has(p.needId)).map(({ id, needId, title, jurisdiction, rightsIssue }) => ({ id, needId, title, jurisdiction, rightsIssue })) };
 }
 export type TopicHubData = NonNullable<ReturnType<typeof topicHub>>;
