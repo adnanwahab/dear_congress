@@ -5,6 +5,8 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 
 ## Choose a safe starting path
 
+The home page’s “Try a sample advisory choice” opens the fictional frequent-bus proposal directly. Allow about 60 seconds to read and choose. This independent demo is non-binding, not an official ballot or public poll. Opening the link never casts a vote. Journal and other browsing paths remain available.
+
 Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game walkthrough](/?quest=1&walkthrough=1). Five skippable chapters explain journal → need → comparison → proposal → future. Fictional examples are optional. Only chapter progress and the sample preference stay in this browser; nothing is published or voted on.
 
 - Explore: try the [Houston and Harris County source treasure hunt](/documentation#civic-source-treasure-hunt). Demo learning prompts link to dated official records. Progress is self-reported, held only on the page, and is never verified civic participation.

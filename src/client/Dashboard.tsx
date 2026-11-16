@@ -87,10 +87,11 @@ export function Dashboard({ request }: { request: Request }) {
     <CivicHeader stage="Live demo" />
     <main id="main-content" tabIndex={-1} className="civic-main">
       <section className="home-start" aria-labelledby="home-start-title">
-        <h1 id="home-start-title">Where would you like to start?</h1>
+        <h1 id="home-start-title">Try one civic action in about 60 seconds</h1>
+        <p>Independent demo · Fictional proposal: run frequent buses on evenings and weekends. Read it, then choose Support, Oppose, or Not sure. This is non-binding, not an official ballot or public poll.</p>
         <div className="home-start-choices">
-          <a className="dashboard-button" href={stageRoute('votes', selected)}>Explore a proposal &amp; advisory vote</a>
-          <a className="dashboard-button" href="/journal">Tell us what needs fixing</a>
+          <a className="dashboard-button" href={stageRoute('votes', 'demo-transit')}>Try a sample advisory choice</a>
+          <a className="home-start-secondary" href="/journal">Tell us what needs fixing</a>
         </div>
         <p>No account is needed: participation is advisory, not an official election or government decision, and sample proposals and counts are illustrative. Journal entries you publish are shared publicly, so leave out names, addresses, contact details and other private information.</p>
       </section>

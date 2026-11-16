@@ -26,12 +26,12 @@ try {
     };
     stage = `${viewport.width}:home`;
     await visit('/');
-    const start = page.getByRole('region', { name: 'Where would you like to start?' });
+    const start = page.getByRole('region', { name: 'Try one civic action in about 60 seconds' });
     await start.waitFor({ state: 'visible' });
     assert.equal(await start.getByRole('link').count(), 2);
-    const explore = start.getByRole('link', { name: 'Explore a proposal & advisory vote' });
+    const explore = start.getByRole('link', { name: 'Try a sample advisory choice' });
     await explore.waitFor({ state: 'visible' });
-    assert.equal(await explore.getAttribute('href'), '/votes');
+    assert.equal(await explore.getAttribute('href'), '/votes?proposal=demo-transit');
     assert.equal(await start.getByRole('link', { name: 'Tell us what needs fixing' }).getAttribute('href'), '/journal');
     // The shared navigation exposes privacy through Participation & privacy.
     // Mobile places that action in its visible More dialog.
