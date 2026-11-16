@@ -100,6 +100,11 @@
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
 
+.proposal-explainer { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.proposal-explainer button { min-height: 44px; margin-block: .5rem; }
+.proposal-explainer summary { cursor: pointer; padding-block: .75rem; }
+.proposal-explainer li { margin-block: 1rem; }
+
 .civic-sampler { margin-block: 1rem; }
 .sampler-actions { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
 .sampler-actions button, .sampler-actions a { min-height: 44px; }
@@ -120,3 +125,12 @@
 .council-choice { display: block; padding: .75rem; min-height: 44px; }
 .council-controls { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
 .council-controls button { min-height: 44px; }
+
+/* Retained revision records remain readable on narrow screens and in print. */
+.source-revision-alert { min-width: 0; overflow-wrap: anywhere; }
+.source-revision-alert button { min-height: 44px; }
+.source-revision-print { display: none; }
+@media print {
+  .source-revision-alert button { display: none; }
+  .source-revision-print { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+}

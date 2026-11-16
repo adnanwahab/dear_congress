@@ -163,3 +163,41 @@ test('options accepted without types still expose the CSS compatibility attribut
   await runViewTransition(() => {}, 'filter');
   expect(document.documentElement.dataset.motionType).toBeUndefined();
 }));
+
+test('low battery adapts live and cleanup removes listeners without touching review mode', () => withWindow(async win => {
+  const battery = new win.EventTarget();
+  Object.assign(battery, { charging: false, level: .15 });
+  Object.defineProperty(win.navigator, 'getBattery', { value: async () => battery });
+  const dispose = installMotion(win as unknown as globalThis.Window);
+  await Promise.resolve(); await Promise.resolve();
+  expect(motionDisabled()).toBe(true);
+  expect(document.documentElement.dataset.motion).toBe('slow');
+  Object.assign(battery, { charging: true });
+  battery.dispatchEvent(new win.Event('chargingchange'));
+  expect(motionDuration(100)).toBe(500);
+  dispose();
+  Object.assign(battery, { charging: false });
+  battery.dispatchEvent(new win.Event('chargingchange'));
+  expect(document.documentElement.dataset.motionBudget).toBe('full');
+}));
+
+test('sustained slow foreground frames constrain future transitions; hidden frames do not', () => withWindow(async win => {
+  let callback: FrameRequestCallback = () => {};
+  win.requestAnimationFrame = ((cb: FrameRequestCallback) => { callback = cb; return 1; }) as unknown as typeof win.requestAnimationFrame;
+  win.cancelAnimationFrame = () => {};
+  Object.defineProperty(win.document, 'hidden', { configurable: true, value: false });
+  const dispose = installMotion(win as unknown as globalThis.Window);
+  win.dispatchEvent(new win.Event('pointerdown'));
+  for (let i = 1; i <= 30; i++) callback(i * 40);
+  expect(motionDisabled()).toBe(true);
+  let updates = 0;
+  document.startViewTransition = (() => { throw new Error('must skip'); }) as typeof document.startViewTransition;
+  await runViewTransition(() => updates++, 'filter');
+  expect(updates).toBe(1);
+  dispose();
+  const clean = installMotion(win as unknown as globalThis.Window);
+  Object.defineProperty(win.document, 'hidden', { configurable: true, value: true });
+  win.dispatchEvent(new win.Event('keydown'));
+  expect(document.documentElement.dataset.motionBudget).toBe('full');
+  clean();
+}));

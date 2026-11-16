@@ -226,6 +226,23 @@ delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
 
+## Sample audio explainer (SHE-490)
+
+The six-stage sample workflow offers a click-to-play English synthetic explainer
+for the selected fictional proposal. Five passages describe its goal, clause,
+scenario jurisdiction, unavailable tradeoff evidence and uncertainty. Transcript
+passages link to the exact displayed sample fields; agency background links are
+never narrated as evidence. Speech is provided by the browser/OS and may use its
+speech service, as disclosed before playback. No microphone, autoplay, external
+AI summarization, vote mutation or stored audio preference is used.
+
+Stop cancels owned speech, as does changing proposal text or leaving the view.
+Loading and voice failure leave the transcript usable; Play retries failures.
+Subtitles show the passage currently being spoken. Native buttons and disclosures
+support keyboard use; text wraps on narrow screens and no animation is added.
+The roughly one-minute duration varies with text and platform voice. Citizen,
+official-bill and repository PR records are outside this sample-only feature.
+
 ## Legislative redline detective sandbox (SHE-415)
 
 The existing amendment editor on sample Draft/Votes and citizen detail includes

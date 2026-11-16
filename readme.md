@@ -744,6 +744,34 @@ independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
 
+## Sample evidence packets
+
+Sample proposal source panels offer a citation-only evidence JSON export, with
+copy/print fallback after loading. Unknown source dates and human review remain
+explicit; links receive safe HTTPS syntax checks, not reachability verification.
+No journals, ballots or source full text are included. Citizen/official proposal
+exports, claim-level evidence and reviewed conflicting cases remain pending.
+See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
+
+## Sample advisory share cards
+
+Share preview beside the shared sample advisory controls exports a standalone SVG
+and copyable alt text after explicit review. Stance is off by default and resets
+when the preview closes or the proposal changes. Cards use only repository-curated
+fictional scenario fields and existing background-source caveats, with a SHA-256
+content version; no identity, journals, receipts, counts or live-round data enter
+the export. They label the action non-binding and not an official election.
+No share endpoint, tracking, automatic posting or vote write is added.
+See [SHE-535 validation and limits](docs/reviews/SHE-535.md).
+
+## Sample proposal audio
+
+The six-stage workflow includes a click-to-play synthetic voice explainer with
+transcript, passage sources and subtitles for the selected fictional sample.
+Voice availability and duration depend on the browser/OS. Tradeoff evidence gaps
+are stated explicitly; background agency references are not treated as proof.
+See [SHE-490 scope and validation limits](docs/reviews/SHE-490.md).
+
 ## Fictional council practice
 
 `/votes` includes a skippable five-minute council sandbox, pending human review.
@@ -938,3 +966,22 @@ The `/outcomes` measurement area also includes a local claim-to-source anchor
 candidate with versioned passages, missing/conflicting evidence and review labels.
 It demonstrates application-code and synthetic fixture provenance, not verified
 real policy effects. See [SHE-679 scope and remaining acceptance](docs/reviews/SHE-679.md).
+
+## Optional Civic Chronicle crossword
+
+The draft catalog and sample workflow offer a three-word educational crossword;
+the guided demo links to it after exiting the tour. Pack 1 is bundled editorial
+content awaiting human clue/source review. Play uses page memory only, requires
+no signup, and never writes participation data. The grid, hints and complete-text
+answers work offline after loading; institutional links need connectivity.
+See [SHE-665 validation and remaining review](docs/reviews/SHE-665.md).
+
+## Weekly civic discovery (SHE-538)
+
+The Dashboard reuses its typed `/api/demo` payload for a read-only sample
+walkthrough alongside weekly self-guided trivia and an evidence tour.
+All sessions are optional and available anytime; they record no participation
+and add no incentives or writes. Native disclosures support keyboard/touch;
+no new animation is used. Official external calendars and hypothetical gatherings
+are separately labeled. No hosted events or moderated public event discussion
+are operational. See [scope and validation](docs/reviews/SHE-538.md).

@@ -16,6 +16,10 @@ Try the [five-minute civic adventure](/?quest=1) or the equivalent [non-game wal
 
 The shared header starts with Sound Off. You can enable quiet navigation and sandbox cues for this browser and try each cue under Sound tests. Enabling sound itself is silent. Reduced motion and motion-off suppress cues. Sounds are generated locally and need no network download once the page has loaded; this does not make the whole application available offline. Use Sound Off for silence, including on devices whose mute switch does not silence browser media. All critical status stays visible as text. Voting and publication have no sound rewards.
 
+## Weekly civic discovery
+
+The home page offers optional self-guided trivia, an evidence tour and a fictional proposal walkthrough every week, available anytime in your browser. Opening a session records no attendance, answers or votes and earns no rewards. Public event discussion is unavailable pending moderators and a reporting process. Hypothetical gatherings are planning examples only. The external Library of Congress calendar is an official directory; verify each event’s current time, location and access details with its organizer.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. After the server confirms a sample-proposal choice, a saved advisory receipt offers Change vote and Copy receipt. Its viewed-text fingerprint identifies the text shown in this browser; it is not a server-bound revision or official ballot receipt. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.
@@ -30,6 +34,12 @@ The optional [private civic passport](/account) is a demo / sandbox awaiting rev
 On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
 
 Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
+
+## Export a sample evidence packet
+
+Open a sample proposal's source details and choose Evidence packet. Export evidence JSON saves a public snapshot with background citations, assumptions, missing dates and review status. Show copy / print fallback lets you select the JSON if downloads fail. Export works offline once the proposal is loaded; it cannot recover a proposal that never loaded.
+
+The packet excludes journals, votes and source full text. Safe HTTPS syntax is checked, but link reachability and source content are unverified. These samples have no reviewed claim-level evidence or upstream evidence revision history. Export time is not a source date or human approval. Citizen proposals and official bill records do not yet have this export.
 
 Draft and Votes offer a read-only reveal slider for fictional current and proposed text. Use arrow keys or drag, or choose Side-by-side mode. Full text stays available below for selection and copying, with background citations alongside. Comparing text does not publish or vote.
 
@@ -89,7 +99,7 @@ The Feed also offers a demo two-minute sampler of five fictional policy topics. 
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. The journey ribbon previews each stage with a drag, arrow keys, or a stage tap. Choose Open to navigate; previewing never publishes, votes, or prepares a sponsor card. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
-The Outcomes measurement prototype also uses explicitly synthetic metrics. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
+The Outcomes measurement prototype also uses explicitly synthetic metrics. Its source revision demonstration retains a published measurement snapshot and shows field-level corrections with SHA-256 hashes. Corrections require reviewer acknowledgment; no authenticated review or live dataset monitoring is available. Hashes identify local measurement content, not verified publisher datasets. Primary sources, editorial inferences, user claims and synthetic estimates have different evidentiary roles. It has no verified implemented policy registered. A simulated improvement does not establish a real-world result. For a real bill, follow its exact official source from Published to verify status. A real outcome needs a named policy, implementation evidence, dated measurements, baseline and source; missing evidence means unknown, not success. There is no promised timetable for passage or implementation. The Outcomes time explorer offers day, month, year and decade windows with shareable UTC ranges. Its planned milestones and future checkpoints are labeled synthetic examples; the historical lane is empty until source measurements are supplied. Zooming never publishes a proposal or casts a vote.
 
 ## Explore connected issues
 
@@ -117,6 +127,18 @@ The Outcomes contradiction compass compares explicit fields only when scope, per
 
 Optional haptics is off by default. Enable it in Page actions (More on phones). On supported devices, brief feedback marks a demo card move, a manual recorded-model time tick, or a successful private amendment save. It never marks a vote, support level, or progress milestone. Reduced motion pauses feedback. Devices without vibration continue normally. The preference stays in this browser, or only this page if storage is blocked.
 
+The Outcomes study-quality matrix separates primary-source findings, editorial inference, illustrative user claims and synthetic estimates. Sort by study characteristics, inspect dated limitations and disclosures, and export or print the records with review history. All entries await human review; a citation is not approval and conflicting endpoints are not a political viewpoint score.
+
+## Reviewing public datasets
+
+The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV files or pasted data, maps value/date/unit/scope columns and checks them against a civic metric contract. It distinguishes primary sources, editorial inference, user claims and synthetic estimates. Dates, exact source revisions, reuse terms and limitations remain attached to each draft.
+
+Acceptance is a self-reported local review of the exact draft. Any data or metadata change requires new review. Nothing is published or added to measured outcomes or synthesis. Drafts and review history disappear on reload; export the complete JSON packet or copy/print its text to retain them. Offline files work without network requests. The cited example is a transcription exercise awaiting independent source verification. A named reviewer and passing structural checks do not establish authenticated approval or real-world policy benefit.
+
+## Contesting evidence
+
+The [evidence challenge docket](/outcomes#evidence-docket) demonstrates sourced, conflicting and missing-source cases. Prepare a local draft tied to an exact claim revision and source; include new evidence, dates, limitations and the requested correction. The prototype sends nothing and loses drafts on reload. Export before leaving. Example decisions are not verified human reviews. A live private intake, moderator review and independent appeal service remain unavailable. Never include personal details in public evidence.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
@@ -135,4 +157,9 @@ This independent prototype explores how everyday needs can inform discussion and
 [Privacy and removal](/privacy) and [participation boundaries](/account) describe the current privacy and consent limits. No separate legal terms route is published here; this prototype does not replace official legal or election information.
 
 This guide uses plain English. Human-reviewed Spanish and broader plain-language access remain pending under [SHE-318](https://linear.app/shel-bernstein/issue/SHE-318/access-human-reviewed-spanish-translation-and-plain-language-civic). No approved Spanish translation is available here yet. Changes to vote, publication, source and deletion wording need the same translation review before they can be labeled reviewed.
+
+
+### Sharing a sample decision
+
+Share preview beside the sample advisory choices creates a downloadable card and copyable alt text. Review it before downloading. It includes the public fictional proposal, a content version and background-source limitations. Chosen stance is off by default and optional. No identity, journals, vote receipt identifiers, tallies or live-round information are included. The card is non-binding, not an official election, and not proof of a saved vote. Downloaded copies cannot be withdrawn from other people.
 `;

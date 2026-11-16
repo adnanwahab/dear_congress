@@ -1,19 +1,25 @@
+import { SourceRevisionAlert } from './SourceRevisionAlert';
+import { DatasetImportWorkbench } from './DatasetImportWorkbench';
+import { ProvenanceBadge } from './ProvenanceBadge';
 import { ClaimEvidence } from './ClaimEvidence';
 import { EVIDENCE_EXAMPLES } from '../shared/claim-provenance';
 import { EvidenceCalendar } from './EvidenceCalendar';
 import { ContradictionCompass } from './ContradictionCompass';
+import { StudyQualityMatrix } from './StudyQualityMatrix';
 import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
   return <><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
     <p>No verified implemented policy or measured policy effects are registered. Replies and committee milestones are activity, not evidence of policy benefit.</p>
+    <DatasetImportWorkbench />
     <details><summary>Explore synthetic measurement prototype</summary>
       <p>Fictional transit pilot · synthetic data only · assessed as of {asOf}. These values do not describe a real policy or enter synthesis.</p>
       {SYNTHETIC_METRICS.map(metric => {
         const result = assessMetric(metric, asOf);
         return <article key={metric.id} className="card policy-measurement">
           <h3>{metric.label} · synthetic</h3>
+          <ProvenanceBadge provenance={{ origin: 'demo-fiction', date: null, jurisdiction: 'Fictional transit pilot', confidence: 'Synthetic fixture only', limitations: 'No real policy or measured effect. Assessment date is not an observation date. ' + metric.caveat, link: null }} />
           <p><strong>{result.movement}</strong> · {result.freshness} · {result.target}</p>
           <dl>
             <dt>Promise</dt><dd>{metric.direction === 'lower' ? 'At most' : 'At least'} {metric.target} {result.baseline?.unit} by {metric.targetDate}</dd>
@@ -22,6 +28,7 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
             <dt>Data owner and cadence</dt><dd>{metric.owner} · {metric.cadence} · next release expected {metric.nextUpdate}</dd>
           </dl>
           <p>{result.attribution}. {metric.caveat}</p>
+          {result.latest && <SourceRevisionAlert sourceId={metric.id} measurement={result.latest} />}
           <details><summary>Baseline and source version history for {metric.label}</summary>
             <ul>{metric.history.map(row => <li key={row.revision}>{row.period}: {row.value} {row.unit} · {row.population} · revision {row.revision} · source version {row.sourceVersion} · synthetic, no external source</li>)}</ul>
           </details>
@@ -30,5 +37,6 @@ export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10
     </details>
     <details><summary>Explore claim-to-source demonstration</summary><p>Local demonstration only; human review pending. Sources describe this prototype and invented fixtures.</p><ClaimEvidence claims={EVIDENCE_EXAMPLES} /></details>
     <EvidenceCalendar asOf={asOf} />
+    <StudyQualityMatrix />
   </section></>;
 }

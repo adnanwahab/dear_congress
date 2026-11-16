@@ -756,6 +756,13 @@ html:is(:active-view-transition-type(proposal-change), [data-motion-type="propos
 html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 html[data-motion="off"]::view-transition-group(*), html[data-motion="off"]::view-transition-old(*), html[data-motion="off"]::view-transition-new(*) { animation: none !important; }
 html[data-motion="off"]::view-transition-old(*) { opacity: 0; }
+/* The adaptive policy uses the same immediate, readable states as motion off. */
+html[data-motion-budget="constrained"] *, html[data-motion-budget="constrained"] *::before, html[data-motion-budget="constrained"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html[data-motion-budget="constrained"]::view-transition-group(*), html[data-motion-budget="constrained"]::view-transition-old(*), html[data-motion-budget="constrained"]::view-transition-new(*) { animation: none !important; }
+html[data-motion-budget="constrained"]::view-transition-old(*) { opacity: 0; }
+html[data-motion-budget="constrained"] .scroll-reveal { opacity: 1 !important; transform: none !important; }
+html[data-motion-budget="constrained"] .national-outline path { stroke-dashoffset: 0; }
+html[data-motion-budget="constrained"] .skeleton > span > span::after { display: none; }
 /* Calm keeps route feedback but removes decorative/in-page motion. */
 html[data-motion="calm"] *, html[data-motion="calm"] *::before, html[data-motion="calm"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 html[data-motion="calm"]::view-transition-group(*) { animation: none !important; }

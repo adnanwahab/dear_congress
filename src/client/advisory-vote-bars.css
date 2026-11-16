@@ -15,6 +15,12 @@
 .live-pulse-marker { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
 .live-pulse { animation: advisory-confirm 90ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .live-pulse { animation: none; } }
+.advisory-share { margin-block: 16px; overflow-wrap: anywhere; }
+.advisory-share-image { display: block; width: 100%; height: auto; margin-block: 16px; }
+.advisory-share textarea { display: block; width: 100%; min-height: 160px; box-sizing: border-box; }
+.advisory-share button, .advisory-share a { min-height: 44px; }
+.advisory-share input { min-width: 24px; min-height: 24px; vertical-align: middle; }
+.advisory-share :focus-visible { outline: 3px solid var(--accent, #244f8b); outline-offset: 3px; }
 
 .advisory-receipt { margin-block: 1rem; padding: 1rem; border: 1px dashed currentColor; border-radius: 8px; overflow-wrap: anywhere; animation: advisory-receipt-settle calc(320ms * var(--motion-scale, 1)) var(--ease-out, ease-out); }
 .advisory-receipt-text { white-space: pre-line; }
