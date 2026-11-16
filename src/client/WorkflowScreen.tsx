@@ -32,12 +32,12 @@ import { filterProposals, proposalCardStyle, ProposalSearch } from './ProposalSe
 import { advisoryMutation, type VoteRequest } from './advisory-mutation';
 import { MutationStatus, type MutationState } from './mutation-status';
 import { DailyQuestion } from './DailyQuestion';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { DemoItem, DemoPayload } from '../engine/demo';
 import './workflow.css';
 import AmendmentEditor from './AmendmentEditor';
 import { OutcomeTimeline } from './OutcomeTimeline';
-import { DataGapsAtlas } from './DataGapsAtlas';
+
 import { EvidenceDocket } from './EvidenceDocket';
 import { PolicyMeasurements } from './PolicyMeasurements';
 import { OfficialBills } from './OfficialBills';
@@ -48,6 +48,8 @@ import { ProposalProvenance, provenanceText } from './ProposalProvenance';
 import { OutreachDraft } from './OutreachDraft';
 
 import { STAGES, stageRoute, type Stage } from '../shared/civic-stages';
+const DataGapsAtlas = lazy(() => import('./DataGapsAtlas').then(module => ({ default: module.DataGapsAtlas })));
+
 const route = (stage: Stage, proposal?: string | null) => {
   const topic = topicById(new URLSearchParams(window.location.search).get('topic') ?? '');
   return topic ? topicStageUrl(stage, topic.id, proposal ?? undefined) : stageRoute(stage, proposal);
@@ -216,7 +218,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     {(stage === 'draft' || stage === 'votes') && item && <AmendmentEditor key={`sample:${item.id}`} source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText, jurisdiction: item.jurisdiction, origin: provenanceText(item) }} />}
     {stage === 'sponsors' && !loading && !loadError && item && <><section className="panel workflow-prepare"><div><h2>Prepare a sample outreach card</h2><p className="workflow-body-muted">Cards are saved in this browser and shared with the dashboard walkthrough.</p></div><div>{selectControl}<label className="workflow-select">Possible office<select value={selectedOffice} onChange={e => setOffice(e.target.value)}>{item?.sponsors.map(s => <option key={s}>{s}</option>)}</select></label><button disabled={!item} onClick={prepare}>Add to tracker</button></div></section><OutreachDraft key={JSON.stringify([item, selectedOffice])} item={item} office={selectedOffice} /><section className="panel workflow-tracker"><div className="panel-head"><h2>Sponsor tracker</h2><span>Local demo · no real outreach</span></div><SponsorBoard items={items} cards={tracker} save={saveTracker} className="workflow-board" /></section></>}
     {stage === 'outcomes' && <EvidenceDocket />}
-    {stage === 'outcomes' && <DataGapsAtlas />}
+    {stage === 'outcomes' && <Suspense fallback={<p role="status">Loading data gaps atlas…</p>}><DataGapsAtlas /></Suspense>}
     {stage === 'outcomes' && (!loading || !!data) && <><OutcomeTimeline /><PolicyMeasurements /><h2>Outreach activity · simulated</h2><div className="workflow-outcome-stats">{[2,3,4].map(n => <section className="panel" key={n}><OutcomeTotal value={tracker.filter(t => t.stage === n).length} /><span>{LANES[n]}</span><small>Simulated outcomes</small></section>)}</div><section className="panel"><div className="panel-head"><h2>Follow-through log</h2><p>Draft downloads do not create outreach evidence. All milestones below are manually selected simulations, not verified contact, replies or sponsorship.</p><label><span className="sr">Filter outcomes</span><select value={outcomeFilter} onChange={e => setOutcomeFilter(e.target.value)}>{['All outcomes',...LANES.slice(2)].map(s => <option key={s}>{s}</option>)}</select></label></div><div className="workflow-outcome-list">{visibleOutcomes.map(t => <article key={t.id}><span className={`workflow-outcome-badge outcome-${t.stage}`}>{LANES[t.stage]} · demo</span><TopicChip linked topic={topicForProposal(t.id, items)} /><h3>{t.title}</h3><p>{t.office}</p><small>{t.updatedAt}</small><p className="workflow-next-step">{t.stage === 2 ? 'Next: review the sample reply and prepare a follow-up.' : t.stage === 3 ? 'Next: track the committee milestone and public record.' : 'Next: revise the proposal and choose a new outreach step.'}</p><a href={t.stage === 4 ? route('feed',item?.id) : route('sponsors',item?.id)}>{t.stage === 4 ? 'Return to the feed →' : 'Update tracker →'}</a></article>)}</div>{!visibleOutcomes.length && <p className="workflow-empty">No simulated outcomes match this filter. Move a card to Replied, Introduced or offered, or Stalled to explore this stage. <a href={route('sponsors',item?.id)}>Open sponsor tracker →</a></p>}</section></>}
     <BudgetShock /><footer className="workflow-footer"><a href="/proposals/new?guided=1">Propose a change · private guided draft →</a><p>Sample clauses are fictional, reference links provide background, and sponsor outcomes are simulated.</p><a href="/journal">Start with your own experience · Journal & API →</a></footer>
   </main></div>;
