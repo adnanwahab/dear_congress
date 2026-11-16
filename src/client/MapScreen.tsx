@@ -9,6 +9,7 @@ import { countyVote, improvePlan, INITIAL_PLAN, PRIORITIES, requirements } from 
 
 import { pathCentroid, rippleDelays } from './county-motion';
 
+const JurisdictionComparison = lazy(() => import('./JurisdictionComparison').then(m=>({default:m.JurisdictionComparison})));
 const LocalProjectCheckins = lazy(() => import('./LocalProjectCheckins').then(m => ({ default: m.LocalProjectCheckins })));
 const CENTERS = counties.map(c => pathCentroid(c.path));
 const IDS = counties.map(c => c.id);
@@ -74,6 +75,7 @@ export default function MapScreen() {
       </aside></div>
       <CountyEventHeatmap revision={round} onCounty={setSelected} />
       <section className="county-directory"><div><h2>Inspect the county models.</h2><p>Search synthetic positions, including Alaska and Hawaii. No resident ballots are shown.</p></div><label>Find a county<input type="search" placeholder="County, state, or FIPS code" value={search} onChange={e => setSearch(e.target.value)} /></label><p role="status">{visible.length.toLocaleString()} / {counties.length.toLocaleString()} synthetic scenarios match search and status filters · county-fips-v1 · plan revision {round} {filter !== 'all' ? `· ${LABELS[filter as keyof typeof LABELS]}` : ''}</p><div className="county-results">{visible.slice(0, 60).map(c => <button key={c.id} onClick={() => setSelected(c.id)} aria-pressed={selected === c.id}><span>{c.name}, {c.state}</span><small style={{ color: COLORS[c.status] }}>{LABELS[c.status]}</small></button>)}</div>{visible.length > 60 && <p>Showing the first 60 matches. Narrow your search to find a county.</p>}{!visible.length && <p>No matching counties. Try another name or clear the model filter.</p>}</section>
+      <Suspense fallback={<p role="status">Loading place comparisons…</p>}><JurisdictionComparison /></Suspense>
       <Suspense fallback={<p role="status">Loading project check-ins…</p>}><LocalProjectCheckins /></Suspense>
       <p className="map-footnote">Geography: U.S. Census Bureau, 2023 cartographic boundaries. All {counties.length.toLocaleString()} counties and county equivalents in the 50 states and D.C.; territories excluded. Equal county models, not population weighted. Alaska and Hawaii shown as insets.</p>
     </main></div>;
