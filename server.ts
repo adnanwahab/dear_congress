@@ -1,6 +1,7 @@
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
+import { createPublicReadCache } from "./src/server/public-read-cache";
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
 import { liveQR } from './src/server/live-qr';
@@ -884,6 +885,7 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+const publicReadCache = createPublicReadCache();
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
@@ -957,6 +959,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/api/audit-samples/:id": {
       GET: (req) => auditSampleResponse(req.params.id!),
+    },
+    "/api/sample-proposals": {
+      GET: () => Response.json({ kind: "fictional-sample", participation: "unavailable", items: DEMO_ITEMS.map(({ support, oppose, unsure, ...item }) => item) }),
     },
     "/api/legislation": {
       GET: async () => {
@@ -1842,6 +1847,9 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
   for (const [method, handler] of Object.entries(route)) {
     if (typeof handler !== "function") continue;
     (route as Record<string, unknown>)[method] = async (req: Request & { params: Record<string, string> }, bunServer: Bun.Server<undefined>) => {
+      if (publicReadCache.eligible(path, method)) {
+        return securityHeaders(await publicReadCache.respond(req, () => handler(req, bunServer)));
+      }
       return publicHandler(publicSecurity, path, method, req, bunServer.requestIP(req)?.address ?? "unknown", async () => {
         // Run after shared validation/limits and before extraction or answer creation.
         if (method === "POST" && ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path)) {

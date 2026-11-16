@@ -87,3 +87,7 @@ test('speculation is limited to same-origin navigation routes and prioritizes th
     expect(rules.prerender[1].where.and[0].href_matches).toEqual([STAGES[stage.next].route, `${STAGES[stage.next].route}?*`]);
   }
 });
+
+test('account shells are never shared-cacheable including normalized trailing slash', () => {
+  for (const path of ['/account', '/account/']) expect(renderPage(shell, path, []).headers.get('cache-control')).toBe('private, no-store');
+});

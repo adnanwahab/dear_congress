@@ -1,0 +1,36 @@
+{
+  "measuredAt": "2026-11-16T02:48:37.058Z",
+  "scope": "serial in-process synthetic archive, warm OS cache, no network; short run <15 seconds",
+  "rows": [
+    {
+      "mode": "before",
+      "requests": 100,
+      "archiveReads": 100,
+      "responseBodyBytes": 52300,
+      "notModified": 0,
+      "failures": 0,
+      "medianMs": 0.06,
+      "p95Ms": 0.099
+    },
+    {
+      "mode": "validate",
+      "requests": 100,
+      "archiveReads": 100,
+      "responseBodyBytes": 523,
+      "notModified": 99,
+      "failures": 0,
+      "medianMs": 0.056,
+      "p95Ms": 0.079
+    },
+    {
+      "mode": "short",
+      "requests": 100,
+      "archiveReads": 1,
+      "responseBodyBytes": 523,
+      "notModified": 99,
+      "failures": 0,
+      "medianMs": 0.001,
+      "p95Ms": 0.003
+    }
+  ]
+}

@@ -14,13 +14,38 @@ Object.assign(process.env, {
   NODE_ENV: 'production', PORT: '0', DB_PATH: join(directory, 'db.json'),
   HBL_DB_PATH: join(directory, 'governance.sqlite'), HBL_SINGLE_WRITER: '1',
   HBL_MERGE_ENABLED: '0', HBL_MERGE_DRY_RUN: '1', HBL_KILL_SWITCH: '1',
-  OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0',
+  OUTCOMES_MODE: 'off', DEBUG_REQUEST_LOGS: '0', PUBLIC_READ_CACHE_MODE: 'short',
   ANON_COOKIE_SECRET: crypto.randomUUID() + crypto.randomUUID(),
 });
 let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  for (const path of ['/api/legislation', '/api/sample-proposals', '/api/audit-samples']) {
+    const first = await get(path);
+    assert.equal(first.status, 200);
+    assert.equal(first.headers.get('set-cookie'), null);
+    assert.equal(first.headers.get('vary'), 'Accept-Encoding');
+    assert.match(first.headers.get('cache-control') ?? '', /public, max-age=15, s-maxage=15/);
+    const etag = first.headers.get('etag')!;
+    assert.ok(etag);
+    const conditional: Response = await fetch(new URL(path, server!.url), { headers: { 'if-none-match': etag, cookie: 'unrelated=private', authorization: 'Bearer ignored' } });
+    assert.equal(conditional.status, 304);
+    assert.equal(await conditional.text(), '');
+    assert.equal(conditional.headers.get('set-cookie'), null);
+    if (path === '/api/sample-proposals') {
+      const sample = await first.json();
+      assert.equal(sample.kind, 'fictional-sample');
+      assert.equal(sample.participation, 'unavailable');
+      assert.ok(sample.items.length > 0);
+      for (const item of sample.items) for (const field of ['support', 'oppose', 'unsure', 'votes', 'ownVote']) assert.ok(!(field in item));
+    }
+  }
+  assert.equal((await get('/account')).headers.get('cache-control'), 'private, no-store');
+  for (const path of ['/api/demo', '/api/state', '/api/citizen-proposals', '/api/journals', '/api/ballot_entries', '/api/hbl/auth/session']) {
+    const response = await get(path);
+    assert.match(response.headers.get('cache-control') ?? '', /no-store/, path);
+  }
   for (const topic of ['transit', 'housing', 'childcare']) {
     const page = await get(`/topics/${topic}`);
     assert.equal(page.status, 200);
