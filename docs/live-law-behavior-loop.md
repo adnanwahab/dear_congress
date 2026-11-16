@@ -341,3 +341,14 @@ live provider/CORS parity for this new ensemble remain unverified. The DOM
 journey checks exact tables, explicit loading, selection, scrubbing, pointer
 selection and HTTP 429 failure; calculation tests reject mixed scenarios,
 versions, duplicate seeds, mismatched checkpoints and missing metrics.
+
+## SHE-899 two-outcome consequence preview
+
+Completed receipts now show two labeled outcomes together at the selected recorded
+checkpoint: mean planned travel and modeled trips for transit; built housing units
+and synthetic rent for housing. Each row shows current, edited and signed difference
+with units. Missing metrics remain Unavailable; no outcomes are computed outside
+the provider model. Each world independently displays its deterministic seed and
+synthetic/not-forecast disclaimer. Changing inputs clears the comparison until an
+explicit rerun returns a validated receipt. This remains a non-binding sandbox,
+not a forecast, measured policy effect or simulation of arbitrary civic bill text.

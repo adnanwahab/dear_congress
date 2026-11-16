@@ -14,7 +14,7 @@ const receipt=(strength:number):LawBehaviorReceipt=>({
     time,
     baseline:{metrics:{trips:i,meanCommuteMinutes:20},actors:[
       {id:'p0',label:'Resident 1',mode:'walk',activity:'home',x:time,z:1}]},
-    edited:{metrics:{trips:i,meanCommuteMinutes:20-6*strength},actors:[
+    edited:{metrics:{trips:i+2*strength,meanCommuteMinutes:20-6*strength},actors:[
       {id:'p0',label:'Resident 1',mode:'bus',activity:'work',x:time+5,z:2}]}
   })),
   limitations:['Synthetic observations only.']
@@ -59,6 +59,7 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
+    await act(async()=>fireEvent.change(getByRole(host,'combobox',{name:'Recorded model outcome'}),{target:{value:'meanCommuteMinutes'}}));
     const share=getByRole(host,'link',{name:'Reproducible scenario link'}) as HTMLAnchorElement;
     expect(share.search).toContain('simulationShare=1');
     expect(share.search).toContain('horizon=720');
@@ -68,6 +69,13 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
     expect(host.textContent).toContain('World B · edited law');
+    const consequences=getByRole(host,'region',{name:'Two simulated consequences'});
+    expect(consequences.textContent).toContain('Mean planned travel (minutes/trip)2014-6');
+    expect(consequences.textContent).toContain('Modeled trips (trips)242');
+    for(const lane of host.querySelectorAll('.civic-law-lane')){
+      expect(lane.textContent).toContain('Deterministic seed 42');
+      expect(lane.textContent).toContain('Synthetic simulation, not a forecast');
+    }
     expect(host.textContent).toContain('What modeled residents did differently');
     expect(host.textContent).toContain('Resident 1');
     expect(host.textContent).toContain('Travel mode: walk → bus');
@@ -116,11 +124,14 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(exported().observation.time).toBe(0);
     await act(async()=>getByRole(host,'button',{name:'Transit at 50%'}).click());
     expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    expect(host.querySelector('.civic-consequence-preview')).toBeNull();
     expect(host.querySelector('#law-outcome-trace')).toBeNull();
     expect(host.textContent).toContain('The input has changed');
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
     expect(requests[1]?.body.implementationStrength).toBe(.5);
+    expect(getByRole(host,'region',{name:'Two simulated consequences'}).textContent).toContain('Mean planned travel (minutes/trip)2017-3');
+    expect(getByRole(host,'region',{name:'Two simulated consequences'}).textContent).toContain('Modeled trips (trips)231');
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
     await act(async()=>getByRole(host,'button',{name:'Restore 100% assumption'}).click());
