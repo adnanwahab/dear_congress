@@ -8,6 +8,9 @@ import { createPolicyComparison, storePolicyComparison } from "./src/server/poli
 import { auditSampleResponse } from "./src/server/audit-samples";
 import { readBills } from './src/server/legislation/import';
 import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/shared/journal-origin";
+import { errorRoute, browserErrorRoutes } from "./src/shared/error-route";
+import { createErrorTelemetry } from "./src/server/error-telemetry";
+import { statsAuthorized } from "./src/server/launch-stats";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
@@ -869,14 +872,16 @@ if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser 
 const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
+const version = { ...buildIdentity, assets: [...browserAssets.keys()].sort() };
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
 let statsHealthy = true;
 // Metrics failures must never turn a persisted vote into an apparent failed vote.
 function recordStats(run: () => unknown) {
-  try { run(); } catch { statsHealthy = false; console.error("[STATS_ERROR] Metrics recording failed"); }
+  try { run(); } catch { statsHealthy = false; console.error('[PUBLIC_ERROR]', JSON.stringify({ buildSha: buildIdentity.commit, routeTemplate: '/admin/stats', category: 'metrics-recording' })); }
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+const errorSecurity = createPublicSecurity({ ...process.env, PUBLIC_IP_LIMIT: "30", PUBLIC_ID_LIMIT: "1000000" });
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
@@ -885,13 +890,22 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   idleTimeout: 255,
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/api/error-report": async (req, bunServer) => {
+      const finish = (status: number) => securityHeaders(new Response(null, { status, headers: { "cache-control": "no-store" } }));
+      if (req.method !== 'POST') { const response = finish(405); response.headers.set('allow', 'POST'); return response; }
+      if (req.headers.get('origin') !== errorSecurity.origin(req)) return finish(403);
+      const limited = errorSecurity.check(req, bunServer.requestIP(req)?.address ?? 'unknown', 'error-report', false);
+      if (limited) return securityHeaders(limited);
+      try { return finish(telemetry.browserReport(await boundedJson(req, 512)) ? 204 : 400); }
+      catch { return finish(400); }
+    },
     "/api/topics/:id": { GET: (req) => {
       const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
       return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });
     } },
     // Process liveness only: no database writes or upstream calls.
     "/version": {
-      GET: () => securityHeaders(Response.json(buildIdentity, { headers: { "Cache-Control": "no-store" } })),
+      GET: () => securityHeaders(Response.json(version, { headers: { "Cache-Control": "no-store" } })),
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
     },
     "/healthz": {
@@ -899,6 +913,11 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
     },
     "/maplibre.css": () => securityHeaders(new Response(Bun.file(new URL("./maplibre-gl.css", import.meta.resolve("maplibre-gl"))), { headers: { "Content-Type": "text/css; charset=utf-8" } })),
+    "/admin/deployments": (req) => {
+      if (!statsAuthorized(req, ADMIN_TOKEN)) return securityHeaders(new Response("Admin authentication required", { status: 401, headers: { "cache-control": "no-store", "www-authenticate": 'Basic realm="Deployment diagnostics"' } }));
+      if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response(null, { status: 405, headers: { allow: "GET, HEAD", "cache-control": "no-store" } }));
+      return securityHeaders(new Response(req.method === "HEAD" ? null : telemetry.page(), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "x-robots-tag": "noindex, nofollow" } }));
+    },
     "/admin/stats": (req) => statsHTTP.admin(req),
     "/api/page-view": (req, bunServer) => statsHTTP.pageView(req, bunServer.requestIP(req)?.address ?? "unknown"),
     "/admin/moderation": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(moderationPage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Journal moderation"', "cache-control": "no-store" } }) },
@@ -1816,11 +1835,8 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
   },
-  error(error: Error) {
-    console.error("[SERVER_ERROR]", JSON.stringify({
-      ts: new Date().toISOString(),
-      name: error.name,
-    }));
+  error() {
+    telemetry.report('unmatched', 500);
     return securityHeaders(new Response("Internal Server Error", { status: 500 }));
   },
 };
@@ -1853,12 +1869,25 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
         const response = await (handler as Function)(req, bunServer);
         return observePublicResponse(launchStats, observation, response, () => {
           statsHealthy = false;
-          console.error("[STATS_ERROR] Metrics observation failed");
+          console.error('[PUBLIC_ERROR]', JSON.stringify({ buildSha: buildIdentity.commit, routeTemplate: path, category: 'metrics-observation' }));
         });
       }, body => validateVotes(body, [...buildContext(db).proposals.map(p => p.id), ...DEMO_ITEMS.map(p => p.id)], currentNeeds().map(n => n.id)));
     };
   }
 }
+// Wrap after API security adapters so validation failures are observed too.
+const telemetry = createErrorTelemetry([...Object.keys(serverOptions.routes ?? {}), ...browserErrorRoutes]);
+for (const [template, route] of Object.entries(serverOptions.routes ?? {})) {
+  if (typeof route === 'function') {
+    (serverOptions.routes as Record<string, unknown>)[template] = (req: Request, server: Bun.Server<undefined>) => telemetry.observe(template, () => (route as Function)(req, server));
+  } else if (route && typeof route === 'object') {
+    for (const [method, handler] of Object.entries(route)) {
+      if (typeof handler === 'function') (route as Record<string, unknown>)[method] = (req: Request, server: Bun.Server<undefined>) => telemetry.observe(template, () => (handler as Function)(req, server));
+    }
+  }
+}
+const fallback = serverOptions.fetch!;
+serverOptions.fetch = (req, server) => telemetry.observe(errorRoute(new URL(req.url).pathname), () => fallback.call(server, req, server) as Response | Promise<Response>);
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);

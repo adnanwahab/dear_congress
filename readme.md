@@ -33,6 +33,13 @@ checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
 State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
 
+Release diagnostics: `/version` lists the image SHA and served asset paths; the
+browser embeds the same SHA as `html[data-asset-build-sha]`. `/admin/deployments`
+uses existing admin authentication to show server failures and a browser version
+split for this process since startup. Error records exclude messages, personal
+URLs and journal text. Fleet aggregation and live acceptance remain pending; see
+[the SHE-978 review](docs/reviews/SHE-978.md).
+
 ## Public guide
 
 `/documentation` (alias `/docs`) explains participation and trust limits in

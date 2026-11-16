@@ -70,6 +70,16 @@ try {
   assert.equal(version.repository, 'https://github.com/adnanwahab/dear_congress');
   assert.equal(version.mode, 'demo');
   assert.equal(version.environment, 'production');
+  assert.ok(Array.isArray(version.assets) && version.assets.some((path: string) => path.endsWith('.js')));
+  const shellForAssets = await (await get('/')).text();
+  const entryAsset = shellForAssets.match(/<script[^>]+type="module"[^>]+src="([^"]+)"/)?.[1];
+  assert.ok(entryAsset && version.assets.includes(entryAsset));
+  const assetSource = await (await get(entryAsset!)).text();
+  assert.ok(assetSource.includes('assetBuildSha'));
+  assert.equal((await get('/admin/deployments')).status, 401);
+  const privateMissing = await get('/unknown-person?journal=secret');
+  assert.equal(privateMissing.headers.get('x-route-template'), 'unmatched');
+  assert.equal(privateMissing.headers.get('x-build-sha'), version.commit ?? 'unknown');
   assert.equal((await fetch(new URL('/version', server!.url), { method: 'POST' })).status, 405);
   const headVersion = await fetch(new URL('/version', server!.url), { method: 'HEAD' });
   assert.equal(headVersion.status, 200);

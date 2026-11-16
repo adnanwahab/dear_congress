@@ -1,3 +1,7 @@
+import { installErrorReporting } from "./error-reporting";
+declare const __CIVIC_BUILD_SHA__: string | null;
+document.documentElement.dataset.assetBuildSha = __CIVIC_BUILD_SHA__ ?? "unknown";
+installErrorReporting(window, __CIVIC_BUILD_SHA__);
 import { installJourneyHistory } from "./journey-history";
 import { installMotion } from "./motion";
 import { createRoot } from "react-dom/client";
