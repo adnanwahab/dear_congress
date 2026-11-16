@@ -1,7 +1,7 @@
 /** Public help copy. Keep trust wording aligned with privacy-page and SHE-318 review. */
 export const PUBLIC_GUIDE = `# How Civic Synthesis works
 
-Civic Synthesis is an independent civic prototype, not a government service, election, or official channel to an office. You can read without participating. This guide describes the prototype, not a promise that a proposal will become law.
+Civic Synthesis is an independent civic prototype, not a government service, election, or official channel to an office. You can read without participating. Use **Report an error** on a sample proposal/background source, citizen proposal, curated draft or official metadata record to submit a factual correction to private human triage. The link pins its ID and revision; a changed revision requires reopening the source. Keep the receipt ID for follow-up. No reporter identity is stored with the report; avoid personal information in the text. Reports do not automatically change content or votes. This guide describes the prototype, not a promise that a proposal will become law.
 
 ## Choose a safe starting path
 

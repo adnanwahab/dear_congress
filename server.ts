@@ -1,3 +1,4 @@
+import { createErrorReportHandlers, errorReportPage, errorTriagePage, errorReportScript } from './src/server/error-reports';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
 import { discoverJournal } from './src/shared/journal-discovery';
@@ -421,6 +422,7 @@ const save = () => {
   void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
+const errorReportHandlers = createErrorReportHandlers(() => db, save);
 const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
 function dashboardState(voterId: string) {
   const day = new Date().toISOString().slice(0, 10);
@@ -919,6 +921,15 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         catch (error) { if (error instanceof PublicInputError) return bad(error.message, error.status); throw error; }
       },
     },
+    "/report-error": { GET: async (req) => { try { return securityHeaders(await errorReportPage(req, db)); } catch (error) { if (error instanceof PublicInputError) return bad(error.message, error.status); throw error; } } },
+    "/error-reports.js": { GET: () => securityHeaders(new Response(errorReportScript, { headers: { "content-type": "text/javascript" } })) },
+    "/admin/error-reports": { GET: (req) => moderationAuthorized(req, ADMIN_TOKEN) ? securityHeaders(errorTriagePage(db)) : new Response("Admin authentication required", { status: 401, headers: { "www-authenticate": 'Basic realm="Factual error triage"', "cache-control": "no-store" } }) },
+    "/api/error-reports": { POST: (req) => errorReportHandlers.submit(req) },
+    "/api/admin/error-reports": { POST: (req) => {
+      if (!moderationAuthorized(req, ADMIN_TOKEN)) return bad("Unauthorized", 401);
+      if (req.headers.get("origin") !== publicSecurity.origin(req)) return bad("Same-origin request required", 403);
+      return errorReportHandlers.decide(req);
+    } },
     "/api/reports": {
       POST: async (req) => {
         const body = await boundedJson(req);
@@ -1793,6 +1804,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       POST: async (req) => {
         if (!isAdmin(req)) return new Response("Not found", { status: 404 });
         // Resetting sample synthesis data must not erase public proposals or their votes.
+        const errorReports = db.errorReports;
         const citizenProposals = db.citizenProposals;
         const journalOwners = db.journalOwners;
         const journalReports = db.journalReports;
@@ -1802,6 +1814,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         const sourceIds = new Set((citizenProposals ?? []).map((p) => p.sourceEntryId).filter(Boolean));
         const citedEntries = db.entries.filter((entry) => sourceIds.has(entry.id));
         db = seed();
+        db.errorReports = errorReports;
         db.citizenProposals = citizenProposals;
         db.journalOwners = journalOwners;
         db.journalReports = journalReports;
