@@ -73,3 +73,12 @@ current-head approval, strict majority, fail-closed base/check allowlists and th
 existing kill switch. Main requires the three launch checks and human approval;
 remote protection and production overrides remain unverified. Human review and
 merge are required; tagged human-published releases remain separately gated.
+
+## Canonical metadata snapshots (SHE-830)
+
+Each metadata card links to `/official-records/:encoded-source-id/:sourceHash`.
+The page validates the archived bytes and source identity and renders the selected
+successful historical observation. Source corrections retain earlier snapshot URLs.
+Unknown identities/revisions return 404; archive integrity/read failures return 503.
+The page never imports, refreshes or changes records. It explicitly describes a
+historical metadata snapshot with unverified current legal status.
