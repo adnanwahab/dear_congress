@@ -1,3 +1,4 @@
+import { changelog } from './src/server/changelog';
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
 import { OperatorHealth } from "./src/server/operator-health";
@@ -900,8 +901,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });
     } },
     // Process liveness only: no database writes or upstream calls.
+    "/changelog": { GET: req => changelog(req), HEAD: req => changelog(req) },
     "/version": {
-      GET: () => securityHeaders(Response.json(buildIdentity, { headers: { "Cache-Control": "no-store" } })),
+      GET: () => securityHeaders(Response.json({ ...buildIdentity, changelog: "/changelog" }, { headers: { "Cache-Control": "no-store" } })),
       HEAD: () => securityHeaders(new Response(null, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } })),
     },
     "/healthz": {
