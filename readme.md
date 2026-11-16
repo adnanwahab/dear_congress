@@ -749,8 +749,12 @@ Embedded needs and jurisdiction maps are optional. Rankings and jurisdiction
 priorities remain available as text while map assets load or fail. Missing styles
 show a map-free notice; resource failures and a 10-second initial loading timeout
 remove the failed map and offer a manual retry. Retry affects only that map.
-Developer console diagnostics report initialization, resource or timeout failures
-without copying provider URLs or raw errors (which may contain credentials).
+The searchable geographic list retains the selected need, source-specific counts
+and aggregate coordinates when maps are disabled. Failed geographic requests are
+labeled separately from empty or privacy-suppressed results.
+Developer console diagnostics report configuration, initialization, resource, timeout
+or geographic-data failures with a browser-generated request ID for each dependency
+attempt (not a server trace), without provider URLs or raw credential-bearing errors.
 Check provider configuration, connectivity and CSP when investigating those logs.
 
 Production acceptance also requires the [release parity contract](docs/release-parity.md):

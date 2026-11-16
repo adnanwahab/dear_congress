@@ -35,7 +35,7 @@ import { livingCityUrl } from "./living-city-link";
 import { constitutionCityUrl } from "./constitution-city-link";
 
 import { loadMapLibre } from "./maplibre";
-import { mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
+import { logMapFailure, mapAttempt, useMapAvailability, MapAvailability } from "./optional-map";
 import { HouseholdImpacts } from "./HouseholdImpacts";
 import { LawBehaviorExplorer } from "./LawBehaviorExplorer";
 
@@ -362,6 +362,7 @@ export function NeedsGeoMap({
   needFilter,
   needs,
   loading = false,
+  dataError = false,
 }: {
   styleUrl?: string;
   loadMap?: typeof loadMapLibre;
@@ -370,6 +371,7 @@ export function NeedsGeoMap({
   needFilter: string | "all";
   needs: NeedDef[];
   loading?: boolean;
+  dataError?: boolean;
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -495,7 +497,7 @@ export function NeedsGeoMap({
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
     <section aria-label="Searchable geographic evidence">
       <label>Search geographic evidence<input type="search" value={search} placeholder="Grid coordinates or evidence source" onChange={event => setSearch(event.target.value)} /></label>
-      <p role="status">{preview}: {matching.length} source-specific aggregate cells. {loading ? 'Geographic evidence loading.' : !evidence.length ? 'No geographic evidence available for this need; missing locations or privacy suppression may limit coverage.' : ''}</p>
+      <p role="status">{preview}: {matching.length} source-specific aggregate cells. {dataError ? 'Geographic evidence could not load. Rankings remain available; reload to retry geographic data.' : loading ? 'Geographic evidence loading.' : !evidence.length ? 'No geographic evidence available for this need; missing locations or privacy suppression may limit coverage.' : ''}</p>
       <ul style={{ maxHeight: 240, overflowY: 'auto' }} data-no-stage-swipe>{matching.map(row => <li key={`${row.lat},${row.lng},${row.source}`}><button type="button" className="ghost" style={{ minHeight: 44 }} aria-pressed={selectedCell === `${row.lat},${row.lng}`} onClick={() => inspect(row.lat, row.lng)}>
         {row.label} · {row.count} · grid {row.lat.toFixed(2)}, {row.lng.toFixed(2)}
       </button></li>)}</ul>
@@ -814,17 +816,19 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
   };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
   const [geoLoading, setGeoLoading] = useState(true);
+  const [geoError, setGeoError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setGeoLoading(true);
+    setGeoError(false);
     setGeoCells([]);
     const run = async () => {
       try {
         const out = await api<{ cells: GeoCell[] }>(`/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=${geoMode}`);
         if (!cancelled) setGeoCells(out.cells ?? []);
       } catch {
-        if (!cancelled) setGeoCells([]);
+        if (!cancelled) { setGeoCells([]); setGeoError(true); logMapFailure('geographic-data'); }
       } finally { if (!cancelled) setGeoLoading(false); }
     };
     void run();
@@ -868,7 +872,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
           <button className={geoMode === "simulated" ? "" : "ghost"} aria-pressed={geoMode === "simulated"} onClick={() => switchMode("simulated")}>Simulated residents</button>
           <button className={geoMode === "both" ? "" : "ghost"} aria-pressed={geoMode === "both"} onClick={() => switchMode("both")}>Both</button>
         </div>
-        <NeedsGeoMap loading={geoLoading} styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
+        <NeedsGeoMap dataError={geoError} loading={geoLoading} styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
           {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
             rank={i + 1} move={moves.get(n.id) ?? 0}
