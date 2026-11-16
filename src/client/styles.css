@@ -1296,6 +1296,13 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 @media (max-width: 600px) { .stage-peek:has(.secondary-destination) { display: none; } .more-destinations .stage-peek { display: block; } .stage-peek-window { bottom: 90px; } }
 @media (prefers-reduced-motion: reduce) { .stage-peek-window { animation: none; } }
 
+.decision-boundary { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line); }
+.decision-boundary input[type=range] { display: block; width: 100%; min-height: 44px; }
+.decision-boundary li { position: relative; padding: .6rem; overflow-wrap: anywhere; border-bottom: 1px solid var(--line); }
+.decision-boundary li[data-highlighted=true] { background: var(--accent-soft); border-inline-start: 4px solid var(--accent); }
+.score-brush { display: block; position: absolute; top: 0; left: 0; width: 100%; border-top: 3px solid var(--accent); pointer-events: none; }
+.decision-boundary :is(input,button):focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
 .priority-history { margin-block: 1rem; }
 .priority-history select { max-width: 100%; }
 .priority-history table { width: 100%; }

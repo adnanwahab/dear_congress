@@ -340,6 +340,10 @@ actual outcomes, real votes and resident records.
 with `{ weights, lambda, budget }`. It displays normalized weights and score/selection
 changes across all three packages using public sample journals and deterministic
 simulated residents. It does not use live resident inputs or approve/activate rules.
+Each package comparison includes a decision boundary brush over distinct deterministic
+engine scores, with inclusive thresholds, rounding details and separate actual
+inclusion changes. It is a read-only score exploration, not an inferred causal
+weight tipping point. See [SHE-599 implementation and validation](docs/reviews/SHE-599.md).
 See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
 ### `POST /api/synthesize` notes
