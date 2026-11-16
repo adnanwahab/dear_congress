@@ -13,7 +13,8 @@ import { CivicMarbleRun } from './CivicMarbleRun';
 import { CivicSampler } from './CivicSampler';
 import { CouncilRoleplay } from './CouncilRoleplay';
 import { ProposalExplainer } from './ProposalExplainer';
-import { ProposalCompare } from './ProposalCompare';
+import { ProposalCompare } from './ProposalCompare'; 
+import { PolicyActions } from './PolicyActions';
 import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
@@ -202,6 +203,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     </section>}
     {item && !loading && !loadError && <ProposalExplainer key={JSON.stringify([item.id, item.summary, item.proposedText, item.jurisdiction])} item={item} />}
     {item && !loading && !loadError && ['feed', 'votes', 'draft', 'outcomes'].includes(stage) && <ProposalFollow source={{ kind: 'sample', id: item.id, title: item.title, text: item.proposedText }} />}
+    {item && !loading && !loadError && <PolicyActions key={`policy-actions:${item.id}`} item={item} />}
     {item && !loading && !loadError && sourceUrl(item) && <Suspense fallback={null}><SaveClaim source={{kind: 'sample-proposal', id: item.id, claim: item.summary, citation: provenanceText(item), url: sourceUrl(item)!, revision: JSON.stringify([item.title, item.proposedText, item.background])}} /></Suspense>}
     {stage === 'outcomes' && <ProposalWatchlist />}
     {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to load. Please try again shortly.'))}>Refresh proposal data</button></div>}
