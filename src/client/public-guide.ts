@@ -51,6 +51,8 @@ The [budget-balancing puzzle](/synth) offers five invented programs and a fixed 
 
 ## What is fictional and what is verified?
 
+The shared Reality lens explains actual activity, seeded examples, model simulations, source-backed records and unknown origins. Choose Explain data for details or Less detail for the compact legend. This browser preference changes only the legend; counts, record origins and synthesis settings stay the same. Read each item’s source label, especially in mixed displays.
+
 The home page’s Daily curiosity mission is a demo reading activity. Its date-based topic rotation uses no political profile or votes; optionally exclude a familiar topic, Shuffle, Skip, or Learn more and confirm you have read it. Progress stays on the current page and never casts a vote. Actual legislative records remain separate.
 
 The [coalition sandbox](/synth#coalition-title) is an unreviewed fictional hall-budget exercise. Edit public constraints, stay within twelve invented tokens and acknowledge the actual drawbacks. Completion is not real consent, a vote or a model projection; changes remain in page memory.
@@ -158,6 +160,10 @@ This independent prototype explores how everyday needs can inform discussion and
 
 This guide uses plain English. Human-reviewed Spanish and broader plain-language access remain pending under [SHE-318](https://linear.app/shel-bernstein/issue/SHE-318/access-human-reviewed-spanish-translation-and-plain-language-civic). No approved Spanish translation is available here yet. Changes to vote, publication, source and deletion wording need the same translation review before they can be labeled reviewed.
 
+
+## Data-source health
+
+Review [data-source health](/outcomes#source-health) for recorded fetch dates, retained-data incidents and missing sources. This is a snapshot, not a live availability probe. Schema changes and human review remain unknown unless recorded. Starter fixtures and synthetic estimates are not verified measurements; source links alone do not prove a claim. Source health does not establish policy effects. Use Show export / print text to copy the dated report.
 
 ### Sharing a sample decision
 

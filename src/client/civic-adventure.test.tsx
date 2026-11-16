@@ -34,7 +34,7 @@ test('offline chapters, skips, optional samples, resume and equivalent walkthrou
     expect(container.textContent).toContain('Chapter 2 of 5');
     expect(container.querySelector('aside')).not.toBeNull();
     await click('Show non-game walkthrough');
-    expect(container.querySelectorAll('section')).toHaveLength(5);
+    expect(container.querySelectorAll('main.civic-adventure > section')).toHaveLength(5);
     await click('Show chapter view');
     for (let i = 0; i < 4; i++) await click('Skip chapter');
     expect(container.textContent).toContain('You know the path');
@@ -49,7 +49,7 @@ test('offline chapters, skips, optional samples, resume and equivalent walkthrou
     expect(container.textContent).toContain('Local saving is unavailable');
     expect(container.textContent).toContain('Chapter 2 of 5');
     await click('Show non-game walkthrough');
-    expect(container.querySelectorAll('section')).toHaveLength(5);
+    expect(container.querySelectorAll('main.civic-adventure > section')).toHaveLength(5);
   } finally {
     await act(async () => root.unmount()); await dom.happyDOM.close();
     for (const [k, d] of Object.entries(previous)) { if (d) Object.defineProperty(globalThis, k, d); else Reflect.deleteProperty(globalThis, k); }

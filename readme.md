@@ -757,6 +757,13 @@ No journals, ballots or source full text are included. Citizen/official proposal
 exports, claim-level evidence and reviewed conflicting cases remain pending.
 See [SHE-687 scope and remaining acceptance](docs/reviews/SHE-687.md).
 
+The `/outcomes#source-health` console reads the existing outcome snapshot, exposing
+recorded fetch dates, missing sources, conflicts and retained-data fetch incidents.
+It does not probe providers or certify starter fixture values. Schema monitoring
+and human-review history are currently unrecorded. A 30-day freshness warning is
+an editorial threshold, not a provider SLA. Copyable JSON provides an export/print
+fallback. See [SHE-688 scope and remaining acceptance](docs/reviews/SHE-688.md).
+
 ## Sample advisory share cards
 
 Share preview beside the shared sample advisory controls exports a standalone SVG

@@ -298,7 +298,7 @@ function LegacyApp() {
     <div className="legacy-shell">
       {header}
       <div className="app engine-workspace">
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" data-civic-stage={tab} tabIndex={-1}>
         <h1>{TABS.find(t => t.id === tab)?.label}</h1>
         {tab === "journal" && <JournalView state={state} refresh={refresh} liveStatus={liveStatus} onPublishStart={onPublishStart} onPublishEvent={onPublishEvent} onSeeNeed={(needId) => { gotoTab("needs"); setFocusNeedId(needId); }} />}
         {tab === "needs" && <NeedsView state={state} focusNeedId={focusNeedId} />}
@@ -914,6 +914,7 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
 
         <div className="card">
           <h2>Measured data caveats</h2>
+          <p role="status">Source freshness, completeness and human review are not verified here. Retained values may be stale after a failed refresh. <a href="/outcomes#source-health">Review data-source health and incidents</a>.</p>
           <p>Need-level conditions do not establish policy effects. <a href="/outcomes#policy-measurements">Review policy measurements and limitations</a>.</p>
           <ul className="policies">
             {[...measuredSources.values()].map((s) => (
