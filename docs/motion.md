@@ -47,6 +47,21 @@ Launch governance and human review requirements remain in
 [launch-merge-policy.md](launch-merge-policy.md); this foundation changes no votes,
 repository bindings, records, receipts, authentication or merge configuration.
 
+## Civic milestone timeline
+
+`CivicTimeline` renders an ordered, always-visible list. Citizen proposal detail
+uses that proposal's `publishedAt` from its source response; institutional review
+and delivery remain unknown because the source contract records neither. Dates
+are never inferred from demo activity, votes, chapter position or tracker moves.
+Recorded events sort by timestamp; invalid/absent dates remain undated. Small
+axis markers use elapsed source time, while the list preserves readable order.
+The Outcomes sample timeline is explicitly fictional and uses the existing chapter
+routes with the selected sample identity. Native links retain existing navigation
+and typed View Transition handling; scroll position never changes route state.
+CSS view timelines enhance only recorded connectors. Unsupported browsers,
+`motion=off` and reduced motion retain the full static list. No observers, pending
+callbacks, submission handlers or new persistence are attached to scrolling.
+
 Synthesis assumption changes reuse `plan-rerank` and its guarded request version.
 The assumption diagram connects the edited value to matching real/blended package
 spending and support figures only after a successful comparable calculation.
