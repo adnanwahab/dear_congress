@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { HistoricalOutcomeCase } from './HistoricalOutcomeCase';
 import { SourceHealth } from './SourceHealth';
 import { SourceRevisionAlert } from './SourceRevisionAlert';
 import { DatasetImportWorkbench } from './DatasetImportWorkbench';
@@ -13,7 +14,7 @@ import { assessMetric, SYNTHETIC_METRICS } from '../shared/policy-measurements';
 const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 
 export function PolicyMeasurements({ asOf = new Date().toISOString().slice(0, 10) }: { asOf?: string }) {
-  return <><SourceHealth /><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
+  return <><HistoricalOutcomeCase /><SourceHealth /><ContradictionCompass /><section className="panel policy-measurements" aria-labelledby="policy-measurements-title" id="policy-measurements">
     <h2 id="policy-measurements-title">Policy measurements</h2>
     <p>No verified implemented policy or measured policy effects are registered. Replies and committee milestones are activity, not evidence of policy benefit.</p>
     <DatasetImportWorkbench />
