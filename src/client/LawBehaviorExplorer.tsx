@@ -3,6 +3,9 @@ import { WorldPortal } from './WorldPortal';
 import { requestHaptic } from './haptics';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {lazy,Suspense} from 'react';
+const FutureLetterCard=lazy(()=>import('./FutureLetter').then(mod=>({default:mod.FutureLetterCard})));
+
 import {LawEnsemble} from './LawEnsemble';
 import {FuturePostcard} from './FuturePostcard';
 import {lawOutcomeTrace} from './law-outcome-trace';
@@ -428,5 +431,6 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         <ul>{receipt.limitations?.map((text,index)=><li key={index}>{text}</li>)}</ul>
       </details>
     </>}
+    <Suspense fallback={<p role="status">Loading fictional letter…</p>}><FutureLetterCard receipt={receipt} busy={busy} error={error}/></Suspense>
   </section>;
 }
