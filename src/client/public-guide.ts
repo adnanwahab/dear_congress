@@ -44,7 +44,7 @@ The optional [private civic passport](/account) is a demo / sandbox awaiting rev
 
 On [advisory votes](/votes), distribute a personal budget of 100 priority points among needs. Drag points or use numeric inputs and plus/minus buttons; Undo reverses draft edits. Only Save priorities sends this allocation, separately from proposal votes. Saved priorities persist for the browser cookie identity and can inform illustrative civic plans. Unsaved edits are lost on refresh. Personal priorities are displayed separately from synthetic proposal responses.
 
-Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance.
+Repository developer previews have separate identities and revision-bound ballots. Browser advisory responses never become verified merge authority. A human maintainer must review code and decide whether to merge; a successful test, simulation or draft PR is not acceptance. Repository PR cards offer expandable Preview readiness diagnostics with refreshable GitHub check receipts and revision details. Refreshing diagnostics does not start a build or submit a vote.
 
 ## Export a sample evidence packet
 

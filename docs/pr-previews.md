@@ -19,6 +19,42 @@ Review and remove obsolete Fly preview apps and their dedicated volumes when the
 
 List and detail cards show the first two unique raster images embedded in the PR description, side by side at desktop and mobile widths. Markdown and HTML image attachments must use immutable full-SHA GitHub blob/raw URLs in that PR's configured repository. Captions identify the image source commit; attachments are not treated as verified deployments. Unsupported hosts, mutable refs, cross-repository paths and SVGs are excluded. Images load lazily without a referrer and can be opened at full size. Browsing never downloads or builds a version. The operator registry remains the authority for exact-head Explore links and the fallback when attachments are absent.
 
+## Readiness diagnostics (SHE-610)
+
+Each PR list card and detail offers a native, keyboard-operable **Preview readiness**
+expander. Opening it fetches the selected repository's existing read-only detail
+endpoint; Refresh diagnostics repeats that GET. While expanded and visible it polls
+at 30-second intervals, with no synthetic progress or build-start action. Closing,
+changing revisions or leaving the page cancels the request and interval. This is
+polling of actual GitHub receipts, not a GitHub event subscription. `LiveRound`
+continues to stream civic round votes independently.
+
+The typed client interpretation is `Readiness` / `Diagnostic` in
+`src/client/preview-readiness.ts`. The additive optional `Evidence.receipt` includes
+observation time, protection-read permission, completeness, exact required check
+contexts, required approval count and strict/up-to-date rule from GitHub's branch
+protection response. Older cached evidence explicitly has no receipt timestamp.
+A denied/unavailable protection lookup retains fetched checks while protection
+eligibility stays unknown and fails closed. The panel distinguishes configured
+`allowedBases` / `requiredChecks` policy from GitHub branch protection rules; it
+cannot claim to enumerate organization rulesets that this source does not fetch.
+
+Check results bind to the displayed head, and the panel identifies repository ID,
+PR number, head and base SHA. A newly observed revision is shown only in diagnostics;
+existing ballot controls retain their source revision until the page source is
+refreshed. Stale responses and failed refreshes display unknown readiness. Source
+permissions are distinct from the existing signed-in/approved voter status.
+Review-ready describes code receipts only, independently of ballot quorum,
+exposure and preview availability. It never authorizes a merge. Exact-head operator
+registry entries remain the only authority for Explore links; images do not prove
+deployment. The panel uses no animation, has wrapped long identifiers and native
+summary/button focus behavior, and does not depend on motion preferences.
+
+Governance remains disabled/dry-run by default, quorum 10, 24-hour exposure, at least
+one current-head review, empty base/check allowlists failing closed, active kill
+switch and fixed advisory pilot auto-merge lock. No configuration or records change.
+See [launch merge policy](launch-merge-policy.md) for human review and release rules.
+
 ## Draft patch stories (SHE-622)
 
 PR details include a read-only, native disclosure accordion ordered by GitHub file
