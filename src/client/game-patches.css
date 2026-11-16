@@ -26,3 +26,8 @@
 @media (forced-colors: active) { .gp-train li[data-state="blocked"] { border-color: Mark; } }
 
 .gp-card{min-width:0;border-top:3px solid var(--accent,#24568a);padding-top:12px;overflow-wrap:anywhere}.gp-card>button{margin-top:16px;min-height:44px}.gp-card [hidden]{display:none!important}.gp-card-back{min-width:0;animation:gp-card-reveal 180ms ease-out}.gp-card-back .gp-diff{max-width:100%;font-size:13px;tab-size:4}.gp-card-back .gp-diff:focus-visible{outline:3px solid #2378bd;outline-offset:2px}@keyframes gp-card-reveal{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.gp-card-back{animation:none}}@media(max-width:760px){.gp-card .gp-links{flex-direction:column}.gp-card>button{width:100%}.gp-card-back .gp-diff{padding:12px}}
+.gp-story ol{padding-left:1.5rem}.gp-story-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.gp-story-pair>*{min-width:0}.gp-story figure{margin:16px 0}.gp-story img{max-width:100%;height:auto}.gp-story figcaption{overflow-wrap:anywhere}.gp-story-content{animation:gp-story-enter calc(260ms * var(--motion-scale,1)) ease-out}.gp-story .gp-diff{white-space:pre-wrap;overflow-wrap:anywhere}
+@keyframes gp-story-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){.gp-story-pair{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.gp-story-content{animation:none}}
+html[data-motion="off"] .gp-story-content{animation:none}
