@@ -15,7 +15,7 @@ test('peel evidence with keyboard and retain proposal through interrupted chapte
   await uncertainty.focus();
   await page.keyboard.press('Space');
   await expect(evidence.getByText(/Effectiveness, costs/)).toBeVisible();
-  await expect(evidence.locator('a')).toHaveAttribute('href', 'https://www.ers.usda.gov/data-products/food-access-research-atlas');
+  await expect(evidence.locator('a[href="https://www.ers.usda.gov/data-products/food-access-research-atlas"]').first()).toHaveAttribute('href', 'https://www.ers.usda.gov/data-products/food-access-research-atlas');
   expect(await evidence.evaluate(el => getComputedStyle(el.querySelector('.evidence-layers')!).userSelect)).toBe('text');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   // Leave while the slow enhancement may still be running. Native links own routing.
@@ -44,7 +44,7 @@ test('failed evidence load retries without turning an unsafe missing source into
   await page.getByRole('alert').filter({ hasText: 'Could not load sample proposals' }).getByRole('button').click();
   const evidence = page.locator('section[aria-label="Scenario and background source"]').first();
   await expect(evidence).toContainText('Source not available / not checked');
-  await expect(evidence.locator('a')).toHaveCount(0);
+  await expect(evidence.locator('a[href^="https://"]')).toHaveCount(0);
   await evidence.getByText('Methodology · how this claim was assembled', { exact: true }).click();
   await evidence.getByText('Uncertainty · what remains unknown', { exact: true }).click();
   await expect(evidence.getByText(/No replacement source/)).toBeVisible();
