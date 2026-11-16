@@ -18,3 +18,28 @@ Review and remove obsolete Fly preview apps and their dedicated volumes when the
 ## PR attachment pairs
 
 List and detail cards show the first two unique raster images embedded in the PR description, side by side at desktop and mobile widths. Markdown and HTML image attachments must use immutable full-SHA GitHub blob/raw URLs in that PR's configured repository. Captions identify the image source commit; attachments are not treated as verified deployments. Unsupported hosts, mutable refs, cross-repository paths and SVGs are excluded. Images load lazily without a referrer and can be opened at full size. Browsing never downloads or builds a version. The operator registry remains the authority for exact-head Explore links and the fallback when attachments are absent.
+
+## Draft patch stories (SHE-622)
+
+PR details include a read-only, native disclosure accordion ordered by GitHub file
+and hunk order. Each step pairs removed/added lines with exact base/head source
+links. The typed local status separates loading, error, blocked, checks-pending,
+review-ready and pending. Review-ready describes available current-head check
+receipts only; it is not merge eligibility or human acceptance. Permission wording
+uses the existing viewer/roster state. Refresh errors retain the displayed revision.
+
+Interpretations remain labeled draft and there is no publication action. Generic
+add/replace/remove summaries are a starting point for human interpretation, not
+verified semantic behavior explanations. Screenshots are revision-wide evidence,
+not claims that a particular file caused a visual change. Only exact base/head
+attachments are included, and contributor provenance remains explicit. The operator
+registry supplies the exact-head fallback; missing before/after captures stay
+pending. No screenshots are synthesized or captured by browsing this control.
+
+Native details support keyboard disclosure without a custom key handler. Paired
+code stacks on mobile; opening content uses the shared motion scale and respects
+reduced motion and motion=off. LiveRound remains civic-only because its snapshot
+contains no repository PR identity. Story browsing has no write callbacks, network
+mutations, voting actions, or publication endpoint. Existing quorum 10, exposure,
+checks, roster/auth/CSRF, advisory lock and disabled/dry-run policies are unchanged;
+see launch-merge-policy.md for the full configured policy and human release rules.

@@ -1,5 +1,5 @@
 import { MutationError, type MutationState } from './mutation-status';
-export type VoteDraft = { proposalId: string; title: string; stance: number };
+export type VoteDraft = { proposalId: string; title: string; stance: number; revision?: string };
 type Stored = { draft: VoteDraft; confirmed: boolean };
 const KEY = 'civic_advisory_receipt_v1';
 export type VoteRequest = <T>(path: string, body?: unknown, method?: string, signal?: AbortSignal) => Promise<T>;
@@ -14,7 +14,7 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
   const receipt = () => `Server confirmed advisory choice for ${stored!.draft.title} (${stored!.draft.proposalId}): ${stored!.draft.stance === 1 ? 'Support' : stored!.draft.stance === -1 ? 'Oppose' : 'Not sure'}. Non-binding.`;
   try {
     const value = JSON.parse(storage.getItem(KEY) ?? 'null');
-    if (value && typeof value.confirmed === 'boolean' && typeof value.draft?.proposalId === 'string' && typeof value.draft?.title === 'string' && [-1, 0, 1].includes(value.draft?.stance)) {
+    if (value && typeof value.confirmed === 'boolean' && typeof value.draft?.proposalId === 'string' && typeof value.draft?.title === 'string' && (value.draft.revision === undefined || typeof value.draft.revision === 'string') && [-1, 0, 1].includes(value.draft?.stance)) {
       stored = value;
       state = { phase: value.confirmed ? 'confirmed' : 'failed', message: value.confirmed ? receipt() + ' Previous server acknowledgement; current choice may have changed.' : 'A previous advisory choice was interrupted. We could not confirm whether it was saved. Retry the exact choice below.' };
     }
@@ -47,5 +47,5 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
       return false;
     } finally { clearTimeout(timer); locked = false; }
   }
-  return { submit, get state() { return state; }, get pending() { return locked; } };
+  return { submit, get state() { return state; }, get pending() { return locked; }, get confirmedDraft(): VoteDraft | undefined { return stored?.confirmed ? { ...stored.draft } : undefined; } };
 }
