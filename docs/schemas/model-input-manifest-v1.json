@@ -1,0 +1,227 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repository",
+    "itemKind",
+    "advisoryOnly",
+    "synthetic",
+    "reviewStatus",
+    "catalogRevision",
+    "sources",
+    "engine",
+    "law",
+    "scenario",
+    "weights",
+    "assumptions",
+    "unknowns",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "civic-model-input-manifest.v1"
+    },
+    "repository": {
+      "const": "adnanwahab/dear_congress"
+    },
+    "itemKind": {
+      "const": "synthetic-law-scenario"
+    },
+    "advisoryOnly": {
+      "const": true
+    },
+    "synthetic": {
+      "const": true
+    },
+    "reviewStatus": {
+      "const": "unreviewed model assumptions"
+    },
+    "catalogRevision": {
+      "type": "null"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "url",
+          "retrievedAt",
+          "kind"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "retrievedAt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "const": "synthetic model receipt"
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 1
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "codeRevision"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "population",
+            "city"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codeRevision": {
+          "type": "null"
+        }
+      }
+    },
+    "law": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "number",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "number": {
+          "enum": [
+            21,
+            22,
+            23,
+            83
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposalId",
+        "revision",
+        "seed",
+        "population",
+        "implementationStrength",
+        "start",
+        "end",
+        "clock",
+        "recordedCheckpoints"
+      ],
+      "properties": {
+        "proposalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "population": {
+          "const": 24
+        },
+        "implementationStrength": {
+          "enum": [
+            0,
+            0.25,
+            0.5,
+            0.75,
+            1
+          ]
+        },
+        "start": {
+          "const": 0
+        },
+        "end": {
+          "enum": [
+            12,
+            720
+          ]
+        },
+        "clock": {
+          "enum": [
+            "minute",
+            "month"
+          ]
+        },
+        "recordedCheckpoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "values",
+        "status"
+      ],
+      "properties": {
+        "values": {
+          "type": "null"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 3
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 4
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Public synthetic law model-input manifest v1"
+}

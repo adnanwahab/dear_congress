@@ -318,6 +318,21 @@ page’s starting parameters without saving data. Flood remains unavailable unti
 its simulator mechanism is reviewed. These synthetic worlds are separate from
 actual outcomes, real votes and resident records.
 
+### Model-input manifest
+
+After a successful paired-world run on `/synth`, **Download evidence and
+model-input manifest (JSON)** exports the public scenario identity/revision,
+provider endpoint and response retrieval time, seed, population, parameter,
+horizon, engine/model version, assumptions, limitations and synthetic/advisory
+flags. Changing inputs hides the export until another successful run.
+The provider does not supply its catalog/code revision, calibration weights or
+underlying evidence sources and retrieval dates: these remain explicit nulls
+and unknowns. The receipt retrieval date is not an evidence publication date.
+This export covers the separate law sandbox, not civic package scoring or votes.
+The closed [v1 schema](docs/schemas/model-input-manifest-v1.json) is validated
+by `bun test` in existing CI. See [SHE-904](docs/reviews/SHE-904.md) for scope
+and remaining source/safety/editorial review.
+
 ### Scoring rule sandbox
 
 `/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`
