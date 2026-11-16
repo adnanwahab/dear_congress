@@ -133,6 +133,10 @@ The [outcomes workbench](/outcomes#dataset-import-title) previews local CSV file
 
 Acceptance is a self-reported local review of the exact draft. Any data or metadata change requires new review. Nothing is published or added to measured outcomes or synthesis. Drafts and review history disappear on reload; export the complete JSON packet or copy/print its text to retain them. Offline files work without network requests. The cited example is a transcription exercise awaiting independent source verification. A named reviewer and passing structural checks do not establish authenticated approval or real-world policy benefit.
 
+## Contesting evidence
+
+The [evidence challenge docket](/outcomes#evidence-docket) demonstrates sourced, conflicting and missing-source cases. Prepare a local draft tied to an exact claim revision and source; include new evidence, dates, limitations and the requested correction. The prototype sends nothing and loses drafts on reload. Export before leaving. Example decisions are not verified human reviews. A live private intake, moderator review and independent appeal service remain unavailable. Never include personal details in public evidence.
+
 ## Simple glossary
 
 - Advisory vote: a recorded preference with no official or binding effect.
