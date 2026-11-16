@@ -27,7 +27,18 @@ test('failed lazy summary keeps the real link available without submission', asy
   // JavaScript requests *after* the app boots, rather than assuming a source
   // filename appears in the built URL. A blocked lazy chunk must fail safely.
   let blockedChunks = 0;
-  await page.route('**/*.js', route => { blockedChunks++; return route.abort(); });
+  // Only the stage-summary module should fail. Aborting every JS request also
+  // destroys unrelated lazy routes and can unmount the app before navigation.
+  await page.route('**/*.js', async route => {
+    const response = await route.fetch();
+    const script = await response.text();
+    if (script.includes('Unknown stage') && script.includes('heading')) {
+      blockedChunks++;
+      await route.abort();
+    } else {
+      await route.fulfill({ response });
+    }
+  });
   const link = page.locator('.bottom-destinations a').filter({ hasText: 'Votes' });
   await link.focus();
   await expect(page.getByRole('status').filter({ hasText: 'Preview unavailable' })).toBeVisible();
