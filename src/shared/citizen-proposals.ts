@@ -84,6 +84,7 @@ export interface ProposalObjectionRecord extends ProposalObjection {
   bodyHash: string;
 }
 
+
 export const CONTRIBUTION_ROLES = ["coauthor", "research", "editing", "accessibility"] as const;
 export type ContributionRole = typeof CONTRIBUTION_ROLES[number];
 export interface CreditEvent {
