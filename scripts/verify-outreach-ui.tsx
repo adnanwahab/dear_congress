@@ -58,7 +58,12 @@ await act(async () => { (select as any).value = 'demo-housing'; select.dispatchE
 assert.match(panel().textContent!, /City housing committee/);
 assert(!button('Download reviewed draft'));
 assert.equal((panel().querySelector('input') as any).value, 'Discussion request: Allow backyard cottages near frequent transit');
-await act(async () => root.render(<WorkflowScreen stage="outcomes" request={request} />));
+await act(async () => {
+  root.render(<WorkflowScreen stage="outcomes" request={request} />);
+  // Keep the lazy outcome resource inside act before teardown; parsing/timing
+  // changes in shared action modules must not leak a late Suspense warning.
+  await import('../src/client/PolicyMeasurements');
+});
 assert.match(container.textContent!, /Draft downloads do not create outreach evidence/);
 assert.equal(dom.localStorage.getItem('civic_demo_tracker_v1'), sentinel);
 await act(async () => root.unmount());

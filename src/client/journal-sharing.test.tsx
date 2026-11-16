@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
+import { MutationError } from './mutation-status';
 
 test('actual journal route isolates the draft and requires fresh exact-payload consent', async () => {
   const dom = new Window({ url: 'https://civic.test/journal' });
@@ -19,6 +20,7 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     calls.push({ path, body });
     if (path.startsWith('/api/entries')) return { entries: [], nextCursor: null } as T;
     if (path.includes('schema')) return { version: 2, needs: [] } as T;
+    if (outcome === 'limited') throw new MutationError('limited', 429, '1');
     if (outcome === 'failure') throw Error('sensitive server error must not be reflected');
     if (outcome === 'pending') return { status: 'pending', entryId: 'held' } as T;
     return { entry: { id: 'public', text: 'Safe excerpt', author: 'Public name', extraction: { needs: [] } } } as T;
@@ -55,6 +57,23 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     expect(document.body.textContent).toContain('Excerpt held for moderation review');
     expect((q().getByLabelText('Working draft (not uploaded)') as HTMLTextAreaElement).value).toContain('PRIVATE_SENTINEL');
     expect(q().queryByRole('button', { name: 'Share publicly' })).toBeNull();
+    // A known rejection preserves all inputs, releases busy state, and requires
+    // fresh consent plus an elapsed cooldown before any explicit retry.
+    outcome = 'limited';
+    await confirm(); await click('Share publicly');
+    expect(q().getByRole('alert').textContent).toContain('This attempt was rejected');
+    expect(document.body.textContent).not.toContain('Submitting your reviewed excerpt');
+    expect(document.body.textContent).not.toContain('Excerpt published.');
+    expect((q().getByLabelText('Public excerpt') as HTMLTextAreaElement).value).toBe('Safe excerpt');
+    expect((q().getByLabelText('Public display name (optional)') as HTMLInputElement).value).toBe('Public name');
+    await confirm();
+    expect((q().getByRole('button', { name: 'Share publicly' }) as HTMLButtonElement).disabled).toBe(true);
+    const limitedCalls = calls.filter(c => c.body).length;
+    await click('Share publicly');
+    expect(calls.filter(c => c.body).length).toBe(limitedCalls);
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1300)); });
+    expect(calls.filter(c => c.body).length).toBe(limitedCalls);
+    expect((q().getByRole('button', { name: 'Share publicly' }) as HTMLButtonElement).disabled).toBe(false);
     outcome = 'failure';
     await confirm(); await click('Share publicly');
     expect(document.body.textContent).toContain('retrying may duplicate');
@@ -74,6 +93,11 @@ test('actual journal route isolates the draft and requires fresh exact-payload c
     expect(calls.filter(c => c.body).length).toBe(beforePublish + 1);
     expect(document.body.textContent).toContain('Excerpt published. Your working draft remains here.');
     expect(document.body.textContent).toContain('Entry ID: public');
+    outcome = 'limited';
+    await confirm(); await click('Share publicly');
+    expect(q().getByRole('alert').textContent).toContain('This attempt was rejected');
+    expect(document.body.textContent).not.toContain('Excerpt published. Your working draft remains here.');
+    expect(calls.filter(c => c.body).length).toBe(beforePublish + 2);
     expect(JSON.stringify(calls)).not.toContain('PRIVATE_SENTINEL');
     expect(dom.localStorage.length).toBe(0);
   } finally {

@@ -93,6 +93,8 @@ The Journal path lets you publish without automatic inference. Other journal int
 
 In the publishing browser, use Delete my entry in [Journal](/journal) to remove an owned entry from the active feed, public APIs and future needs calculations. Losing that browser's cookie may prevent self-service deletion. Independently published proposals and their ballots are not rewritten when a source journal is deleted. Backups, logs and other people's copies may remain; there is no guaranteed deletion schedule for those copies. The privacy notice explains removal requests and their public GitHub channel.
 
+If sharing is rate limited (429), your working draft, public excerpt, display name and selected categories remain in the open Journal page. Sharing pauses until the retry time; review and confirm again to retry. Nothing is submitted automatically, and a rejected attempt creates no publication receipt. Keep the page open: drafts are lost on refresh or navigation. A connection failure can leave the outcome unknown; check the feed before retrying to avoid duplicates.
+
 ## What happens next?
 
 The Feed also offers a demo two-minute sampler of five fictional policy topics. Swipe either way or use Skip to move on; neither casts a vote. Save to reading list stores public sample text in this browser watchlist, visible to others using the profile. Open context reads the sample draft. There is no timer or required vote.

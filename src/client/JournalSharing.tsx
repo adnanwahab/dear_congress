@@ -1,5 +1,6 @@
 import { StateFeedback } from './StateFeedback';
-import { useRef, useState } from 'react';
+import { MutationError, retryDeadline } from './mutation-status';
+import { useEffect, useRef, useState } from 'react';
 import type { JournalEntry } from '../engine/types';
 
 type Request = <T>(path: string, body?: unknown, method?: string) => Promise<T>;
@@ -24,13 +25,24 @@ export default function JournalSharing({ request, onPublished, needs = [] }: { r
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const sending = useRef(false);
+  const [retryAt, setRetryAt] = useState(0);
+  const [now, setNow] = useState(Date.now);
+  const coolingDown = now < retryAt;
+  useEffect(() => {
+    if (!retryAt) return;
+    const timer = setInterval(() => {
+      const time = Date.now(); setNow(time);
+      if (time >= retryAt) setRetryAt(0);
+    }, 250);
+    return () => clearInterval(timer);
+  }, [retryAt]);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   function invalidate() { setReview(null); setConsent(false); setStatus(''); }
   async function publish() {
-    if (!review || !consent || sending.current) return;
+    if (!review || !consent || sending.current || Date.now() < retryAt) return;
     if (!navigator.onLine) { invalidate(); setError('You are offline. Review and confirm again when online. Nothing was queued.'); return; }
-    sending.current = true; setBusy(true); setError('');
+    sending.current = true; setBusy(true); setError(''); setStatus('');
     // Consume consent before the request; failures never retry automatically.
     const payload = review;
     setReview(null); setConsent(false);
@@ -39,8 +51,12 @@ export default function JournalSharing({ request, onPublished, needs = [] }: { r
       if (result.status === 'pending') setStatus('Excerpt held for moderation review. It is not in the public feed.');
       else if (result.entry) { setStatus('Excerpt published. Your working draft remains here. No inference was requested and no vote was cast.'); onPublished(result.entry); }
       else setError('Publication outcome is unknown. Check the shared feed before reviewing and trying again.');
-    } catch {
-      setError('Publication could not be confirmed. Check the shared feed before trying again; retrying may duplicate the excerpt. Your working draft remains here.');
+    } catch (error) {
+      if (error instanceof MutationError && error.status === 429) {
+        const deadline = retryDeadline(error.retryAfter);
+        setRetryAt(deadline); setNow(Date.now());
+        setError(`Too many requests. This attempt was rejected. Your working draft and excerpt remain here. Wait until ${new Date(deadline).toLocaleTimeString()}, then review and confirm again. Nothing will be retried automatically.`);
+      } else setError('Publication could not be confirmed. Check the shared feed before trying again; retrying may duplicate the excerpt. Your working draft remains here.');
     } finally { sending.current = false; setBusy(false); }
   }
   return <section aria-label="Deliberate public sharing">
@@ -55,12 +71,13 @@ export default function JournalSharing({ request, onPublished, needs = [] }: { r
     <input id="journal-author" maxLength={120} value={author} disabled={busy} onChange={e => { setAuthor(e.target.value); invalidate(); }} />
     <fieldset disabled={busy}><legend>Choose needs yourself (optional)</legend><p>No AI or keyword inference is requested. Leave every category unchecked to share without tags. These choices do not cast votes.</p>{needs.map(n => <label key={n.id} style={{ display: 'block' }}><input type="checkbox" checked={selected.includes(n.id)} onChange={e => { setSelected(ids => e.target.checked ? [...ids, n.id] : ids.filter(id => id !== n.id)); invalidate(); }} /> {n.label}</label>)}</fieldset>
     <div className="journal-publish"><button type="button" disabled={busy || !excerpt.trim()} onClick={() => { setReview(publicExcerpt(excerpt, author, selected)); setConsent(false); setError(''); }}>Review public excerpt</button></div>
+    {coolingDown && <p role="status">Sharing is paused for {Math.ceil((retryAt - now) / 1000)} more seconds. Review and confirm before retrying.</p>}
     {review && <section aria-label="Exact public preview" className="journal-result">
       <h3>Exact public preview</h3><strong>{review.author}</strong><p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{review.text}</p>
       <p>{review.labels.length ? `Categories: ${review.labels.map(id => needs.find(n => n.id === id)?.label ?? id).join(', ')}` : 'No categories selected.'}</p>
       <p>This excerpt, display name and the categories you selected will be public through the feed and API. No AI or keyword inference is requested. No location is included. Copies and independently published proposals may remain after removal. Keep this browser’s cookies to retain removal ownership. <a href="/privacy">Privacy and deletion details</a>.</p>
       <label><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> I want to share this exact excerpt publicly.</label>
-      <button type="button" disabled={!consent || busy} onClick={publish}>Share publicly</button>
+      <button type="button" disabled={!consent || busy || coolingDown} onClick={publish}>Share publicly</button>
       <button type="button" className="outline" onClick={invalidate}>Cancel sharing</button>
     </section>}
     <p role="status"><StateFeedback state={busy ? 'syncing' : status ? 'updated' : 'draft'}>{busy ? 'Submitting your reviewed excerpt…' : status || 'Draft in this open page only · not saved or uploaded.'}</StateFeedback></p>{error && <p role="alert"><StateFeedback state="error">{error}</StateFeedback></p>}

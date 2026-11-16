@@ -425,7 +425,13 @@ Fly deployments must retain `TRUST_FLY_PROXY=1`: the public browser uses HTTPS w
 
 
 All limits must be positive integers. Invalid attempts consume the same budget.
-429 responses include seconds in `Retry-After` and a readable retry message.
+429 responses include seconds in `Retry-After`, `code: "rate_limited"`,
+`retryAfterSeconds`, and a readable rejection message. Protected handlers do not
+run for rejected attempts. Journal sharing preserves the in-page draft and excerpt,
+stops its spinner, and requires elapsed cooldown plus fresh review/consent for an
+explicit retry. Shared action errors and citizen proposal actions display retry
+guidance; advisory vote retries retain their exact target and choice. No action is
+automatically resubmitted. See [SHE-931 validation and staged rollout](docs/reviews/SHE-931.md).
 Journal aliases are `/api/journal`, `/api/entries`, and `/api/publish_draft` (including
 answer mode). `/api/votes`, `/api/answers`, citizen proposal publication/votes/comments, and label
 edits share the combined limits. Journal input is capped at 10,000 characters,

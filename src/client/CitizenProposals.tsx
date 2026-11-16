@@ -1,3 +1,4 @@
+import { MutationError } from './mutation-status';
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
 import { LawBehaviorExplorer } from './LawBehaviorExplorer';
@@ -24,7 +25,7 @@ class ProposalRequestError extends Error {
   constructor(message: string, readonly status: number | null) { super(message); }
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+export async function request<T>(path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -36,6 +37,8 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   } catch {
     throw new ProposalRequestError("We couldn’t connect. Please check your connection and try again.", null);
   }
+  // Preserve retry guidance even when an overloaded proxy returns non-JSON.
+  if (response.status === 429) throw new MutationError('Too many requests', 429, response.headers.get('Retry-After'));
   let data: unknown;
   try { data = await response.json(); }
   catch { throw new ProposalRequestError("The server returned an unexpected response. Please try again.", response.ok ? null : response.status); }

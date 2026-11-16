@@ -124,3 +124,28 @@ describe("public write security", () => {
     expect(response.headers.get("strict-transport-security")).toContain("31536000");
   });
 });
+
+test('all public actions reject before side effects, with truthful remaining Retry-After and explicit retry', async () => {
+  for (const path of ['/api/journal', '/api/entries', '/api/publish_draft', '/api/votes', '/api/answers', '/api/reports', '/api/citizen-proposals', '/api/citizen-proposals/example/vote', '/api/live/example/votes']) {
+    let time = 1000;
+    let writes = 0;
+    const security = createPublicSecurity({ ANON_COOKIE_SECRET: secret, PUBLIC_IP_LIMIT: '1', PUBLIC_RATE_WINDOW_SECONDS: '10' }, () => time);
+    const headers = { cookie: cookie(security) };
+    const submit = () => guard(security, request(path, { text: 'Preserve this draft' }, headers), undefined, () => { writes++; return Response.json({ ok: true }); });
+    expect((await submit()).status).toBe(200);
+    time += 1100;
+    const rejected = await submit();
+    expect(rejected.status).toBe(429);
+    expect(rejected.headers.get('retry-after')).toBe('9');
+    expect(rejected.headers.get('cache-control')).toBe('no-store');
+    const body = await rejected.json() as any;
+    expect(body.code).toBe('rate_limited');
+    expect(body.retryAfterSeconds).toBe(9);
+    expect(body.ok).toBeUndefined();
+    expect(body.entry).toBeUndefined();
+    expect(writes).toBe(1);
+    time += 8900;
+    expect((await submit()).status).toBe(200);
+    expect(writes).toBe(2);
+  }
+});
