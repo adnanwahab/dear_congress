@@ -23,7 +23,7 @@ import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { ProposalFollow, ProposalWatchlist } from './ProposalFollow';
 import { TopicChip } from './TopicChip';
 import { Skeleton, WorkflowSkeleton } from './LoadingSkeleton';
-import { topicForProposal } from '../shared/topics';
+import { getTopic, topicForProposal } from '../shared/topics';
 import { proposalTitleName, readProposalSnapshot, saveProposalSnapshot } from './proposal-motion';
 import { AdvisoryReceipt, sampleTextRevision } from './AdvisoryReceipt';
 import type { VoteDraft } from './advisory-mutation';
@@ -58,10 +58,6 @@ const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ defa
 const PolicyMeasurements = lazy(() => import('./PolicyMeasurements').then(module => ({ default: module.PolicyMeasurements })));
 const ResponseComposition = lazy(() => import('./ResponseComposition').then(module => ({ default: module.ResponseComposition })));
 const DataGapsAtlas = lazy(() => import('./DataGapsAtlas').then(module => ({ default: module.DataGapsAtlas })));
-const route = (stage: Stage, proposal?: string | null) => {
-  const topic = topicById(new URLSearchParams(window.location.search).get('topic') ?? '');
-  return topic ? topicStageUrl(stage, topic.id, proposal ?? undefined) : stageRoute(stage, proposal);
-};
 type Request = VoteRequest;
 interface Tracked { id: string; title: string; office: string; stage: number; updatedAt: string; }
 const SELECTION_KEY = 'civic_demo_selection_v1';
@@ -92,12 +88,13 @@ const count = (item: DemoItem) => item.support + item.oppose + item.unsure;
 
 
 export default function WorkflowScreen({ stage, request }: { stage: Stage; request: Request }) {
-  const jurisdiction = useJurisdiction(readJourney()?.filters.jurisdiction);
+  const [journey] = useState(() => readJourney());
+  const shared = !journey && ['proposal', 'topic'].some(key => new URLSearchParams(window.location.search).has(key));
+  const jurisdiction = useJurisdiction(shared ? '' : journey?.filters.jurisdiction);
   const [data, setData] = useState<DemoPayload | null>(readProposalSnapshot);
   const [selected, setSelected] = useState(initialSelection);
-  const [journey] = useState(() => readJourney());
-  const [topic, setTopic] = useState(journey?.filters.topic ?? 'All topics');
-  const [query, setQuery] = useState(journey?.filters.query ?? '');
+  const [topic, setTopic] = useState(() => topicById(new URLSearchParams(window.location.search).get('topic') ?? '')?.label ?? (shared ? 'All topics' : journey?.filters.topic) ?? 'All topics');
+  const [query, setQuery] = useState(shared ? '' : journey?.filters.query ?? '');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [error, setError] = useState('');
@@ -122,6 +119,10 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     const frame = window.requestAnimationFrame(() => restoreJourney());
     return () => window.cancelAnimationFrame(frame);
   }, [loading, journey]);
+  const route = (destination: Stage, proposal?: string | null) => {
+    const publicTopic = getTopic(topic);
+    return publicTopic ? topicStageUrl(destination, publicTopic.id, proposal ?? undefined) : stageRoute(destination, proposal);
+  };
   const meta = STAGES[stage];
   const load = () => request<DemoPayload>('/api/demo').then(value => { saveProposalSnapshot(value); setData(value); });
   const [attempt, setAttempt] = useState(0);
@@ -134,7 +135,13 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     return () => { active = false; };
   }, [request, attempt]);
   useEffect(() => {
-    const update = () => { setSelected(initialSelection()); setOffice(''); setStatus(''); };
+    const update = () => {
+      const entry = readJourney();
+      setSelected(initialSelection());
+      setTopic(topicById(new URLSearchParams(window.location.search).get('topic') ?? '')?.label ?? entry?.filters.topic ?? 'All topics');
+      setQuery(entry?.filters.query ?? '');
+      setOffice(''); setStatus('');
+    };
     window.addEventListener('popstate', update);
     return () => window.removeEventListener('popstate', update);
   }, []);
@@ -149,12 +156,13 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     if (!item) return;
     setSelected(item.id);
     if (!(new URLSearchParams(window.location.search).get('demo') === '1')) { try { sessionStorage.setItem(SELECTION_KEY, item.id); } catch {} }
-    if (deepStage) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('proposal', item.id);
-      window.history.replaceState(window.history.state, '', url);
-    }
-  }, [item?.id, stage]);
+    const url = new URL(window.location.href);
+    url.searchParams.set('proposal', item.id);
+    const publicTopic = getTopic(topic);
+    if (publicTopic) url.searchParams.set('topic', publicTopic.id);
+    else url.searchParams.delete('topic');
+    window.history.replaceState(window.history.state, '', url);
+  }, [item?.id, stage, topic]);
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
