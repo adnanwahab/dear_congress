@@ -231,10 +231,18 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   async function run(){
     if(!Number.isInteger(effectiveSeed)||effectiveSeed<0||effectiveSeed>4294967295)return;
     const request=++generation.current;controller.current?.abort();
+    setPlaying(false);setReceipt(null);setError('');setDirty(false);
+    if(typeof fetch!=='function'||typeof AbortController!=='function'){
+      setBusy(false);setError('This browser lacks the request features needed for the live model.');return;
+    }
     const abort=new AbortController();controller.current=abort;
-    setBusy(true);setPlaying(false);setReceipt(null);setError('');setDirty(false);
-    let timedOut=false;
-    const timeout=window.setTimeout(()=>{timedOut=true;abort.abort();},45000);
+    setBusy(true);
+    const timeout=window.setTimeout(()=>{
+      if(request!==generation.current)return;
+      // Invalidate even providers that ignore abort, including a stalled response body.
+      generation.current++;abort.abort();setBusy(false);
+      setError('The model exceeded the 45-second limit. Retry when the service is available.');
+    },45000);
     try{
       const response=await fetch(new URL('/api/law-behavior',hblOrigin),{
         method:'POST',headers:{'content-type':'application/json'},signal:abort.signal,
@@ -255,7 +263,6 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.status==='completed'&&strength===100)setReference(old=>old&&old.law.number===lawId?old:parsed);
     }catch(err){
       if(request!==generation.current)return;
-      if(timedOut){setError('The model exceeded the 45-second limit. Retry when the service is available.');return;}
       if(abort.signal.aborted)return;
       setError(err instanceof Error?err.message:'Behavior model unavailable.');
     }finally{window.clearTimeout(timeout);if(request===generation.current)setBusy(false);}
@@ -330,7 +337,19 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}
-    {error&&<p role="alert" className="note warn">Model data unavailable: {error}. The paired snapshot links above remain available.</p>}
+    {error&&<p role="alert" className="note warn">Model data unavailable: {error}</p>}
+    {(error||receipt?.status==='mechanism-unavailable')&&<section aria-label="Static simulation fallback" className="note">
+      <h4>Static precomputed example · fictional teaching sample</h4>
+      <p>This is not your live simulation, a cached result, a provider receipt or a forecast. It does not use your selected law, strength or seed.</p>
+      <p>Assumptions: an invented bus arrives at perfectly regular intervals; arrival time is uniformly random; capacity is unlimited. No congestion, missed buses, costs or household differences are modeled.</p>
+      <table><caption>Precomputed arithmetic example · expected wait = interval ÷ 2</caption>
+        <thead><tr><th scope="col">Fictional scenario</th><th scope="col">Bus interval</th><th scope="col">Expected wait</th></tr></thead>
+        <tbody><tr><th scope="row">Example A</th><td>20 minutes</td><td>10 minutes</td></tr><tr><th scope="row">Example B</th><td>10 minutes</td><td>5 minutes</td></tr></tbody>
+      </table>
+      <p>These fixed values illustrate an assumption only. Actual service and modeled futures may differ; there is no measured or official claim here. Civic views remain non-binding and advisory.</p>
+      <button type="button" disabled={busy||invalidContext} onClick={()=>void run()}>Retry live simulation</button>
+      <p><a href="/votes">Read proposals and give advisory views</a> while the model is unavailable.</p>
+    </section>}
     {receipt?.status==='mechanism-unavailable'&&<p role="status">No reviewed behavior mapping: {receipt.reason||'Effects unavailable.'}</p>}
     {receipt?.status==='completed'&&frames.length>0&&<>
       {!dirty && !busy && !error && <SaveToJourney category="Sandbox runs" kind="Model simulation" text={JSON.stringify({ source: 'hbl-law-behavior-receipt.v1', law: receipt.law, amendment, revision, engine: receipt.engine, manifest: receipt.manifest, unit: receipt.unit, limitations: receipt.limitations, note: 'Completed synthetic run metadata only; actor frames are not copied. No legal effect or civic ballot.' }, null, 2)} />}

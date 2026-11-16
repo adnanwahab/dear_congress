@@ -341,3 +341,11 @@ live provider/CORS parity for this new ensemble remain unverified. The DOM
 journey checks exact tables, explicit loading, selection, scrubbing, pointer
 selection and HTTP 429 failure; calculation tests reject mixed scenarios,
 versions, duplicate seeds, mismatched checkpoints and missing metrics.
+
+## SHE-906 · unavailable model fallback
+
+Failed or unsupported requests, the 45-second deadline and missing browser request
+features show assumptions, a separately labeled static fictional arithmetic
+example and Retry live simulation. The example never becomes a model receipt or
+uses current settings. Deadline invalidation rejects even abort-ignoring late
+responses. See [SHE-906 validation and remaining acceptance](reviews/SHE-906.md).

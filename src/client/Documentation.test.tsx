@@ -41,6 +41,7 @@ test('public guide explains trust limits and keeps historical planning collapsed
   appendix.innerHTML = '<summary>Historical appendix</summary>';
   const guide = document.querySelector('article')!;
   expect(guide.textContent).toContain('Play legislative redline detective');
+  for(const text of ['static precomputed fictional bus-wait example', 'Retry live simulation', 'Late responses from timed-out runs are ignored']) expect(guide.textContent).toContain(text);
   expect(guide.textContent).toContain('never become votes, private amendment versions or model projections');
   for (const text of ['four invented household scenarios', 'unvalidated extrapolation', 'not a vote or verified civic participation', 'not saved or sent to a simulation']) expect(guide.textContent).toContain(text);
   for (const text of ['not a government service', 'Will my journal be public?', 'Does my vote count?', 'What happens next?', 'no guaranteed deletion schedule', 'Human-reviewed Spanish', 'All its sample counts are invented', 'no consented real sample is connected', 'Small groups and rare cells are withheld', 'private evidence-condition cards', 'discarded when you leave or reload', 'Linked evidence remains unverified', 'Steelman challenge', 'AI scoring is off', 'Responses stay in page memory']) expect(guide.textContent).toContain(text);
