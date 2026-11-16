@@ -15,7 +15,7 @@ import { createStatsHTTP } from "./src/server/launch-stats-http";
 import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
 import { publicEntry } from "./src/shared/moderation";
 import { contactReasons, isPublicEntry, moderate, moderationAuthorized, moderationPage, moderationScript } from "./src/server/moderation";
-import { boundedJson, PublicInputError } from "./src/server/public-security";
+import { boundedJson, embedCsp, PublicInputError } from "./src/server/public-security";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
 import { renderPage, sitemap } from "./src/server/pages";
@@ -76,7 +76,7 @@ const FRAME_ANCESTORS = normalizeFrameAncestors(
   (process.env.FRAME_ANCESTORS
     ?? (process.env.NODE_ENV === "production" ? "'self'" : DEFAULT_DEV_FRAME_ANCESTORS)).trim(),
 ) || "'self'";
-const EMBED_CSP = `frame-ancestors ${FRAME_ANCESTORS}`;
+const EMBED_CSP = embedCsp(FRAME_ANCESTORS);
 const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
