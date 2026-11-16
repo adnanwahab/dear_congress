@@ -1223,3 +1223,7 @@ html[data-motion="calm"] .is-playing .patch-final { opacity: 1; }
 .chapter-preview { pointer-events: none; }
 .chapter-peek a, .chapter-peek button { display: block; margin-top: 12px; }
 .chapter-peek-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.responsible-sharing summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.responsible-sharing summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.responsible-sharing p { max-width: 65ch; }

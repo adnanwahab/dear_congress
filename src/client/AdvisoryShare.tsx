@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { decisionCard } from './advisory-share';
+import { RESPONSIBLE_SHARING } from './responsible-sharing';
 
 type Card = Awaited<ReturnType<typeof decisionCard>>;
 export function AdvisoryShare({ id, choice }: { id: string; choice?: number }) {
@@ -21,6 +22,11 @@ export function AdvisoryShare({ id, choice }: { id: string; choice?: number }) {
   function close() { setOpen(false); setIncludeStance(false); setResult(undefined); }
   return <section className="advisory-share" aria-label="Share advisory decision card">
     <button type="button" className="outline" aria-expanded={open} onClick={() => open ? close() : setOpen(true)}>Share preview</button>
+    <details className="responsible-sharing">
+      <summary>How to share responsibly</summary>
+      <p>{RESPONSIBLE_SHARING}</p>
+      <a href="/documentation#how-to-share-responsibly">Full sharing documentation</a>
+    </details>
     {open && <div>
       <p>Review before downloading. Only this public fictional scenario and its background references are shared. Identity, journals and vote receipt identifiers are excluded.</p>
       <label><input type="checkbox" checked={includeStance} disabled={choice === undefined} onChange={event => { setResult(undefined); setIncludeStance(event.target.checked); }} /> Include my chosen stance (optional, off by default)</label>
