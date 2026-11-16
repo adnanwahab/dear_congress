@@ -1,3 +1,4 @@
+import { createFeedbackIntake, feedbackPage, feedbackScript } from "./src/server/feedback-intake";
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -869,6 +870,7 @@ if (!browserBuild.success) throw new AggregateError(browserBuild.logs, "Browser 
 const shell = transitionShell(await browserBuild.outputs.find((output) => output.type.startsWith("text/html"))!.text());
 const browserAssets = new Map(browserBuild.outputs.filter((output) => !output.type.startsWith("text/html")).map((output) => ["/" + output.path.replace(/^.*\//, ""), output]));
 
+const feedbackIntake = createFeedbackIntake(`${DB_PATH}.feedback.sqlite`, () => process.env.FEEDBACK_ADMIN_TOKEN ?? "");
 const launchStats = new LaunchStats(process.env.STATS_DB_PATH ?? `${DB_PATH}.stats.sqlite`);
 let statsHealthy = true;
 // Metrics failures must never turn a persisted vote into an apparent failed vote.
@@ -885,6 +887,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   idleTimeout: 255,
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/feedback": () => securityHeaders(new Response(feedbackPage, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } })),
+    "/feedback.js": () => securityHeaders(new Response(feedbackScript, { headers: { "content-type": "text/javascript" } })),
+    "/api/feedback": { POST: (req) => feedbackIntake.submit(req) },
+    "/api/admin/feedback": { GET: (req) => feedbackIntake.queue(req) },
     "/api/topics/:id": { GET: (req) => {
       const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
       return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });

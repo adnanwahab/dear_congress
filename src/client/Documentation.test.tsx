@@ -48,7 +48,7 @@ test('public guide explains trust limits and keeps historical planning collapsed
   for (const link of Array.from(document.querySelectorAll('a[href^="#"]'))) expect(document.getElementById(link.getAttribute('href')!.slice(1))).not.toBeNull();
   for (const link of Array.from(guide.querySelectorAll('a[href^="/"]'))) {
     const path = new URL(link.getAttribute('href')!, 'https://civic-synthesis.fly.dev').pathname;
-    if (['/version', '/healthz'].includes(path)) continue; // Dedicated HTTP handlers, outside renderPage.
+    if (['/version', '/healthz', '/feedback'].includes(path)) continue; // Dedicated HTTP handlers, outside renderPage.
     expect(renderPage('<title>Test</title><div id="root"></div>', path, []).status).toBe(200);
   }
   const missing = renderPage('<title>Test</title><div id="root"></div>', '/missing-guide-page', []);
