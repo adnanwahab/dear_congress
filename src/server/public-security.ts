@@ -93,12 +93,12 @@ export function createPublicSecurity(env: Record<string, string | undefined> = p
       let retry = 0;
       for (const [key, limit] of keys) {
         let bucket = buckets.get(key);
-        if (!bucket && buckets.size >= 100000) return Response.json({ error: "Submissions are busy. Please try again later." }, { status: 429, headers: { "retry-after": String(Math.ceil(windowMs / 1000)) } });
+        if (!bucket && buckets.size >= 100000) return Response.json({ error: "Submissions are busy. This attempt was rejected; please try again later.", code: "rate_limited", retryAfterSeconds: Math.ceil(windowMs / 1000) }, { status: 429, headers: { "retry-after": String(Math.ceil(windowMs / 1000)) } });
         if (!bucket) { bucket = { count: 0, until: time + windowMs }; buckets.set(key, bucket); }
         bucket.count++;
         if (bucket.count > limit) retry = Math.max(retry, Math.ceil((bucket.until - time) / 1000));
       }
-      if (retry) return Response.json({ error: `Too many submissions. Please try again in ${retry} seconds.` }, { status: 429, headers: { "retry-after": String(retry) } });
+      if (retry) return Response.json({ error: `Too many submissions. This attempt was rejected; please try again in ${retry} seconds.`, code: "rate_limited", retryAfterSeconds: retry }, { status: 429, headers: { "retry-after": String(retry) } });
       if (journal && env.PUBLIC_SUBMISSIONS_ENABLED === "0") return Response.json({ error: "Public journal submissions are temporarily paused." }, { status: 503 });
     },
   };

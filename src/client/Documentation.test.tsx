@@ -40,6 +40,7 @@ test('public guide explains trust limits and keeps historical planning collapsed
   expect(appendix.querySelector('summary')!.textContent).toContain('November 12, 2026');
   appendix.innerHTML = '<summary>Historical appendix</summary>';
   const guide = document.querySelector('article')!;
+  for (const text of ['rate limited (429)', 'review and confirm again to retry', 'Nothing is submitted automatically', 'a rejected attempt creates no publication receipt', 'drafts are lost on refresh or navigation']) expect(guide.textContent).toContain(text);
   expect(guide.textContent).toContain('Play legislative redline detective');
   expect(guide.textContent).toContain('never become votes, private amendment versions or model projections');
   for (const text of ['four invented household scenarios', 'unvalidated extrapolation', 'not a vote or verified civic participation', 'not saved or sent to a simulation']) expect(guide.textContent).toContain(text);

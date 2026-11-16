@@ -1,4 +1,4 @@
-import { MutationError, type MutationState } from './mutation-status';
+import { MutationError, retryDeadline, type MutationState } from './mutation-status';
 export type VoteDraft = { proposalId: string; title: string; stance: number; revision?: string };
 type Stored = { draft: VoteDraft; confirmed: boolean };
 const KEY = 'civic_advisory_receipt_v1';
@@ -39,9 +39,7 @@ export function advisoryMutation(request: VoteRequest, storage: Pick<Storage, 'g
       return true;
     } catch (error) {
       if (error instanceof MutationError && error.status === 429) {
-        const header = error.retryAfter;
-        const seconds = header && /^\d+$/.test(header) ? Number(header) * 1000 : NaN;
-        retryAt = Number.isFinite(seconds) ? Date.now() + seconds : Math.max(Date.now(), Date.parse(header ?? '') || Date.now() + 60000);
+        retryAt = retryDeadline(error.retryAfter);
       }
       emit({ phase: 'failed', message: `We could not confirm whether your advisory choice for ${stored.draft.title} was saved.${retryAt > Date.now() ? ` Too many requests; wait until ${new Date(retryAt).toLocaleTimeString()} before retrying.` : ' Retry sends the same choice to the same proposal.'}${recoverable ? '' : ' Browser recovery unavailable; keep this page open.'}` });
       return false;

@@ -990,7 +990,7 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
   };
 
   async function saveAll(msg: string) {
-    setVoteError("");
+    setVoteError(""); setSaved("");
     try {
       await api("/api/votes", { votes: Object.values(votes), allocation: alloc, withdrawVotes });
       setWithdrawVotes([]);
@@ -1010,10 +1010,13 @@ function VoteView({ state, refresh }: { state: AppState; refresh: () => void }) 
 
   async function submitAnswer() {
     if (!answer.trim()) return;
-    const r = await api<{ proposalId: string; isNew: boolean }>("/api/answers", { needId, text: answer });
-    setAnswerMsg(r.isNew ? "That's a new idea. It now appears as its own option for others to weigh in on." : "Grouped with a similar idea people already suggested.");
-    setAnswer("");
-    refresh();
+    setAnswerMsg(""); setVoteError("");
+    try {
+      const r = await api<{ proposalId: string; isNew: boolean }>("/api/answers", { needId, text: answer });
+      setAnswerMsg(r.isNew ? "That's a new idea. It now appears as its own option for others to weigh in on." : "Grouped with a similar idea people already suggested.");
+      setAnswer("");
+      refresh();
+    } catch (error) { setVoteError(error instanceof Error ? error.message : "Could not submit idea. Please retry."); }
   }
 
   const mech = props.map((p) => ({ p, share: state.mechanismShare[p.id] ?? 0, mine: state.user.answers.filter((a) => a.proposalId === p.id).length }))
