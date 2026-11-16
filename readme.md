@@ -985,3 +985,11 @@ and add no incentives or writes. Native disclosures support keyboard/touch;
 no new animation is used. Official external calendars and hypothetical gatherings
 are separately labeled. No hosted events or moderated public event discussion
 are operational. See [scope and validation](docs/reviews/SHE-538.md).
+
+## Private launch feedback
+
+`/feedback` accepts bugs, misleading claims, privacy, accessibility and ideas into
+separate protected storage, without automatic public posting. Intake fails closed
+until `FEEDBACK_ADMIN_TOKEN` is set. Assigned review roles, response targets,
+queue access, retention limits and required staffing are documented in
+[docs/feedback-intake.md](docs/feedback-intake.md).

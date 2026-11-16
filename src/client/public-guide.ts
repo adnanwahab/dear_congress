@@ -146,7 +146,7 @@ Acceptance is a self-reported local review of the exact draft. Any data or metad
 
 ## About, feedback and language access
 
-This independent prototype explores how everyday needs can inform discussion and illustrative civic plans. [Project background and source code](https://github.com/adnanwahab/dear_congress#readme) explain the project. [Send feedback](https://github.com/adnanwahab/dear_congress/issues/new) through a public GitHub issue; an account is required. Do not include private journal text or cookie identifiers. A dedicated About/contact experience is tracked separately in SHE-285; no private contact channel is currently published.
+This independent prototype explores how everyday needs can inform discussion and illustrative civic plans. [Project background and source code](https://github.com/adnanwahab/dear_congress#readme) explain the project. [Send private feedback](/feedback) for bugs, misleading claims, privacy, accessibility or ideas. Reports are stored separately for authorized maintainer review and are never automatically posted publicly. The form explains review targets, retention and availability. Do not include private journal text, contact details or cookie identifiers. Keep the receipt ID; no automatic email reply is provided.
 
 [Privacy and removal](/privacy) and [participation boundaries](/account) describe the current privacy and consent limits. No separate legal terms route is published here; this prototype does not replace official legal or election information.
 
