@@ -89,7 +89,7 @@ export function Dashboard({ request }: { request: Request }) {
       <section className="home-start" aria-labelledby="home-start-title">
         <h1 id="home-start-title">Where would you like to start?</h1>
         <div className="home-start-choices">
-          <a className="dashboard-button" href={stageRoute('votes', selected)}>Explore a proposal &amp; advisory vote</a>
+          <a className="dashboard-button" href={stageRoute('votes', selected ?? item?.id)}>Explore a proposal &amp; advisory vote</a>
           <a className="dashboard-button" href="/journal">Tell us what needs fixing</a>
         </div>
         <p>No account is needed: participation is advisory, not an official election or government decision, and sample proposals and counts are illustrative. Journal entries you publish are shared publicly, so leave out names, addresses, contact details and other private information.</p>
