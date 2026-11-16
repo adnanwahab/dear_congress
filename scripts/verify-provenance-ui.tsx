@@ -56,7 +56,9 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
     assert(first.hasAttribute('open'), 'tap opens');
     const original = first.querySelector('a')!;
     assert.equal(original.getAttribute('target'), '_blank');
-    assert.equal(dom.location.search, '?proposal=demo-food');
+    const params = new URLSearchParams(dom.location.search);
+    assert.equal(params.get('proposal'), 'demo-food', 'source inspection never changes the selected proposal');
+    if (stage === 'feed') assert.equal(params.get('discover'), 'demo-housing', 'discovery deck independently records its current card');
     await act(async () => { (first.querySelector('button') as any).click(); });
     assert(!first.hasAttribute('open'), 'close button dismisses');
     await act(async () => { (chip as any).blur(); });
