@@ -105,6 +105,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. Its s
 
 [Topic hubs](/topics) include a curiosity constellation and equivalent list. Select a node to preview its source-connected relationships and next step before navigation. Solid lines show stored fictional-sample lineage; dashed lines show illustrative catalog associations and measurement targets. No real graph edges, reviewed official bill bindings or verified outcome measurements are registered. A target is not an observed result. Graph selection and zoom do not save votes or run simulations.
 
+The [response-composition exercise](/outcomes#response-composition) lets you reweight fictional groups. All inputs are illustrative; self-selection and missing groups prevent a representative public poll. It works offline after the page loads. Export or copy its report to retain dated provenance, limitations and pending human-review history; changes otherwise disappear on reload.
+
 ## Sources and methodology
 
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.

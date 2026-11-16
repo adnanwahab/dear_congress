@@ -18,6 +18,8 @@ await act(async () => { root.render(<WorkflowScreen stage="outcomes" request={re
 await act(async () => { await import('../src/client/PolicyMeasurements'); });
 // Wait for the independently split component to hydrate, not for the proposal API.
 await act(async () => { await import('../src/client/UncertaintyStack'); });
+// Wait for sibling response-composition hydration before comparing measurements after storage updates.
+await act(async () => { await import('../src/client/ResponseComposition'); });
 const measurements = container.querySelector('#policy-measurements')!;
 assert(measurements, 'Measurements remain accessible when proposal API is unavailable');
 const before = measurements.textContent;
