@@ -1,0 +1,178 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repository",
+    "kind",
+    "proposal",
+    "exportedAt",
+    "evidenceSummary",
+    "citations",
+    "assumptions",
+    "gaps",
+    "materialUpdateLog"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "repository": {
+      "const": "adnanwahab/dear_congress"
+    },
+    "kind": {
+      "const": "fictional-demo"
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "jurisdiction",
+        "currentText",
+        "proposedText"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "jurisdiction": {
+          "type": "string"
+        },
+        "currentText": {
+          "type": "string"
+        },
+        "proposedText": {
+          "type": "string"
+        }
+      }
+    },
+    "exportedAt": {
+      "type": "string"
+    },
+    "evidenceSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "text",
+        "author",
+        "review",
+        "sourceDate",
+        "kind",
+        "limitations"
+      ],
+      "properties": {
+        "version": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "review": {
+          "type": "string"
+        },
+        "sourceDate": {
+          "type": "null"
+        },
+        "kind": {
+          "const": "editorial inference"
+        },
+        "limitations": {
+          "type": "string"
+        }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "url",
+          "title",
+          "publisher",
+          "sourceDate",
+          "checkedAt",
+          "scope",
+          "linkVerification",
+          "content"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "sourceDate": {
+            "type": "null"
+          },
+          "checkedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "linkVerification": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "materialUpdateLog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "provenance",
+          "humanReview"
+        ],
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "provenance": {
+            "type": "string"
+          },
+          "humanReview": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dear Congress public sample evidence packet v1"
+}

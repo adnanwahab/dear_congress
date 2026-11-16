@@ -1,0 +1,7 @@
+.curiosity-mission { margin-bottom: 24px; min-width: 0; overflow-wrap: anywhere; }
+.curiosity-mission select { max-width: 100%; min-height: 44px; }
+.curiosity-mission summary { cursor: pointer; padding-block: 12px; }
+.curiosity-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 16px; }
+.curiosity-mission button, .curiosity-mission a { min-height: 44px; }
+.curiosity-mission button { white-space: normal; }
+.curiosity-mission :is(button, a, select, summary):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }

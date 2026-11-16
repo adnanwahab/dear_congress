@@ -20,7 +20,7 @@ async function render(stage: 'draft' | 'sponsors' | 'outcomes', request: any, se
   document.body.innerHTML = '<div id="root"></div>';
   root = createRoot(document.getElementById('root')!);
   // Stage-state checks cover proposal loading; answer the official-bills lane separately.
-  const scoped = async (path: string, ...rest: unknown[]) => String(path).startsWith('/api/legislation') ? { bills: [] } : request(path, ...rest);
+  const scoped = async (path: string, ...rest: unknown[]) => path === '/api/meetings' ? { meetings: [] } : String(path).startsWith('/api/legislation') ? { bills: [] } : request(path, ...rest);
   await act(async () => root.render(<WorkflowScreen stage={stage} request={scoped} />));
 }
 const request = async () => payload;

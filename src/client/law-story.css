@@ -1,0 +1,19 @@
+.law-story { border: 2px solid var(--line); border-radius: 16px; padding: clamp(12px, 3vw, 28px); margin-block: 24px; background: var(--card); color: var(--ink); }
+.law-story summary { cursor: pointer; font-weight: 700; font-size: 1.15rem; padding: 8px 0; }
+.law-story p { max-width: 75ch; line-height: 1.65; }
+.law-story a { color: var(--accent); text-decoration: underline; }
+.law-story-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block: 16px; }
+.law-story-controls button { white-space: normal; min-height: 44px; text-align: left; }
+.law-story button[aria-current="step"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+.law-story :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.law-story-panel { border: 2px solid var(--ink); padding: clamp(12px, 3vw, 24px); border-radius: 5px; }
+.law-story-art { background: var(--bg); border-bottom: 2px solid var(--ink); overflow: hidden; }
+.law-story-art svg { display: block; width: 100%; max-height: 220px; fill: none; stroke: currentColor; stroke-width: 3; }
+.law-story-art span { display: block; padding: 12px; font-weight: 800; letter-spacing: .08em; }
+.law-story-scene { font-size: 1.25rem; font-style: italic; }
+.law-story-edition { padding-inline-start: 24px; }
+.law-story-edition li { padding-block: 12px; }
+@media (prefers-reduced-motion: no-preference) {
+  .law-story-motion .law-story-bus { animation: law-story-arrive 700ms ease-out both; }
+  @keyframes law-story-arrive { from { transform: translateX(70px); } to { transform: translateX(0); } }
+}
