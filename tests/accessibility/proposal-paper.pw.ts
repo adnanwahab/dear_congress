@@ -5,7 +5,7 @@ test('paper disclosure preserves route, selection and separate public actions', 
   page.on('request', r => { if (!['GET', 'HEAD'].includes(r.method())) writes.push(r.url()); });
   await page.goto('/feed?demo=1');
   const paper = page.locator('.proposal-paper').first();
-  const summary = paper.locator('summary');
+  const summary = paper.locator(':scope > summary');
   await expect(summary).toBeVisible();
   const url = page.url();
   const history = await page.evaluate(() => window.history.length);
@@ -36,7 +36,7 @@ test('failed snapshot still opens document and interrupted navigation stays usab
   });
   await page.goto('/feed?demo=1');
   const paper = page.locator('.proposal-paper').first();
-  await paper.locator('summary').click();
+  await paper.locator(':scope > summary').click();
   await expect(paper).toHaveAttribute('open', '');
   await paper.getByRole('link', { name: 'Continue to sample draft →' }).click();
   await expect(page).toHaveURL(/\/draft\?proposal=/);
