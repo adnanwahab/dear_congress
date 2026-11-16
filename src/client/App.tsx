@@ -1,3 +1,4 @@
+import { DistributionConsent, distributionHeaders, distributionCompleted } from './DistributionConsent';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
 import { TopicHubs, TopicReturn } from './TopicHubs';
@@ -102,10 +103,12 @@ async function api<T>(path: string, body?: unknown, method?: string, signal?: Ab
     signal,
     headers: {
       "content-type": "application/json",
+      ...(resolvedMethod === "POST" && [...JOURNAL_CREATE_ENDPOINTS, "/api/votes"].includes(path) ? distributionHeaders() : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
+  distributionCompleted(res);
   const raw = await res.text();
   let payload: unknown = null;
   if (raw.trim()) {
@@ -181,7 +184,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
+  return <JournalLiveProvider><div className="product-shell"><DistributionConsent /><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {

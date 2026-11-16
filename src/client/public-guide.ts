@@ -35,6 +35,8 @@ An advisory vote records a preference inside this prototype. It does not cast an
 
 Local sample filters, comparisons, sponsor-card moves, household presets and synthesis sliders offer **Undo local change** for 20 seconds. A new action replaces the previous Undo. Focus or hover pauses expiry; leaving gives another 20 seconds. Undo history clears on navigation or reload. Restoring synthesis settings creates an unsaved preview. Public posts and advisory votes use separate explicit workflows.
 
+Optional launch-link measurement asks permission before recording campaign categories. It lasts only in this page’s memory for up to 30 minutes; reload or Stop launch measurement ends it. It counts accepted real journal publications or civic sandbox votes as activity, not understanding. See [privacy details](/privacy).
+
 A signed browser cookie lets you change your saved choice. Clearing cookies or using another browser can create another identity; this does not prove one person, one vote. Read [participation and privacy](/account). On proposal cards, remove your selected response to withdraw it. The separate [civic policy sandbox](/vote) has option changes saved with Save votes; see [withdrawal instructions](/privacy).
 
 The optional [private civic passport](/account) is a demo / sandbox awaiting review. Start it to record self-reported learning badges for evidence, jurisdictions and opposing views in this browser only. It is independent of verified identity and awards nothing for votes, posts or influence. Reset progress, export a JSON file or delete the passport and turn it off on the account page. People sharing your browser profile can read it; keep exported files private.
