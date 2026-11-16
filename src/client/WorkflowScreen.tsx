@@ -57,6 +57,7 @@ const CitizenJury = lazy(() => import('./CitizenJury').then(module => ({ default
 const ProposalDuet = lazy(() => import('./ProposalDuet').then(mod => ({ default: mod.ProposalDuet })));
 const JurisdictionComparison = lazy(() => import('./JurisdictionComparison').then(m=>({default:m.JurisdictionComparison})));
 const CooperativeMission = lazy(() => import('./CooperativeMission').then(m=>({default:m.CooperativeMission})));
+const RoomReturn = lazy(() => import('./civic-house-return').then(m => ({default:m.RoomReturn})));
 const ResponsibilityExplorer = lazy(() => import('./ResponsibilityExplorer').then(mod => ({ default: mod.ResponsibilityExplorer })));
 const SaveClaim = lazy(() => import('./EvidenceNotebook').then(module => ({ default: module.SaveClaim })));
 const PolicyMeasurements = lazy(() => import('./PolicyMeasurements').then(module => ({ default: module.PolicyMeasurements })));
@@ -189,11 +190,11 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   const selectControl = <label className="workflow-select">Proposal<select value={item?.id ?? ''} onChange={e => choose(e.target.value)} disabled={!filtered.length}>{!item && <option value="">Choose a sample proposal</option>}{filtered.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></label>;
   const draftDetail = item && <><WorldPortal title={item.title} source={`Sample proposal · ${item.id}`}><LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev" /></WorldPortal><ProposalProvenance item={item} /><PatchChange key={item.id} item={item} /></>;
   const visibleOutcomes = tracker.filter(t => t.stage >= 2 && (outcomeFilter === 'All outcomes' || LANES[t.stage] === outcomeFilter));
-  return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
+  return <div className="civic-shell workflow-shell"><CivicHeader stage={meta.title} /><Suspense fallback={null}><RoomReturn route={meta.route} ready={!loading} /></Suspense><main id="main-content" tabIndex={-1} className="civic-main workflow-main"><PolicyPinball /><OutcomeMetricPuzzle />
     {["published", "feed", "votes"].includes(stage) && <p><a href="/bills">Explore 100 Bills for Human Flourishing</a> · Separate curated, unreviewed draft concepts</p>}
     {!new URLSearchParams(window.location.search).has('demo') && <CivicCrossword />}
     {stage === 'votes' && <CouncilRoleplay />}
-    {stage === 'votes' && <DailyQuestion request={request} />}<section className="workflow-heading"><div><p className="workflow-eyebrow" style={{ viewTransitionName: `journey-stage-${meta.n}` }}>Stage {meta.n} of 6 · {meta.time}</p><h1>{meta.title}</h1><p><strong>{meta.heading}</strong></p><p>{meta.description}</p></div>{meta.next && <a className="workflow-next" href={route(meta.next,item?.id ?? selected)}>Next: {STAGES[meta.next].title} →</a>}</section>
+    {stage === 'votes' && <DailyQuestion request={request} />}<section className="workflow-heading"><div><p className="workflow-eyebrow" style={{ viewTransitionName: `journey-stage-${meta.n}` }}>Stage {meta.n} of 6 · {meta.time}</p><h1 id="stage-heading" tabIndex={-1}>{meta.title}</h1><p><strong>{meta.heading}</strong></p><p>{meta.description}</p></div>{meta.next && <a className="workflow-next" href={route(meta.next,item?.id ?? selected)}>Next: {STAGES[meta.next].title} →</a>}</section>
     <JourneyRibbon key={stage} stage={stage} item={item} data={data} loading={loading} failed={!!loadError} cards={tracker} route={route} />
     {stage === 'votes' && <nav className="panel workflow-repository-voting" aria-label="Vote on application pull requests">
       <h2>Review and vote on app changes</h2>

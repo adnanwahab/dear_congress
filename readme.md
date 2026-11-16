@@ -1251,3 +1251,23 @@ draft with its fixture, assumptions and source identity; copyable JSON remains
 if download fails. No server API, legal text, recorded vote or stored plan is
 changed. This is demo activity, never verified civic participation. See
 `docs/reviews/SHE-457.md`.
+
+## Civic House
+
+`/?house=1` opens an optional six-room foyer from **More → Civic House**.
+The flat grid is the default and low-GPU/no-motion mode. The optional CSS 3D
+view has a touch/keyboard range control; reduced motion and `?motion=off`
+disable the spatial control. All six links and sample previews are shared across
+modes. Preview failures retain navigation and offer a read-only retry.
+
+Previews come from `/api/demo` and retain fictional/synthetic labels. Room
+position, visits and orbit angle imply no civic progress. Entering a room uses
+its existing native chapter route and View Transition enhancement. Same-tab
+stage URLs (including query/hash) and an existing focused element ID are saved
+in session storage; controls without IDs fall back to the stage heading. Storage
+failure leaves normal navigation usable. No vote, publication, outreach, tracker
+mutation or governance change is initiated by the foyer.
+
+Browser success/failure coverage: `cd tests/accessibility && npx playwright test
+civic-house.pw.ts --config playwright.config.ts`. Human screen-reader and touch
+acceptance remain required; see `docs/accessibility-acceptance.md`.
