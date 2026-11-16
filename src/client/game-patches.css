@@ -12,6 +12,38 @@
 /* Keep the requested pair side by side, including narrow screens. */
 .gp-attached-screenshots{margin:18px 0}.gp-screenshot-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.gp-screenshot-single{grid-template-columns:minmax(0,1fr)}.gp-screenshot-pair figure{margin:0;min-width:0}.gp-screenshot-pair img{display:block;width:100%;height:auto;max-height:320px;object-fit:contain;object-position:top;border:1px solid var(--line,#cbd6ce);border-radius:8px;background:var(--panel,#eef2ec)}.gp-screenshot-pair figcaption{font-size:12px;line-height:1.5;margin:8px 0;color:var(--muted,#52616b);overflow-wrap:anywhere}
 
+.gp-queue-filters>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px}.game-patches .gp-queue-filters label{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:0;padding:0;min-width:0}.gp-queue-filters select{font:inherit;color:var(--text,#202c35);background:var(--panel,#fff);width:100%;min-height:44px;padding:8px;border:1px solid #aebbc5;border-radius:7px}.gp-queue-filters button{margin-top:16px}.game-patches select:focus-visible{outline:3px solid #2378bd;outline-offset:3px}
+
+/* Stationary receipt railway: no motion can imply a merge or approval. */
+.gp-train { border: 2px solid currentColor; border-radius: 12px; padding: 16px; margin: 16px 0; min-width: 0; }
+.gp-train p, .gp-train code { overflow-wrap: anywhere; }
+.gp-train ol { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 12px; padding: 0; list-style: none; }
+.gp-train li { border-top: 6px double currentColor; padding: 10px; background: var(--panel, transparent); }
+.gp-train li[data-state="blocked"] { border-color: #bc3030; }
+.gp-train summary { cursor: pointer; min-height: 44px; overflow-wrap: anywhere; font-weight: 700; }
+.gp-train summary:focus-visible, .gp-train a:focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+@media (max-width: 700px) { .gp-train ol { grid-template-columns: 1fr; } .gp-train li { border-top: 0; border-left: 6px double currentColor; } }
+@media (forced-colors: active) { .gp-train li[data-state="blocked"] { border-color: Mark; } }
+
+.gp-card{min-width:0;border-top:3px solid var(--accent,#24568a);padding-top:12px;overflow-wrap:anywhere}.gp-card>button{margin-top:16px;min-height:44px}.gp-card [hidden]{display:none!important}.gp-card-back{min-width:0;animation:gp-card-reveal 180ms ease-out}.gp-card-back .gp-diff{max-width:100%;font-size:13px;tab-size:4}.gp-card-back .gp-diff:focus-visible{outline:3px solid #2378bd;outline-offset:2px}@keyframes gp-card-reveal{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.gp-card-back{animation:none}}@media(max-width:760px){.gp-card .gp-links{flex-direction:column}.gp-card>button{width:100%}.gp-card-back .gp-diff{padding:12px}}
+.gp-story ol{padding-left:1.5rem}.gp-story-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.gp-story-pair>*{min-width:0}.gp-story figure{margin:16px 0}.gp-story img{max-width:100%;height:auto}.gp-story figcaption{overflow-wrap:anywhere}.gp-story-content{animation:gp-story-enter calc(260ms * var(--motion-scale,1)) ease-out}.gp-story .gp-diff{white-space:pre-wrap;overflow-wrap:anywhere}
+@keyframes gp-story-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){.gp-story-pair{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.gp-story-content{animation:none}}
+html[data-motion="off"] .gp-story-content{animation:none}
+.gp-playtest { overflow-wrap: anywhere; }
+.gp-playtest fieldset { min-width: 0; margin: 1rem 0; padding: 1rem; }
+.gp-playtest form label { display: block; margin-block: .75rem; }
+.gp-playtest textarea { display: block; width: 100%; box-sizing: border-box; }
+.gp-playtest :is(input, textarea, button, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.gp-carousel { overflow-wrap: anywhere; }
+.gp-carousel nav, .gp-carousel [role="tablist"] { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.gp-carousel button { min-height: 44px; }
+.gp-carousel [aria-selected="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+.gp-carousel:focus-visible, .gp-carousel :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.gp-carousel [role="tabpanel"] { min-width: 0; }
+.gp-microscope article{border-left:3px solid var(--line,#d9dfe1);padding:0 16px;margin:16px 0;overflow-wrap:anywhere}.gp-microscope h3{overflow-wrap:anywhere}.gp-microscope summary{min-height:44px}.gp-microscope a{display:inline-block;padding:8px 0}.gp-microscope{animation:none;transition:none}
+
 .gp-rehearsal { overflow-wrap: anywhere; }
 .gp-rehearsal select { max-width: 100%; min-height: 44px; }
 .gp-rehearsal li { margin-block: 1.5rem; }

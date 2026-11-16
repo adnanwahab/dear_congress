@@ -13,3 +13,7 @@
 @media(max-width:600px){.bill-catalog main{padding-top:1.5rem}.bill-chips button{font-size:.9rem}.bill-grid article{padding:1.1rem}}
 /* The catalog owns a dark palette; global light-theme h4 muted text is unreadable here. */
 .bill-document h4{color:inherit}
+
+/* The catalog is dark even when the global theme is light. Pin the closed
+   Budget Shock launcher to a tested high-contrast pair, including at 390px. */
+.bill-catalog .budget-shock > button { background: #17375f; border-color: #17375f; color: #fff; opacity: 1; }
