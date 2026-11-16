@@ -93,7 +93,7 @@ In the publishing browser, use Delete my entry in [Journal](/journal) to remove 
 
 ## What happens next?
 
-The Feed also offers a demo two-minute sampler of five fictional policy topics. Swipe either way or use Skip to move on; neither casts a vote. Save to reading list stores public sample text in this browser watchlist, visible to others using the profile. Open context reads the sample draft. There is no timer or required vote.
+The Feed also offers a demo two-minute sampler of five fictional policy topics. Swipe either way or use Skip to move on; neither casts a vote. Save to reading list stores public sample text in this browser watchlist, visible to others using the profile. In the [watchlist](/outcomes#watchlist), inspect saved text, choose Refresh saved proposal to check its public source, or remove it. Last checked means the last successful manual check, not a source update date. Failed checks keep saved text. No background checks, email, web alerts or cross-device synchronization occur. Open context reads the sample draft. There is no timer or required vote.
 
 Follow one sample proposal from [Feed](/feed) to [Votes](/votes), [Draft](/draft), [Sponsors](/sponsors), and [Outcomes](/outcomes). Keep the same selected proposal and compare its text and status at each step. The journey ribbon previews each stage with a drag, arrow keys, or a stage tap. Choose Open to navigate; previewing never publishes, votes, or prepares a sponsor card. Drafts are examples; sponsor preparation sends nothing to a public office. Sample replies, introductions and stalled items are simulated, not evidence of government action.
 
