@@ -89,7 +89,13 @@ test('proposal selection uses typed motion and world handoff stays external', as
   await expect(page.locator('.patch-change')).toBeVisible();
   await expect(page.locator('.patch-final').last()).toContainText(chosen.proposedText);
   await capture(page, info, 'selected-proposal', page.locator('.patch-change'));
+  // The external HBL link is in the mobile More dialog, not the collapsed bottom nav.
+  if (info.project.use.isMobile) {
+    await activate(page, page.getByRole('button', { name: 'More', exact: true }), info);
+    await expect(page.getByRole('dialog', { name: 'More destinations' })).toBeVisible();
+  }
   const world = page.getByRole('link', { name: 'HBL — HappyBearLandia (opens in a new tab)' });
+  await expect(world).toBeVisible();
   await expect(world).toHaveAttribute('href', 'https://happybearlandia.fly.dev/world');
   await expect(world).toHaveAttribute('rel', 'noopener noreferrer');
   // Never navigate to or simulate ownership of the other repository's renderer.
