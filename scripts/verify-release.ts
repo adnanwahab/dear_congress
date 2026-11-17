@@ -1,11 +1,13 @@
 import { strict as assert } from 'node:assert';
+import { sanitizeRelease } from '../src/server/build-identity';
 
 /** GET-only parity contract. Never records response bodies, cookies or exception text. */
-export async function verifyRelease(origin: string | undefined, expected: string | undefined, request: typeof fetch = fetch) {
+export async function verifyRelease(origin: string | undefined, expected: string | undefined, request: typeof fetch = fetch, expectedRelease?: string) {
   assert.ok(origin && /^https?:\/\//.test(origin), 'Supply the release origin');
   const base = new URL(origin);
   assert.ok(!base.username && !base.password && base.pathname === '/' && !base.search && !base.hash, 'Supply a bare origin without credentials');
   assert.match(expected ?? '', /^[a-f0-9]{40}$/, 'Supply the intended full release SHA');
+  if (expectedRelease !== undefined) assert.equal(sanitizeRelease(expectedRelease), expectedRelease, "Supply a public release tag");
   const checks: { path: string; status: number | null; passed: boolean }[] = [];
   async function check(path: string, status: number, inspect: (response: Response) => Promise<void>) {
     const result = { path, status: null as number | null, passed: false };
@@ -22,6 +24,7 @@ export async function verifyRelease(origin: string | undefined, expected: string
     assert.match(response.headers.get('content-type') ?? '', /application\/json/);
     const version = await response.json();
     assert.equal(version.commit, expected);
+    if (expectedRelease !== undefined) assert.equal(version.release, expectedRelease);
     assert.equal(version.environment, 'production');
     assert.equal(version.repository, 'https://github.com/adnanwahab/dear_congress');
     assert.match(version.builtAt ?? '', /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
@@ -44,7 +47,7 @@ export async function verifyRelease(origin: string | undefined, expected: string
 }
 if (import.meta.main) {
   try {
-    const report = await verifyRelease(...process.argv.slice(2) as [string, string]);
+    const report = await verifyRelease(process.argv[2], process.argv[3], fetch, process.argv[4]);
     await Bun.write('release-parity-http.json', JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report));
     if (!report.passed) throw new Error();

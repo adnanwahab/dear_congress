@@ -6,7 +6,7 @@ function fixture(broken = '', status = 200, body?: string) {
     expect(options.redirect).toBe('error');
     expect(options.cache).toBe('no-store');
     if (url.pathname === broken) return new Response(body ?? 'private data must never be recorded', { status });
-    if (url.pathname === '/version') return Response.json({ commit: sha, builtAt: '2026-11-13T12:00:00.000Z', environment: 'production', repository: 'https://github.com/adnanwahab/dear_congress' });
+    if (url.pathname === '/version') return Response.json({ commit: sha, release: 'v2026.11.16', builtAt: '2026-11-13T12:00:00.000Z', environment: 'production', repository: 'https://github.com/adnanwahab/dear_congress' });
     if (url.pathname === '/privacy') return new Response('Delete an entry or withdraw a vote', { headers: { 'content-type': 'text/html' } });
     if (url.pathname === '/release-parity-unknown-route') return new Response('Not found', { status: 404 });
     return new Response(`<div id="root"></div><footer data-build-commit="${sha}"></footer>`, { headers: { 'content-type': 'text/html' } });
@@ -31,4 +31,17 @@ test('network failures are redacted and invalid inputs fail closed', async () =>
   expect(JSON.stringify(report)).not.toContain('secret');
   await expect(verifyRelease('https://user:secret@example.test', sha, fixture())).rejects.toThrow();
   await expect(verifyRelease('https://example.test', 'short', fixture())).rejects.toThrow();
+});
+
+test('release gate binds the immutable manifest to the reviewed tag', async () => {
+  expect((await verifyRelease('https://example.test', sha, fixture(), 'v2026.11.16')).passed).toBe(true);
+  expect((await verifyRelease('https://example.test', sha, fixture(), 'v2026.11.15')).passed).toBe(false);
+  const missing = (async (url: URL, options: RequestInit) => {
+    const response = await fixture()(url, options);
+    if (url.pathname !== '/version') return response;
+    const identity = await response.json();
+    delete identity.release;
+    return Response.json(identity);
+  }) as typeof fetch;
+  expect((await verifyRelease('https://example.test', sha, missing, 'v2026.11.16')).passed).toBe(false);
 });

@@ -10,7 +10,7 @@ UTC build date, repository and environment without runtime secrets.
 Run HTTP parity with:
 
 ```sh
-bun scripts/verify-release.ts https://civic-synthesis.fly.dev APPROVED_TAG_SHA
+bun scripts/verify-release.ts https://civic-synthesis.fly.dev APPROVED_TAG_SHA APPROVED_TAG
 ```
 
 Install the isolated browser harness and run against the same origin and SHA:
@@ -45,3 +45,10 @@ prove fleet convergence. Identity is traceability, not signed attestation.
 The existing release-only trigger, PRODUCTION_RELEASES_ENABLED hold, human review,
 required checks and tagged-release policy remain intact. No deploy authorization
 is supplied by this gate. See launch-merge-policy.md and source-recovery.md.
+
+SHE-805 extends the image manifest with `release`, the public reviewed tag supplied
+as BUILD_RELEASE at image build time. The release workflow passes that same tag
+to the HTTP gate; absent or mismatched tags fail that gate. SHA and builtAt remain
+image-generated, never runtime overrides. Runtime flyRelease remains optional and
+is not the reviewed source tag. Local/manual builds can omit BUILD_RELEASE and
+report release:null; they cannot pass the tagged workflow's verification.
