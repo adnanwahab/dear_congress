@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { replaySnapshot } from '../src/server/audit-replay';
+import { checkSocialPreviews, previewProposals } from './social-preview-check';
 import { CIVIC_STAGES, stageRoute } from '../src/shared/civic-stages';
 
 // Run the real production router/build with disposable state and no service credentials.
@@ -19,8 +20,10 @@ Object.assign(process.env, {
 });
 let server: { url: URL; stop(closeConnections?: boolean): void } | undefined;
 try {
+  await Bun.write(process.env.DB_PATH!, JSON.stringify({ schemaVersion: 2, citizenProposals: previewProposals }));
   ({ server } = await import('../server'));
   const get = (path: string) => fetch(new URL(path, server!.url), { signal: AbortSignal.timeout(10_000) });
+  await checkSocialPreviews(get);
   for (const topic of ['transit', 'housing', 'childcare']) {
     const page = await get(`/topics/${topic}`);
     assert.equal(page.status, 200);
