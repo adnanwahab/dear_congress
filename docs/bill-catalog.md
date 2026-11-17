@@ -144,3 +144,18 @@ catalog, IDs, revisions and supplement remain unchanged. No review workflow or
 validity transition is implemented; nothing automatically becomes legally valid.
 Future review records must bind exact text and supplement revisions and identify
 a qualified human reviewer, sources, date, findings and remaining uncertainty.
+
+## Human editorial gate (SHE-878)
+
+`content/bill-collections/eudaimonia-100-reviews.json` is the review ledger: exactly
+one record per stable HFL ID, pinned to the existing catalog SHA-256 and proposed
+jurisdiction. All 100 records begin with author/editor unassigned, legal/evidence/
+fiscal reviews pending and publication blocked. Source authorship is not verified;
+unassigned is an explicit gap, not an invented person or an approval.
+
+`src/shared/bill-editorial.ts` derives readiness and fails closed for missing or
+ambiguous records, stale digests, jurisdiction changes, missing assignments,
+incomplete reviews and decisions without a reviewer or review record. Detail pages
+expose assignments, review statuses, current digest and blockers; cards always
+expose the blocked publish gate. Review completion does not make a concept
+introduced legislation, verified evidence or a modeled outcome.
