@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const routes = ['/', '/feed', '/votes', '/published', '/journal', '/needs', '/synth', '/map', '/draft', '/sponsors', '/outcomes', '/documentation', '/account'];
+const routes = ['/', '/feed', '/votes', '/bills', '/published', '/journal', '/needs', '/synth', '/map', '/draft', '/sponsors', '/outcomes', '/documentation', '/account'];
 for (const route of routes) test(`${route} accessibility evidence`, async ({ page }, info) => {
   // The geographic evidence view can take longer to audit at high contrast.
   if (route === '/map') test.setTimeout(60_000);

@@ -1,8 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 test('catalog keyboard search, categories, history and deep link', async ({ page }) => {
   let writes = 0;
   page.on('request', r => { if (r.method() === 'POST' && /\/(votes|citizen-proposals)/.test(r.url())) writes++; });
+  async function activate(target: Locator) {
+    for (let n = 0; n < 220; n++) {
+      if (await target.evaluateAll(els => els.includes(document.activeElement!))) {
+        await expect(target).toBeInViewport();
+        await page.keyboard.press('Enter');
+        return;
+      }
+      await page.keyboard.press('Tab');
+    }
+    throw new Error('Catalog control unreachable by keyboard');
+  }
   await page.goto('/bills');
   await expect(page.locator('.bill-grid article')).toHaveCount(100);
   await page.keyboard.press('Tab');
@@ -16,14 +27,14 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   await expect(page.locator('.bill-grid article')).toHaveCount(1);
   await expect(search).toBeFocused();
   const share = page.url();
-  await page.getByRole('button', { name: 'Housing and livable cities', exact: true }).click();
+  await activate(page.getByRole('button', { name: 'Housing and livable cities', exact: true }));
   await expect(page.locator('main')).toContainText('No draft concepts match');
   await page.goBack();
   await expect(page.locator('.bill-grid article')).toHaveCount(1);
   await page.goForward();
   await expect(page.locator('.bill-grid article')).toHaveCount(0);
   await page.goto(share);
-  await page.getByRole('link', { name: /Explore proposal HFL-051/ }).click();
+  await activate(page.getByRole('link', { name: /Explore proposal HFL-051/ }));
   await expect(page).toHaveURL(/\/bills\/HFL-051/);
   await expect(page.getByRole('heading', { name: 'Statutory text' })).toBeVisible();
   await expect(page.locator('main')).toContainText('Unknown until assessed');
