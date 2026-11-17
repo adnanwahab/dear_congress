@@ -21,6 +21,8 @@ Repository developer previews have separate identities and revision-bound ballot
 
 Sample proposals, sample tallies, simulated residents, illustrative costs and future scenarios demonstrate how the tools work. They are not enacted laws, measured public opinion, legal advice, or predictions. [Explore civic plans](/synth) can combine journal inputs with deterministic simulated residents; inspect the simulated-data controls and labels before comparing results.
 
+The reviewed law sandbox can search up to eight consecutive seeds for a reversal in the chosen endpoint metric. Results show the search budget, exact seeds, model version, horizon and paired receipts. Reopen a seed to run it explicitly; no reversal found does not prove robustness. This separate synthetic model does not apply your legal text, household preset or package score.
+
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
 ## Will my journal be public?

@@ -27,6 +27,8 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     const body=JSON.parse(String(init?.body)) as {lawId:number;seed:number;population:number;implementationStrength:number};
     requests.push({href:String(uri),body});
     const payload=receipt(body.implementationStrength);
+    payload.manifest!.seed=body.seed;
+    if(body.seed!==42)payload.frames.forEach(frame=>{frame.edited.metrics.meanCommuteMinutes=23;});
     return Response.json(payload);
   }) as typeof fetch;
   const globals={window:browser,document:browser.document,navigator:browser.navigator,
@@ -63,6 +65,13 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
     expect(requests).toHaveLength(2);
     expect(requests[1]?.body.implementationStrength).toBe(.5);
+    await act(async()=>getByRole(host,'button',{name:'Search seeds'}).click());
+    expect(requests).toHaveLength(6);
+    expect(host.textContent).toContain('Search complete: 4 reversals');
+    expect(host.textContent).toContain('Synthetic counterexample seed 43');
+    const replay=Array.from(host.querySelectorAll('a')).find(a=>a.textContent==='Reopen exact seed inputs')!;
+    expect(new URL(replay.href).searchParams.get('seed')).toBe('43');
+    expect(new URL(replay.href).searchParams.get('modelVersion')).toBe('population.v1');
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
     expect(host.querySelector('iframe')).toBeNull();
@@ -99,6 +108,17 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>resolve!(Response.json(mismatch)));
   expect(host.textContent).toContain('does not match this request');
   expect(host.querySelector('.civic-law-lanes')).toBeNull();
+  await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+  await act(async()=>resolve!(Response.json(receipt(1))));
+  await act(async()=>getByRole(host,'button',{name:'Search seeds'}).click());
+  expect(host.textContent).toContain('Checking seed 43');
+  await act(async()=>resolve!(Response.json({error:'busy'},{status:429})));
+  expect(host.textContent).toContain('Provider unavailable (429)');
+  expect(host.textContent).toContain('0/4 verified; 1 requests attempted');
+  await act(async()=>getByRole(host,'button',{name:'Search seeds'}).click());
+  await act(async()=>getByRole(host,'button',{name:'Cancel seed search'}).click());
+  expect(host.textContent).toContain('Canceled or 45-second deadline reached');
+  expect((getByRole(host,'button',{name:'Search seeds'}) as HTMLButtonElement).disabled).toBe(false);
  }finally{
   await act(async()=>root.unmount());host.remove();
   for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}

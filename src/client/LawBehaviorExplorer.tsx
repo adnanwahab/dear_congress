@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {SeedCounterexamples} from './SeedCounterexamples';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -297,6 +298,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
       <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
+      <SeedCounterexamples key={`${revision}:${receipt.manifest?.seed}:${selectedMetric}`} base={receipt} metric={selectedMetric} label={METRICS[selectedMetric]?.label||selectedMetric} context={context} origin={hblOrigin}/>
       <section aria-label="Recorded actor behavior changes">
         <h4>{receipt.engine==='city'?'What modeled households did':'What modeled residents did differently'}</h4>
         <p className="muted s">{actorChanges.length} of {matched.length} tracked synthetic

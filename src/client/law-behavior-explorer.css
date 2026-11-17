@@ -39,3 +39,8 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.civic-law-behavior section[aria-label="Counterexample seed search"]{border:1px solid #96b4c4;padding:12px;margin-block:16px;overflow-wrap:anywhere}
+.civic-law-behavior section[aria-label="Counterexample seed search"] label{display:block;margin-block:8px}
+.civic-law-behavior section[aria-label="Counterexample seed search"] input{max-width:100%;min-height:44px}
+.civic-law-behavior section[aria-label="Counterexample seed search"] button{min-height:44px}

@@ -136,3 +136,21 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Bounded counterexample search (SHE-635)
+
+After a completed paired run, the endpoint metric selector also chooses the signed
+metric for **Find a modeled counterexample**. Search checks 1–8 consecutive unsigned
+32-bit seeds, sequentially, with one 45-second total deadline and cancellation.
+It uses only the existing reviewed law/strength/population request allowlist.
+A reversal requires a strictly opposite edited-minus-baseline endpoint sign;
+zero and missing endpoint metrics are not reversals. A zero reference disables
+search. Model version, engine, units, horizon, population and strength must match
+the captured reference. Provider errors stop the search and disclose partial work.
+
+Counterexamples retain complete paired receipts in page memory and provide
+version-pinned, seed-specific links; opening a link never runs automatically.
+The search reports range, budget, attempted and verified counts. Results are a
+small nonrepresentative sample, not a forecast, proof of robustness or a claim
+that the metric direction is beneficial. Household definitions and package score
+arithmetic remain separate because no validated model mapping exists for them.
