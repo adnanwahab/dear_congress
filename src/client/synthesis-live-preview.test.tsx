@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
-import { DEFAULT_WEIGHTS } from '../engine/engine';
+import { createPolicyComparison } from '../server/policy-comparison';
+import { DEFAULT_WEIGHTS, emptyDB } from '../engine/engine';
 
 test('all eight controls debounce previews, abort stale requests, and Synthesize commits', async () => {
   const { Window } = await import('happy-dom');
@@ -32,6 +33,8 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
         slider.dispatchEvent(new window.Event('change', { bubbles: true }) as unknown as Event);
       });
       expect(requests.length).toBe(before);
+      expect(host.textContent).toContain("Updating customized plan — previous results hidden");
+      expect(host.textContent).not.toContain("Live preview · not saved");
       await act(async () => { await Bun.sleep(210); });
       expect(requests.length).toBe(before + 1);
       expect(requests.at(-1)!.body.preview).toBe(true);
@@ -53,9 +56,26 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
     expect(host.textContent).not.toContain('Live preview · not saved');
     await settle(requests.length - 2);
     expect(host.textContent).not.toContain('Live preview · not saved');
+    const { PolicyComparisonPanel } = await import('./PolicyComparison');
+    await act(async () => root.render(<PolicyComparisonPanel />));
+    const capture = [...host.querySelectorAll('button')].find(button => button.textContent === 'Capture default preset inputs')!;
+    const fixture = createPolicyComparison(emptyDB(), { a: 'A', b: 'B', seed: 42 });
+    for (const input of [host.querySelector('select')!, host.querySelector('input[type=number]')!]) {
+      await act(async () => capture.click());
+      await act(async () => requests.at(-1)!.resolve(Response.json({ comparison: fixture })));
+      expect(host.textContent).toContain('Frozen inputs ready');
+      expect(host.querySelector('table')).not.toBeNull();
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(input.tagName === 'SELECT' ? window.HTMLSelectElement.prototype : window.HTMLInputElement.prototype, 'value')!.set!.call(input, input.tagName === 'SELECT' ? 'C' : '43');
+        input.dispatchEvent(new window.Event('change', { bubbles: true }) as unknown as Event);
+        input.dispatchEvent(new window.Event('input', { bubbles: true }) as unknown as Event);
+      });
+      expect(host.querySelector('table')).toBeNull();
+      expect(host.textContent).not.toContain('Frozen inputs ready');
+    }
   } finally {
     await act(async () => root.unmount()); host.remove(); globalThis.fetch = originalFetch;
     for (const key of Object.keys(globals)) { if (previous[key]) Object.defineProperty(globalThis, key, previous[key]!); else Reflect.deleteProperty(globalThis, key); }
     await window.happyDOM.close();
   }
-});
+}, 15000);

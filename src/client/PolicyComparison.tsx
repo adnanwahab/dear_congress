@@ -12,7 +12,7 @@ export function PolicyComparisonPanel() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function load(url: string, init?: RequestInit) {
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setComparison(null);
     try {
       const response = await fetch(url, init);
       const data = await response.json();
@@ -26,22 +26,22 @@ export function PolicyComparisonPanel() {
     if (id) void load(`/api/policy-comparisons/${encodeURIComponent(id)}`);
   }, []);
   const valid = seed.trim() !== "" && Number.isInteger(Number(seed)) && Number(seed) >= 0 && Number(seed) <= 0xffffffff;
-  return <><NegotiationTabletop /><section className="card" aria-label="Policy comparison pilot">
+  return <><NegotiationTabletop /><details className="card"><summary>Independent preset demonstration — does not use your customized plan</summary><section aria-label="Policy comparison pilot">
     <h3>Compare frozen policy inputs</h3>
-    <p>Simulation, not forecast. Advisory only. This pilot captures two packages using default settings (budget 40, real voices); it does not use the customized plan above.</p>
+    <p>Independent advisory beta demonstration. Default budget $40B and default scoring settings; real-only synthesis inputs. No model runs have been executed. Changing Synthesis settings or clicking Synthesize does not update this demonstration. Simulation, not forecast.</p>
     <fieldset disabled={busy}>
       <legend>Choose comparison inputs</legend>
-      {([["World A", a, setA], ["World B", b, setB]] as const).map(([label, value, setter]) => <label key={label}>{label} <select value={value} onChange={e => setter(e.target.value)}>
+      {([["World A", a, setA], ["World B", b, setB]] as const).map(([label, value, setter]) => <label key={label}>{label} <select value={value} onChange={e => { setComparison(null); setter(e.target.value); }}>
         <option value="A">Balanced</option><option value="B">Minimal change</option><option value="C">Most popular</option>
       </select> </label>)}
-      <label>Shared seed <input type="number" min="0" max="4294967295" step="1" value={seed} onChange={e => setSeed(e.target.value)} /></label>
-      <button disabled={!valid} onClick={() => void load("/api/policy-comparisons", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ a, b, seed: Number(seed) }) })}>Capture comparison</button>
+      <label>Shared seed <input type="number" min="0" max="4294967295" step="1" value={seed} onChange={e => { setComparison(null); setSeed(e.target.value); }} /></label>
+      <button disabled={!valid} onClick={() => void load("/api/policy-comparisons", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ a, b, seed: Number(seed) }) })}>Capture default preset inputs</button>
     </fieldset>
     <p role="status">{busy ? "Loading comparison…" : comparison ? "Frozen inputs ready. Model execution unavailable." : ""}</p>
     {!valid && <p role="alert">Seed must be a whole number from 0 to 4,294,967,295.</p>}
     {error && <p role="alert">{error}</p>}
     {comparison && <ComparisonDetails comparison={comparison} />}
-  </section></>;
+  </section></details></>;
 }
 
 export function ComparisonDetails({ comparison }: { comparison: PolicyComparison }) {

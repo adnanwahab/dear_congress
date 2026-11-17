@@ -10,6 +10,11 @@ test("comparison pilot renders native labels, semantic input table, unknown outc
   try {
     const controls = renderToStaticMarkup(<PolicyComparisonPanel />);
     for (const text of ['aria-label="Policy comparison pilot"', '<legend>Choose comparison inputs</legend>', '<label>World A', '<label>World B', '<label>Shared seed', 'role="status"', 'Simulation, not forecast']) expect(controls).toContain(text);
+    expect(controls).toContain("Independent preset demonstration — does not use your customized plan");
+    expect(controls).toContain("Default budget $40B and default scoring settings");
+    expect(controls).toContain("No model runs have been executed");
+    expect(controls).toContain("Capture default preset inputs");
+    expect(controls).not.toContain("<details class=\"card\" open");
     const comparison = createPolicyComparison(emptyDB(), { a: "A", b: "A", seed: 0 });
     const details = renderToStaticMarkup(<ComparisonDetails comparison={comparison} />);
     expect(details).toContain('<caption>Frozen package inputs');

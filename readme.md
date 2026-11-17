@@ -344,6 +344,12 @@ page’s starting parameters without saving data. Flood remains unavailable unti
 its simulator mechanism is reviewed. These synthetic worlds are separate from
 actual outcomes, real votes and resident records.
 
+The frozen policy-input comparison is a collapsed, independent preset demonstration.
+It always uses the default $40B budget and scoring settings, never the customized
+plan. Changing its package selectors or seed hides the previous capture. Customized
+synthesis results are hidden while inputs recalculate or a request fails; delayed
+responses cannot replace newer inputs. No frozen comparison model runs are claimed.
+
 ### Scoring rule sandbox
 
 `/synth` includes a read-only fixture comparison at `POST /api/synthesis-rule-preview`
