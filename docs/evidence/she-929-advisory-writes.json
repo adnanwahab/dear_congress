@@ -1,0 +1,121 @@
+{
+  "syntheticOnly": true,
+  "transport": "in-process real wrapped handlers; no HTTP sockets",
+  "createdAt": "2026-11-16T02:44:15.304Z",
+  "bun": "1.4.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M4",
+  "requestsPerCase": 48,
+  "timeoutMs": 10000,
+  "results": [
+    {
+      "entries": 500,
+      "pool": 16,
+      "snapshotBytes": 333090,
+      "elapsedMs": 211.13,
+      "requestsPerSecond": 227.35,
+      "votes": {
+        "count": 24,
+        "p50Ms": 64.04,
+        "p95Ms": 97.16,
+        "p99Ms": 100.98
+      },
+      "journal": {
+        "count": 24,
+        "p50Ms": 63.99,
+        "p95Ms": 130.84,
+        "p99Ms": 135.19
+      },
+      "sampledMaxPendingWrites": 16,
+      "statuses": {
+        "200": 48
+      },
+      "conflicts409": 0,
+      "clientErrors": 0,
+      "acknowledgedRecordsLost": 0,
+      "dbConnectionExhaustion": "not applicable: JSON single writer; no pool"
+    },
+    {
+      "entries": 500,
+      "pool": 4,
+      "snapshotBytes": 333090,
+      "elapsedMs": 224.61,
+      "requestsPerSecond": 213.71,
+      "votes": {
+        "count": 24,
+        "p50Ms": 18.18,
+        "p95Ms": 25.31,
+        "p99Ms": 31.25
+      },
+      "journal": {
+        "count": 24,
+        "p50Ms": 17.24,
+        "p95Ms": 35.31,
+        "p99Ms": 39.56
+      },
+      "sampledMaxPendingWrites": 4,
+      "statuses": {
+        "200": 48
+      },
+      "conflicts409": 0,
+      "clientErrors": 0,
+      "acknowledgedRecordsLost": 0,
+      "dbConnectionExhaustion": "not applicable: JSON single writer; no pool"
+    },
+    {
+      "entries": 5000,
+      "pool": 16,
+      "snapshotBytes": 3145090,
+      "elapsedMs": 386.87,
+      "requestsPerSecond": 124.07,
+      "votes": {
+        "count": 24,
+        "p50Ms": 119.54,
+        "p95Ms": 135.81,
+        "p99Ms": 142.02
+      },
+      "journal": {
+        "count": 24,
+        "p50Ms": 128.16,
+        "p95Ms": 198.17,
+        "p99Ms": 206.37
+      },
+      "sampledMaxPendingWrites": 16,
+      "statuses": {
+        "200": 48
+      },
+      "conflicts409": 0,
+      "clientErrors": 0,
+      "acknowledgedRecordsLost": 0,
+      "dbConnectionExhaustion": "not applicable: JSON single writer; no pool"
+    },
+    {
+      "entries": 5000,
+      "pool": 4,
+      "snapshotBytes": 3145090,
+      "elapsedMs": 368.8,
+      "requestsPerSecond": 130.15,
+      "votes": {
+        "count": 24,
+        "p50Ms": 29.58,
+        "p95Ms": 34.81,
+        "p99Ms": 41.71
+      },
+      "journal": {
+        "count": 24,
+        "p50Ms": 29.51,
+        "p95Ms": 50.11,
+        "p99Ms": 58.4
+      },
+      "sampledMaxPendingWrites": 4,
+      "statuses": {
+        "200": 48
+      },
+      "conflicts409": 0,
+      "clientErrors": 0,
+      "acknowledgedRecordsLost": 0,
+      "dbConnectionExhaustion": "not applicable: JSON single writer; no pool"
+    }
+  ]
+}
