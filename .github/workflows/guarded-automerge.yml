@@ -1,10 +1,14 @@
 name: Guarded PR auto-merge
 
-# A green PR can merge automatically; never execute untrusted PR code with a write token.
+# Eligibility requires current-head human maintainer approval and green checks.
+# Never execute untrusted PR code with a write token; this does not enable integrations.
 on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
 
@@ -20,12 +24,12 @@ concurrency:
 
 jobs:
   merge:
-    name: Merge eligible changes
-    if: github.repository == 'adnanwahab/dear_congress'
+    name: Audit PR merge eligibility
+    if: github.repository == 'adnanwahab/dear_congress' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Check and merge one eligible PR
+      - name: Audit current evidence and merge at most one eligible PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -35,6 +39,41 @@ jobs:
           node <<'NODE'
           const { execFileSync } = require('node:child_process');
 
+          // BEGIN PURE APPROVAL POLICY — extracted verbatim by regression tests.
+          function approvalEligibility({sha, author, reviewDecision, decisionHead, reviews, permissions}) {
+            const deny = reason => ({eligible:false, reason});
+            if (!/^[a-f0-9]{40}$/.test(sha || '') || decisionHead !== sha) return deny('review decision is not bound to the current head');
+            if (reviewDecision !== 'APPROVED') return deny('explicit APPROVED review decision required');
+            if (!author || !Array.isArray(reviews) || !permissions || typeof permissions !== 'object') return deny('approval evidence incomplete');
+            const latest = new Map();
+            for (const review of reviews) {
+              if (!review || !Number.isSafeInteger(review.id) || !review.user?.login || !['User','Bot'].includes(review.user.type) ||
+                  !['APPROVED','CHANGES_REQUESTED','COMMENTED','DISMISSED','PENDING'].includes(review.state)) return deny('review list incomplete or invalid');
+              if (review.state === 'PENDING') continue;
+              if (!Number.isFinite(Date.parse(review.submitted_at)) || !/^[a-f0-9]{40}$/.test(review.commit_id || '')) return deny('submitted review evidence incomplete');
+              if (review.state === 'COMMENTED') continue;
+              const login = review.user.login.toLowerCase(), previous = latest.get(login);
+              if (!previous || Date.parse(review.submitted_at) > Date.parse(previous.submitted_at) ||
+                  review.submitted_at === previous.submitted_at && review.id > previous.id) latest.set(login, review);
+            }
+            if ([...latest.values()].some(review => review.state === 'CHANGES_REQUESTED')) return deny('outstanding changes requested');
+            for (const [login, review] of latest) {
+              if (review.state !== 'APPROVED' || review.commit_id !== sha || review.user.type !== 'User' ||
+                  login.endsWith('[bot]') || login === author.toLowerCase()) continue;
+              const evidence = permissions[login];
+              if (evidence?.user?.login?.toLowerCase() === login && ['admin','maintain','write'].includes(evidence.permission)) return {eligible:true, reason:'current-head human maintainer approval verified'};
+            }
+            return deny('current-head human maintainer approval or permission evidence missing');
+          }
+          function confirmedMerge(outcome) {
+            return outcome?.merged === true && /^[a-f0-9]{40}$/.test(outcome.sha || '');
+          }
+          function outcomeSummary({audited, skipped, merged, errors}) {
+            return {audit:errors ? 'failed' : 'succeeded', audited, skipped, merged, errors,
+              outcome:merged > 0 ? 'merged' : 'no_merge'};
+          }
+          // END PURE APPROVAL POLICY
+          const { appendFileSync } = require('node:fs');
           const repo = process.env.GH_REPO;
           const expectedChecks = ['bun test', 'bun run typecheck', 'route smoke test'];
           const run = (args) => execFileSync('gh', args, {
@@ -43,17 +82,43 @@ jobs:
             maxBuffer: 12 * 1024 * 1024,
           }).trim();
           const api = (path) => JSON.parse(run(['api', path]));
-          const skip = (number, reason) => console.log('#' + number + ': skip - ' + reason);
+          const skip = (number, reason) => { skipped++; console.log('#' + number + ': skip - ' + reason); };
+
+          const protectedBase = () => {
+            try { const branch = api('repos/' + repo + '/branches/main'); return branch.name === 'main' && branch.protected === true; }
+            catch { return false; }
+          };
+          const readApproval = pr => {
+            const sha = pr.head.sha, number = pr.number;
+            const review = JSON.parse(run(['pr', 'view', String(number), '--repo', repo,
+                                       '--json', 'reviewDecision,headRefOid']));
+            // --paginate follows every Link page; failed or malformed reads never imply approval.
+            const reviewPages = JSON.parse(run(['api', '--paginate', '--slurp',
+              'repos/' + repo + '/pulls/' + number + '/reviews?per_page=100']));
+            if (!Array.isArray(reviewPages) || !reviewPages.length || reviewPages.some(page => !Array.isArray(page))) throw new Error('Incomplete review pagination');
+            const reviews = reviewPages.flat(), permissions = {};
+            for (const r of reviews) {
+              if (r?.state !== 'APPROVED' || r.commit_id !== sha || r.user?.type !== 'User' || !r.user?.login || r.user.login.toLowerCase().endsWith('[bot]')) continue;
+              const login = r.user.login.toLowerCase();
+              if (!Object.hasOwn(permissions, login)) {
+                try { permissions[login] = api('repos/' + repo + '/collaborators/' + encodeURIComponent(r.user.login) + '/permission'); }
+                catch { permissions[login] = null; } // No permission evidence means no merge authority.
+              }
+            }
+            return approvalEligibility({sha, author:pr.user?.login, reviewDecision:review.reviewDecision,
+              decisionHead:review.headRefOid, reviews, permissions});
+          };
 
           const incoming = process.env.EVENT_PR;
           const numbers = incoming && /^\d+$/.test(incoming)
             ? [Number(incoming)]
             : run(['api', '--paginate', 'repos/' + repo + '/pulls?state=open&per_page=100',
                    '--jq', '.[].number']).split(/\s+/).filter(Boolean).map(Number);
-          let errors = 0;
+          let errors = 0, audited = 0, skipped = 0, merged = 0;
 
           for (const number of numbers) {
             try {
+              audited++;
               const pr = api('repos/' + repo + '/pulls/' + number);
               if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main') {
                 skip(number, 'closed, draft, or not targeting main');
@@ -72,10 +137,19 @@ jobs:
                 continue;
               }
 
-              const review = JSON.parse(run(['pr', 'view', String(number), '--repo', repo,
-                                             '--json', 'reviewDecision']));
-              if (['CHANGES_REQUESTED', 'REVIEW_REQUIRED'].includes(review.reviewDecision)) {
-                skip(number, 'needs review or has changes requested');
+              if (!Array.isArray(pr.requested_reviewers) || !Array.isArray(pr.requested_teams) ||
+                  pr.requested_reviewers.length || pr.requested_teams.length) {
+                skip(number, 'requested review pending or evidence unavailable');
+                continue;
+              }
+              if (!protectedBase()) {
+                skip(number, 'protected main branch evidence unavailable');
+                continue;
+              }
+              const sha = pr.head.sha;
+              const approval = readApproval(pr);
+              if (!approval.eligible) {
+                skip(number, approval.reason);
                 continue;
               }
 
@@ -102,7 +176,6 @@ jobs:
               }
 
               // Only trust checks attached to this exact head SHA (not earlier commits).
-              const sha = pr.head.sha;
               const checks = api('repos/' + repo + '/commits/' + sha + '/check-runs?per_page=100');
               const runs = checks.check_runs || [];
               if (checks.total_count !== runs.length) {
@@ -110,7 +183,7 @@ jobs:
                 continue;
               }
               if (!expectedChecks.every((name) => runs.some((r) =>
-                  r.name === name && r.app?.slug === 'github-actions' &&
+                  r.head_sha === sha && r.name === name && r.app?.slug === 'github-actions' &&
                   r.status === 'completed' && r.conclusion === 'success'))) {
                 skip(number, 'required tests missing, pending, or failing');
                 continue;
@@ -121,16 +194,43 @@ jobs:
                 continue;
               }
               const statuses = api('repos/' + repo + '/commits/' + sha + '/status');
-              if ((statuses.statuses || []).length && statuses.state !== 'success') {
+              if (!Array.isArray(statuses.statuses) || statuses.sha !== sha || statuses.total_count !== statuses.statuses.length) {
+                skip(number, 'legacy commit status evidence incomplete');
+                continue;
+              }
+              if (statuses.statuses.length && statuses.state !== 'success') {
                 skip(number, 'legacy commit status not green');
                 continue;
               }
 
+              const current = api('repos/' + repo + '/pulls/' + number);
+              if (current.head?.sha !== sha || current.state !== 'open' || current.draft ||
+                  current.base?.ref !== 'main' || current.head?.repo?.full_name !== repo ||
+                  current.mergeable !== true || current.mergeable_state !== 'clean') {
+                skip(number, 'PR changed while auditing');
+                continue;
+              }
+              if ((current.labels || []).some(label => ['do-not-merge', 'hold', 'wip'].includes(label.name.toLowerCase())) ||
+                  !Array.isArray(current.requested_reviewers) || !Array.isArray(current.requested_teams) ||
+                  current.requested_reviewers.length || current.requested_teams.length) {
+                skip(number, 'hold or requested review changed while auditing');
+                continue;
+              }
+              const finalApproval = readApproval(current);
+              if (!finalApproval.eligible) {
+                skip(number, 'approval changed while auditing: ' + finalApproval.reason);
+                continue;
+              }
+              if (!protectedBase()) {
+                skip(number, 'main branch protection changed or evidence unavailable');
+                continue;
+              }
               // GitHub enforces branch rules again; sha precondition prevents a stale-head merge.
               const outcome = JSON.parse(run(['api', '-X', 'PUT',
                 'repos/' + repo + '/pulls/' + number + '/merge',
                 '-f', 'merge_method=squash', '-f', 'sha=' + sha]));
-              if (!outcome.merged) throw new Error('GitHub did not confirm merge');
+              if (!confirmedMerge(outcome)) throw new Error('GitHub did not confirm merge');
+              merged++;
               console.log('#' + number + ' merged at ' + outcome.sha);
               // Merge only one PR per run: let GitHub recompute the rest against new main.
               break;
@@ -139,5 +239,11 @@ jobs:
               console.error('#' + number + ': error: ' + error.message);
             }
           }
+          const summary = outcomeSummary({audited, skipped, merged, errors});
+          console.log(JSON.stringify(summary));
+          if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            '## Guarded PR audit\n\nAudit: **' + summary.audit + '**. PRs audited: ' + audited +
+            '; skipped: ' + skipped + '; merged: **' + merged + '**; errors: ' + errors +
+            '.\n\n' + (merged ? 'GitHub confirmed a merge.' : 'No PR was merged. A successful audit is not a merge or acceptance.') + '\n');
           if (errors) process.exitCode = 1;
           NODE
