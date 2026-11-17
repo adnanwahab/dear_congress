@@ -36,3 +36,19 @@ test('catalog UI controls, restored URL and expanded detail are isolated from AP
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   expect(stdout).toContain('PASS catalog:');
 });
+
+test('question exploration has an empty state and a static motion-independent interface', async () => {
+  const { PolicyQuestions } = await import('./PolicyQuestions');
+  const previous = globalThis.window;
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { search: '?question=legal' }, matchMedia: () => ({ matches: true }) } });
+  try {
+    const empty = renderToStaticMarkup(<PolicyQuestions bill={null} />);
+    expect(empty).toContain('No draft text is available');
+    const html = renderToStaticMarkup(<PolicyQuestions bill={billCollection.bills[0]!} />);
+    expect(html).toContain('Legal basis has not been assessed');
+    expect(html).toContain('View underlying catalog text');
+    expect(html).toContain('Evidence freshness: not checked');
+    expect(html).not.toContain('canvas');
+    expect(html).toContain('aria-pressed="true"');
+  } finally { Object.defineProperty(globalThis, 'window', { configurable: true, value: previous }); }
+});

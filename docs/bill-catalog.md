@@ -122,3 +122,20 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Practical question exploration (SHE-728)
+
+Each catalog detail offers five branching questions: who, cost, implementation,
+legal basis and risk. Answers cite the existing HFL record, collection version and
+revision and expose the exact relevant field through native details and field
+anchors. They describe hypothetical intentions only. Fiscal cost and legal
+basis remain unassessed; the dated editorial record is never labeled current
+verified evidence. No external evidence or official-legislation identity is inferred.
+
+The interface is static for every motion preference, using the same native search,
+buttons, focusable answer heading, details and links. `question` is a shareable URL
+parameter; selection preserves catalog filters and popstate restores selection.
+Missing questions and text, empty search and unverified evidence have explicit
+states. No network requests, storage writes, votes or participation transitions
+are added. Dashboard and topic lanes keep their existing identities and filters;
+this implementation belongs solely to the curated bill catalog.
