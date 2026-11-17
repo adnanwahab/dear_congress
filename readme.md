@@ -43,6 +43,15 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+## Educational exhibit export
+
+Open **More → Exhibit export** (or `/account#exhibit-export`). Prepare a phone
+or wide sample catalog, then save its SVG, accessible HTML description and JSON
+manifest together. Exporting uses no live records or drafts. The catalog fields
+are content-versioned by SHA-256, with layout version v1 and fixed seed 42.
+See [docs/layout-snapshots.md](docs/layout-snapshots.md) for reproducibility,
+privacy boundaries and the copy/print fallback.
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS

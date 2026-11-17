@@ -99,3 +99,11 @@
 @media (prefers-reduced-motion: reduce) {
   .workflow-provenance-compact::details-content, .workflow-source-toggle { transition: none !important; }
 }
+
+/* Static exhibit controls share civic theme tokens and need no motion. */
+.layout-snapshot { overflow-wrap: anywhere; scroll-margin-top: 24px; }
+.layout-snapshot label { display: grid; gap: 8px; margin-block: 16px; }
+.layout-snapshot select, .layout-snapshot button { min-height: 44px; max-width: 100%; }
+.layout-snapshot button { white-space: normal; }
+.layout-snapshot summary { min-height: 44px; padding-block: 10px; }
+.layout-snapshot a[download] { display: inline-block; min-height: 44px; padding-block: 10px; }

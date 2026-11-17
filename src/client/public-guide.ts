@@ -9,6 +9,10 @@ Civic Synthesis is an independent civic prototype, not a government service, ele
 - Respond: open [advisory votes](/votes), read the proposal, and choose support, oppose, or unsure. You can change or remove your response. No identity documents are needed.
 - Journal: open [Journal](/journal). Write only what you are comfortable sharing publicly. The draft stays in page memory until submission and is lost on reload. Review the public notice before publishing; you may select labels without automatic inference.
 
+## Export a sample exhibit
+
+In [Participation & privacy](/account#exhibit-export), prepare a public educational exhibit and download its SVG image, HTML description and JSON manifest together. Phone and wide layouts contain the same sample goals and metrics, with a dataset digest and fixed seed 42. These exports use only the built-in catalog; they exclude journals, drafts, browser choices and account details. They are illustrative, not measured outcomes or official policy. If downloads fail, expand the sample description and copy it or use browser Print; that fallback does not include a version manifest.
+
 ## Does my vote count?
 
 An advisory vote records a preference inside this prototype. It does not cast an official ballot, enact law, authorize spending, contact an office, or approve a code merge. Saved browser choices and fictional sample totals are displayed separately. Neither is a verified count of people or an official public poll.

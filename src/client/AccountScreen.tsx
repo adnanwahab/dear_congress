@@ -1,5 +1,6 @@
 import { ParticipationNotice } from './ParticipationNotice';
 import './workflow.css';
+import { LayoutSnapshotExport } from './LayoutSnapshotExport';
 export default function AccountScreen() {
   return <div className="civic-shell workflow-shell"><main id="main-content" tabIndex={-1} className="civic-main workflow-main">
     <h1>Participation &amp; privacy</h1>
@@ -12,6 +13,7 @@ export default function AccountScreen() {
     <section className="panel"><h2>Synthetic demo data — illustrative</h2>
       <p>Fictional sample response totals are shown separately from saved browser choices. Neither group contributes to verified counts, and they are not combined into a people total.</p>
     </section>
+    <LayoutSnapshotExport />
     <section className="panel"><h2>Before optional verification can open</h2>
       <p>A future opt-in pilot needs a reviewed privacy protocol, eligibility scope, expiry, revocation and retention rules, plus external security and privacy review before consequential use. No provider is connected and no private ballot guarantee is made.</p>
       <a href="/privacy">Privacy &amp; removal options</a>
