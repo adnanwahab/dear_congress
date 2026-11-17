@@ -56,7 +56,9 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
   const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
   const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
-  let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
+  // A callback keeps public text such as $&, $` and $' literal rather than
+  // interpreting it as String.replace substitution syntax after HTML encoding.
+  let html = shell.replace(/<title>[^<]*<\/title>/, () => metadata(title, description, path));
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
   if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");
