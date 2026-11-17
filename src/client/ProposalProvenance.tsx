@@ -1,3 +1,5 @@
+import recordedChecks from '../../data/citation-checks.json';
+import { citationAvailability, CITATION_LIMIT, type CitationCheck } from '../shared/citation-availability';
 import { EvidenceExport } from './EvidenceExport';
 import { ClaimEvidence } from './ClaimEvidence';
 import type { EvidenceClaim } from '../shared/claim-provenance';
@@ -25,10 +27,21 @@ export function freshness(item: DemoItem, now = Date.now()): string {
   }
   return `Source checked ${checked}`;
 }
-export function provenanceText(item: DemoItem): string {
-  return `${provenanceLines(scenarioProvenance(item)).join('\n')}\nSample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
+export function sourceReviewDetail(item: DemoItem, now = Date.now()): string {
+  const checked = item.background?.checkedAt;
+  if (!sourceUrl(item)) return 'Missing or unsafe HTTPS citation; availability unknown.';
+  if (!checked) return 'Editorial review date: Not checked; availability unknown without a recorded link check.';
+  const timestamp = Date.parse(`${checked}T00:00:00Z`);
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(checked) && Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === checked;
+  if (!valid) return `Editorial review date: ${checked} — invalid date; review needed.`;
+  if (timestamp > now) return `Editorial review date: ${checked} — future date; review needed.`;
+  if (now - timestamp > 30 * 86400000) return `Editorial review date: ${checked} — stale (over 30 days); review needed.`;
+  return `Editorial review date: ${checked}; does not establish policy validity.`;
 }
-export function ProposalProvenance({ item, compact = false, claims = [] }: { item: DemoItem; compact?: boolean; claims?: readonly EvidenceClaim[] }) {
+export function provenanceText(item: DemoItem): string {
+  return `${provenanceLines(scenarioProvenance(item)).join('\n')}\nSample scenario / not introduced bill\nScenario jurisdiction: ${item.jurisdiction}\n${item.background?.name ?? 'Source not available'}\nPublisher: ${item.background?.publisher ?? 'Not available'}\n${sourceUrl(item) ?? 'Source not available'}\n${freshness(item)}\n${sourceReviewDetail(item)}\n${citationAvailability(item, recordedChecks) ?? 'Link availability: Not checked'}\n${CITATION_LIMIT}\n${item.background?.scope ?? 'Background scope not documented.'}\nBackground only; does not establish the scenario, current-rule wording, or proposed bill as official text.`;
+}
+export function ProposalProvenance({ item, compact = false, claims = [], checks = recordedChecks }: { item: DemoItem; compact?: boolean; claims?: readonly EvidenceClaim[]; checks?: readonly CitationCheck[] }) {
   const [open, setOpen] = useState(false);
   const pinned = useRef(false);
   const panel = useRef<HTMLDetailsElement>(null);
@@ -63,7 +76,9 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
         {url && item.background?.publisher && <a href={url} target="_blank" rel="noopener noreferrer">{item.background.publisher} — {item.background.name} ↗</a>}
         {(!url || !item.background?.publisher) && <div role="note">Unsupported source — a safe HTTPS original and publisher are required.</div>}
         <div>{freshness(item)}</div>
-        <div role="note">Editorial background; successful fetch and schema monitoring are not recorded.</div>
+        <div>{sourceReviewDetail(item)}</div>
+        <div>{citationAvailability(item, checks) ?? 'Link availability: Not checked'}</div>
+        <div role="note">{CITATION_LIMIT} Schema monitoring is not recorded.</div>
         <p>Editorial inference · Publication and observation dates unknown. Source age does not determine validity. <a href="/outcomes#policy-measurements">Browse evidence freshness calendar</a>.</p>
         <p>Scope: {item.background?.scope ?? 'Background scope not documented.'} Limitations: Background only; does not establish the scenario, current-rule wording, or proposed bill as official text.</p>
         <details className="evidence-layer">
@@ -93,6 +108,7 @@ export function ProposalProvenance({ item, compact = false, claims = [] }: { ite
       <span> · {item.jurisdiction} · </span>
       {url ? <span>{item.background?.name ?? 'Source not available'}</span> : <span>Source not available</span>}
       <span> · {freshness(item) === 'Source not available / not checked' ? 'Not checked' : freshness(item)} </span>
+      <span>{citationAvailability(item, checks) ? ` · ${citationAvailability(item, checks)}` : ''}</span>
       <span className="workflow-source-toggle" aria-hidden="true">⌄</span>
     </summary>
     <div className="workflow-provenance-body">{full}<button type="button" className="outline" onClick={() => dismiss(true)}>Close source inspection</button><EvidenceExport key={JSON.stringify(item)} item={item} /></div>

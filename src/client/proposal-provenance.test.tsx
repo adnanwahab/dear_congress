@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEMO_ITEMS, demoPayload } from '../engine/demo';
-import { freshness, ProposalProvenance, sourceUrl } from './ProposalProvenance';
+import { freshness, ProposalProvenance, sourceUrl, sourceReviewDetail } from './ProposalProvenance';
 
 test('every stable sample keeps its source and shows publisher, jurisdiction and unknown freshness', () => {
   expect(DEMO_ITEMS).toHaveLength(12);
@@ -70,3 +70,23 @@ test('compact cards keep sample status and safe source links in the disclosure s
   expect(css).toContain('transition: none !important');
   expect(css).toContain('min-height: 44px');
  });
+
+test('cards expose dated link failure without upgrading editorial review or scenario status', () => {
+  const item = DEMO_ITEMS[0]!;
+  const checks = [{ itemId: item.id, url: item.sourceUrl, attemptedAt: '2020-01-01T00:00:00Z', operator: 'Test operator', status: 404, reason: 'http' as const }];
+  for (const compact of [true, false]) {
+    const html = renderToStaticMarkup(<ProposalProvenance item={item} compact={compact} checks={checks} />);
+    for (const text of ['Unavailable HTTP 404', '2020-01-01', 'Stale check', 'policy substance and legal status remain unverified', 'Sample scenario / not introduced bill', 'Editorial review date: Not checked']) expect(html).toContain(text);
+  }
+  expect(item.background?.checkedAt).toBeNull();
+});
+
+
+test('editorial check explanations retain dates and distinguish stale, future and invalid', () => {
+  const item = DEMO_ITEMS[0]!;
+  const now = Date.parse('2026-11-17T12:00:00Z');
+  for (const [checkedAt, reason] of [['2020-01-01', 'stale (over 30 days)'], ['2027-01-01', 'future date'], ['2026-02-31', 'invalid date']]) {
+    const text = sourceReviewDetail({ ...item, background: { ...item.background!, checkedAt: checkedAt! } }, now);
+    expect(text).toContain(checkedAt!); expect(text).toContain(reason!);
+  }
+});
