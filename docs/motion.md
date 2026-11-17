@@ -458,3 +458,8 @@ Existing merge policy is unchanged: disabled/dry-run defaults, quorum 10,
 active default kill switch and human review. Browser choices are advisory;
 production requires a human-published tagged release. This implementation does
 not inspect or attest live protection/environment configuration.
+
+The cinematic browser regression candidate runs with `bun run test:visual`.
+See [SHE-542 coverage and baseline review](reviews/SHE-542.md) for the four device/
+motion projects, isolated fixtures, screenshot approval procedure and remaining
+morph/fly-through gaps. Missing screenshot baselines deliberately fail CI.
