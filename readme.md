@@ -927,6 +927,12 @@ history. See [SHE-684 validation and limits](docs/reviews/SHE-684.md).
 
 ## Sample advisory share cards
 
+Share link beside the sample advisory controls opens the native share sheet when
+supported, or copies a clean public sample link. Copy link is always available;
+blocked clipboard access reveals a selectable link. Neither action includes saved
+votes, journal text, receipts, live-round codes or current URL parameters.
+Share-sheet completion does not verify delivery or meaningful participation.
+
 Share preview beside the shared sample advisory controls exports a standalone SVG
 and copyable alt text after explicit review. Stance is off by default and resets
 when the preview closes or the proposal changes. Cards use only repository-curated

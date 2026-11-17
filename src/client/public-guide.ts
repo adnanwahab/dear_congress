@@ -223,5 +223,7 @@ Review [data-source health](/outcomes#source-health) for recorded fetch dates, r
 
 ### Sharing a sample decision
 
+Share link beside the sample advisory choices opens your device’s share sheet when available, or copies a public sample link. Copy link is also available. If copying is blocked, select and copy the displayed link yourself. These links exclude your saved vote, personal journal text, receipts and live-round information. Share-sheet completion does not verify delivery or participation.
+
 Share preview beside the sample advisory choices creates a downloadable card and copyable alt text. Review it before downloading. It includes the public fictional proposal, a content version and background-source limitations. Chosen stance is off by default and optional. No identity, journals, vote receipt identifiers, tallies or live-round information are included. The card is non-binding, not an official election, and not proof of a saved vote. Downloaded copies cannot be withdrawn from other people.
 `;

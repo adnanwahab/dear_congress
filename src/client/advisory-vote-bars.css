@@ -31,3 +31,6 @@
 @keyframes advisory-receipt-stamp { from { opacity: .4; transform: scale(1.06); } to { opacity: 1; transform: none; } }
 html[data-motion="off"] .advisory-receipt, html[data-motion="off"] .advisory-receipt-stamp { animation: none; }
 @media (prefers-reduced-motion: reduce) { .advisory-receipt, .advisory-receipt-stamp { animation: none; } }
+.sample-link-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sample-link-actions button { min-width: 44px; min-height: 44px; }
+.sample-link-share input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; min-height: 44px; }
