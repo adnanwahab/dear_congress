@@ -11,7 +11,7 @@ const liveRounds = new LiveRounds();
 import { handleRulePreview } from "./src/server/synthesis-rule-preview";
 import { createPolicyComparison, storePolicyComparison } from "./src/server/policy-comparison";
 import { auditSampleResponse } from "./src/server/audit-samples";
-import { readBills } from './src/server/legislation/import';
+import { readLegislation } from './src/server/legislation/import';
 import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/shared/journal-origin";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
@@ -969,7 +969,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/legislation": {
       GET: async () => {
         const headers = { "cache-control": "no-store" };
-        try { return Response.json({ bills: await readBills(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
+        try { return Response.json({ ...await readLegislation(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
         catch { return Response.json({ error: "Official metadata unavailable" }, { status: 503, headers }); }
       },
     },

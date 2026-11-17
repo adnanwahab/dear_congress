@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { BillMetadata, BillObservation } from '../../shared/legislation';
+import type { BillMetadata, BillObservation, LegislationSnapshot, UnavailableBill } from '../../shared/legislation';
 
 export function billIdentity(congress: number, type: string, number: number) {
   if (!Number.isSafeInteger(congress) || congress < 93 || congress > 999 || !['hr', 's'].includes(type) || !Number.isSafeInteger(number) || number < 1) throw new Error('Unsupported bill identity');
@@ -21,7 +21,7 @@ export function parseBill(raw: string, congress: number, type: string, number: n
   const b = JSON.parse(raw).bill;
   if (!b || b.congress !== congress || b.type?.toLowerCase() !== type || String(b.number) !== String(number) || b.originChamber !== (type === 'hr' ? 'House' : 'Senate')) throw new Error('Source identity mismatch');
   if (!Array.isArray(b.sponsors)) throw new Error('Missing sponsors collection');
-  return { id, congress, type: type as 'hr' | 's', number, title: text(b.title), chamber: b.originChamber,
+  return { id, jurisdiction: 'US', congress, type: type as 'hr' | 's', number, title: text(b.title), chamber: b.originChamber,
     sourceUrl: `https://www.congress.gov/bill/${congress}${congress % 100 >= 11 && congress % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[congress % 10] ?? 'th'}-congress/${type === 'hr' ? 'house' : 'senate'}-bill/${number}`,
     introducedDate: day(b.introducedDate), sponsors: b.sponsors.map((s: { fullName: unknown }) => text(s.fullName)),
     latestAction: { actionDate: day(b.latestAction?.actionDate), text: text(b.latestAction?.text) },
@@ -70,10 +70,10 @@ export async function refreshBill(root: string, congress: number, type: string, 
     throw new Error('Bill metadata refresh failed; last-good evidence retained');
   }
 }
-export async function readBills(root: string): Promise<BillObservation[]> {
+export async function readLegislation(root: string): Promise<LegislationSnapshot> {
   let files: string[];
   try { files = await readdir(join(root, 'attempts')); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { bills: [], unavailable: [] }; throw error; }
   const groups = new Map<string, Attempt[]>();
   for (const file of files.filter(f => /^[\da-f-]+\.json$/.test(f))) {
     const attempt: Attempt = JSON.parse(await readFile(join(root, 'attempts', file), 'utf8'));
@@ -82,13 +82,23 @@ export async function readBills(root: string): Promise<BillObservation[]> {
     groups.set(id, [...groups.get(id) ?? [], attempt]);
   }
   const bills: BillObservation[] = [];
+  const unavailable: UnavailableBill[] = [];
   for (const attempts of groups.values()) {
     attempts.sort((a, b) => Date.parse(b.checkedAt) - Date.parse(a.checkedAt) || Number(a.sourceHash !== null) - Number(b.sourceHash !== null));
     const good = attempts.find(a => a.sourceHash !== null);
-    if (!good) continue;
+    if (!good) {
+      const latest = attempts[0]!;
+      unavailable.push({ id: billIdentity(latest.congress, latest.type, latest.number), jurisdiction: 'US', congress: latest.congress,
+        type: latest.type as 'hr' | 's', number: latest.number, state: 'unavailable', attemptedAt: latest.checkedAt });
+      continue;
+    }
     const raw = await readFile(join(root, 'raw', `${good.sourceHash}.json`), 'utf8');
     if (hash(raw) !== good.sourceHash) throw new Error('Archive integrity failure');
-    bills.push({ ...parseBill(raw, good.congress, good.type, good.number), checkedAt: good.checkedAt, sourceHash: good.sourceHash!, refreshFailed: attempts[0]!.sourceHash === null });
+    bills.push({ ...parseBill(raw, good.congress, good.type, good.number), checkedAt: good.checkedAt, retrievedAt: good.checkedAt, sourceHash: good.sourceHash!, refreshFailed: attempts[0]!.sourceHash === null });
   }
-  return bills.sort((a, b) => a.id.localeCompare(b.id));
+  return { bills: bills.sort((a, b) => a.id.localeCompare(b.id)), unavailable: unavailable.sort((a, b) => a.id.localeCompare(b.id)) };
+}
+// Preserve the existing reader contract for local operators.
+export async function readBills(root: string): Promise<BillObservation[]> {
+  return (await readLegislation(root)).bills;
 }

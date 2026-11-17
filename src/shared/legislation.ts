@@ -1,12 +1,18 @@
 export interface BillMetadata {
-  id: string; congress: number; type: 'hr' | 's'; number: number; title: string;
+  id: string; jurisdiction: 'US'; congress: number; type: 'hr' | 's'; number: number; title: string;
   chamber: 'House' | 'Senate'; sourceUrl: string; introducedDate: string;
   sponsors: string[]; latestAction: { actionDate: string; text: string };
   upstreamUpdatedAt: string | null;
 }
 export interface BillObservation extends BillMetadata {
-  checkedAt: string; sourceHash: string; refreshFailed: boolean;
+  // Retrieval attempt start time; both timestamps refer to the last successful archive.
+  checkedAt: string; retrievedAt: string; sourceHash: string; refreshFailed: boolean;
 }
+export interface UnavailableBill {
+  id: string; jurisdiction: 'US'; congress: number; type: 'hr' | 's'; number: number;
+  state: 'unavailable'; attemptedAt: string;
+}
+export interface LegislationSnapshot { bills: BillObservation[]; unavailable: UnavailableBill[] }
 export function metadataFreshness(bill: BillObservation, now = Date.now()) {
   const checked = Date.parse(bill.checkedAt);
   const age = now - checked;
