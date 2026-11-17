@@ -1,3 +1,4 @@
+import {experimentBundle, UNCERTAINTY} from './experiment-receipt';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
@@ -146,6 +147,8 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
 
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
 export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:string}){
+  const [exportError,setExportError]=useState('');
+  const [exporting,setExporting]=useState(false);
   const [imported]=useState(()=>typeof window==='undefined'?null:parseCivicLawContext(window.location.search));
   const effectiveSeed=imported?.seed??seed;
   const invalidContext=typeof window!=='undefined'&&new URLSearchParams(window.location.search).has('civicContext')&&!imported;
@@ -229,6 +232,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   }
   return <section className="civic-law-behavior card" aria-label="Real modeled behavior after editing a law">
     <h3>Run two futures for one policy</h3>
+    <p className="muted s">Source data mode: synthetic · model version: {receipt?.manifest?.modelVersion || "unavailable before run"}. {UNCERTAINTY}</p>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
@@ -262,6 +266,18 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         {' · '}{strength}% reviewed parameter
         {' · '}{frames.length} checkpoints, {receipt.unit}s {frames[0]?.time}–{frames.at(-1)?.time}.
       </p>
+      <button type="button" disabled={exporting} onClick={async()=>{
+        setExporting(true);setExportError('');
+        try {
+          const bundle=await experimentBundle(receipt,{...context,modelVersion:receipt.manifest?.modelVersion||undefined});
+          const url=URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
+          const link=document.createElement('a');link.href=url;link.download='civic-experiment.json';link.click();
+          window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+        } catch {setExportError('Receipt export unavailable. Retry after a completed supported run.');}
+        finally {setExporting(false);}
+      }}>{exporting?'Preparing receipt…':'Download redacted experiment receipt'}</button>
+      {exportError&&<p role="alert">{exportError}</p>}
+      <p className="muted s">SHA-256 integrity bundle, not a signature. Includes replay instructions and aggregate checkpoints; actor records are omitted. Provider event references are unavailable.</p>
       <div className="civic-law-playback-controls">
         <label>Recorded model outcome
           <select value={selectedMetric} onChange={e=>{setMetric(e.target.value);setPlaying(false);}}>

@@ -136,3 +136,41 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Experimental receipt export (SHE-643)
+
+Completed allowlisted law runs offer a redacted `civic-experiment.v1` JSON bundle.
+SHA-256 covers the compact JSON manifest in its published key order. This is an
+unsigned integrity hash, not provider authentication, scientific validation or
+merge authority. No journals, votes, actor IDs/labels/coordinates, proposal IDs,
+provider free text or raw snapshots are exported. Aggregate metrics use a fixed
+allowlist. Event references are explicitly null because provider v1 has none.
+
+Validate offline with `bun scripts/validate-experiment.ts receipt.json`. This
+checks the contract, allowlisted replay context, bounded ordered checkpoints,
+projection and hash without fetching any imported URL. Keep the reviewed source
+revision alongside the file. On that build, open the manifest's relative replay
+link, explicitly run, export again and compare hashes. The URL pins the model
+version; mismatches fail instead of silently reproducing with another version.
+A matching hash demonstrates identical exported aggregates, not identical hidden
+engine states or provider authenticity. Provider availability is still required
+for a fresh run. Household effects and synthesis scores are not represented as
+law simulations; their unavailable simulation provenance is labeled separately.
+
+Remaining human acceptance: real-provider replay across restarts, browser download
+and failure interaction, keyboard/touch and reduced-motion verification of the
+new export control. Existing playback tests do not establish that entire matrix.
+No governance configuration, voting authority, production data or deployment was
+changed. Existing disabled/dry-run defaults, quorum 10 and human review/release
+requirements in launch-merge-policy.md remain in force; remote enforcement was
+not verified by this work.
+
+Candidate validation in this workspace (2026-11-17): `bun run typecheck` passed;
+the focused receipt/viewer/household/score suite passed 12 tests, 114 assertions.
+`bun test` reported 477 passed and 26 failed (HTTP server startup encounters
+EADDRINUSE on port 0); `bun run test:routes` failed at the same server binding.
+These failures are not passing acceptance evidence. No checks were weakened.
+Read-only GitHub audit found no SHE-643 PR; related existing candidates included
+#28 (households), #29/#65 (deterministic futures), #164 (presets) and #257
+(synchronized playback). Their draft/process descriptions do not establish
+acceptance, and no code or product requirements were imported from them.

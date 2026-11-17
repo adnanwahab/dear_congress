@@ -3,9 +3,10 @@ import type { PackageResult } from "../engine/types";
 /** Inspection only: opening this view never sends a synthesis request. */
 export function ScoreInspector({ pkg }: { pkg: PackageResult }) {
   const audit = pkg.scoreAudit;
-  if (!audit) return <p>Score arithmetic unavailable for this response.</p>;
+  if (!audit) return <p>Score arithmetic unavailable for this response. Source data mode, seed, model version and horizon: unavailable. Uncertainty cannot be assessed; no forecast is supplied.</p>;
   return <details className="why">
     <summary>Why this plan?</summary>
+    <p>Source data mode: mixed illustrative scoring inputs; not a simulator receipt. Seed and simulation horizon: unavailable. Scoring model version: {audit.version}. Major uncertainty: assumptions are uncalibrated; scores are not forecasts.</p>
     <p>Advisory prototype · {audit.version}. Costs and catalog evidence are illustrative assumptions, not verified predictions. Support describes this response’s voices; simulated residents are not verified voters.</p>
     <p>Base score = sum(raw × weight ÷ divisor) − change penalty + rounding adjustment. Scores use Math.round(x × 1000) ÷ 1000. Display rounding is applied last; use the exact numeric inputs below to reproduce within 1e-9. Selected rank adds the published stability bonus.</p>
     <p>Fairness is an opposition proxy: clamp(1 − 2.5 × strong opposition), rounded to three decimals. It does not measure distributional fairness. Evidence uses the greater of catalog evidence and available impact, clamped to [0,1]. Missing measured impact defaults to zero in scoring; it is not verified zero impact. No confidence interval is available.</p>
