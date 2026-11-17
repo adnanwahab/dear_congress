@@ -1,0 +1,44 @@
+import { expect, test } from 'bun:test';
+import { createDraftHandoff } from './draft-handoff';
+import { encryptWorkspace, decryptWorkspace } from '../client/draft-handoff';
+import { blankWorkspace } from '../client/proposal-workspace';
+import { createPublicSecurity, publicHandler } from './public-security';
+const raw = JSON.stringify({ version: 1, id: 'original', savedAt: '2026-11-17', values: { ...blankWorkspace(), text: 'Private unfinished draft 🌍\n  exact whitespace' } });
+const request = (body: object) => new Request('https://civic.test/api/draft-handoff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+test('encrypted workspace roundtrip retains exact bytes and rejects wrong key or tampering', async () => {
+  const a = await encryptWorkspace(raw), b = await encryptWorkspace(raw);
+  expect(a.ciphertext).not.toContain('Private');
+  expect(await decryptWorkspace(a.ciphertext, a.iv, a.key)).toBe(raw);
+  expect(a.key).not.toBe(b.key);
+  await expect(decryptWorkspace(a.ciphertext, a.iv, b.key)).rejects.toThrow();
+  await expect(decryptWorkspace(b.ciphertext, a.iv, a.key)).rejects.toThrow();
+});
+test('one claimant only, separate revocation authority, expiry and restart fail closed', async () => {
+  let now = 1; const relay = createDraftHandoff(() => now, 1);
+  const encrypted = await encryptWorkspace(raw);
+  const create = () => relay(request({ action: 'create', ciphertext: encrypted.ciphertext, iv: encrypted.iv }));
+  const first = await (await create()).json();
+  expect(first.key).toBeUndefined();
+  expect((await create()).status).toBe(503);
+  expect((await relay(request({ action: 'revoke', id: first.id, revoke: first.id }))).status).toBe(410);
+  const results = await Promise.all([relay(request({ action: 'claim', id: first.id })), relay(request({ action: 'claim', id: first.id }))]);
+  expect(results.map(r => r.status)).toEqual([200, 410]);
+  const payload = await results[0]!.json();
+  expect(await decryptWorkspace(payload.ciphertext, payload.iv, encrypted.key)).toBe(raw);
+  const second = await (await create()).json();
+  expect((await relay(request({ action: 'revoke', ...second }))).status).toBe(200);
+  expect((await relay(request({ action: 'claim', id: second.id }))).status).toBe(410);
+  const third = await (await create()).json(); now += 900000;
+  expect((await relay(request({ action: 'claim', id: third.id }))).status).toBe(410);
+  expect((await createDraftHandoff()(request({ action: 'claim', id: third.id }))).status).toBe(410);
+});
+test('shared boundary enforces origin, limits and no-store on the relay', async () => {
+  const security = createPublicSecurity({ PUBLIC_IP_LIMIT: '1' });
+  const req = request({ action: 'create' }); req.headers.set('origin', 'https://other.test');
+  let called = false;
+  const handler = () => { called = true; return Response.json({}); };
+  const response = await publicHandler(security, '/api/draft-handoff', 'POST', req, '127.0.0.1', handler);
+  expect(response.status).toBe(403); expect(called).toBe(false);
+  expect(response.headers.get('cache-control')).toBe('no-store');
+  expect((await publicHandler(security, '/api/draft-handoff', 'POST', request({}), '127.0.0.1', handler)).status).toBe(429);
+});

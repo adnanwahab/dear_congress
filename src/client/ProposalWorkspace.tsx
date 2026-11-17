@@ -40,8 +40,9 @@ export default function ProposalWorkspace() {
   }
   return <section className="cp-panel cp-editor">
     <h1>Propose a change</h1>
-    <p>Private drafting pilot · citizen-authored · advisory only. One workspace is saved on this device. Anyone using this browser profile can read it; it is not encrypted or backed up across devices.</p>
+    <p>Private drafting pilot · citizen-authored · advisory only. One workspace is saved on this device. Anyone using this browser profile can read it; local storage is not encrypted. Save first, then use the optional encrypted handoff in Participation & privacy to transfer this saved workspace.</p>
     <p>Publication is unavailable here until proposal moderation, consent and live privacy safeguards are verified. No source or legal authority is automatically verified.</p>
+    <p><a href="/account#draft-handoff">Transfer saved draft privately</a></p>
     <p>Step {step + 1} of {steps.length}</p>
     <h2 tabIndex={-1} ref={heading}>{steps[step]!.title}</h2>
     {step === 0 && <label className="cp-field" htmlFor="workspace-jurisdiction">Jurisdiction<select id="workspace-jurisdiction" value={values.jurisdiction} onChange={e => update('jurisdiction', e.target.value)}>{PROPOSAL_JURISDICTIONS.map(j => <option key={j} value={j}>{j === 'unsure' ? 'Not sure yet' : j}</option>)}</select></label>}

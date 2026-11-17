@@ -679,3 +679,15 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Private workspace handoff
+
+Save the guided proposal workspace (`/proposals/new?guided=1`), then open
+`/account#draft-handoff` (also available in navigation). Only that saved workspace
+is encrypted in the browser with a fresh AES-256-GCM key. Send the handoff link
+and key separately through trusted channels. No publishing endpoint is used.
+The ephemeral single-writer relay consumes a handoff once and expires it after
+15 minutes; revocation and restart also make it unavailable. Keep the source
+copy. Destination review never overwrites an existing workspace. For unavailable
+crypto/network/storage, keep the original page open and manually copy the draft
+privately. See [SHE-761](docs/reviews/SHE-761.md) for limits and acceptance checks.

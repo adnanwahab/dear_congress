@@ -9,7 +9,10 @@ test('account route explains all tracks without collecting identity or implying 
   for (const label of ['Verified eligible participants — advisory', 'Unverified browser votes — advisory', 'Synthetic demo data — illustrative', 'Not available.', 'Continue anonymously', 'stored with a browser identifier']) expect(html).toContain(label);
   expect(html).toContain('href="/votes"');
   expect(html).toContain('href="/privacy"');
-  expect(html).not.toContain('<input');
+  // Handoff credentials are local transfer controls, never civic identity verification.
+  expect((html.match(/<input/g) ?? []).length).toBe(2);
+  expect(html).toContain('Separate decryption key');
+  expect(html).not.toMatch(/type="(?:email|file)"|name="(?:identity|residency|eligibility)"/);
   expect(html).not.toContain('<form');
   expect(renderToStaticMarkup(<ParticipationNotice />)).toContain('No verified participant count is reported');
   const response = renderPage('<title>App</title><div id="root"></div>', '/account', []);

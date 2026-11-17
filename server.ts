@@ -1,3 +1,4 @@
+import { createDraftHandoff } from './src/server/draft-handoff';
 import { discoverJournal } from './src/shared/journal-discovery';
 import { topicHub } from './src/shared/topic-hubs';
 import { LiveRounds } from './src/server/live-rounds';
@@ -882,6 +883,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   development: process.env.NODE_ENV !== "production",
   routes: {
+    "/api/draft-handoff": { POST: createDraftHandoff() },
     "/api/topics/:id": { GET: (req) => {
       const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
       return Response.json(hub ?? { error: "Topic not found" }, { status: hub ? 200 : 404, headers: { "Cache-Control": "no-store" } });

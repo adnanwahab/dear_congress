@@ -1,0 +1,5 @@
+#draft-handoff label { display: grid; gap: .5rem; margin-block: 1rem; }
+#draft-handoff input, #draft-handoff textarea { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; font: inherit; padding: .6rem; color: inherit; background: var(--panel, Canvas); border: 1px solid currentColor; border-radius: .3rem; }
+#draft-handoff button { min-height: 44px; white-space: normal; max-width: 100%; margin-block: .4rem; }
+#draft-handoff :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+#draft-handoff { overflow-wrap: anywhere; }
