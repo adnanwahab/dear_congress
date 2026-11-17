@@ -47,6 +47,8 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
     expect(host.textContent).toContain('World A · current rules');
+    expect(getByRole(host, 'region', {name: 'Model versus observation calibration'}).textContent).toContain('Data gap:');
+    expect(host.textContent).toContain('Fit score and residual: unavailable');
     expect(host.textContent).toContain('World B · edited law');
     expect(host.textContent).toContain('What modeled residents did differently');
     expect(host.textContent).toContain('Resident 1');

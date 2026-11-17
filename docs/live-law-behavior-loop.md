@@ -136,3 +136,30 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Model-versus-observation gap review (SHE-639)
+
+The recorded-results view now includes a calibration gap assessment for the
+selected observable. No public observation is allowlisted. The local starter
+outcomes fixture describes annual Harris County ACS commuting shares, NFIP
+claims and Houston 311 closure durations. None has the same observable definition,
+unit, synthetic population scope and calendar period as the provider receipts.
+No numeric observation, residual, fit score or model tuning is presented.
+
+The expandable `civic-calibration-gap.v1` JSON binds source repository identity,
+selected observable/unit, model version, seed, actual horizon, allowlisted inputs
+and the entire validated model receipt. Its recorded checkpoints can be inspected
+again without requesting a new simulation. It is an unsigned local record, not
+verified public data or proof of provider reproducibility. The existing versioned
+scenario link remains available. Missing provenance is explicitly unavailable.
+Household readiness and score arithmetic views disclose their own source mode
+and missing simulation metadata; neither is turned into a household model or
+empirical calibration score.
+
+Before implementing numeric calibration, review and pin a public series with
+source/version, observation definition, unit, population/geography, calendar
+window, collection method and uncertainty. Add a reviewed model-to-observation
+mapping and reject any mismatch or missing field before calculating a residual.
+A similar label or fraction unit cannot authorize a pair. A close fit would not
+validate other predictions or establish causality. See docs/reviews/SHE-639.md
+for candidate validation and outstanding acceptance.

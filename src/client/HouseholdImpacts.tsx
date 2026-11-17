@@ -15,6 +15,7 @@ export function HouseholdImpacts() {
   const label = HOUSEHOLD_PRESETS.find(([key]) => key === preset)?.[1];
   return <section className="household-impacts" aria-labelledby={`${id}-title`}>
     <h4 id={`${id}-title`}>Hypothetical household impacts</h4>
+    <p className="muted s">Source data mode: local readiness preview. Seed, model version and horizon: unavailable because no model run is connected. Major uncertainty: household effects and matched public observations are unavailable.</p>
     <p id={`${id}-help`} className="muted s">Optional experiment input, not a description of you. Selection stays in this page’s memory and is not sent to the simulation, saved or inferred from your journal, income, address or identity.</p>
     <label htmlFor={`${id}-preset`}>Hypothetical household type</label>
     <select id={`${id}-preset`} aria-describedby={`${id}-help`} value={preset}
