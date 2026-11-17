@@ -114,12 +114,12 @@ function ActorPositionMap({actors,bounds,label,changed}:{
     <rect x="5" y="5" width="230" height="128" rx="8" fill="#fff" stroke="#cfdee9"/>
     {actors.filter(a=>isFiniteNumber(a.x)&&isFiniteNumber(a.z)).map(a=><circle key={a.id}
       cx={14+212*(a.x!-bounds.x0)/spanX} cy={14+108*(a.z!-bounds.z0)/spanZ}
-      r={changed.has(a.id)?5:3} className={changed.has(a.id)?'sim-actor-changed':'sim-actor'}>
+      r={changed.has(a.id)?5:3} strokeDasharray={changed.has(a.id) ? '2 1' : undefined} className={changed.has(a.id)?'sim-actor-changed':'sim-actor'}>
       <title>{a.label||a.id} · {a.activity||'activity unavailable'} · {a.mode||'mode unavailable'}</title>
     </circle>)}
   </svg>;
 }
-function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric:string;index:number}){
+export function ActualTimeChart({frames,metric,index,timeUnit = 'simulation clock units'}:{frames:LawBehaviorFrame[];metric:string;index:number;timeUnit?:string}){
   if(frames.length<2||!metric||frames.some(f=>!isFiniteNumber(f.baseline.metrics[metric])||
     !isFiniteNumber(f.edited.metrics[metric])))return <p className="muted s">No complete paired recorded series for this outcome.</p>;
   // The guard above establishes a finite observed value in *every* paired frame.
@@ -130,18 +130,18 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
   const x=(v:number)=>28+(v-start)*478/extent,y=(v:number)=>143-(v-min)*111/span;
   const path=(side:'baseline'|'edited')=>frames.map(f=>x(f.time).toFixed(1)+','+y(value(f,side)).toFixed(1)).join(' ');
   const current=frames[index]!;
-  return <svg viewBox="0 0 530 174" role="img" aria-label="Time-aligned plot of actual current-rule and edited-law model outputs">
+  return <><p className="chart-key">○ Solid line: World A · current rules. □ Dashed line: World B · edited law.</p><svg viewBox="0 0 530 174" role="img" aria-label="Time-aligned plot of actual current-rule and edited-law model outputs">
     <line x1="28" y1="143" x2="505" y2="143" stroke="#92a9ba"/>
     <polyline points={path('baseline')} className="sim-plot-base"/>
     <polyline points={path('edited')} className="sim-plot-edited"/>
     {frames.map(f=><g key={f.time}>
       <circle cx={x(f.time)} cy={y(value(f,'baseline'))} r="2" fill="#166d9e"/>
-      <circle cx={x(f.time)} cy={y(value(f,'edited'))} r="2" fill="#15845a"/>
+      <rect x={x(f.time)-3} y={y(value(f,'edited'))-3} width="6" height="6" fill="#15845a"/>
     </g>)}
     <line x1={x(current.time)} x2={x(current.time)} y1="12" y2="143" stroke="#d98b17" strokeDasharray="4 3" strokeWidth="2"/>
     <text x="30" y="13" fontSize="11" fill="#3a5160">{formatted(max)}</text>
     <text x="30" y="164" fontSize="11" fill="#3a5160">{formatted(min)}</text>
-  </svg>;
+  </svg><details><summary>Recorded chart values (text alternative)</summary><div className="chart-table" role="region" aria-label="Recorded chart values" tabIndex={0}><table><caption>{METRICS[metric]?.label ?? metric} · {METRICS[metric]?.unit ?? 'model units'}. Time: {timeUnit}.</caption><thead><tr><th scope="col">Recorded time ({timeUnit})</th><th scope="col">World A · current rules</th><th scope="col">World B · edited law</th></tr></thead><tbody>{frames.map(f => <tr key={f.time}><th scope="row">{f.time}</th><td>{value(f,'baseline')}</td><td>{value(f,'edited')}</td></tr>)}</tbody></table></div></details></>;
 }
 
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
@@ -277,6 +277,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
           if(playing)setPlaying(false);else{if(frameIndex===frames.length-1)setFrameIndex(0);setPlaying(true);}
         }}>{playing?'Pause recorded playback':'Play recorded behavior'}</button>
       </div>
+      <p className="chart-key">Actor maps: large dashed-ring circles indicate changed sampled actors; small solid-ring circles indicate unchanged actors. Read identities and before/after values below.</p>
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>
@@ -293,8 +294,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       {reference&&strength!==100&&isFiniteNumber(originalValue)&&<p className="muted s">
         Original 100% setting at this checkpoint: {formatted(originalValue)} {unit}. The original run is retained.
       </p>}
-      <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex}/></div>
-      <p className="muted s">Blue: current rules · green: edited law · gold: selected recorded checkpoint.
+      <div className="civic-law-chart"><ActualTimeChart frames={frames} metric={selectedMetric} index={frameIndex} timeUnit={receipt.unit}/></div>
+      <p className="muted s">Solid line / circles: current rules · dashed line / squares: edited law · vertical dashed cursor: selected recorded checkpoint.
         Lines join recorded checkpoints and are not fabricated intermediate outcomes.</p>
       <p><a href={'/synth?'+civicLawQuery(context)}>Reproducible scenario link</a> · <a href={new URL('/world/constitution-city.html?'+civicLawQuery(context),hblOrigin).href} target="_blank" rel="noopener">Explore this future in HappyBearLandia</a> · <a href="/votes">Give your view (advisory)</a> · <a href="/proposals/new">Suggest an amendment</a></p>
       <section aria-label="Recorded actor behavior changes">

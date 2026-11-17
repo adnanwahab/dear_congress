@@ -32,10 +32,10 @@ const click = async (text: string) => {
 const ids = counties.map(c => c.id);
 assert.equal(container.querySelectorAll('path.county-shape title').length, counties.length);
 assert([...container.querySelectorAll('path.county-shape title')].every(t => t.textContent!.includes('Not evaluated')));
-await click('Hypothetical model agrees0 / 3,144');
+await click('○ Solid · Hypothetical model agrees0 / 3,144');
 assert.equal(container.querySelectorAll('.county-results button').length, 0);
 assert(container.querySelector('.county-directory')!.textContent!.includes('0 / 3,144 synthetic scenarios'));
-await click('Hypothetical model agrees0 / 3,144');
+await click('○ Solid · Hypothetical model agrees0 / 3,144');
 let plan = [...INITIAL_PLAN];
 for (let revision = 1; revision <= 10; revision++) {
   const supported = ids.filter(id => countyVote(id, plan).status === 'agree').length;
@@ -53,7 +53,16 @@ for (let revision = 1; revision <= 10; revision++) {
 }
 assert(panel.textContent!.includes('3,144 / 3,144 county models meet all four'));
 const before = panel.textContent;
-await click('Hypothetical model agrees3,144 / 3,144');
+const selectedBefore = container.querySelector('.county-selected')!.textContent;
+await click('Use text-only county view');
+assert.equal(container.querySelectorAll('.county-shape').length, 0);
+assert.equal(container.querySelectorAll('pattern[id^="county-"]').length, 4, 'legend definitions survive hiding the map');
+assert.equal(container.querySelector('.county-selected')!.textContent, selectedBefore);
+assert.equal(panel.textContent, before, 'text-only view preserves plan revision and denominator');
+await click('Show county graphic');
+assert.equal(container.querySelectorAll('.county-shape').length, counties.length);
+
+await click('○ Solid · Hypothetical model agrees3,144 / 3,144');
 const search = container.querySelector('input[type=search]')!;
 await act(async () => {
   Object.getOwnPropertyDescriptor(dom.HTMLInputElement.prototype, 'value')!.set!.call(search, 'Harris');

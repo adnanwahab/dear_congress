@@ -313,7 +313,7 @@ function LegacyApp() {
 
 function Bar({ value, tone = "accent", label }: { value: number; tone?: string; label?: string }) {
   return (
-    <div className="bar" title={label}>
+    <div className="bar" role="img" aria-label={label ?? `${(Math.max(0, Math.min(1, value)) * 100).toFixed(1)}% of scale`}>
       <div className={`fill ${tone}`} style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
     </div>
   );
@@ -321,7 +321,7 @@ function Bar({ value, tone = "accent", label }: { value: number; tone?: string; 
 
 function Split({ s }: { s: ProposalStats }) {
   return (
-    <div className="split" title={`Support ${pct(s.support)} · Neutral ${pct(s.neutral)} · Oppose ${pct(s.oppose)}`}>
+    <div className="split" role="img" aria-label={`Support ${pct(s.support)} · Neutral ${pct(s.neutral)} · Oppose ${pct(s.oppose)}`}>
       <div className="sup" style={{ width: pct(s.support) }} />
       <div className="neu" style={{ width: pct(s.neutral) }} />
       <div className="opp" style={{ width: pct(s.oppose) }} />
@@ -332,9 +332,9 @@ function Split({ s }: { s: ProposalStats }) {
 function SplitLegend({ s }: { s: ProposalStats }) {
   return (
     <div className="legend">
-      <span><i className="dot sup" />{pct(s.support)} support</span>
-      <span><i className="dot neu" />{pct(s.neutral)} neutral</span>
-      <span><i className="dot opp" />{pct(s.oppose)} oppose</span>
+      <span><i className="dot sup" aria-hidden="true" />○ {pct(s.support)} support</span>
+      <span><i className="dot neu" aria-hidden="true" />△ {pct(s.neutral)} neutral</span>
+      <span><i className="dot opp" aria-hidden="true" />□ {pct(s.oppose)} oppose</span>
     </div>
   );
 }
@@ -389,6 +389,7 @@ export function NeedsGeoMap({
         properties: {
           count,
           topNeed,
+          label: needs.find(n => n.id === topNeed)?.label ?? topNeed ?? "Unknown need",
           color: colorByNeed[topNeed ?? ""] ?? "#2f5d50",
           hasSim: c.simulated.count > 0 ? 1 : 0,
         },
@@ -466,6 +467,7 @@ export function NeedsGeoMap({
               "circle-stroke-color": "#1d1b18",
             },
           });
+          map.addLayer({ id: "cells-label", type: "symbol", source: "cells", layout: { "text-field": ["concat", ["get", "label"], " · ", ["to-string", ["get", "count"]]], "text-size": 12, "text-offset": [0, 1.5] }, paint: { "text-color": "#111111", "text-halo-color": "#ffffff", "text-halo-width": 2 } });
         } catch { attempt.fail('initialization'); }
       });
     })().catch(() => attempt.fail('initialization'));
@@ -488,7 +490,8 @@ export function NeedsGeoMap({
 
   return <>
     <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
-    <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+    <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map; equivalent values in the grid table" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+    <details><summary>Shared needs map values (text alternative)</summary><p>Same mode and need filter as the map. Counts are journal entries, not unique people. Dashed boxes mark grids containing simulated entries; circles show counts and labels name the leading need.</p><div className="chart-table" role="region" aria-label="Shared needs grid values" tabIndex={0}><table><caption>Visible needs grids · {mode} entries</caption><thead><tr><th scope="col">Grid</th><th scope="col">Leading need</th><th scope="col">Entries in selected mode</th><th scope="col">Contains simulated entries</th></tr></thead><tbody>{features.map((f, i) => f && <tr key={i}><th scope="row">{i + 1}</th><td>{f.properties.label}</td><td>{f.properties.count}</td><td>{f.properties.hasSim ? 'Yes' : 'No'}</td></tr>)}</tbody></table></div></details>
   </>;
 }
 
@@ -573,6 +576,7 @@ export function JurisdictionMap({
   return <>
     <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional jurisdiction map" data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
+    <p className="chart-key">Jurisdiction map key: the solid outline is {jurisdiction ?? 'the selected jurisdiction'}; circles mark {pushingCells.length} contributing entry grids, not unique people. Read jurisdiction priorities and proposal explanations alongside this optional map.</p>
   </>;
 }
 
@@ -1239,9 +1243,9 @@ function WorldsView({ w, title }: { w: WorldsResult; title?: string }) {
         <span className="poor" style={{ width: `${(w.poor / w.n) * 100}%` }} />
       </div>
       <ul className="worlds-legend">
-        <li><i className="good" />Works well <b>{w.good}</b></li>
-        <li><i className="mixed" />Mixed <b>{w.mixed}</b></li>
-        <li><i className="poor" />Performs poorly <b>{w.poor}</b></li>
+        <li><i className="good" aria-hidden="true" />○ Works well <b>{w.good}</b></li>
+        <li><i className="mixed" aria-hidden="true" />△ Mixed <b>{w.mixed}</b></li>
+        <li><i className="poor" aria-hidden="true" />□ Performs poorly <b>{w.poor}</b></li>
       </ul>
       <div className="robust"><span>Robustness</span><Bar value={w.robustness} /><b>{pct(w.robustness)}</b></div>
       <p className="muted s">Overruns use up the plan's reserve in {pct(w.budgetStress)} of futures.</p>

@@ -57,6 +57,10 @@ both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
 
+Charts use redundant patterns, markers and text alternatives. See the
+[SHE-759 fallback and verification notes](docs/reviews/SHE-759.md) for text-only
+county inspection, recorded-value tables and grayscale-print review.
+
 ## Measured outcomes (Harris County / Houston)
 
 The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.

@@ -1089,3 +1089,26 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+/* Redundant chart encodings: meaning remains in adjacent text and patterns. */
+.split .sup, .legend .sup, .worlds-bar .good, .worlds-legend .good { background-image: none; border: 1px solid currentColor; }
+.split .neu, .legend .neu, .worlds-bar .mixed, .worlds-legend .mixed { background-image: repeating-linear-gradient(45deg, transparent 0 4px, #111 4px 5px); border: 1px solid currentColor; }
+.split .opp, .legend .opp, .worlds-bar .poor, .worlds-legend .poor { background-image: repeating-linear-gradient(45deg, transparent 0 4px, #111 4px 5px), repeating-linear-gradient(-45deg, transparent 0 4px, #111 4px 5px); border: 1px solid currentColor; }
+.chart-key { color: var(--ink); background: var(--bg); padding: .5rem; border: 1px solid currentColor; }
+.chart-table { max-width: 100%; overflow: auto; }
+.chart-table table { width: 100%; border-collapse: collapse; }
+.chart-table th, .chart-table td { padding: .5rem; border: 1px solid currentColor; text-align: left; }
+.county-legend button { min-height: 44px; }
+.county-legend button svg { flex: 0 0 24px; border: 1px solid currentColor; }
+@media print {
+  .split, .legend, .worlds-bar, .worlds-legend, .county-svg, .county-legend { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .chart-key, .county-legend button { color: #111; background: #fff; }
+  .chart-table { overflow: visible; }
+}
+@media (forced-colors: active) {
+  .county-legend button { border: 1px solid ButtonText; }
+  .county-legend button[aria-pressed="true"] { outline: 3px solid Highlight; }
+  .county-svg, .county-legend svg { forced-color-adjust: none; }
+}
+.legend, .worlds-legend { color: var(--ink); }
+.split > *, .worlds-bar > * { box-sizing: border-box; }
