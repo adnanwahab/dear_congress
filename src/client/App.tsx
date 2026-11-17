@@ -413,12 +413,12 @@ export function NeedsGeoMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     availability.setStatus('loading');
-    const attempt = mapAttempt(status => {
+    const attempt = mapAttempt((status, reason) => {
       if (status === 'unavailable') {
         mapRef.current?.remove?.();
         mapRef.current = null;
       }
-      availability.setStatus(status);
+      availability.setStatus(status, reason);
     });
     (async () => {
       const maplibre = await loadMap();
@@ -499,7 +499,7 @@ export function NeedsGeoMap({
   return <>
     <h3>{preview}</h3>
     <p className="muted s">Aggregate 0.01° cells, not household locations. Filled green: submitted accounts; outlined ochre: simulated estimates. Counts remain separate. Measured conditions appear separately below and are not map markers. Civic choices are advisory; exploring records no vote or publication.</p>
-    <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
+    <MapAvailability reason={availability.reason} lastSuccess={availability.lastSuccess} status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
     <section aria-label="Searchable geographic evidence">
       <label>Search geographic evidence<input type="search" value={search} placeholder="Grid coordinates or evidence source" onChange={event => setSearch(event.target.value)} /></label>
@@ -531,12 +531,12 @@ export function JurisdictionMap({
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
     availability.setStatus('loading');
-    const attempt = mapAttempt(status => {
+    const attempt = mapAttempt((status, reason) => {
       if (status === 'unavailable') {
         mapRef.current?.remove?.();
         mapRef.current = null;
       }
-      availability.setStatus(status);
+      availability.setStatus(status, reason);
     });
     (async () => {
       const maplibre = await loadMap();
@@ -591,7 +591,7 @@ export function JurisdictionMap({
   }, [jurisdiction, pushingCells, availability.status]);
 
   return <>
-    <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
+    <MapAvailability reason={availability.reason} lastSuccess={availability.lastSuccess} status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional jurisdiction map" data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
   </>;
 }
@@ -822,21 +822,27 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
   };
   const [geoCells, setGeoCells] = useState<GeoCell[]>([]);
   const [geoLoading, setGeoLoading] = useState(true);
+  const [geoError, setGeoError] = useState(false);
+  const [geoSuccess, setGeoSuccess] = useState<string>();
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
     setGeoLoading(true);
+    setGeoError(false);
     setGeoCells([]);
     const run = async () => {
       try {
-        const out = await api<{ cells: GeoCell[] }>(`/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=${geoMode}`);
-        if (!cancelled) setGeoCells(out.cells ?? []);
+        const out = await api<{ cells: GeoCell[] }>(`/api/needs/geo?bbox=29.0,-96.2,30.4,-94.6&mode=${geoMode}`, undefined, undefined, controller.signal);
+        if (!Array.isArray(out.cells)) throw new Error('Invalid geographic evidence response');
+        if (!cancelled) { setGeoCells(out.cells); setGeoSuccess(new Date().toISOString()); }
       } catch {
-        if (!cancelled) setGeoCells([]);
-      } finally { if (!cancelled) setGeoLoading(false); }
+        if (!cancelled) { setGeoCells([]); setGeoError(true); }
+      } finally { clearTimeout(timeout); if (!cancelled) setGeoLoading(false); }
     };
     void run();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(timeout); controller.abort(); };
   }, [geoMode, state.entries.length]);
 
   useEffect(() => {
@@ -877,6 +883,11 @@ export function NeedsView({ state, focusNeedId }: { state: AppState; focusNeedId
           <button className={geoMode === "simulated" ? "" : "ghost"} aria-pressed={geoMode === "simulated"} onClick={() => switchMode("simulated")}>Simulated residents</button>
           <button className={geoMode === "both" ? "" : "ghost"} aria-pressed={geoMode === "both"} onClick={() => switchMode("both")}>Both</button>
         </div>
+        <section aria-label="Dependency observations"><h3>Dependency observations</h3>
+          <p role="status">Geographic source fetch: {geoLoading ? 'Loading' : geoError ? 'Unavailable; geographic evidence could not be fetched. Rankings remain available.' : 'Response received from the local aggregate API; upstream source freshness is not verified.'} Last successful fetch in this view: {geoSuccess ?? 'Never observed'}.</p>
+          <p>GitHub bridge: not checked in this view. Last success: unknown. Repository voting reports its own source sync and cached-data status.</p>
+          <p>External world handoff: unverified. Last success: unknown. Opening a link does not confirm world loading or simulation success. Keep this view available if the external world fails.</p>
+        </section>
         <NeedsGeoMap loading={geoLoading} styleUrl={state.mapStyleUrl} cells={geoCells} mode={geoMode} needFilter={sel || "all"} needs={state.needs} />
         <ul className="needs">
           {visibleNeeds.map((n, i) => <NeedRow key={n.id} need={n} demand={visibleDemand[n.id]!}
