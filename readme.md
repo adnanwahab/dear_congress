@@ -1161,3 +1161,12 @@ An invitation can be forwarded by its holder. There is no individual revocation,
 verified-person identity, durable recovery or joint package approval. Leave drops
 local access and presence becomes away; the room history remains until expiry.
 Native disclosure, labels and form controls need no motion or pointer gestures.
+
+## Citation availability checks
+
+Sample source panels distinguish dated link availability observations from editorial
+review. Operators can probe or explicitly record a curated citation check with
+`scripts/check-citations.ts`; redirects, HTTP errors, network failures and checks
+older than 30 days remain explicit. Fetching never verifies policy substance or
+legal status and never changes the editorial review date. No checks are bundled
+initially. See [the operator workflow](docs/citation-availability.md).
