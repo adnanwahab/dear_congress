@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import { Window } from 'happy-dom';
+import { act } from 'react';
+import { fireEvent } from '@testing-library/dom';
+const dom = new Window({ url: 'http://localhost/bills?exhibit=builder' });
+for (const key of ['window', 'document', 'navigator']) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+// The same native controls are used under reduced motion, without media-dependent UI.
+Object.defineProperty(dom, 'matchMedia', { value: () => ({ matches: true }) });
+const { createRoot } = await import('react-dom/client');
+const { Exhibition } = await import('../src/client/Exhibition');
+const container = document.createElement('div'); document.body.append(container);
+const root = createRoot(container);
+let requests = 0; globalThis.fetch = async () => { requests++; throw new Error('No writes or reads expected'); };
+await act(async () => root.render(<Exhibition />));
+const publish = [...container.querySelectorAll('button')].find(b => b.textContent === 'Publish local preview')!;
+assert(publish.disabled);
+const search = container.querySelector('input[type=search]') as HTMLInputElement;
+search.focus();
+await act(async () => fireEvent.input(search, { target: { value: 'missing-source' } }));
+assert(container.textContent!.includes('No sources match'));
+assert.equal(document.activeElement, search);
+const emptyUrl = window.location.href;
+await act(async () => { [...container.querySelectorAll('button')].find(b => b.textContent === 'Clear source filters')!.click(); });
+for (const select of container.querySelectorAll('fieldset select')) await act(async () => fireEvent.change(select, { target: { value: 'HFL-051' } }));
+assert(publish.disabled);
+for (const box of container.querySelectorAll('input[type=checkbox]')) await act(async () => (box as HTMLInputElement).click());
+assert(!publish.disabled);
+await act(async () => fireEvent.change(container.querySelector('fieldset select')!, { target: { value: 'HFL-001' } }));
+assert(publish.disabled); // A content change invalidates the review.
+for (const box of container.querySelectorAll('input[type=checkbox]')) await act(async () => (box as HTMLInputElement).click());
+await act(async () => publish.click());
+const previewUrl = window.location.href;
+assert.equal(container.querySelectorAll('article').length, 5);
+assert.equal(document.activeElement, container.querySelector('h1'));
+assert.equal(container.querySelectorAll('select,input').length, 0);
+assert.equal(container.querySelectorAll('nav[aria-label="Exhibit panels"] a').length, 5);
+// Native back/forward notifications restore both mode and filters.
+await act(async () => { window.history.replaceState(null, '', emptyUrl); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert.equal((container.querySelector('input[type=search]') as HTMLInputElement).value, 'missing-source');
+await act(async () => { window.history.replaceState(null, '', previewUrl); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert.equal(container.querySelectorAll('article').length, 5);
+await act(async () => { const url = new URL(previewUrl); url.searchParams.set('panels', url.searchParams.get('panels')!.replace(/"revision":"[^"]+"/, '"revision":"stale"')); window.history.replaceState(null, '', url); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert(container.querySelector('[role=alert]')!.textContent!.includes('stale'));
+assert.equal(requests, 0);
+await act(async () => root.unmount()); await dom.happyDOM.close();

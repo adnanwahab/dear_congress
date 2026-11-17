@@ -13,3 +13,4 @@
 @media(max-width:600px){.bill-catalog main{padding-top:1.5rem}.bill-chips button{font-size:.9rem}.bill-grid article{padding:1.1rem}}
 /* The catalog owns a dark palette; global light-theme h4 muted text is unreadable here. */
 .bill-document h4{color:inherit}
+.bill-catalog select{display:block;box-sizing:border-box;max-width:100%;width:100%;padding:.8rem;background:#1a2530;color:#fff;border:1px solid #738799;font:inherit;margin:.5rem 0 1rem}.bill-catalog select:focus-visible,.bill-catalog article:focus-visible{outline:3px solid #ffdb85;outline-offset:4px}.bill-catalog fieldset{min-width:0;margin:1rem 0;border:1px solid #738799}.bill-catalog button:disabled{opacity:.6;cursor:not-allowed}

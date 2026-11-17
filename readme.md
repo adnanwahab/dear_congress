@@ -679,3 +679,20 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Civic exhibitions
+
+From `/bills`, choose **Build a civic exhibition** (`/bills?exhibit=builder`).
+Select catalog sources for question, proposal, counterargument, evidence and
+results panels using the existing search and category filters. All panels are
+explicitly hypothetical; the catalog contains no verified evidence or measured
+outcomes. Review consent, accessibility and labeling before creating a local,
+read-only preview URL. This does not publish content to a server.
+
+Preview URLs pin catalog IDs and revisions and reject stale or invalid sources.
+Download a self-contained HTML exhibit for offline reading or hosting in a
+sandboxed iframe. It contains the selected text, labels, source links and revision
+IDs, with native Find, focus and anchor navigation, no scripts or remote assets.
+Source destinations still require connectivity. Curator checks are attestations,
+not independent verification. No personal testimony, official bill records,
+ballots or production data are copied. See [SHE-732 review](docs/reviews/SHE-732.md).

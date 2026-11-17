@@ -1,3 +1,4 @@
+import { Exhibition } from './Exhibition';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
@@ -37,6 +38,7 @@ export default function BillCatalog() {
   const results = searchBills(query, category);
   const back = `/bills${params.size ? '?' + params : ''}`;
   return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>
+    {params.has('exhibit') ? <Exhibition /> : <>
     <p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
@@ -56,6 +58,7 @@ export default function BillCatalog() {
       {bill.id === 'HFL-051' && <section aria-label="Expanded legislative discussion draft"><LegislativeMarkdown source={supplement} /></section>}
       <section><h2>Related draft concepts</h2><ul>{billCollection.bills.filter(b => b.category === bill.category && b.id !== bill.id).slice(0,3).map(b => <li key={b.id}><a href={`/bills/${b.id}`}>{b.id}: {b.title}</a></li>)}</ul></section>
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
+      <p><a href="/bills?exhibit=builder">Build a civic exhibition</a></p>
       <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
       <label htmlFor="bill-search">Search bills</label>
@@ -64,6 +67,7 @@ export default function BillCatalog() {
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+    </>}
     </>}
   </main></div>;
 }
