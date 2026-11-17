@@ -8,6 +8,7 @@ import { GlossaryText } from './CivicGlossary';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
+import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -59,6 +60,7 @@ export default function BillCatalog() {
         ['Status / provenance', 'Unreviewed editorial policy concept · eudaimonia-100 · version 1 · 2026-11-13'],
         ['Immutable catalog revision (SHA-256)', bill.revision],
       ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      <LegalAuthorityChecklist bill={bill} />
       <section className="bill-notice"><h2>Review before participation</h2><p>This draft is not introduced legislation, enacted law, a citizen submission or a ballot. Advisory participation is unavailable until authorized review pins an immutable revision. No votes or endorsements are claimed.</p><a href="/proposals/new?guided=1">Prepare your own private civic proposal</a><p>This opens the existing private workspace. Catalog text and identity are not submitted or transferred.</p></section>
       {bill.id === 'HFL-051' && <section aria-label="Expanded legislative discussion draft"><LegislativeMarkdown source={supplement} /></section>}
       <section><h2>Related draft concepts</h2><ul>{billCollection.bills.filter(b => b.category === bill.category && b.id !== bill.id).slice(0,3).map(b => <li key={b.id}><a href={`/bills/${b.id}`}>{b.id}: {b.title}</a></li>)}</ul></section>
@@ -71,7 +73,7 @@ export default function BillCatalog() {
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
       <TownHallGame />
-      <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept · Legal authority: unverified</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
     {id && <TownHallGame />}
   </main></div>;

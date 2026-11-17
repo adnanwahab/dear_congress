@@ -132,3 +132,15 @@ screens and the active guided tour. Its invented tokens and protected minimums
 have no relationship to catalog cost assessments or participation. Choices stay
 in component memory and show tradeoff receipts; see
 [the SHE-663 review](reviews/SHE-663.md) for validation limits.
+
+## Legal-authority checklist (SHE-893)
+
+Every detail includes read-only authority hypotheses, unresolved preemption and
+rights questions, missing-source findings and an unassigned human reviewer/date.
+Cards also label legal authority unverified. HFL-051 has facilities/grants-specific
+prompts and explicitly separates its supplement from the catalog digest. These
+are editorial questions, not source-backed legal conclusions. The original
+catalog, IDs, revisions and supplement remain unchanged. No review workflow or
+validity transition is implemented; nothing automatically becomes legally valid.
+Future review records must bind exact text and supplement revisions and identify
+a qualified human reviewer, sources, date, findings and remaining uncertainty.
