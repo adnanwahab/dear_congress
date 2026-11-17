@@ -33,6 +33,7 @@ export function HouseholdImpacts() {
         </tr>)}</tbody>
       </table>
     </div>
+    <p className="muted s">Source data mode: unavailable household model; seed, model version and horizon: unavailable (no run). Major uncertainty: no validated household response mechanism. Household sensitivity bounds are unavailable.</p>
     <p className="muted s">No validated package-to-household response model is connected here. Effects, better/worse/unchanged counts, uncertainty intervals and simulated cohort sizes are unavailable; no runs were performed. Missing effects do not mean zero impact.</p>
     <p className="muted s">Preset assumptions describe housing, travel or budget scenarios only; they assign no population weights. Aggregate historical conditions, illustrative policy costs and synthetic voter preferences cannot establish household effects. External world links do not carry this selection.</p>
   </section>;

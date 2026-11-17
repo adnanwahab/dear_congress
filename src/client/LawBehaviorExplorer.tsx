@@ -252,6 +252,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
+    {!invalidContext&&<SensitivityTornado key={`${lawId}-${strength}-${effectiveSeed}-${revision}`} context={context} hblOrigin={hblOrigin}/> }
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}
     {error&&<p role="alert" className="note warn">Model data unavailable: {error}. The paired snapshot links above remain available.</p>}
     {receipt?.status==='mechanism-unavailable'&&<p role="status">No reviewed behavior mapping: {receipt.reason||'Effects unavailable.'}</p>}
@@ -316,6 +317,84 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         <p>Only reviewed parameters are executable. Synthetic results are not claims about actual people, future legislation, happiness, rights or budgets.</p>
         <ul>{receipt.limitations?.map((text,index)=><li key={index}>{text}</li>)}</ul>
       </details>
+    </>}
+  </section>;
+}
+
+/** One-at-a-time endpoint experiment; bounds are choices, never probabilities. */
+export function sensitivityReceipt(context:CivicLawContext, receipts:LawBehaviorReceipt[]){
+  if(![22,23,83].includes(context.lawId)||![0,.25,.5,.75,1].includes(context.implementationStrength))throw Error('Unsupported sensitivity input.');
+  const strengths=[...new Set([context.implementationStrength,0,1])];
+  if(receipts.length!==strengths.length)throw Error('Incomplete bounds experiment.');
+  const base=receipts[0]!;
+  receipts.forEach((raw,i)=>{
+    const r=parseLawBehaviorReceipt(raw),m=r.manifest;
+    if(r.status!=='completed'||!m||r.law.number!==context.lawId||m.seed!==context.seed||m.population!==24||
+      m.implementationStrength!==strengths[i]||!m.modelVersion||context.modelVersion&&m.modelVersion!==context.modelVersion||
+      m.modelVersion!==base.manifest?.modelVersion||r.engine!==base.engine||r.unit!==base.unit||
+      m.start!==0||m.end!==(context.lawId===83?720:12)||
+      r.frames[0]?.time!==m.start||r.frames.at(-1)?.time!==m.end||
+      JSON.stringify(r.frames.map(f=>[f.time,f.baseline]))!==JSON.stringify(base.frames.map(f=>[f.time,f.baseline])))throw Error('Bounds receipts do not share the requested seed, model, horizon and baseline.');
+  });
+  const last=(r:LawBehaviorReceipt)=>r.frames.at(-1)!.edited.metrics;
+  const at=(s:number)=>last(receipts[strengths.indexOf(s)]!);
+  const rows=Object.entries(METRICS).flatMap(([key,meta])=>{
+    const center=last(base)[key],low=at(0)[key],high=at(1)[key];
+    if(!isFiniteNumber(center)||!isFiniteNumber(low)||!isFiniteNumber(high))return[];
+    return[{key,...meta,center,low,high,lowDelta:low-center,highDelta:high-center}];
+  });
+  if(!rows.length)throw Error('No complete allowlisted outcomes.');
+  return{schemaVersion:'civic-sensitivity.v1',sourceDataMode:'synthetic provider model',context:{...context,modelVersion:base.manifest!.modelVersion},
+    horizon:base.manifest!.end,clock:base.unit,parameter:'implementationStrength',bounds:[0,1],testedStrengths:strengths,
+    caps:{requests:3,population:24,checkpointsPerRequest:100,deadlineMs:45000,responseCharacters:2000000},rows,receipts};
+}
+function SensitivityTornado({context,hblOrigin}:{context:CivicLawContext;hblOrigin:string}){
+  const [result,setResult]=useState<ReturnType<typeof sensitivityReceipt>|null>(null);
+  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[metric,setMetric]=useState('');
+  const active=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{active.current?.abort();},[]);
+  const supported=context.lawId!==21;
+  async function run(){
+    const replayContext={...context,modelVersion:result?.context.modelVersion||context.modelVersion};
+    const abort=new AbortController();active.current=abort;setBusy(true);setError('');setResult(null);
+    const timeout=window.setTimeout(()=>abort.abort(),45000);
+    try{
+      civicLawQuery(replayContext); // Validate the allowlisted public inputs before any model work.
+      const receipts:LawBehaviorReceipt[]=[];
+      for(const implementationStrength of [...new Set([context.implementationStrength,0,1])]){
+        const response=await fetch(new URL('/api/law-behavior',hblOrigin),{method:'POST',headers:{'content-type':'application/json'},signal:abort.signal,
+          body:JSON.stringify({lawId:context.lawId,seed:context.seed,population:24,implementationStrength})});
+        const bytes=await response.text();
+        if(!response.ok)throw Error(`Provider unavailable (${response.status}).`);
+        if(bytes.length>2000000)throw Error('Receipt exceeds display cap.');
+        receipts.push(parseLawBehaviorReceipt(JSON.parse(bytes)));
+      }
+      if(!abort.signal.aborted)setResult(sensitivityReceipt(replayContext,receipts));
+    }catch(e){if(active.current===abort)setError(abort.signal.aborted?'Experiment canceled or exceeded 45 seconds.':e instanceof Error?e.message:'Bounds unavailable.');}
+    finally{window.clearTimeout(timeout);if(active.current===abort)setBusy(false);}
+  }
+  const row=result?.rows.find(r=>r.key===metric)||result?.rows[0];
+  const extent=row?Math.max(Math.abs(row.lowDelta),Math.abs(row.highDelta),1e-12):1;
+  return <section aria-label="Assumption sensitivity tornado">
+    <h4>Which modeled outcome is fragile?</h4>
+    <p>Source data mode: synthetic provider model · seed {context.seed} · model version {result?.context.modelVersion||context.modelVersion||'pending receipt'} · horizon {context.lawId===83?'720 minutes':'12 months'}. Major uncertainty: these reviewed mechanisms are unvalidated for real-world effects. Illustrative model, not a forecast.</p>
+    <p>One supported assumption: implementation strength, bounds 0–100%, compared with the selected {context.implementationStrength*100}%. Bounds are not probabilities or confidence intervals. Other laws, household effects, parameter interactions and intermediate strengths are untested.</p>
+    <p>Caps: at most 3 sequential requests, 24 synthetic actors, 100 checkpoints per request, 45 seconds total. Arbitrary legal text is never executed.</p>
+    <button type="button" disabled={busy||!supported} onClick={()=>void run()}>{busy?'Running bounds…':'Run sensitivity bounds'}</button>
+    {!supported&&<p>Unavailable: the fixed upzoning rule has no reviewed numeric bounds.</p>}
+    {busy&&<p role="status">Loading bounded experiment… <button type="button" onClick={()=>active.current?.abort()}>Cancel bounds</button></p>}
+    {error&&<p role="alert">Sensitivity unavailable: {error} Retry with Run sensitivity bounds.</p>}
+    {result&&row&&<>
+      <label> Sensitivity outcome <select value={row.key} onChange={e=>setMetric(e.target.value)}>{result.rows.map(r=><option key={r.key} value={r.key}>{r.label}</option>)}</select></label>
+      <p>Implementation strength · endpoint change from selected setting at {result.horizon} {result.clock}s. Selected output: {row.center} {row.unit}.</p>
+      <svg viewBox="0 0 500 80" role="img" aria-label={`Implementation strength tornado: 0% delta ${row.lowDelta}, 100% delta ${row.highDelta} ${row.unit}`} style={{width:'100%',maxWidth:600}}>
+        <line x1="250" x2="250" y1="0" y2="65" stroke="currentColor"/>
+        {[row.lowDelta,row.highDelta].map((delta,i)=><rect key={i} x={250+Math.min(0,delta/extent*230)} y={10+i*25} width={Math.max(1,Math.abs(delta/extent*230))} height="18" fill={i?'#15845a':'#166d9e'}/>)}
+        <text x="250" y="78" textAnchor="middle" fill="currentColor">0 delta</text>
+      </svg>
+      <ul><li>0% bound: {row.low} {row.unit}; exact delta {row.lowDelta} {row.unit}.</li><li>100% bound: {row.high} {row.unit}; exact delta {row.highDelta} {row.unit}.</li></ul>
+      <p>Only one numeric assumption is available per law; no cross-assumption ranking is claimed. A zero endpoint delta does not establish robustness between bounds.</p>
+      <details><summary>Deterministic experiment receipt and replay inputs</summary><p>Replay uses the same law, seed, selected strength, bounds, population, horizon and model version. Provider changes must be rejected. No automatic rerun occurs.</p><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(result,null,2)}</pre></details>
     </>}
   </section>;
 }

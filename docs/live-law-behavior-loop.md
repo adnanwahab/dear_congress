@@ -136,3 +136,15 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Bounded assumption sensitivity (SHE-636 candidate)
+
+The native viewer now offers **Run sensitivity bounds** for numeric reviewed
+laws. It runs the chosen strength and 0%/100% endpoints, at most three sequential
+requests within one 45-second deadline. Only the existing 24-actor, fixed-horizon
+provider contract is used. One supported assumption is shown per law; the fixed
+upzoning mechanism has no numeric bounds. Exact endpoint deltas retain metric
+units; bounds are choices, never probabilities. Full experiment receipts expose
+replay inputs and provider limitations. Shared baseline, model version, seed and
+horizon checks reject incompatible comparisons. See
+[the candidate validation and remaining acceptance](reviews/SHE-636.md).
