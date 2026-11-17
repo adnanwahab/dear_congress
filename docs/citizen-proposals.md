@@ -90,9 +90,8 @@ return to the guided URL. Storage key `civic_synthesis_private_proposal_workspac
 has a validated versioned envelope and stable draft ID. It is separate from and
 does not migrate or overwrite existing `civic_synthesis_proposal_drafts_v1`
 drafts. This is unencrypted browser storage, visible to other people using the
-same profile, with no account recovery or cross-device backup. Saving again
-replaces the workspace. Storage errors retain text on screen; corrupt/unknown
-versions are not overwritten. Unsaved edits trigger the browser leave warning.
+same profile, with no account recovery or cross-device backup. Saving again preserves the prior revision in local history before replacing the current workspace. Storage errors retain text on screen; corrupt/unknown
+versions are not overwritten. Unsaved edits trigger the browser leave warning. See the SHE-762 recovery behavior below.
 
 Walkthrough: open Journal → Propose a change; enter a night-shift transit problem,
 select city, save; reload and check the experience remains; fill the remaining
@@ -225,3 +224,45 @@ observation time is not a source update date. No background monitoring or notifi
 delivery exists, and missing/withdrawn source status is not inferred. See
 [scope and remaining acceptance](reviews/SHE-358.md) before treating this as a
 subscription service. No notification permission or identity is collected.
+
+## Guided draft crash recovery (SHE-762)
+
+The guided workspace (`/proposals/new?guided=1`, also linked from navigation and
+Participation & privacy) autosaves after 500 ms without editing. It asks before
+restoring saved work. A storage event, refocus, or stale save opens a field-by-field
+Saved text / Current text comparison. Deleted and inserted spans have text labels
+and native strike/underline; exact whitespace and Unicode remain intact. Choose
+**Use saved text** or **Keep current text**. Editing remains possible during the
+comparison; autosave stays paused. A subsequent save rechecks the current revision.
+No choice submits anything publicly or changes political options or vote meaning.
+
+A Web Lock serializes cooperating tabs around an exact-envelope revision check.
+New envelopes include a UUID revision and an accidental-corruption checksum
+(FNV-1a over the exact serialized values, not a security signature). Legacy v1
+workspaces remain readable. Before replacement, the old envelope is retained at
+`civic_synthesis_private_proposal_workspace_v1:history:<UUID>`. History is not
+pruned automatically; quota exhaustion stops saving instead of deleting work.
+Existing legacy proposal drafts and amendment records remain separate.
+
+Fallback: if storage is disabled/full, corrupted, or Web Locks are unavailable,
+keep the page open and select/copy the complete **Recovery copy** textarea to a
+trusted local file. The copy includes all fields across all steps. Restore those
+fields manually after fixing browser storage; no import or account recovery is
+promised. A maintainer can recover exact prior envelopes from the history keys
+using browser storage tools; copy storage before making repairs. Do not put
+sensitive information in unencrypted profile storage. Clearing site storage loses
+all local drafts/history. A crash within the 500 ms pending window can lose the
+last edits; **Save privately** forces an immediate attempt. Saving is independent
+of animation, reduced motion, theme or demo settings and performs no polling.
+
+Other proposal editors retain their documented manual save behavior. Existing
+older application tabs that predate this locking implementation must be closed
+before concurrent editing; they do not participate in its lock protocol. Arbitrary
+scripts or manual storage edits are outside this cooperative concurrency guarantee.
+Native keyboard, screen-reader, touch, zoom and low-power checks remain human
+acceptance work; automated DOM tests are regression evidence only.
+
+Governance remains as configured in [launch-merge-policy.md](launch-merge-policy.md):
+disabled/dry-run automation, quorum 10, kill switch active by default, and human
+review with the required checks. No live configuration or branch protection was
+changed or independently verified here. Production releases require human action.

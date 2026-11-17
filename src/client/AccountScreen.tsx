@@ -9,6 +9,11 @@ export default function AccountScreen() {
       <p>Anonymous does not mean secret from the service: current advisory choices are stored with a browser identifier. Do not submit identity documents or eligibility credentials. This page collects none.</p>
       <a className="dashboard-button" href="/votes">Continue anonymously</a>
     </section>
+    <section className="panel"><h2>Private draft recovery</h2>
+      <p>The guided proposal workspace autosaves locally after editing pauses. On return, compare and choose whether to restore saved text. Conflicts pause autosave until you choose. Nothing is published.</p>
+      <p>Browser storage is unencrypted and shared with this browser profile. Clearing it loses recovery and revision history. If saving fails or safe locking is unavailable, copy the complete recovery text before leaving. Other proposal editors still use their existing save controls.</p>
+      <a href="/proposals/new?guided=1">Open private draft recovery</a>
+    </section>
     <section className="panel"><h2>Synthetic demo data — illustrative</h2>
       <p>Fictional sample response totals are shown separately from saved browser choices. Neither group contributes to verified counts, and they are not combined into a people total.</p>
     </section>

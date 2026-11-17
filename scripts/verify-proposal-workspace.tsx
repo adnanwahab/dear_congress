@@ -8,6 +8,7 @@ const dom = new Window({ url: 'http://localhost/proposals/new?guided=1' });
 for (const key of ['window', 'document', 'navigator', 'localStorage']) {
   Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
 }
+Object.defineProperty(navigator, 'locks', { configurable: true, value: { request: async (_name: string, work: () => unknown) => work() } });
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 const { createRoot } = await import('react-dom/client');
 const { CitizenProposalsApp } = await import('../src/client/CitizenProposals');
@@ -41,13 +42,34 @@ assert.match(container.textContent!, /Choose a jurisdiction/);
 assert.equal(container.querySelectorAll('script').length, 0);
 assert.match((container.querySelector('#workspace-output') as any).value, /late bus/);
 await act(async () => { root.unmount(); }); root = createRoot(container as any); await render();
+await click('Use saved text');
 assert.match((container.querySelector('#workspace-problem') as any).value, /late bus/);
 assert.match(container.querySelector('[role=status]')!.textContent!, /Resumed/);
+// A different tab changes the saved revision: show both texts and require a choice.
+const remote = JSON.parse(localStorage.getItem(WORKSPACE_KEY)!);
+remote.values.problem = 'Newer work from another tab';
+delete remote.checksum;
+localStorage.setItem(WORKSPACE_KEY, JSON.stringify(remote));
+await act(async () => { dom.dispatchEvent(new dom.Event('focus')); });
+assert.match(container.textContent!, /Saved draft conflict/);
+assert.match(container.textContent!, /Newer work from another tab/);
+assert.match((container.querySelector('#workspace-problem') as any).value, /late bus/);
+await click('Keep current text');
+await click('Save privately');
+assert.match(localStorage.getItem(WORKSPACE_KEY)!, /late bus/);
+// Autosave does not need an explicit Save click.
+await act(async () => {
+  const field = container.querySelector('#workspace-title') as any;
+  Object.getOwnPropertyDescriptor(dom.HTMLTextAreaElement.prototype, 'value')!.set!.call(field, 'Autosaved title');
+  field.dispatchEvent(new dom.Event('input', { bubbles: true }));
+});
+await act(async () => { await new Promise(resolve => setTimeout(resolve, 650)); });
+assert.match(localStorage.getItem(WORKSPACE_KEY)!, /Autosaved title/);
 const saved = localStorage.getItem(WORKSPACE_KEY)!;
 const workingStorage = localStorage;
 Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
   getItem: workingStorage.getItem.bind(workingStorage),
-  setItem: () => { throw new Error('QuotaExceededError'); },
+  setItem: () => { throw new Error('Could not save: QuotaExceededError'); },
 } });
 await click('Save privately'); assert.match(container.querySelector('[role=alert]')!.textContent!, /Could not save/);
 Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: workingStorage });
