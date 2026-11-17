@@ -45,7 +45,7 @@ export default function AmendmentEditor({ source }: { source: AmendmentSource })
       }}>
         {(['replacement', 'rationale', 'impact', 'citation'] as const).map(key => <label key={key} htmlFor={`${id}-${key}`}>
           {{ replacement: 'Suggested replacement text', rationale: 'Rationale', impact: 'Impact / cost note (unknown is acceptable)', citation: 'Citation note (title, URL, locator, date and excerpt/version)' }[key]}
-          <textarea id={`${id}-${key}`} required rows={key === 'replacement' ? 6 : 3} maxLength={key === 'replacement' ? 10000 : key === 'citation' ? 2000 : 3000} value={fields[key]} onChange={e => { setFields({ ...fields, [key]: e.target.value }); setSelected(null); setStatus(''); }} />
+          <textarea dir="auto" id={`${id}-${key}`} required rows={key === 'replacement' ? 6 : 3} maxLength={key === 'replacement' ? 10000 : key === 'citation' ? 2000 : 3000} value={fields[key]} onChange={e => { setFields({ ...fields, [key]: e.target.value }); setSelected(null); setStatus(''); }} />
         </label>)}
         <p>Source notes are unverified plain text. Author: This browser · unverified. Publication permission has not been requested or granted.</p>
         <h3>Live comparison against saved base</h3>

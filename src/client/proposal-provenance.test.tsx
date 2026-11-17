@@ -8,7 +8,7 @@ test('every stable sample keeps its source and shows publisher, jurisdiction and
   for (const item of DEMO_ITEMS) {
     const html = renderToStaticMarkup(<ProposalProvenance item={item} />);
     expect(html).toContain('Sample scenario / not introduced bill');
-    expect(html).toContain(`Scenario jurisdiction: ${item.jurisdiction}`);
+    expect(html.replace(/<[^>]+>/g, '')).toContain(`Scenario jurisdiction: ${item.jurisdiction}`);
     expect(html).toContain('Publisher:');
     expect(html).toContain('Source not available / not checked');
     expect(html).toContain('rel="noopener noreferrer"');

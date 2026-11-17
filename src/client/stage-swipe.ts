@@ -1,6 +1,7 @@
 import { CIVIC_STAGES, stageRoute } from '../shared/civic-stages';
 
-export function swipeDestination(path: string, dx: number, dy: number, proposal: string | null) {
+export function swipeDestination(path: string, dx: number, dy: number, proposal: string | null, direction: string = 'ltr') {
+  if (direction === 'rtl') dx = -dx;
   if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return null;
   const index = CIVIC_STAGES.findIndex(s => s.route === (path === '/vote' ? '/votes' : path.replace(/\/+$/, '')));
   const next = index < 0 ? undefined : CIVIC_STAGES[index + (dx < 0 ? 1 : -1)];
@@ -30,7 +31,7 @@ export function installStageSwipe(target: Window) {
     const origin = start;
     cancel();
     if (!origin || origin.id !== e.pointerId) return;
-    const href = swipeDestination(target.location.pathname, e.clientX - origin.x, e.clientY - origin.y, new URLSearchParams(target.location.search).get('proposal'));
+    const href = swipeDestination(target.location.pathname, e.clientX - origin.x, e.clientY - origin.y, new URLSearchParams(target.location.search).get('proposal'), target.document.documentElement.dir);
     if (href) target.location.assign(href); // Same document-navigation path as stage links; SHE-323 supplies motion.
   });
 }

@@ -5,6 +5,7 @@ export type MotionMode = 'normal' | 'slow' | 'off';
 
 /** Apply before rendering/capturing the incoming page. Storage may be unavailable. */
 export function installMotion(target: Window) {
+  installDirection(target);
   const requested = new URL(target.location.href).searchParams.get('motion');
   let mode: MotionMode = 'normal';
   try {
@@ -61,4 +62,20 @@ export async function runViewTransition(update: () => void, type: MotionType, on
   } finally {
     if (fallback && root && fallbackOwners.get(root) === owner) { delete root.dataset.motionType; fallbackOwners.delete(root); }
   }
+}
+
+/** Layout preview only: never infer translation or rewrite content. */
+export function setDirection(target: Window, direction: 'ltr' | 'rtl') {
+  target.document.documentElement.dir = direction;
+  try { target.sessionStorage.setItem('civic-layout-direction', direction); } catch { /* page-only fallback */ }
+}
+export function installDirection(target: Window) {
+  let direction = target.document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr';
+  try {
+    const saved = target.sessionStorage.getItem('civic-layout-direction');
+    if (saved === 'ltr' || saved === 'rtl') direction = saved;
+  } catch { /* retain authored direction */ }
+  const requested = new URL(target.location.href).searchParams.get('layout');
+  if (requested === 'ltr' || requested === 'rtl') direction = requested;
+  setDirection(target, direction as 'ltr' | 'rtl');
 }
