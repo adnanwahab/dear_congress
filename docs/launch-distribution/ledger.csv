@@ -1,0 +1,1 @@
+record_id,supersedes,publication_id,channel,source_label,status,owner,approval_evidence,consent_status,consent_evidence,published_at,publication_url,landing_url,spend_amount,spend_currency,spend_evidence,window_start,window_end,aggregate_sessions,session_definition,follow_through_count,follow_through_definition,denominator,measurement_source,measured_at,limitations
