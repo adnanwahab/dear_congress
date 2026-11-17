@@ -5,6 +5,11 @@ export class PublicInputError extends Error {
   constructor(message: string, readonly status = 400) { super(message); }
 }
 export const CSP = "default-src 'self'; media-src 'self' data:; script-src 'self' 'inline-speculation-rules' 'sha256-HO0qYDJrCW2A6ld+cpXkVWe9KgZqF7RY5gfRmB2zy9E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://raw.githubusercontent.com/adnanwahab/happybearlandia/ https://raw.githubusercontent.com/adnanwahab/dear_congress/ https://raw.githubusercontent.com/adnanwahab/digital_pensieve/ https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; connect-src 'self' https://happybearlandia.fly.dev https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://*.bugsnag.com; worker-src 'self' blob:; font-src 'self' data: https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+/** Change only who may frame the app; retain every resource/script restriction. */
+export function embedCsp(frameAncestors: string) {
+  if (!frameAncestors.trim() || /[;\r\n]/.test(frameAncestors)) throw new Error("Invalid frame ancestors");
+  return CSP.replace("frame-ancestors 'self'", `frame-ancestors ${frameAncestors}`);
+}
 export function securityHeaders(res: Response) {
   const headers = new Headers(res.headers);
   headers.set("content-security-policy", CSP);

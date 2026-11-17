@@ -130,7 +130,8 @@ try {
     }
   }
   const embed = await get('/embed');
-  assert.equal(embed.headers.get('content-security-policy'), "frame-ancestors 'self'");
+  assert.equal(embed.headers.get('content-security-policy'), (await get('/')).headers.get('content-security-policy'));
+  assert.match(embed.headers.get('content-security-policy') ?? '', /script-src 'self'/);
   assert.match((await get('/map')).headers.get('content-security-policy') ?? '', /default-src 'self'/);
   const proposals = await get('/api/citizen-proposals');
   assert.equal(proposals.status, 200);

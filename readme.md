@@ -512,16 +512,18 @@ in one transaction/script, keyed by HMAC(IP) and signed ID) and a shared transac
 application database. Independent machine-local counters or files are insufficient.
 Verify machine count before rollout; this change does not inspect or alter production.
 
-API responses include HSTS, nosniff, no-referrer and CSP. Fly's response header
-configuration applies the same policy to HTML and bundled assets. Direct local Bun
-HTML responses do not get the Fly headers. CSP permits same-origin scripts,
-MapLibre blob workers, CARTO tile/style/font requests and Bugsnag reporting. It
-blocks plugins, other framing origins, script evaluation and external scripts.
-Arbitrary `MAP_STYLE_URL` hosts need explicit policy review. Inline styles remain
-allowed for React/MapLibre. Frame embedding is limited to the same origin; the old
-wildcard `FRAME_ANCESTORS` setting no longer grants embedding permission. CSP
-configuration tests pass; actual browser tile/worker/reporting verification remains
-required in an environment that permits a local server.
+The server applies HSTS, nosniff, no-referrer and CSP to the application shell,
+bundled assets and wrapped public APIs; Fly also supplies the three non-CSP
+headers. CSP permits same-origin scripts, the exact theme initializer hash,
+MapLibre blob workers, CARTO tile/style/font requests and Bugsnag reporting.
+Inline styles remain allowed for React/MapLibre; unrestricted inline scripts and
+script evaluation remain blocked. Custom map and HBL hosts require policy review.
+Ordinary pages use `frame-ancestors 'self'`. `/embed` retains the full CSP while
+using `FRAME_ANCESTORS` (production default self; the checked-in Fly setting is
+currently `*`). This legacy wildcard permits any framing site and needs human
+partner inventory review before narrowing. COOP/COEP remain unset for compatibility.
+See [SHE-946 audit and staged rollout](docs/reviews/SHE-946.md) for evidence,
+validation limits and required partner/browser checks.
 
 Journal publishing requires a visible public-content confirmation. The submit
 area warns against addresses/contact details and links to removal requests; use
