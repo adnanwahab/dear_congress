@@ -3,6 +3,7 @@ import {act} from 'react';
 import {Window} from 'happy-dom';
 import {getByRole,fireEvent} from '@testing-library/dom';
 import {LawBehaviorExplorer,type LawBehaviorReceipt} from './LawBehaviorExplorer';
+import {parseSimulationShare} from './civic-law-context';
 
 const receipt=(strength:number):LawBehaviorReceipt=>({
   schemaVersion:'hbl-law-behavior-receipt.v1',status:'completed',
@@ -73,6 +74,15 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(share.search).toContain('horizon=720');
     expect(share.search).toContain('modelVersion=population.v1');
     expect(share.search).not.toContain('proposalId');
+    expect(host.textContent).toContain('Catalog compatibility unverified');
+    await act(async()=>getByRole(host,'button',{name:/Explore in HappyBearLandia/}).click());
+    const world=getByRole(host,'link',{name:'Open reviewed world in HappyBearLandia ↗'}) as HTMLAnchorElement;
+    expect(world.origin).toBe('https://happybearlandia.fly.dev');
+    expect(world.pathname).toBe('/world/constitution-city.html');
+    // Model a return that retains the public query, without claiming provider behavior.
+    expect(world.search).toBe(share.search);
+    expect(parseSimulationShare(world.search)).toMatchObject({seed:42,modelVersion:'population.v1',revision:3,lawId:83});
+    expect(requests).toHaveLength(1);
     expect(host.textContent).toContain('Receipt checks passed');
     expect(host.textContent).toContain('Synthetic observations only.');
     expect(host.textContent).toContain('World A · current rules');
