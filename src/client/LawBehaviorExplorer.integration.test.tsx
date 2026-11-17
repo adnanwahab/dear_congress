@@ -22,11 +22,13 @@ const receipt=(strength:number):LawBehaviorReceipt=>({
 
 test('native simulate → edit lever → rerun displays actual paired actor changes and retains original',async()=>{
   const browser=new Window({url:'https://civic-synthesis.fly.dev/synth'});
+  let drift=false;
   const requests:{href:string;body:{lawId:number;seed:number;population:number;implementationStrength:number}}[]=[];
   const mockedFetch=(async(uri:string|URL,init?:RequestInit)=>{
     const body=JSON.parse(String(init?.body)) as {lawId:number;seed:number;population:number;implementationStrength:number};
     requests.push({href:String(uri),body});
     const payload=receipt(body.implementationStrength);
+    if(drift)payload.manifest!.modelVersion='population.v2';
     return Response.json(payload);
   }) as typeof fetch;
   const globals={window:browser,document:browser.document,navigator:browser.navigator,
@@ -66,6 +68,16 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
     expect(host.querySelector('iframe')).toBeNull();
+    expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).disabled).toBe(true);
+    expect(host.textContent).toContain('Reproducible run receipt');
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+    expect(host.textContent).toContain('Recorded difference');
+    drift=true;
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+    expect(host.textContent).toContain('Locked baseline, horizon or model version changed');
+    expect(host.querySelector('.civic-law-lanes')).toBeNull();
+    await act(async()=>getByRole(host,'button',{name:'Start new bench'}).click());
+    expect((getByRole(host,'combobox',{name:'Reviewed law'}) as HTMLSelectElement).disabled).toBe(false);
   }finally{
     await act(async()=>root.unmount());host.remove();
     for(const key of Object.keys(globals)){

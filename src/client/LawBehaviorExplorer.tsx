@@ -85,6 +85,27 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
   return data as LawBehaviorReceipt;
 }
 
+/** Stable object-key ordering makes receipt comparisons independent of JSON serialization order. */
+function canonical(value:unknown):string {
+  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
+  if(value&&typeof value==='object')return '{'+Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>JSON.stringify(k)+':'+canonical(v)).join(',')+'}';
+  return JSON.stringify(value)??'null';
+}
+export function simulatorInput(lawId:number,seed:number,strength:number){
+  const context:CivicLawContext={lawId,seed,implementationStrength:strength,population:24,revision:1};
+  civicLawQuery(context); // Runtime allowlist also rejects unsupported discrete values.
+  return {lawId,seed,population:24 as const,implementationStrength:strength};
+}
+export function verifyLockedBaseline(locked:LawBehaviorReceipt,next:LawBehaviorReceipt){
+  const identity=(r:LawBehaviorReceipt)=>({law:r.law,engine:r.engine,unit:r.unit,
+    manifest:r.manifest&&{...r.manifest,implementationStrength:undefined},
+    baseline:r.frames.map(f=>({time:f.time,baseline:f.baseline}))});
+  if(canonical(identity(locked))!==canonical(identity(next)))
+    throw Error('Locked baseline, horizon or model version changed. Start a new bench to use this model.');
+  if(locked.manifest?.implementationStrength===next.manifest?.implementationStrength&&canonical(locked.frames)!==canonical(next.frames))
+    throw Error('Deterministic replay mismatch. Results were rejected.');
+}
+
 export function actualActorDifferences(frame:LawBehaviorFrame|undefined,engine:string|undefined){
   if(!frame)return[];
   const after=new Map(frame.edited.actors.map(row=>[row.id,row]));
@@ -154,12 +175,14 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [revision,setRevision]=useState(imported?.revision??1);
   const [selectedActor,setSelectedActor]=useState('');
   const [receipt,setReceipt]=useState<LawBehaviorReceipt|null>(null);
+  const [locked,setLocked]=useState<LawBehaviorReceipt|null>(null);
   const [reference,setReference]=useState<LawBehaviorReceipt|null>(null);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
   const amendment=structuredAmendment(context);
+  const acceptedRuns=useRef(new Map<number,LawBehaviorReceipt>());
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
   const law=MODELED_LAWS.find(row=>row.id===lawId)!;
   const frames=receipt?.status==='completed'?receipt.frames:[];
@@ -193,6 +216,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
     setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
+    if(locked&&nextLawId!==lawId)return;
+    try{simulatorInput(nextLawId,effectiveSeed,nextStrength/100);}catch{setError('Unsupported simulator parameter.');return;}
     if(nextLawId!==lawId)setReference(null);
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
@@ -206,7 +231,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     try{
       const response=await fetch(new URL('/api/law-behavior',hblOrigin),{
         method:'POST',headers:{'content-type':'application/json'},signal:abort.signal,
-        body:JSON.stringify({lawId,seed:effectiveSeed,population:24,implementationStrength:strength/100})
+        body:JSON.stringify(simulatorInput(lawId,effectiveSeed,strength/100))
       });
       const bytes=await response.text();
       if(bytes.length>2_000_000)throw Error('Model receipt exceeds the display limit.');
@@ -216,6 +241,13 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
+      if(parsed.status==='completed'){
+        if(locked)verifyLockedBaseline(locked,parsed);
+        const prior=acceptedRuns.current.get(strength);
+        if(prior)verifyLockedBaseline(prior,parsed);
+        if(!locked)setLocked(parsed);
+        acceptedRuns.current.set(strength,parsed);
+      }
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
       setMetric(defaultMetric(parsed.frames,keys));
@@ -235,7 +267,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
       <label>Reviewed law
-        <select value={lawId} onChange={e=>{const id=Number(e.target.value);
+        <select disabled={!!locked} value={lawId} onChange={e=>{const id=Number(e.target.value);
           changedInput(id,100);}}>
           {MODELED_LAWS.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}
         </select>
@@ -249,6 +281,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         {busy?'Running same-seed worlds…':'Run two futures'}
       </button>
     </fieldset>
+    <p className="muted s">Source data mode: synthetic reviewed model · seed {effectiveSeed} · model version {locked?.manifest?.modelVersion||'unavailable until run'} · horizon {amendment.horizon} {amendment.clock}s. Major uncertainty: unvalidated response assumptions and nonrepresentative synthetic actors; no empirical confidence interval.</p>
+    <p><strong>Changed assumption:</strong> implementation strength only. Seed, population, model, horizon and recorded baseline stay locked after the first successful run.</p>
+    {locked&&<button type="button" disabled={busy} onClick={()=>{acceptedRuns.current.clear();setLocked(null);setReference(null);setReceipt(null);setDirty(true);setError('');setPlaying(false);}}>Start new bench</button>}
     <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
@@ -262,6 +297,8 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
         {' · '}{strength}% reviewed parameter
         {' · '}{frames.length} checkpoints, {receipt.unit}s {frames[0]?.time}–{frames.at(-1)?.time}.
       </p>
+      <details><summary>Reproducible run receipt (JSON)</summary><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify({schemaVersion:'civic-intervention-bench.v1',sourceDataMode:'synthetic',provider:hblOrigin,input:simulatorInput(lawId,effectiveSeed,strength/100),receipt},null,2)}</pre></details>
+      <p><strong>Measured model outcome:</strong> recorded synthetic output below; not an empirical policy measurement.</p>
       <div className="civic-law-playback-controls">
         <label>Recorded model outcome
           <select value={selectedMetric} onChange={e=>{setMetric(e.target.value);setPlaying(false);}}>

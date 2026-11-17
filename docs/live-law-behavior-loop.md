@@ -136,3 +136,21 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## SHE-634 intervention bench
+
+The first completed receipt pins the reviewed law, model version, seed, population,
+clock, horizon, checkpoint schedule and entire recorded baseline in page memory.
+Only allowlisted implementation-strength increments may change until **Start new
+bench** clears the pin and receipts. Every subsequent completed run must match the
+pin; rerunning any previously accepted strength must also reproduce its recorded
+frames. Drift fails closed, leaving no outcome visible. At most five strength
+receipts are retained; there is no persistence or automatic execution.
+
+The expandable run JSON records provider origin, synthetic source mode, typed
+allowlisted input and full provider receipt. The existing share URL reopens those
+inputs with version checking; it does not guarantee provider availability or future
+reproduction. Assumptions and measured synthetic outputs have separate text labels.
+The household and scoring views explicitly identify missing simulation metadata
+rather than invent seeds, horizons or household effects. Neither view is wired to
+an unvalidated response model. See `docs/reviews/SHE-634.md` for validation limits.

@@ -1,6 +1,6 @@
 import {test,expect} from 'bun:test';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {LawBehaviorExplorer,parseLawBehaviorReceipt,actualActorDifferences,type LawBehaviorReceipt} from './LawBehaviorExplorer';
+import {LawBehaviorExplorer,verifyLockedBaseline,simulatorInput,parseLawBehaviorReceipt,actualActorDifferences,type LawBehaviorReceipt} from './LawBehaviorExplorer';
 
 const realShape:LawBehaviorReceipt={
   schemaVersion:'hbl-law-behavior-receipt.v1',status:'completed',
@@ -83,3 +83,25 @@ test('simulation first-load shows native accessible controls with explicit separ
  const value=structuredClone(realShape);mutate(value);expect(()=>parseLawBehaviorReceipt(value)).toThrow();
  }
  });
+
+test('bench pins model identity and baseline and rejects nondeterministic replay',()=>{
+  const baseline=structuredClone(realShape);
+  const intervention=structuredClone(realShape);
+  intervention.manifest!.implementationStrength=.25;
+  intervention.frames[1]!.edited.metrics.meanCommuteMinutes=14;
+  expect(()=>verifyLockedBaseline(baseline,intervention)).not.toThrow();
+  for(const mutate of [
+    (r:LawBehaviorReceipt)=>{r.manifest!.modelVersion='drift';},
+    (r:LawBehaviorReceipt)=>{r.manifest!.seed=43;},
+    (r:LawBehaviorReceipt)=>{r.frames[1]!.baseline.metrics.meanCommuteMinutes=18;},
+    (r:LawBehaviorReceipt)=>{r.manifest!.end=16;},
+    (r:LawBehaviorReceipt)=>{r.frames[1]!.edited.metrics.meanCommuteMinutes=13;},
+  ]){const next=structuredClone(baseline);mutate(next);expect(()=>verifyLockedBaseline(baseline,next)).toThrow();}
+  expect(()=>verifyLockedBaseline(baseline,structuredClone(baseline))).not.toThrow();
+});
+
+test('simulator inputs reject unsupported laws, strengths and unbounded seeds',()=>{
+  expect(simulatorInput(83,42,.5)).toEqual({lawId:83,seed:42,population:24,implementationStrength:.5});
+  for(const args of [[99,42,1],[83,-1,1],[83,42,.3],[21,42,.5],[83,Infinity,1]])
+    expect(()=>simulatorInput(args[0]!,args[1]!,args[2]!)).toThrow();
+});
