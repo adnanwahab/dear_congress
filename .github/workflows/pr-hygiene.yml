@@ -1,0 +1,28 @@
+name: PR hygiene
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  hygiene:
+    name: PR hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # Run only trusted default-branch code; never check out PR head.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/pr-hygiene.test.cjs
+      - name: Audit changed PR files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: node scripts/pr-hygiene.cjs
