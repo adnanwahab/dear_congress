@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { metadataFreshness, type BillObservation } from '../shared/legislation';
 export function BillMetadataLane({ bills, now = Date.now() }: { bills: BillObservation[]; now?: number }) {
   return <section className="panel" aria-label="Official bill metadata" style={{ overflowWrap: 'anywhere' }}>
-    <h2>Official bill metadata</h2>
+    <h2>Official source references</h2>
+    <p>Official bill metadata · {bills.length} retained reference records · incomplete coverage</p>
     <p>Separate from citizen ideas, drafts and fictional samples. Metadata-only coverage: full text, amendments and complete legal status have not been checked. Enactment does not establish effective dates or measured outcomes.</p>
     {!bills.length && <p>No official bill metadata available. This is not a complete catalog.</p>}
     {bills.map(b => <article key={b.id}>
@@ -31,5 +32,5 @@ export function OfficialBills({ request }: { request: <T>(path: string) => Promi
     const timer = setInterval(() => { setNow(Date.now()); void load(); }, 60000);
     return () => { active = false; clearInterval(timer); };
   }, [request]);
-  return <>{!loaded && <p role="status">Loading official metadata…</p>}{error && <p role="alert">Official metadata unavailable. Any retained records below could not be rechecked.</p>}<BillMetadataLane bills={bills.map(b => error ? { ...b, refreshFailed: true } : b)} now={now} /></>;
+  return <>{!loaded && <p role="status">Loading official metadata…</p>}{error && <p role="alert">Official metadata unavailable. Any retained records below could not be rechecked.</p>}{loaded && (!error || bills.length > 0) && <BillMetadataLane bills={bills.map(b => error ? { ...b, refreshFailed: true } : b)} now={now} />}</>;
 }

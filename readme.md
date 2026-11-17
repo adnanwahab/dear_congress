@@ -1177,3 +1177,15 @@ Corrections enter only an append-only page-memory demo queue bound to the select
 project/evidence revision. Nothing is published or delivered to a real moderator.
 No verified project feed or shared correction API is connected. Reload clears the
 queue. See [SHE-467 scope and remaining acceptance](docs/reviews/SHE-467.md).
+
+## Feed data lanes
+
+`/feed` defaults to **Fictional samples**. Its always-available lane selector switches
+exclusively to **Unreviewed concepts** (the existing editorial catalog) or
+**Official source references** (read-only legislative metadata). `?lane=concepts`
+and `?lane=official` survive reload and browser history; unknown lanes fall back
+to fictional samples. Filter resets stay in the current lane, and result totals
+never combine these datasets. Official loading/failure is not reported as zero
+coverage. Background citations do not promote fictional proposals to official
+records. Neither reference metadata nor concepts establish measured effects or
+modeled futures. All participation remains non-binding and advisory.

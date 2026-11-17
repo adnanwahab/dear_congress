@@ -30,7 +30,7 @@ for (const screen of ['home', 'feed', 'published'] as const) {
   const input = form.querySelector('input')!;
   const select = form.querySelector('select')!;
   const countText = () => container.querySelector('.proposal-search [role=status]')!.textContent;
-  assert.equal(countText(), `Showing ${payload.items.length} of ${payload.items.length} proposals · Sample data`);
+  assert.equal(countText(), `Showing ${payload.items.length} of ${payload.items.length} proposals · Fictional samples`);
   const baseline = calls;
   const cards = () => [...container.querySelectorAll('article[style*="proposal-card-"]')];
   const names = cards().map(card => (card as HTMLElement).style.viewTransitionName);
@@ -38,7 +38,7 @@ for (const screen of ['home', 'feed', 'published'] as const) {
   const inputNode = input;
   input.focus();
   await act(async () => { fireEvent.change(select, { target: { value: payload.items[0]!.topic } }); });
-  assert.equal(countText(), `Showing ${filterProposals(payload.items, '', select.value).length} of ${payload.items.length} proposals · Sample data`);
+  assert.equal(countText(), `Showing ${filterProposals(payload.items, '', select.value).length} of ${payload.items.length} proposals · Fictional samples`);
   await act(async () => { fireEvent.input(input, { target: { value: 'zzzz-no-match' } }); });
   assert.equal(input.value, 'zzzz-no-match');
   await act(async () => { await new Promise(r => setTimeout(r, 150)); });
@@ -79,6 +79,32 @@ for (const screen of ['home', 'feed', 'published'] as const) {
   delete (dom as any).matchMedia;
   assert.equal(dom.document.activeElement, input);
   assert.equal(calls, baseline, 'search, submit and reset must stay local');
+  if (screen === 'feed') {
+    const laneButton = (label: string) => [...container.querySelectorAll('[aria-label="Data lane"] button')].find(b => b.textContent === label) as HTMLButtonElement;
+    assert.equal(laneButton('Fictional samples').getAttribute('aria-pressed'), 'true');
+    await act(async () => { laneButton('Unreviewed concepts').click(); await new Promise(r => setTimeout(r, 30)); });
+    assert.equal(container.querySelector('.proposal-search'), null);
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 100 of 100/);
+    const conceptSearch = container.querySelector('[aria-label="Unreviewed concepts"] input')!;
+    await act(async () => { fireEvent.input(conceptSearch, { target: { value: 'zzzz-no-match' } }); });
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 0 of 100/);
+    await act(async () => { ([...container.querySelectorAll('button')].find(b => b.textContent === 'Reset concept filters') as HTMLButtonElement).click(); });
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 100 of 100/);
+    assert.equal(laneButton('Unreviewed concepts').getAttribute('aria-pressed'), 'true');
+    await act(async () => { laneButton('Official source references').click(); });
+    assert.equal(container.querySelector('[aria-label="Unreviewed concepts"]'), null);
+    assert.equal(container.querySelector('.workflow-feed-list'), null);
+    await act(async () => { resolve({ bills: [] } as any); });
+    assert.match(container.textContent!, /0 retained reference records/);
+    assert.match(container.textContent!, /No official bill metadata available/);
+    await act(async () => {
+      dom.history.replaceState(null, '', '/feed?lane=fictional');
+      dom.dispatchEvent(new dom.PopStateEvent('popstate'));
+    });
+    assert.equal(laneButton('Fictional samples').getAttribute('aria-pressed'), 'true');
+    assert.equal(cards().length, payload.items.length);
+    assert.equal(container.querySelector('[aria-label="Official bill metadata"]'), null);
+  }
   await act(async () => root.unmount()); container.remove();
   console.log(`PASS ${screen}: retry, counts, topic, keyboard, reset and local requests`);
 }
