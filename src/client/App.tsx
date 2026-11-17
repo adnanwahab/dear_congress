@@ -149,6 +149,7 @@ const BillCatalog = lazy(() => import("./BillCatalog"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
+const Playground = lazy(() => import("./Playground"));
 const AccountScreen = lazy(() => import("./AccountScreen"));
 import WorkflowScreen from "./WorkflowScreen";
 
@@ -162,6 +163,7 @@ export function App() {
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
     : path === "/bills" || path.startsWith("/bills/") ? <BillCatalog />
+    : path === "/playground" ? <Playground />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />

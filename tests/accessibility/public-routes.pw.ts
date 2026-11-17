@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-const routes = ['/', '/feed', '/votes', '/published', '/journal', '/needs', '/synth', '/map', '/draft', '/sponsors', '/outcomes', '/documentation', '/account'];
+const routes = ['/', '/feed', '/votes', '/published', '/journal', '/needs', '/synth', '/map', '/draft', '/sponsors', '/outcomes', '/documentation', '/account', '/playground'];
 for (const route of routes) test(`${route} accessibility evidence`, async ({ page }, info) => {
   await page.goto(route);
   await expect(page.locator('main')).toHaveCount(1);

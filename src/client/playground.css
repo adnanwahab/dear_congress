@@ -1,0 +1,12 @@
+.playground-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 16px; }
+.playground button, .playground summary { min-height: 44px; padding: 10px 14px; cursor: pointer; }
+.playground button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+.playground :is(button, summary, input, a):focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.playground-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.playground-card { overflow-wrap: anywhere; }
+.playground-source { border: 1px solid currentColor; border-radius: 12px; }
+.playground .more-sheet { background: var(--card, Canvas); color: var(--ink, CanvasText); }
+
+.playground[data-static="true"] dialog, .playground[data-static="true"] dialog::backdrop { transition: none !important; }
+
+.playground input[type="checkbox"] { width: auto; min-width: 24px; min-height: 24px; vertical-align: middle; }

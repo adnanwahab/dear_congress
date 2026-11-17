@@ -43,6 +43,12 @@ contract test. Spanish translation approval and critical-copy synchronization fo
 [the SHE-318 review workflow](docs/reviews/SHE-318.md); do not label unreviewed
 translations approved. See [SHE-361 validation and remaining review](docs/reviews/SHE-361.md).
 
+## Contributor interaction gallery
+
+`/playground` contains synthetic state, source disclosure and sheet examples.
+Use Static preview / low power or `?motion=off` for the static fallback.
+See [SHE-763 contracts and review](docs/reviews/SHE-763.md).
+
 ## Appearance
 
 The shared Civic Synthesis title cycles through rainbow hues with a 12-second CSS
