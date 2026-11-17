@@ -69,7 +69,7 @@ export function ProposalSearch({ items, query, topic, setQuery, setTopic, loaded
     <div className="topic-filters" aria-label="Explore topic hubs">{topics.map(t => <TopicHubLink key={t} topic={t} />)}</div>
     {undo.control}
     <p>Search titles, summaries, sources and jurisdictions in this sample list.</p>
-    <p style={{ viewTransitionName: `proposal-count-${identity}` }} role="status" aria-live="polite">{loaded ? `Showing ${filtered.length} of ${items.length} proposals · Sample data` : failed ? 'Sample proposals unavailable. Use the retry control above.' : 'Loading sample proposals…'}</p>
+    <p style={{ viewTransitionName: `proposal-count-${identity}` }} role="status" aria-live="polite">{loaded ? `Showing ${filtered.length} of ${items.length} proposals · Fictional samples` : failed ? 'Sample proposals unavailable. Use the retry control above.' : 'Loading sample proposals…'}</p>
     {loaded && !filtered.length && <div className="empty-feed"><p>{items.length ? 'No proposals match your search and topic. Try a broader term or reset filters.' : 'No sample proposals are available in the loaded list.'}</p><button type="button" className="outline" onClick={reset}>Reset filters</button></div>}
   </div>;
 }

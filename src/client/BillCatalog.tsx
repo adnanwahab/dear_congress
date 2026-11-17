@@ -64,7 +64,7 @@ export default function BillCatalog() {
       ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       <LegalAuthorityChecklist bill={bill} />
       <section className="bill-notice" aria-label="Human editorial review gate"><h2>Human editorial review gate</h2>
-        <p>{gate?.reviewReady ? 'Editorial record complete; advisory publication remains unavailable.' : 'Human review incomplete. This revision is blocked from advisory publication.'}</p>
+        <p>{gate?.reviewReady ? 'Editorial record complete; advisory publication remains unavailable.' : 'Human review incomplete. Advisory publication unavailable: this revision is blocked from publication.'}</p>
         <ul>{gate?.blockers.map(reason => <li key={reason}>{reason}</li>)}</ul>
         <p>Reviews cover this catalog revision only. Separate legislative supplements require their own review. Review readiness does not establish official status, verified evidence or assessed cost.</p>
       </section>
