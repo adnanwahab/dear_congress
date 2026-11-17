@@ -37,6 +37,8 @@ try {
   assert.match(proposalCard.headers.get('content-security-policy') ?? '', /script-src 'none'/);
   assert.equal(proposalCard.headers.get('set-cookie'), null);
   assert.match(await proposalCard.text(), /Fictional demo · read-only/);
+  const transitCard = await get('/embed/v1?proposal=demo-transit');
+  assert.match(await transitCard.text(), /Reasons for[\s\S]*Concerns[\s\S]*Background sources/);
   assert.equal((await get('/embed/v1?proposal=missing')).status, 404);
   assert.equal((await fetch(new URL('/embed/v1', server!.url), { method: 'POST' })).status, 405);
   const meetings = await get('/api/meetings');

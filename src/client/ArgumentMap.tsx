@@ -11,10 +11,7 @@ export { PILOT_TEXT, PILOT_SCOPE } from './evidence-conditions';
 
 // Pin editorial and provenance fields; changing any requires a new reviewed script.
 const original = JSON.stringify({ id: 'demo-transit', title: 'Run frequent buses on evenings and weekends', topic: 'Transit', jurisdiction: 'City', source: 'Transit planning', background: { name: 'METRO', publisher: 'Metropolitan Transit Authority of Harris County', scope: 'Regional transit agency background only; not a city bill', checkedAt: null }, sourceUrl: 'https://www.ridemetro.org/', summary: 'Pilot 15-minute bus service on three high-demand corridors until 10 p.m. Measure missed trips, access to jobs, and ridership before expanding.', currentText: 'Evening and weekend service follows the existing lower-frequency schedule.', proposedText: PILOT_TEXT, sponsors: ['Transit board', 'City mobility committee'] });
-const points = [
-  { id: 'for', title: 'Reasons for', claim: 'More frequent evening service could reduce waiting for riders whose shifts end late.', limits: 'No corridor-specific ridership, staffing or travel-time study has been supplied.', condition: 'Evidence that the proposed schedule does not improve access for evening riders.', reply: 'Frequency alone may not help if connections or reliability remain poor.' },
-  { id: 'concern', title: 'Concerns', claim: 'Extra service could divert limited operating funds from other routes.', limits: 'No operating budget or comparison with alternative service plans has been supplied.', condition: 'A funded operating plan showing additional service without reducing essential routes.', reply: 'A time-limited pilot with public reporting could reveal whether the added cost is justified.' },
-] as const;
+import { SAMPLE_TRANSIT_ARGUMENTS as points } from '../shared/sample-arguments';
 
 type CardId = 'claim' | 'reply';
 type Side = typeof points[number]['id'];

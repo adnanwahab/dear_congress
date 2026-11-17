@@ -866,7 +866,10 @@ and never feed voting, synthesis or actual budget decisions.
 In `/feed`, select a sample and expand “Embed this sample on a community website”
 to copy the iframe HTML or preview it. `/embed/v1?proposal=demo-housing` renders a
 static accessible card; `/embed/v1` lists samples. Missing samples return 404.
-The v1 URL pins the card contract, not an immutable content revision.
+The v1 URL pins the card contract, not an immutable content revision. Cards include
+the source label and sample ID. Transit includes the existing fictional reasons,
+concerns, counterarguments and evidence gaps; other samples explicitly have no
+arguments available. Background citations do not substantiate editorial claims.
 
 Only fictional beta scenarios are supported. Existing editorial background sources
 and their review dates are preserved; currently unchecked sources are explicitly
