@@ -1,3 +1,4 @@
+import { DEMO_ITEMS } from '../engine/demo';
 import { billCollection } from '../shared/bill-catalog';
 import { CIVIC_STAGES, STAGES } from '../shared/civic-stages';
 import { buildIdentity } from "./build-identity";
@@ -48,15 +49,21 @@ export function speculationRules(path: string) {
 }
 
 export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[]) {
+  // Only the public selection is retained; never reflect tracking or draft parameters.
+  const requestURL = new URL(path, SITE_URL);
+  path = requestURL.pathname.replace(/\/+$/, "") || "/";
+  const sampleRoute = path === '/' || CIVIC_STAGES.some(stage => stage.route === path) || path === '/vote';
+  const sampleId = sampleRoute ? requestURL.searchParams.get('proposal') : null;
+  const sample = sampleId ? DEMO_ITEMS.find(item => item.id === sampleId) : undefined;
   path = path.replace(/\/+$/, "") || "/";
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
     ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
   const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
   const bill = billCollection.bills.find(b => path === `/bills/${b.id}`);
-  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
-  const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
-  const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
-  let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
+  const found = (!sampleId || !!sample) && (Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path));
+  const title = sample ? `Fictional sample: ${sample.title} | ${SITE_NAME}` : bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `Advisory proposal: ${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
+  const description = sample ? `Fictional sample; tallies are illustrative, not verified turnout. ${sample.summary} Independent, non-binding beta; not government authority.` : bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? `Published citizen proposal; non-binding advisory discussion, not verified turnout or government authority. ${proposal.problem.slice(0, 240)} Independent beta.` : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
+  let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, sample ? `${path}?proposal=${encodeURIComponent(sample.id)}` : path));
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
   if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");

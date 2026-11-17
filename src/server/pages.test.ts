@@ -87,3 +87,24 @@ test('speculation is limited to same-origin navigation routes and prioritizes th
     expect(rules.prerender[1].where.and[0].href_matches).toEqual([STAGES[stage.next].route, `${STAGES[stage.next].route}?*`]);
   }
 });
+
+test('sample links retain exact public selection and disclose fictional turnout in initial metadata', async () => {
+  for (const route of ['/votes', '/feed', '/draft', '/published', '/sponsors', '/outcomes', '/']) {
+    const html = await renderPage(shell, `${route}?proposal=demo-housing&utm_source=secret&draft=private`, []).text();
+    expect(html).toContain('Fictional sample: Allow backyard cottages near frequent transit');
+    expect(html).toContain('tallies are illustrative, not verified turnout');
+    expect(html).toContain(`${SITE_URL}${route}?proposal=demo-housing`);
+    expect(html).toContain('image/png');
+    expect(html).not.toMatch(/1284|326|190|secret|private/);
+    expect(html).not.toContain('demo-childcare');
+  }
+  expect(renderPage(shell, '/votes?proposal=missing', []).status).toBe(404);
+});
+
+test('citizen preview exposes public problem and status without private ledger or query fields', async () => {
+  const record = { ...proposal, votes: { privateVoter: 'support' }, sourceEntryId: 'privateJournal', comments: [{ text: 'privateComment' }] } as unknown as CitizenProposalRecord;
+  const html = await renderPage(shell, '/proposals/citizen_1?proposal=demo-housing&token=privateToken', [record]).text();
+  expect(html).toContain('Published citizen proposal; non-binding advisory discussion');
+  expect(html).toContain('not verified turnout or government authority');
+  expect(html).not.toMatch(/privateVoter|privateJournal|privateComment|privateToken|demo-housing/);
+});

@@ -458,3 +458,36 @@ controls with visible focus and no drag requirement. Styles wrap long content,
 stack at mobile widths and disable motion under reduced-motion preferences.
 Native mobile, keyboard/screen-reader and visual verification remains required;
 DOM tests do not establish native accessibility acceptance.
+
+## Social preview metadata (SHE-831)
+
+Initial HTML for published `/proposals/:id` links includes the public title and
+problem plus a non-binding advisory/independent beta disclosure. Sample selections
+on the six workflow routes, Overview and `/vote` retain only the `proposal` query
+parameter in canonical and Open Graph URLs. Their titles say Fictional sample;
+descriptions label illustrative tallies as unverified turnout. Missing selected
+samples return 404 rather than silently advertising a different proposal.
+
+Both Open Graph and X metadata use the existing 1200×630 brand PNG; images are
+shared branding, not proposal-specific artwork. No counts, journals, comments,
+credits, browser identity or private draft fields are read for preview rendering.
+Unrelated query parameters never enter metadata. Public proposal text is escaped;
+it is already public content and may appear in third-party caches when shared.
+
+Automated tests check initial HTML, source isolation and escaping; route smoke
+coverage requests crawler user agents without cookies. These are contracts, not
+proof that LinkedIn, X or iMessage rendered a card. On an authorized reachable
+review build, a human must inspect those three native previews for both a sample
+and citizen proposal, confirm disclosure survives truncation, image loading and
+canonical selection, and record usefulness/comprehension findings. Do not post or
+send political content as part of automated checks. Native platform acceptance
+remains pending. Existing merge policy in `launch-merge-policy.md` is unchanged:
+disabled/dry-run governance defaults, quorum 10, active kill switch, current-head
+checks and human approval; production requires a human-published tagged release.
+
+Workspace validation (2026-11-16): focused page tests 9 passed; typecheck passed.
+Full `bun test`: 759 passed, 26 failed; HTTP integration servers could not bind
+(`EADDRINUSE` on port 0) in this restricted workspace. `bun run test:routes`
+failed at the same server startup before crawler assertions. Re-run both in an
+environment permitting local server listeners before review acceptance. GitHub
+PR searches for SHE-831 and preview returned no matching candidates during audit.
