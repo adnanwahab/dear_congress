@@ -1,5 +1,6 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useId,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {checkScenario} from './scenario-invariants';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -147,7 +148,8 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
 export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:string}){
   const [imported]=useState(()=>typeof window==='undefined'?null:parseCivicLawContext(window.location.search));
-  const effectiveSeed=imported?.seed??seed;
+  const [seedDraft,setSeedDraft]=useState(String(imported?.seed??seed));
+  const effectiveSeed=/^\d{1,10}$/.test(seedDraft)?Number(seedDraft):NaN;
   const invalidContext=typeof window!=='undefined'&&new URLSearchParams(window.location.search).has('civicContext')&&!imported;
   const [lawId,setLawId]=useState(imported?.lawId??83);
   const [strength,setStrength]=useState((imported?.implementationStrength??1)*100);
@@ -159,7 +161,12 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
   const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
-  const amendment=structuredAmendment(context);
+  const controlId=useId();
+  const input={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,
+    units:lawId===21?'discrete rule':'fraction of reviewed implementation',horizon:lawId===83?720:12,clock:lawId===83?'minute':'month'};
+  const failures=checkScenario(input);
+  // Invalid drafts stay in memory and never reach serialization or the provider.
+  const amendment=failures.length?null:structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
   const law=MODELED_LAWS.find(row=>row.id===lawId)!;
   const frames=receipt?.status==='completed'?receipt.frames:[];
@@ -186,9 +193,13 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   useEffect(()=>()=>{controller.current?.abort();generation.current++;},[]);
   useEffect(()=>{
     if(!playing||frames.length<2)return;
+    const motion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if(motion?.matches){setPlaying(false);return;}
+    const stop=()=>{if(motion?.matches)setPlaying(false);};
+    motion?.addEventListener('change',stop);
     const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))));
     const timer=window.setInterval(()=>setFrameIndex(old=>{if(old>=frames.length-1){setPlaying(false);return old;}return old+1;}),delay);
-    return()=>window.clearInterval(timer);
+    return()=>{window.clearInterval(timer);motion?.removeEventListener('change',stop);};
   },[playing,receipt]);
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
@@ -197,7 +208,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
   async function run(){
-    if(!Number.isInteger(effectiveSeed)||effectiveSeed<0||effectiveSeed>4294967295)return;
+    if(invalidContext||checkScenario(input).length)return;
     const request=++generation.current;controller.current?.abort();
     const abort=new AbortController();controller.current=abort;
     setBusy(true);setPlaying(false);setReceipt(null);setError('');setDirty(false);
@@ -214,6 +225,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(!response.ok)throw Error(typeof payload?.error==='string'?payload.error:'Model request unavailable.');
       const parsed=parseLawBehaviorReceipt(payload);
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
+      if(parsed.status==='completed'&&(parsed.unit!==input.clock||parsed.engine!==(lawId===83?'population':'city')||parsed.manifest!.start!==0||parsed.manifest!.end>input.horizon))throw Error('Receipt units, engine or horizon violate the selected mechanism.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
@@ -231,25 +243,32 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Source data mode: synthetic HBL sandbox. Seed {seedDraft}; model version {receipt?.manifest?.modelVersion||imported?.modelVersion||'unavailable until a verified receipt returns'}; horizon {input.horizon} {input.clock}s. Major uncertainty: structural assumptions and sampled actors are not calibrated real-world effects.</p>
+    {failures.length>0&&<div role="alert"><p>Scenario cannot launch. Your exploration draft is retained.</p><ul>{failures.map((failure,i)=><li key={i}><a href={'#'+controlId+'-'+failure.control}>{failure.message}</a></li>)}</ul></div>}
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
       <label>Reviewed law
-        <select value={lawId} onChange={e=>{const id=Number(e.target.value);
+        <select id={controlId+'-law'} value={lawId} onChange={e=>{const id=Number(e.target.value);
           changedInput(id,100);}}>
           {MODELED_LAWS.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}
         </select>
       </label>
+      <label>Seed (integer 0–4294967295)
+        <input id={controlId+'-seed'} type="text" inputMode="numeric" value={seedDraft} onChange={e=>{
+          setSeedDraft(e.target.value);changedInput(lawId,strength);
+        }}/>
+      </label>
       <label>Implementation strength: <strong>{strength}%</strong>
-        <input type="range" min="0" max="100" step="25" value={strength}
+        <input id={controlId+'-strength'} type="range" min="0" max="100" step="25" value={strength}
           disabled={!law.editable} onChange={e=>changedInput(lawId,Number(e.target.value))}/>
       </label>
       {!law.editable&&<p className="muted s">This supported law uses a fixed/discrete engine rule. No partial-strength effects are invented.</p>}
-      <button type="button" onClick={()=>void run()} disabled={!Number.isInteger(effectiveSeed)||busy}>
+      <button type="button" onClick={()=>void run()} disabled={failures.length>0||busy}>
         {busy?'Running same-seed worlds…':'Run two futures'}
       </button>
     </fieldset>
-    <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
+    <p className="muted s">Reviewed amendment: law {lawId}, {amendment?.parameterKey}, {amendment?.originalValue} → {amendment?.editedValue} {amendment?.units}; revision {revision}. Seed {seedDraft}; {input.horizon} {input.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}

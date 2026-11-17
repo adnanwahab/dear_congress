@@ -65,6 +65,11 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[1]?.body.implementationStrength).toBe(.5);
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
+    Object.defineProperty(browser,'matchMedia',{configurable:true,value:()=>({matches:true,addEventListener(){},removeEventListener(){}})});
+    await act(async()=>getByRole(host,'button',{name:'Play recorded behavior'}).click());
+    expect(getByRole(host,'button',{name:'Play recorded behavior'})).toBeTruthy();
+    expect(host.querySelector('input[aria-label="Recorded simulation time"]')).toBeTruthy();
+
     expect(host.querySelector('iframe')).toBeNull();
   }finally{
     await act(async()=>root.unmount());host.remove();
@@ -102,6 +107,34 @@ test('bounded request, cancellation, response identity and unsupported context n
  }finally{
   await act(async()=>root.unmount());host.remove();
   for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}
+  await browser.happyDOM.close();
+ }
+});
+
+test('invalid seed preflight renders a linked failure and cannot submit or destroy the draft',async()=>{
+ const browser=new Window({url:'https://civic-synthesis.fly.dev/synth'});
+ const keys=['window','document','navigator','fetch','IS_REACT_ACT_ENVIRONMENT'];
+ const previous=Object.fromEntries(keys.map(k=>[k,Object.getOwnPropertyDescriptor(globalThis,k)]));
+ let requests=0;
+ for(const [key,value] of Object.entries({window:browser,document:browser.document,navigator:browser.navigator,IS_REACT_ACT_ENVIRONMENT:true,fetch:()=>{requests++;throw Error('must not submit');}}))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
+ const host=document.createElement('main');document.body.append(host);
+ const {createRoot}=await import('react-dom/client');const root=createRoot(host);
+ try{
+  await act(async()=>root.render(<LawBehaviorExplorer seed={-1} hblOrigin="https://happybearlandia.fly.dev"/>));
+  expect(host.textContent).toContain('Your exploration draft is retained');
+  const failure=getByRole(host,'link',{name:'Seed must be an integer from 0 to 4294967295.'});
+  const target=document.getElementById(failure.getAttribute('href')!.slice(1));
+  expect((target as HTMLInputElement)?.value).toBe('-1');
+  const run=getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement;
+  expect(run.disabled).toBe(true);
+  await act(async()=>run.click());expect(requests).toBe(0);
+  expect(host.querySelector('select')?.value).toBe('83');
+  await act(async()=>fireEvent.change(target!,{target:{value:'42'}}));
+  expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
+  expect(host.textContent).not.toContain('Scenario cannot launch');
+ }finally{
+  await act(async()=>root.unmount());host.remove();
+  for(const key of keys){if(previous[key])Object.defineProperty(globalThis,key,previous[key]!);else Reflect.deleteProperty(globalThis,key);}
   await browser.happyDOM.close();
  }
 });

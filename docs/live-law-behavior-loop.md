@@ -136,3 +136,19 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Scenario invariant preflight (SHE-641)
+
+Before submitting, the consumer checks the exact allowed input keys, discrete
+strength domain, unsigned 32-bit seed, fixed-upzoning dependency, mechanism units,
+24-actor population and fixed 720-minute/12-month horizon. Failures link to the
+corresponding native control. Seed text and other unsaved choices stay in page
+memory on validation errors, cancellation and provider failure; correcting them
+never launches automatically. Reload still discards unsaved edits.
+
+Completed receipts must also match the selected engine, clock and bounded horizon.
+Existing request identity and model-version checks remain in place. The local
+amendment JSON and reproducible link retain the reviewed inputs; no new execution
+engine or package-to-household model is introduced. Reduced motion uses manual
+checkpoint selection rather than timed playback. Provenance disclosures identify
+unavailable metadata explicitly in household and arithmetic-only views.

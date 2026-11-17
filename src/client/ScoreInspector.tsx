@@ -6,6 +6,7 @@ export function ScoreInspector({ pkg }: { pkg: PackageResult }) {
   if (!audit) return <p>Score arithmetic unavailable for this response.</p>;
   return <details className="why">
     <summary>Why this plan?</summary>
+    <p>Source data mode: response score arithmetic, with illustrative catalog assumptions. Seed and simulation horizon: unavailable in this score receipt. Model version: {audit.version}. Major uncertainty: scoring proxies do not establish causal effects or forecasts.</p>
     <p>Advisory prototype · {audit.version}. Costs and catalog evidence are illustrative assumptions, not verified predictions. Support describes this response’s voices; simulated residents are not verified voters.</p>
     <p>Base score = sum(raw × weight ÷ divisor) − change penalty + rounding adjustment. Scores use Math.round(x × 1000) ÷ 1000. Display rounding is applied last; use the exact numeric inputs below to reproduce within 1e-9. Selected rank adds the published stability bonus.</p>
     <p>Fairness is an opposition proxy: clamp(1 − 2.5 × strong opposition), rounded to three decimals. It does not measure distributional fairness. Evidence uses the greater of catalog evidence and available impact, clamped to [0,1]. Missing measured impact defaults to zero in scoring; it is not verified zero impact. No confidence interval is available.</p>
