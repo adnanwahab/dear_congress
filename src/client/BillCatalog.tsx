@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
+import { PlaceCosts } from './PlaceCosts';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -26,7 +27,8 @@ export default function BillCatalog() {
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   function update(q: string, c: string) {
-    const next = new URLSearchParams();
+    const next = new URLSearchParams(window.location.search);
+    next.delete('q'); next.delete('category');
     if (q) next.set('q', q);
     if (c) next.set('category', c);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
@@ -64,6 +66,7 @@ export default function BillCatalog() {
       <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
       {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      <details><summary>Compare local cost context</summary><PlaceCosts /></details>
     </>}
   </main></div>;
 }

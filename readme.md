@@ -679,3 +679,10 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+The draft catalog and housing/childcare/transit hubs include **Compare local
+cost context**, a static Chicago/New York evidence panel with published housing
+and transit units, dates and source links. Childcare city-wide measures remain
+missing and explicitly labeled. Selections and place search use shareable URL
+parameters; no personal location or eligibility is inferred. See
+[the SHE-726 review](docs/reviews/SHE-726.md) for coverage and remaining acceptance.
