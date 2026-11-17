@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {ExperimentNotebook} from './ExperimentNotebook';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -55,7 +56,8 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
   const data=value as Partial<LawBehaviorReceipt>;
   const object=(v:unknown)=>!!v&&typeof v==='object'&&!Array.isArray(v);
   if(data.schemaVersion!=='hbl-law-behavior-receipt.v1'||!Array.isArray(data.frames)||
-    !data.law||!Number.isInteger(data.law.number)||typeof data.law.title!=='string'||data.frames.length>100)
+    !data.law||typeof data.law.id!=='string'||!Number.isInteger(data.law.number)||typeof data.law.title!=='string'||data.frames.length>100||
+    data.limitations!==undefined&&(!Array.isArray(data.limitations)||data.limitations.length>100||data.limitations.some(v=>typeof v!=='string'||v.length>4000)))
     throw Error('Unknown law behavior contract; model data not displayed.');
   if(data.status==='mechanism-unavailable')return data as LawBehaviorReceipt;
   if(data.status!=='completed'||!data.manifest?.pairedInitialState||
@@ -77,7 +79,8 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
     for(const side of [frame.baseline,frame.edited]){
       if(!object(side.metrics)||Object.values(side.metrics).some(v=>!isFiniteNumber(v))||
         side.actors.some(a=>!object(a)||typeof a.id!=='string'||!a.id||a.id.length>100||
-          Object.values(a).some(v=>typeof v==='number'&&!Number.isFinite(v)))||
+          (a.label!==undefined&&typeof a.label!=='string')||
+          Object.values(a).some(v=>v!==undefined&&v!==null&&!['string','number','boolean'].includes(typeof v)||typeof v==='number'&&!Number.isFinite(v)))||
         new Set(side.actors.map(a=>a.id)).size!==side.actors.length)throw Error('Invalid model metrics or actor identities.');
     }
     if(frame.time<data.manifest.start||frame.time>data.manifest.end)throw Error('Checkpoint outside the recorded horizon.');
@@ -147,7 +150,10 @@ function ActualTimeChart({frames,metric,index}:{frames:LawBehaviorFrame[];metric
 /** Native React behavior UI. The HBL endpoint delivers *data*, not an iframe or screenshot. */
 export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:string}){
   const [imported]=useState(()=>typeof window==='undefined'?null:parseCivicLawContext(window.location.search));
-  const effectiveSeed=imported?.seed??seed;
+  const [effectiveSeed,setEffectiveSeed]=useState(imported?.seed??seed);
+  const [expectedVersion,setExpectedVersion]=useState(imported?.modelVersion);
+  const [proposalId,setProposalId]=useState(imported?.proposalId);
+  const [replaying,setReplaying]=useState(false);
   const invalidContext=typeof window!=='undefined'&&new URLSearchParams(window.location.search).has('civicContext')&&!imported;
   const [lawId,setLawId]=useState(imported?.lawId??83);
   const [strength,setStrength]=useState((imported?.implementationStrength??1)*100);
@@ -158,7 +164,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
-  const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:imported?.proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||imported?.modelVersion)?{modelVersion:receipt?.manifest?.modelVersion||imported?.modelVersion}: {})};
+  const context:CivicLawContext={lawId,implementationStrength:strength/100,seed:effectiveSeed,population:24,revision,proposalId:proposalId||`demo-law-${lawId}`,...((receipt?.manifest?.modelVersion||expectedVersion)?{modelVersion:receipt?.manifest?.modelVersion||expectedVersion}: {})};
   const amendment=structuredAmendment(context);
   const controller=useRef<AbortController|null>(null),generation=useRef(0);
   const law=MODELED_LAWS.find(row=>row.id===lawId)!;
@@ -194,13 +200,13 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
     setReceipt(null);setError('');setDirty(true);setFrameIndex(0);
     if(nextLawId!==lawId)setReference(null);
-    setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
+    setReplaying(false);setLawId(nextLawId);setStrength(nextStrength);setRevision(old=>Math.min(1000000,old+1));setSelectedActor('');
   }
   async function run(){
     if(!Number.isInteger(effectiveSeed)||effectiveSeed<0||effectiveSeed>4294967295)return;
     const request=++generation.current;controller.current?.abort();
     const abort=new AbortController();controller.current=abort;
-    setBusy(true);setPlaying(false);setReceipt(null);setError('');setDirty(false);
+    setReplaying(false);setBusy(true);setPlaying(false);setReceipt(null);setError('');setDirty(false);
     let timedOut=false;
     const timeout=window.setTimeout(()=>{timedOut=true;abort.abort();},45000);
     try{
@@ -214,7 +220,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(!response.ok)throw Error(typeof payload?.error==='string'?payload.error:'Model request unavailable.');
       const parsed=parseLawBehaviorReceipt(payload);
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
-      if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
+      if(expectedVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==expectedVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
       setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
@@ -231,6 +237,15 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Source data mode: synthetic HBL recorded model · seed {effectiveSeed} · model version {receipt?.manifest?.modelVersion||expectedVersion||'unavailable until a run completes'} · horizon {receipt?.manifest?`${receipt.manifest.start}–${receipt.manifest.end} ${receipt.unit}s`:`${amendment.horizon} ${amendment.clock}s (requested)`}. Major uncertainty: unvalidated model assumptions and a small synthetic actor sample.</p>
+    <ExperimentNotebook receipt={receipt} context={context} sourceOrigin={hblOrigin} onReplay={saved=>{
+      generation.current++;controller.current?.abort();setBusy(false);setPlaying(false);setError('');setDirty(false);
+      setEffectiveSeed(saved.context.seed);setExpectedVersion(saved.context.modelVersion);setProposalId(saved.context.proposalId);
+      setLawId(saved.context.lawId);setStrength(saved.context.implementationStrength*100);setRevision(saved.context.revision);
+      setReceipt(saved.receipt);setReference(null);setFrameIndex(0);setSelectedActor('');setReplaying(true);
+      setMetric(defaultMetric(saved.receipt.frames,validMetricKeys(saved.receipt.frames)));
+    }}/>
+    {replaying&&<p role="status">Recorded replay: displaying the saved receipt without running the model.</p>}
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>

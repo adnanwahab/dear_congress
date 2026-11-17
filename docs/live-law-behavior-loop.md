@@ -136,3 +136,40 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Local experiment notebook (SHE-633)
+
+`LawBehaviorExplorer` now includes an explicitly saved browser-local notebook.
+Each named record contains the full validated completed receipt, source origin,
+allowlisted scenario context, model version, seed, population, reviewed law and
+strength, exact recorded horizon, timestamp and independent record ID. Scenario
+links include the recorded version; receipt download links export the stored JSON.
+The versioned storage key is `dear-congress:experiment-notebook:v1`.
+
+Rename changes only metadata. Duplicate creates a new ID and parent reference,
+with independent copies of the original inputs and receipt. Replay restores the
+exact saved checkpoints without a provider request; clicking Run explicitly
+requests fresh execution and rejects a changed provider version. Inputs never
+silently replace a saved result. Comparison shows final recorded edited-world
+metrics only when engine, version, seed, population, horizon and final checkpoint
+match; unavailable metrics stay unavailable. These records are local, unsigned
+model observations, not verified civic records, forecasts or legal amendments.
+
+Storage is bounded to twelve records and eight million serialized characters.
+Quota/read/schema failures leave existing storage unchanged. Another tab’s edits
+require reload before writing. Clearing browser site data removes notebooks;
+receipt downloads allow retaining a copy, but import is not implemented. No
+private entries, household selections or ballots are added to run inputs.
+HouseholdImpacts remains a readiness preview and ScoreInspector remains score
+arithmetic; each now explicitly states unavailable simulation provenance and its
+major uncertainty instead of inventing compatible effects or receipts.
+
+Focused DOM tests cover persisted immutable results, rename/duplicate/compare,
+reload and deterministic recorded replay, storage corruption, quota failure,
+cross-tab conflicts, input/version/source mismatch and existing loading/cancel/
+request failures. `scripts/verify-experiment-notebook.ts` provides a server-free
+Playwright fixture harness for keyboard, touch at 320px and reduced motion. Run
+with `PLAYWRIGHT_MODULE` pointing to an installed Playwright module, optionally
+`CHROMIUM_PATH` pointing to a browser executable. It uses synthetic test receipts
+and cannot establish real provider determinism or production CORS parity. See
+`docs/reviews/SHE-633.md` for executed checks and outstanding acceptance.
