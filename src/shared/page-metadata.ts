@@ -1,3 +1,4 @@
+import { TOPIC_ORIENTATIONS } from './topic-orientation';
 import { TOPICS } from './topics';
 import { CIVIC_STAGES } from './civic-stages';
 export const SITE_URL = "https://civic-synthesis.fly.dev";
@@ -7,7 +8,7 @@ export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen propos
 export const PAGE_TITLES: Record<string, string> = {
   "/bills": "100 Bills for Human Flourishing",
   "/topics": "Topic hubs",
-  ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),
+  ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, TOPIC_ORIENTATIONS[t.id]?.title ?? `${t.label} topic hub`])),
   "/account": "Participation & privacy",
   "/map": "County map",
   "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",

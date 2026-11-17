@@ -1,3 +1,6 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createElement } from 'react';
+import { TOPIC_ORIENTATIONS, TopicOrientation } from '../shared/topic-orientation';
 import { billCollection } from '../shared/bill-catalog';
 import { CIVIC_STAGES, STAGES } from '../shared/civic-stages';
 import { buildIdentity } from "./build-identity";
@@ -55,8 +58,11 @@ export function renderPage(shell: string, path: string, proposals: CitizenPropos
   const bill = billCollection.bills.find(b => path === `/bills/${b.id}`);
   const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
   const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
-  const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
+  const topicId = path.startsWith('/topics/') ? path.slice('/topics/'.length) : '';
+  const orientation = TOPIC_ORIENTATIONS[topicId];
+  const description = orientation ? orientation.description : bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
   let html = shell.replace(/<title>[^<]*<\/title>/, metadata(title, description, path));
+  if (orientation) html = html.replace('<div id="root"></div>', `<div id="root"><main><h1>${escapeHTML(orientation.title)}</h1>${renderToStaticMarkup(createElement(TopicOrientation, { id: topicId }))}</main></div>`);
   if (found && path !== '/privacy') html = html.replace('</head>', `<script type="speculationrules">${JSON.stringify(speculationRules(path))}</script></head>`);
   if (path.startsWith("/live/")) html = html.replace("</head>", '<meta name="robots" content="noindex,nofollow"></head>');
   if (path === "/privacy") html = html.replace('<div id="root"></div>', PRIVACY_HTML).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "");

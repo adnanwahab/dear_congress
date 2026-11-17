@@ -1,3 +1,4 @@
+import { TopicOrientation } from '../shared/topic-orientation';
 import { useEffect, useState } from 'react';
 import { TOPICS } from '../shared/topics';
 import { topicById, topicStageUrl, type TopicHubData } from '../shared/topic-hubs';
@@ -36,6 +37,7 @@ export function TopicHubs({ request }: { request: <T>(path: string) => Promise<T
   const samples = items.filter(i => i.topic === topic?.label && sampleMatchesJurisdiction(i.id, jurisdiction.value));
   return <main className="topic-hubs"><CivicHeader stage="Topics" /><h1>{topic ? `${topic.label} topic hub` : 'Topic hubs'}</h1>
     <p>Follow a topic across experiences, needs, competing proposals and evidence. Missing stages remain visible.</p>
+    <TopicOrientation id={id} />
     <form role="search" onSubmit={e => e.preventDefault()}><label>Search topics<input type="search" value={query} onChange={e => {
       const value = e.target.value; setQuery(value); const url = new URL(window.location.href);
       if (value) url.searchParams.set('q', value); else url.searchParams.delete('q');

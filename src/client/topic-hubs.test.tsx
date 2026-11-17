@@ -110,3 +110,33 @@ test('hub UI keeps missing evidence explicit, scopes samples and recovers search
     await window.happyDOM.close();
   }
 });
+
+test('four orientation paths render distinct metadata and usable fictional guidance without JavaScript', async () => {
+  const { TOPIC_ORIENTATIONS } = await import('../shared/topic-orientation');
+  const { Window } = await import('happy-dom');
+  expect(Object.keys(TOPIC_ORIENTATIONS).sort()).toEqual(['childcare', 'climate', 'housing', 'transit']);
+  expect(new Set(Object.values(TOPIC_ORIENTATIONS).map(p => p.question)).size).toBe(4);
+  for (const [id, page] of Object.entries(TOPIC_ORIENTATIONS)) {
+    const response = renderPage('<html><head><title>test</title></head><body><div id="root"></div></body></html>', `/topics/${id}`, []);
+    expect(response.status).toBe(200);
+    const window = new Window();
+    try {
+      window.document.write(await response.text());
+      const doc = window.document;
+      expect(doc.title).toBe(`${page.title} | Civic Synthesis`);
+      for (const selector of ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']) {
+        expect(doc.querySelector(selector)?.getAttribute('content')).toBe(page.description);
+      }
+      expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`https://civic-synthesis.fly.dev/topics/${id}`);
+      const section = doc.querySelector('[aria-label="Topic orientation"]')!;
+      expect(section.querySelector('h2')?.textContent).toBe(page.question);
+      expect(Array.from(section.querySelectorAll('li'), li => li.textContent)).toEqual([...page.scenarios]);
+      expect(section.textContent).toContain('fictional');
+      expect(section.textContent).toContain(page.caveat);
+      expect(section.textContent).toContain('non-binding beta');
+      expect(section.querySelectorAll('a').length).toBe(1);
+      expect(section.querySelector('a')?.getAttribute('href')).toBe(`/needs?topic=${id}`);
+      expect(sitemap([])).toContain(`/topics/${id}`);
+    } finally { await window.happyDOM.close(); }
+  }
+});

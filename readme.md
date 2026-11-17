@@ -716,7 +716,12 @@ never used to infer locality. Draft and explicit publication flows are unchanged
 ## Topic hubs
 
 Open `/topics` to search the existing taxonomy, or share `/topics/transit`,
-`/topics/housing` and `/topics/childcare` directly. Topic chips on sample cards
+`/topics/housing`, `/topics/childcare` and `/topics/climate` directly. These four
+paths include a distinct orientation question, two explicitly fictional scenarios,
+source caveats and one primary next step to compare needs and alternatives. Shared
+editorial copy and distinct title/description metadata render on the server before
+JavaScript or API data loads. The same content is shown to every visitor; no
+political or personal targeting is used. Topic chips on sample cards
 open hubs; filter controls also offer hub links. Hubs display stored sample
 extraction lineage and catalog policy alternatives separately from fictional
 workflow proposals and their background references. Topic association alone is
