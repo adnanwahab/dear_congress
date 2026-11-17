@@ -28,7 +28,7 @@ for (const stage of ['published', 'feed', 'votes'] as const) {
   };
   const root = createRoot(container as any);
   await act(async () => { root.render(<WorkflowScreen stage={stage} request={request} />); });
-  assert.match(container.textContent!, /Unsupported saved locality/);
+  assert.match(container.textContent!, /Showing All jurisdictions/, 'Shared proposal context overrides saved locality');
   assert.match(container.textContent!, /Could not load sample proposals/);
   await change('Texas');
   failed = false;

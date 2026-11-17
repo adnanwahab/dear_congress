@@ -84,3 +84,55 @@ test('browsing never votes; only acknowledged submissions confirm, with retry an
     await dom.happyDOM.close();
   }
 });
+
+
+test('copied stage URLs restore public context in a fresh browser without sharing advisory choices', async () => {
+  const dom = new Window({ url: 'http://localhost/feed' });
+  const keys = ['window', 'document', 'navigator', 'HTMLElement', 'Element', 'Node', 'Event', 'MouseEvent', 'localStorage', 'sessionStorage'];
+  const previous = new Map(keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  for (const key of keys) Object.defineProperty(globalThis, key, { configurable: true, value: key === 'window' ? dom : (dom as any)[key] });
+  (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+  const { act, createElement } = await import('react');
+  const { createRoot } = await import('react-dom/client');
+  const { fireEvent, within } = await import('@testing-library/dom');
+  const { default: WorkflowScreen } = await import('../src/client/WorkflowScreen');
+  const writes: unknown[] = [];
+  const request = async <T,>(path: string, body?: unknown): Promise<T> => {
+    if (body) writes.push(body);
+    return { items: DEMO_ITEMS, votes: { 'demo-transit': 1 }, updatedAt: '2026-11-13', closesAt: '2026-11-20' } as T;
+  };
+  try {
+    for (const stage of ['feed', 'draft', 'sponsors', 'outcomes'] as const) {
+      sessionStorage.clear(); localStorage.clear();
+      dom.history.replaceState(null, '', `/${stage}?topic=transit&proposal=demo-transit`);
+      // The recipient's saved scope and selection must not override the shared link.
+      localStorage.setItem('civic_browse_jurisdiction_v1', 'Houston');
+      sessionStorage.setItem('civic_demo_selection_v1', 'demo-housing');
+      document.body.innerHTML = '<div id="root"></div>';
+      let root = createRoot(document.getElementById('root')!);
+      await act(async () => { root.render(createElement(WorkflowScreen, { stage, request })); });
+      expect(document.querySelector('.workflow-detail-title')?.textContent ?? within(document.body).getByRole('region', { name: 'Proposal context' }).textContent).toContain(DEMO_ITEMS.find(i => i.id === 'demo-transit')!.title);
+      const copied = dom.location.href;
+      expect(Object.fromEntries(new URL(copied).searchParams)).toEqual({ topic: 'transit', proposal: 'demo-transit' });
+      expect(document.querySelector('.workflow-next')?.getAttribute('href')).toContain('topic=transit');
+      await act(async () => { root.unmount(); });
+      sessionStorage.clear(); localStorage.clear(); dom.history.replaceState(null, '', copied);
+      root = createRoot(document.getElementById('root')!);
+      await act(async () => { root.render(createElement(WorkflowScreen, { stage, request })); });
+      expect(dom.location.href).toBe(copied);
+      expect(document.body.textContent).toContain(DEMO_ITEMS.find(i => i.id === 'demo-transit')!.title);
+      await act(async () => { root.unmount(); });
+    }
+    // Filter-driven selection must also update the address bar on Feed.
+    dom.history.replaceState(null, '', '/feed'); sessionStorage.clear();
+    const root = createRoot(document.getElementById('root')!);
+    await act(async () => { root.render(createElement(WorkflowScreen, { stage: 'feed', request })); });
+    await act(async () => { fireEvent.change(within(document.body).getByRole('combobox', { name: 'Filter by topic' }), { target: { value: 'Transit' } }); });
+    expect(Object.fromEntries(new URL(dom.location.href).searchParams)).toEqual({ proposal: 'demo-transit', topic: 'transit' });
+    await act(async () => { root.unmount(); });
+    expect(writes).toEqual([]);
+  } finally {
+    for (const key of keys) { const descriptor = previous.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key); }
+    await dom.happyDOM.close();
+  }
+});

@@ -758,6 +758,10 @@ extraction lineage and catalog policy alternatives separately from fictional
 workflow proposals and their background references. Topic association alone is
 never presented as source derivation. Workflow links retain `topic` and
 `proposal`; the return link and browser history preserve the topic context.
+Feed also updates the address bar after filter-driven selection. A fresh shared
+proposal/topic link takes precedence over the recipient’s saved jurisdiction and
+proposal selection. Search text, advisory choices and sponsor drafts stay out of
+generated stage links. See `docs/reviews/SHE-846.md` for validation and limits.
 
 `GET /api/topics/:id` is a read-only, uncached projection. It only includes public,
 non-synthetic repository-seeded stories with existing taxonomy labels, and omits
