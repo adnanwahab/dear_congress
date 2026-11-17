@@ -42,6 +42,20 @@ for (const search of ['', '?proposal=sample%26one']) {
   assert(q().getByRole('heading', { name: 'Sponsor tracker' }));
 }
 assert(calls.every(path => path === '/api/demo'));
+// A prior workflow choice must not override the sample displayed on home.
+dom.happyDOM.setURL('http://localhost/');
+sessionStorage.clear();
+const samples = demoPayload({}, 'test');
+const displayed = samples.items[0]!;
+sessionStorage.setItem('civic_demo_selection_v1', samples.items[1]!.id);
+await act(async () => root.render(<Dashboard key="loaded" request={async <T,>() => samples as T} />));
+const start = q().getByRole('region', { name: 'Where would you like to start?' });
+const destination = within(start).getByRole('link', { name: 'Explore a proposal & advisory vote' }).getAttribute('href')!;
+assert.equal(destination, `/votes?proposal=${encodeURIComponent(displayed.id)}`);
+dom.happyDOM.setURL(`http://localhost${destination}`);
+await act(async () => root.render(<WorkflowScreen key="home-destination" stage="votes" request={async <T,>(path: string) => (path === '/api/state' ? { needs: [], user: { allocation: {} } } : samples) as T} />));
+assert.equal((q().getByRole('combobox', { name: 'Proposal', exact: true }) as HTMLSelectElement).value, displayed.id);
+sessionStorage.clear();
 // Follow the default vote destination: no chooser or additional navigation is needed.
 dom.happyDOM.setURL('http://localhost/votes');
 await act(async () => root.render(<WorkflowScreen stage="votes" request={async <T,>(path: string) => (path === '/api/state' ? { needs: [], user: { allocation: {} } } : demoPayload({}, 'test')) as T} />));
