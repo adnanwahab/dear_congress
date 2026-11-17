@@ -1,3 +1,4 @@
+import { attachGraphics, type GraphicsStats } from './graphics';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
@@ -376,6 +377,7 @@ export function NeedsGeoMap({
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const availability = useMapAvailability(styleUrl);
+  const [graphics, setGraphics] = useState<GraphicsStats | null>(null);
   const colorByNeed = useMemo(() => Object.fromEntries(needs.map((n, i) => [n.id, NEED_COLORS[i % NEED_COLORS.length]])), [needs]);
 
   const features = useMemo(() => cells
@@ -417,9 +419,11 @@ export function NeedsGeoMap({
   useEffect(() => {
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
+    let stopGraphics: (() => void) | undefined;
     availability.setStatus('loading');
     const attempt = mapAttempt(status => {
       if (status === 'unavailable') {
+        stopGraphics?.();
         mapRef.current?.remove?.();
         mapRef.current = null;
       }
@@ -435,6 +439,7 @@ export function NeedsGeoMap({
         zoom: 8,
       });
       mapRef.current = map;
+      stopGraphics = attachGraphics(map, window, setGraphics);
       map.addControl(new maplibre.NavigationControl({ visualizePitch: false }), "top-right");
       map.on("error", () => attempt.fail('resource'));
       map.on("idle", () => attempt.ready());
@@ -472,6 +477,7 @@ export function NeedsGeoMap({
     return () => {
       disposed = true;
       attempt.dispose();
+      stopGraphics?.();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
@@ -487,6 +493,7 @@ export function NeedsGeoMap({
   }, [features, simBoxes, availability.status]);
 
   return <>
+    {graphics && availability.status === 'ready' && <p className="muted s">Graphics: {graphics.tier} · {graphics.pixelRatio.toFixed(1)}× pixel density · {graphics.frameMs === null ? 'Waiting for active frame samples' : `${graphics.frameMs.toFixed(1)} ms per active frame`} · <a href="/account#graphics">Change quality</a></p>}
     <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional shared needs map" data-no-stage-swipe style={{ width: "100%", height: 320, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
   </>;
@@ -506,13 +513,16 @@ export function JurisdictionMap({
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const availability = useMapAvailability(styleUrl);
+  const [graphics, setGraphics] = useState<GraphicsStats | null>(null);
 
   useEffect(() => {
     if (!elRef.current || !styleUrl) return;
     let disposed = false;
+    let stopGraphics: (() => void) | undefined;
     availability.setStatus('loading');
     const attempt = mapAttempt(status => {
       if (status === 'unavailable') {
+        stopGraphics?.();
         mapRef.current?.remove?.();
         mapRef.current = null;
       }
@@ -523,6 +533,7 @@ export function JurisdictionMap({
       if (disposed || !attempt.active || !elRef.current) return;
       const map = new maplibre.Map({ container: elRef.current, style: styleUrl, center: [-95.37, 29.76], zoom: 6 });
       mapRef.current = map;
+      stopGraphics = attachGraphics(map, window, setGraphics);
       map.on("error", () => attempt.fail('resource'));
       map.on("idle", () => attempt.ready());
       map.on("load", () => {
@@ -538,6 +549,7 @@ export function JurisdictionMap({
     return () => {
       disposed = true;
       attempt.dispose();
+      stopGraphics?.();
       mapRef.current?.remove?.();
       mapRef.current = null;
     };
@@ -571,6 +583,7 @@ export function JurisdictionMap({
   }, [jurisdiction, pushingCells, availability.status]);
 
   return <>
+    {graphics && availability.status === 'ready' && <p className="muted s">Graphics: {graphics.tier} · {graphics.pixelRatio.toFixed(1)}× pixel density · {graphics.frameMs === null ? 'Waiting for active frame samples' : `${graphics.frameMs.toFixed(1)} ms per active frame`} · <a href="/account#graphics">Change quality</a></p>}
     <MapAvailability status={styleUrl ? availability.status : 'unavailable'} configured={!!styleUrl} retry={availability.retry} />
     <div ref={elRef} hidden={!styleUrl || availability.status === 'unavailable'} aria-label="Optional jurisdiction map" data-no-stage-swipe style={{ width: "100%", height: 240, borderRadius: 10, overflow: "hidden", border: "1px solid var(--line)" }} />
   </>;
