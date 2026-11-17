@@ -679,3 +679,13 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Optional fictional permit puzzle
+
+Choose **Play permit escape room** in the draft catalog, workflow screens or
+paused guided tour. Lantern City, its missing permits, conflicting checklist and
+deadline are fictional. Progress is held only in component memory; play never
+changes advisory participation or city services. Skip, Restart, Exit and the
+complete text solution are always available. The explanation links a City of
+Houston background source separately from the invented story. See
+[SHE-648 verification and remaining acceptance](docs/reviews/SHE-648.md).

@@ -1,0 +1,9 @@
+.permit-escape { margin-block: 16px; }
+.permit-escape dialog { box-sizing: border-box; width: min(720px, calc(100% - 24px)); max-height: 85dvh; overflow-y: auto; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius, 12px); padding: 24px; }
+.permit-escape dialog::backdrop { background: #0009; }
+.permit-escape article { padding: 12px; margin-block: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.permit-escape button { min-height: 44px; white-space: normal; margin: 4px; }
+.permit-escape summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.permit-escape .chip { white-space: normal; }
+.permit-actions { display: flex; flex-wrap: wrap; margin-top: 16px; }
+.permit-escape :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
