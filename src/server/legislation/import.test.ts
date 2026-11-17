@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseBill, readBills, refreshBill } from './import';
+import { parseBill, readBills, readLegislation, refreshBill } from './import';
 import { metadataFreshness } from '../../shared/legislation';
 // Synthetic Congress.gov-shaped fixtures, never published as fetched official evidence.
 const fixture = (overrides = {}) => JSON.stringify({ bill: { congress: 119, type: 'HR', number: '123', originChamber: 'House', title: 'Synthetic test bill', introducedDate: '2025-01-03', sponsors: [{ fullName: 'Synthetic sponsor' }], latestAction: { actionDate: '2025-01-03', text: 'Introduced in House' }, ...overrides } });
@@ -28,6 +28,8 @@ test('refresh archives exact bytes, preserves corrections and marks failures wit
   try {
     await refresh(fixture());
     const first = (await readBills(root))[0]!;
+    expect(first.jurisdiction).toBe('US');
+    expect(first.retrievedAt).toBe(first.checkedAt);
     expect(metadataFreshness(first, time.getTime() + 86400000)).toStartWith('Stale');
     expect(metadataFreshness(first, time.getTime() - 1)).toStartWith('Unavailable');
     time = new Date('2026-11-13T01:00:00Z');
@@ -40,6 +42,7 @@ test('refresh archives exact bytes, preserves corrections and marks failures wit
       await expect(refresh(raw)).rejects.toThrow('last-good');
       const retained = (await readBills(root))[0]!;
       expect(retained.checkedAt).toBe(corrected.checkedAt);
+      expect(retained.retrievedAt).toBe(corrected.retrievedAt);
       expect(retained.refreshFailed).toBe(true);
       expect(metadataFreshness(retained, time.getTime())).toStartWith('Refresh failed');
     }
@@ -52,8 +55,16 @@ test('empty archives have no invented evidence; HTTP errors retain an unavailabl
   const root = await mkdtemp(join(tmpdir(), 'bills-'));
   try {
     expect(await readBills(root)).toEqual([]);
-    await expect(refreshBill(root, 119, 'hr', 123, 'secret-test-key', (async () => new Response('rate limit', { status: 429 })))).rejects.toThrow();
+    await expect(refreshBill(root, 119, 'hr', 123, 'secret-test-key', (async () => new Response('rate limit', { status: 429 })), () => new Date('2026-11-17T00:00:00Z'))).rejects.toThrow();
     expect(await readBills(root)).toEqual([]);
+    expect(await readLegislation(root)).toEqual({ bills: [], unavailable: [{
+      id: 'congress-gov:119:hr:123', jurisdiction: 'US', congress: 119, type: 'hr', number: 123,
+      state: 'unavailable', attemptedAt: '2026-11-17T00:00:00.000Z',
+    }] });
+    await refreshBill(root, 119, 'hr', 123, 'secret-test-key', fetchRaw(fixture()), () => new Date('2026-11-17T01:00:00Z'));
+    const recovered = await readLegislation(root);
+    expect(recovered.unavailable).toEqual([]);
+    expect(recovered.bills[0]!.refreshFailed).toBe(false);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 test('fetch is restricted to identity-bound HTTPS detail endpoint, with redirect refusal and no credentials in archive', async () => {

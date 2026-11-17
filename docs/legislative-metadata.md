@@ -48,8 +48,8 @@ not a WORM archive or cryptographic proof of source authenticity.
 
 The latest attempt is ordered by attempt start time, so a late old response cannot
 replace a newer observation. Failed attempts never advance last-good check time;
-retained records show refresh failure. No prior success shows an unavailable/empty
-lane, never withdrawal. Metadata expires at 24 hours and age is recomputed in the
+retained records show refresh failure. No prior success produces an identity-only entry in the API’s `unavailable` array
+and an explicit unavailable card, never withdrawal or invented metadata. Metadata expires at 24 hours and age is recomputed in the
 browser every minute, including when no importer runs. The UI polls the read API
 once a minute, so another process's failure becomes visible at the next poll.
 Future/malformed check timestamps are unavailable. Cache age and upstream update
@@ -73,3 +73,22 @@ current-head approval, strict majority, fail-closed base/check allowlists and th
 existing kill switch. Main requires the three launch checks and human approval;
 remote protection and production overrides remain unverified. Human review and
 merge are required; tagged human-published releases remain separately gated.
+
+## SHE-880 pilot preparation (November 17, 2026)
+
+Successful read-only API records expose `jurisdiction: "US"` and `retrievedAt`.
+For compatibility with existing archives, `retrievedAt` equals the last successful
+attempt’s `checkedAt`: the UTC start of that retrieval attempt, not the upstream
+action date, response completion time or a full legal-status review. Failed
+attempts advance neither field. No archive migration or replacement is needed.
+The `bills` array and local `readBills` contract remain intact; the additive
+`unavailable` array contains requested identities with no successful archive,
+`state: "unavailable"` and `attemptedAt`. These entries have no title, action,
+retrievedAt, hash or official-evidence badge. A successful retry replaces that
+unavailable projection with validated metadata while retaining all attempt files.
+
+No three-record pilot is bundled or imported. The archive remains operator-owned
+and ignored by Git. This workspace lacks `CONGRESS_API_KEY` and cannot resolve
+the API host from the importer. Web-rendered source excerpts cannot substitute
+for the original JSON responses. See [SHE-880](reviews/SHE-880.md) for validation
+and remaining source/import/review requirements.
