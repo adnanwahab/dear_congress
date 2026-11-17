@@ -79,7 +79,22 @@ test('simulation first-load shows native accessible controls with explicit separ
 });
 
  test('malformed metric maps, actor identities and manifest bounds fail closed',()=>{
- for(const mutate of [(v:any)=>v.frames[0].baseline.metrics=null,(v:any)=>v.frames[0].baseline.actors=[{id:'a'},{id:'a'}],(v:any)=>v.manifest.seed=-1,(v:any)=>v.manifest.recordedCheckpoints=3,(v:any)=>v.frames[1].time=999]){
+ for(const mutate of [(v:any)=>v.frames[0].baseline.actors[0].activity={invented:'event'},(v:any)=>v.frames[0].baseline.metrics=null,(v:any)=>v.frames[0].baseline.actors=[{id:'a'},{id:'a'}],(v:any)=>v.manifest.seed=-1,(v:any)=>v.manifest.recordedCheckpoints=3,(v:any)=>v.frames[1].time=999]){
  const value=structuredClone(realShape);mutate(value);expect(()=>parseLawBehaviorReceipt(value)).toThrow();
  }
  });
+
+test('town replays exact recorded household occupancy without inventing buildings or events',async()=>{
+  const {TownDiorama}=await import('./TownDiorama');
+  const value=structuredClone(realShape);
+  value.engine='city';value.unit='month';
+  value.frames[1]!.edited.actors=[{id:'h0',unitId:'u12',unhoused:false}];
+  const parsed=parseLawBehaviorReceipt(value);
+  const render=()=>renderToStaticMarkup(<TownDiorama receipt={parsed} index={1} checkpointLink="/synth?seed=42&amp;checkpoint=15"/>);
+  const html=render();
+  expect(render()).toBe(html);
+  for(const text of ['u12','h0','seed 42','horizon 0–15','event IDs','not forecasts','Unavailable'])expect(html).toContain(text);
+  expect(html).toContain('Show list alternative');
+  expect(html).toContain('Inspectable recorded receipt');
+  expect(renderToStaticMarkup(<TownDiorama receipt={parsed} index={99} checkpointLink="/synth"/>)).toBe('');
+});

@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {TownDiorama} from './TownDiorama';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -77,7 +78,7 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
     for(const side of [frame.baseline,frame.edited]){
       if(!object(side.metrics)||Object.values(side.metrics).some(v=>!isFiniteNumber(v))||
         side.actors.some(a=>!object(a)||typeof a.id!=='string'||!a.id||a.id.length>100||
-          Object.values(a).some(v=>typeof v==='number'&&!Number.isFinite(v)))||
+          Object.values(a).some(v=>v!==null&&v!==undefined&&!(typeof v==='string'&&v.length<=500)&&typeof v!=='boolean'&&!(typeof v==='number'&&Number.isFinite(v))))||
         new Set(side.actors.map(a=>a.id)).size!==side.actors.length)throw Error('Invalid model metrics or actor identities.');
     }
     if(frame.time<data.manifest.start||frame.time>data.manifest.end)throw Error('Checkpoint outside the recorded horizon.');
@@ -186,9 +187,13 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   useEffect(()=>()=>{controller.current?.abort();generation.current++;},[]);
   useEffect(()=>{
     if(!playing||frames.length<2)return;
+    const preference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if(preference?.matches){setPlaying(false);return;}
+    const stop=()=>{if(preference?.matches)setPlaying(false);};
+    preference?.addEventListener('change',stop);
     const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))));
     const timer=window.setInterval(()=>setFrameIndex(old=>{if(old>=frames.length-1){setPlaying(false);return old;}return old+1;}),delay);
-    return()=>window.clearInterval(timer);
+    return()=>{window.clearInterval(timer);preference?.removeEventListener('change',stop);};
   },[playing,receipt]);
   function changedInput(nextLawId:number,nextStrength:number){
     generation.current++;controller.current?.abort();setPlaying(false);setBusy(false);
@@ -216,7 +221,10 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       if(parsed.law.number!==lawId||parsed.status==='completed'&&(parsed.manifest?.seed!==effectiveSeed||parsed.manifest?.population!==24||parsed.manifest?.implementationStrength!==strength/100))throw Error('The returned scenario does not match this request.');
       if(imported?.modelVersion&&parsed.status==='completed'&&parsed.manifest?.modelVersion!==imported.modelVersion)throw Error('Model version mismatch. The shared scenario cannot be reproduced by this provider version.');
       if(request!==generation.current)return;
-      setReceipt(parsed);setFrameIndex(parsed.frames.length?parsed.frames.length-1:0);
+      const checkpoint=new URLSearchParams(window.location.search).getAll('checkpoint');
+      const requested=checkpoint.length===1&&/^\d+(\.\d+)?$/.test(checkpoint[0]!)?Number(checkpoint[0]):NaN;
+      const found=parsed.frames.findIndex(frame=>frame.time===requested);
+      setReceipt(parsed);setFrameIndex(found>=0?found:parsed.frames.length?parsed.frames.length-1:0);
       const keys=validMetricKeys(parsed.frames);
       setMetric(defaultMetric(parsed.frames,keys));
       if(parsed.status==='completed'&&strength===100)setReference(old=>old&&old.law.number===lawId?old:parsed);
@@ -250,6 +258,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       </button>
     </fieldset>
     <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
+    {!receipt&&<p className="muted s">Source data mode: synthetic model request. Seed {effectiveSeed}; model version unavailable until a completed receipt; requested horizon {amendment.horizon} {amendment.clock}s. Major uncertainty: reviewed model assumptions are illustrative and unvalidated for real-world effects.</p>}
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}
@@ -274,9 +283,11 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
             aria-label="Recorded simulation time"/>
         </label>
         <button type="button" disabled={frames.length<2} onClick={()=>{
+          if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){setPlaying(false);setFrameIndex(old=>Math.min(old+1,frames.length-1));return;}
           if(playing)setPlaying(false);else{if(frameIndex===frames.length-1)setFrameIndex(0);setPlaying(true);}
         }}>{playing?'Pause recorded playback':'Play recorded behavior'}</button>
       </div>
+      <TownDiorama receipt={receipt} index={frameIndex} checkpointLink={'/synth?'+civicLawQuery(context)+'&checkpoint='+encodeURIComponent(String(frame?.time))}/>
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>

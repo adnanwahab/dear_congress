@@ -39,3 +39,12 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.town-diorama{border:1px solid #96b4c4;border-radius:12px;padding:12px;margin:12px 0;overflow-wrap:anywhere}
+.town-diorama button,.town-diorama>a{display:inline-block;min-height:44px;padding:10px;margin:4px}
+.town-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.town-grid ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;list-style:none;padding:0}
+.town-grid li{border:1px solid #96b4c4;border-top:6px solid #175875;border-radius:6px;padding:8px;background:#fff;min-width:0}
+.town-diorama summary{min-height:44px;cursor:pointer}
+.town-diorama dl{font-size:.8rem}.town-diorama dd{margin:0 0 6px}
+@media(max-width:600px){.town-grid{grid-template-columns:1fr}.town-grid ul{grid-template-columns:repeat(2,minmax(0,1fr))}}

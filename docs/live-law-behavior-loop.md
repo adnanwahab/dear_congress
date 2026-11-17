@@ -136,3 +136,30 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+### SHE-638 miniature town candidate
+
+The native viewer includes a low-GPU schematic town using ordinary HTML actor
+slots, with a list alternative. Slots show only sampled actor IDs and available
+activity/occupancy/status fields from the selected paired checkpoint. They do not
+represent buildings or geographic locations. No event IDs, building geometry,
+causal explanation or intermediate motion is invented from the v1 receipt.
+The original recorded position maps remain available separately.
+
+Each town displays synthetic source mode, seed, model version, receipt horizon
+and major uncertainty. Its expandable JSON retains the whole response for
+inspection. Checkpoint links preserve the existing allowlisted scenario recipe
+and add `checkpoint=<recorded time>`; opening the link does not run a model.
+An explicit run restores an exact matching time, otherwise the final checkpoint.
+Model-version mismatch still fails closed. This is provider-dependent replay,
+not an offline deterministic engine guarantee. Reduced-motion playback advances
+one checkpoint per press; changing that preference stops ongoing playback.
+The household preset and score inspector explicitly disclose their absent
+simulator provenance rather than assigning this sandbox's results to a package.
+
+SHE-638 remains a human review candidate. Browser keyboard/touch/visual acceptance
+and production provider parity must be verified before acceptance. Existing
+configured governance remains disabled/dry-run, quorum 10, 24-hour exposure,
+current-head approval, fail-closed base/check allowlists and active kill switch.
+No production state, ballots, repository identities, merge controls or releases
+are changed by this UI increment.

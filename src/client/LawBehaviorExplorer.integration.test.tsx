@@ -53,6 +53,31 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(host.textContent).toContain('Travel mode: walk → bus');
     expect(host.querySelectorAll('polyline').length).toBe(2);
     expect(host.textContent).toContain('minute 30');
+    let town=getByRole(host,'region',{name:'Miniature synthetic town'});
+    expect(town.textContent).toContain('seed 42');
+    expect(town.textContent).toContain('population.v1');
+    expect(town.textContent).toContain('horizon 0–30');
+    const recorded=town.querySelector('pre')!.textContent;
+    await act(async()=>getByRole(town,'button',{name:'Show list alternative'}).click());
+    expect(town.querySelector('.town-list')).not.toBeNull();
+    expect(town.querySelector('pre')!.textContent).toBe(recorded);
+    const checkpoint=getByRole(town,'link',{name:'Inspect seed and this recorded time'}) as HTMLAnchorElement;
+    expect(new URL(checkpoint.href).searchParams.get('checkpoint')).toBe('30');
+    // Reopening an inspectable link does not run automatically; an explicit run restores time.
+    browser.location.href=checkpoint.href.replace('checkpoint=30','checkpoint=15');
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+    town=getByRole(host,'region',{name:'Miniature synthetic town'});
+    expect(town.textContent).toContain('minute 15');
+    expect(town.querySelector('pre')!.textContent).toBe(recorded);
+    requests.pop();
+    const originalMedia=window.matchMedia;
+    window.matchMedia=(()=>({matches:true,addEventListener(){},removeEventListener(){}})) as any;
+    try{
+      await act(async()=>getByRole(host,'button',{name:'Play recorded behavior'}).click());
+      expect(getByRole(host,'button',{name:'Play recorded behavior'})).toBeTruthy();
+      expect(town.textContent).toContain('minute 30');
+    }finally{window.matchMedia=originalMedia;}
+
     const timeSlider=getByRole(host,'slider',{name:'Recorded simulation time'}) as HTMLInputElement;
     await act(async()=>fireEvent.change(timeSlider,{target:{value:'0'}}));
     expect(host.textContent).toContain('minute 0');
@@ -88,6 +113,7 @@ test('bounded request, cancellation, response identity and unsupported context n
   await act(async()=>root.render(<LawBehaviorExplorer seed={42} hblOrigin="https://happybearlandia.fly.dev"/>));
   await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
   expect(host.textContent).toContain('45-second limit');
+  expect(host.querySelector('.town-diorama')).toBeNull();
   await act(async()=>timeout!());
   expect(host.textContent).toContain('exceeded the 45-second limit');
   expect((getByRole(host,'button',{name:'Run two futures'}) as HTMLButtonElement).disabled).toBe(false);
