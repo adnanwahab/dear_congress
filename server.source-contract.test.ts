@@ -50,7 +50,7 @@ test('source → advisory ballot → frozen simulation keeps source lanes and nu
     expect(before.verified).toEqual({ status: 'unavailable' });
     expect(Object.values(before.browserCounts).every(c => c.support + c.oppose + c.unsure === 0)).toBe(true);
     const legislation = await (await request('/api/legislation')).json();
-    expect(legislation).toEqual({ coverage: 'metadata-only', bills: [official] });
+    expect(legislation).toEqual({ coverage: 'metadata-only', bills: [official], unavailable: [] });
     expect(official).not.toHaveProperty('legalStatus');
     expect(official).not.toHaveProperty('effectiveDate');
     const measured = await (await request('/api/outcomes')).json();
