@@ -1,7 +1,8 @@
 import { expect, test } from "bun:test";
+import counties from "../client/data/counties.json";
 import { buildBrowser, transitionShell } from "./browser-build";
 
-test("production shell stays under budget and defers MapLibre JS and CSS", async () => {
+test("production shell stays under budget and defers county geometry, map modules and MapLibre JS/CSS", async () => {
   const build = await buildBrowser(true);
   expect(build.success).toBe(true);
   const outputs = new Map(await Promise.all(build.outputs.map(async output => [
@@ -28,8 +29,26 @@ test("production shell stays under budget and defers MapLibre JS and CSS", async
     const asset = outputs.get(path)!;
     gzipBytes += Bun.gzipSync(await asset.output.arrayBuffer()).length;
     expect(asset.text).not.toContain("maplibregl-");
+    expect(asset.text).not.toContain(counties[0]!.path);
+    expect(asset.text).not.toContain("Hypothetical model requests changes");
+    expect(asset.text).not.toMatch(/deck\.gl|@deck\.gl/);
   }
   expect(gzipBytes).toBeLessThan(250_000);
+  const county = [...outputs.entries()].find(([path, asset]) => path.endsWith(".js") && asset.text.includes(counties[0]!.path));
+  expect(county).toBeDefined();
+  expect(initial.has(county![0])).toBe(false);
+  // Geometry may live in a shared static dependency of the lazy MapScreen chunk.
+  const deferred = new Set<string>();
+  function visitDeferred(path: string) {
+    if (deferred.has(path)) return;
+    deferred.add(path);
+    const asset = outputs.get(path);
+    if (!asset) return;
+    for (const dependency of scanner.scanImports(asset.text)) visitDeferred(dependency.path);
+  }
+  for (const path of dynamic) visitDeferred(path);
+  expect(deferred.has(county![0])).toBe(true);
+  expect(html).not.toMatch(/modulepreload|prefetch/);
   const map = [...outputs.entries()].find(([path, asset]) => path.endsWith(".js") && asset.text.includes("maplibregl-"));
   expect(map).toBeDefined();
   expect(initial.has(map![0])).toBe(false);
