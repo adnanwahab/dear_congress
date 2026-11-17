@@ -39,3 +39,10 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.simulation-batch { border-top: 1px solid currentColor; margin-top: 1rem; padding-top: 1rem; overflow-wrap: anywhere; }
+.simulation-batch button, .simulation-batch select, .simulation-batch summary, .simulation-batch a { min-height: 44px; }
+.simulation-batch button { margin: .3rem; white-space: normal; }
+.simulation-batch select { max-width: 100%; }
+.simulation-batch li { margin-block: .7rem; }
+.simulation-batch pre { max-height: 24rem; overflow: auto; }

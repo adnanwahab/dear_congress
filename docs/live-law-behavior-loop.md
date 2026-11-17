@@ -136,3 +136,33 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## SHE-640: bounded page-local batch console
+
+The reviewed mechanism sandbox can queue 1–8 consecutive explicit seeds at the
+current allowlisted law/strength, fixed population 24 and reviewed horizon.
+The console estimates requests, paired worlds, actor instances and the 45-second
+per-request deadline budget; CPU cost remains unknown. One batch request is
+active at a time, and the single-run controls are disabled during batch work.
+This is a page-local cap; provider admission limits remain authoritative across
+visitors/tabs. Cancellation aborts the active request, cancels pending runs,
+and keeps completed receipts. Abort does not prove provider computation stopped.
+Retry waits for settlement and submits only unfinished runs, manually.
+
+The canonical deduplication key includes schema, provider origin, explicit seeds,
+reviewed parameters, revision and requested model version. An identical current
+batch cannot be resubmitted; retries preserve completed receipts. Results from
+an old selection stay labeled with their original inputs. Closing the page loses
+the queue. This is not a durable distributed job service.
+
+Only completed, paired receipts with matching inputs, full start/end checkpoints,
+fixed horizon/unit and model version are retained. The first valid receipt pins
+the model version for remaining runs and retries. Version drift fails explicitly.
+Progress is receipt counts; no interpolated compute progress or invented partial
+within-run results. A batch with failed/canceled runs never says all completed.
+The JSON receipt bundle includes provider, key, inputs, statuses, attempts and
+recorded results. Replay links restore each completed seed and pinned model
+without autorun; the provider must still offer that model version to reproduce it.
+No arbitrary legal text, household preset, private journal, cookie or vote is sent.
+Household and scoring surfaces explain their distinct source/model availability;
+no household effects or score changes are inferred from these experiments.

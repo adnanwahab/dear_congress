@@ -105,3 +105,35 @@ test('bounded request, cancellation, response identity and unsupported context n
   await browser.happyDOM.close();
  }
 });
+
+test('batch console queues explicit seeds, exposes partial failures and replays without automatic execution',async()=>{
+ const {SimulationBatchConsole}=await import('./SimulationBatchConsole');
+ const browser=new Window({url:'https://civic.example/synth'});
+ const globals={window:browser,document:browser.document,navigator:browser.navigator,IS_REACT_ACT_ENVIRONMENT:true};
+ const previous=Object.fromEntries(Object.keys(globals).map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
+ for(const [key,value] of Object.entries(globals))Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});
+ const host=document.createElement('main');document.body.append(host);
+ const {createRoot}=await import('react-dom/client');const root=createRoot(host);
+ let attempts=0;
+ try{
+  await act(async()=>root.render(<SimulationBatchConsole context={{lawId:83,seed:42,population:24,implementationStrength:1,revision:1}} origin="https://model.example" disabled={false} run={async(c)=>{attempts++;if(c.seed===43&&attempts===2)throw Error('offline');const r=receipt(1);return {...r,manifest:{...r.manifest!,seed:c.seed}};}}/>));
+  expect(attempts).toBe(0);
+  const queue=getByRole(host,'button',{name:'Queue batch'}) as HTMLButtonElement;
+  expect(queue.tabIndex).toBe(0);
+  // Native click path is shared by keyboard Enter/Space and touch; the console has no animation/timers for progress.
+  await act(async()=>queue.click());
+  expect(host.textContent).toContain('2/3 completed receipts');
+  expect(host.textContent).toContain('1 failed');
+  expect(host.textContent).toContain('offline');
+  expect(queue.disabled).toBe(true);
+  expect(getByRole(host,'link',{name:'Replay seed 42'}).getAttribute('href')).toContain('modelVersion=population.v1');
+  await act(async()=>getByRole(host,'button',{name:'Retry unfinished runs'}).click());
+  expect(attempts).toBe(4);
+  expect(host.textContent).toContain('3/3 completed receipts');
+  expect(getByRole(host,'button',{name:'Retry unfinished runs'}).hasAttribute('disabled')).toBe(true);
+  expect(host.textContent).toContain('Major uncertainty');
+ }finally{
+  await act(async()=>root.unmount());await browser.happyDOM.close();
+  for(const [key,value] of Object.entries(previous)){if(value)Object.defineProperty(globalThis,key,value);else Reflect.deleteProperty(globalThis,key);}
+ }
+});

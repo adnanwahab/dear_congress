@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import {SimulationBatchConsole} from './SimulationBatchConsole';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -85,6 +86,24 @@ export function parseLawBehaviorReceipt(value:unknown):LawBehaviorReceipt {
   return data as LawBehaviorReceipt;
 }
 
+/** Batch transport uses exactly the reviewed fields; caller context is never spread into the body. */
+export async function requestBatchBehavior(context:CivicLawContext,origin:string,signal:AbortSignal){
+  civicLawQuery(context);
+  const response=await fetch(new URL('/api/law-behavior',origin),{
+    method:'POST',credentials:'omit',headers:{'content-type':'application/json'},signal,
+    body:JSON.stringify({lawId:context.lawId,seed:context.seed,population:24,implementationStrength:context.implementationStrength})
+  });
+  const bytes=await response.text();
+  if(bytes.length>2_000_000)throw Error('Model receipt exceeds the display limit.');
+  if(!response.ok)throw Error(`Model request failed (HTTP ${response.status}).`);
+  const receipt=parseLawBehaviorReceipt(JSON.parse(bytes));
+  const m=receipt.manifest;
+  const horizon=structuredAmendment(context);
+  if(receipt.law.number!==context.lawId)throw Error('Returned law does not match this run.');
+  if(receipt.status==='completed'&&(!m||m.seed!==context.seed||m.population!==24||m.implementationStrength!==context.implementationStrength||m.start!==0||m.end!==horizon.horizon||receipt.unit!==horizon.clock||receipt.frames[0]?.time!==0||receipt.frames.at(-1)?.time!==horizon.horizon||context.modelVersion&&m.modelVersion!==context.modelVersion))throw Error('Receipt inputs, model version or complete horizon do not match this run.');
+  return receipt;
+}
+
 export function actualActorDifferences(frame:LawBehaviorFrame|undefined,engine:string|undefined){
   if(!frame)return[];
   const after=new Map(frame.edited.actors.map(row=>[row.id,row]));
@@ -155,6 +174,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
   const [selectedActor,setSelectedActor]=useState('');
   const [receipt,setReceipt]=useState<LawBehaviorReceipt|null>(null);
   const [reference,setReference]=useState<LawBehaviorReceipt|null>(null);
+  const [batchBusy,setBatchBusy]=useState(false);
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dirty,setDirty]=useState(true);
   const [frameIndex,setFrameIndex]=useState(0),[playing,setPlaying]=useState(false);
   const [metric,setMetric]=useState('');
@@ -231,8 +251,9 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    <p className="muted s">Source data mode: synthetic. Seed {effectiveSeed}; model version {receipt?.manifest?.modelVersion||imported?.modelVersion||'unavailable until run'}; horizon {amendment.horizon} {amendment.clock}s. Major uncertainty: uncalibrated assumptions; real-world causal effects are unvalidated.</p>
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
-    <fieldset disabled={busy||invalidContext} className="civic-law-controls">
+    <fieldset disabled={busy||batchBusy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
       <label>Reviewed law
         <select value={lawId} onChange={e=>{const id=Number(e.target.value);
@@ -251,6 +272,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     </fieldset>
     <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
+    <SimulationBatchConsole context={context} origin={hblOrigin} disabled={busy||invalidContext} onBusy={setBatchBusy} run={(input,signal)=>requestBatchBehavior(input,hblOrigin,signal)}/>
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}
     {error&&<p role="alert" className="note warn">Model data unavailable: {error}. The paired snapshot links above remain available.</p>}
