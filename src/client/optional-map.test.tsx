@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Window } from 'happy-dom';
 import { NeedsGeoMap, JurisdictionMap, NeedsView } from './App';
-import { mapAttempt } from './optional-map';
+import { logMapFailure, mapAttempt } from './optional-map';
 
 for (const View of [NeedsGeoMap, JurisdictionMap]) {
   test(`${View.name}: missing, configured, invalid tiles, retry and cleanup`, async () => {
@@ -126,4 +126,26 @@ test('rankings and jurisdiction alternatives remain text without a map', () => {
   expect(html).toContain('Real voices');
   expect(html).toContain('Simulated residents');
   expect(html).not.toContain('MAP_STYLE_URL');
+});
+
+
+test('map diagnostics identify requests without provider details; disabled maps retain evidence', () => {
+  const messages: string[] = [];
+  const warn = console.warn;
+  console.warn = message => messages.push(String(message));
+  try {
+    const first = logMapFailure('configuration');
+    const second = logMapFailure('resource');
+    expect(first).not.toBe(second);
+    expect(messages[0]).toContain(`requestId=${first} reason=configuration`);
+    expect(messages[1]).toContain(`requestId=${second} reason=resource`);
+  } finally { console.warn = warn; }
+  const props = { cells: [{ lat: 29, lng: -95, real: { count: 3, perNeed: [] }, simulated: { count: 2, perNeed: [] } }], mode: 'both', needFilter: 'all', needs: [] } as any;
+  const html = renderToStaticMarkup(<NeedsGeoMap {...props} />);
+  expect(html).toContain('Maps are disabled because no map provider is configured.');
+  expect(html).toContain('Submitted accounts · 3 · grid 29.00, -95.00');
+  expect(html).toContain('Simulated estimates · 2 · grid 29.00, -95.00');
+  const failed = renderToStaticMarkup(<NeedsGeoMap {...props} cells={[]} dataError />);
+  expect(failed).toContain('Geographic evidence could not load.');
+  expect(failed).not.toContain('No geographic evidence available for this need');
 });
