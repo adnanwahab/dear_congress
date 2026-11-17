@@ -679,3 +679,12 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Public finance teaching explorer
+
+`/bills?finance=1` opens a static agency/program waterfall with an equivalent
+low-power text view. All amounts and agencies are explicitly hypothetical; no
+verified cross-government accounting data is registered. Search, government level,
+selection and expansion are shareable query state. Internal transfers are excluded
+from final spending, and unresolved coverage remains explicit. See
+[public finance scope and validation](docs/public-finance.md).

@@ -1,0 +1,8 @@
+.finance-explorer { margin-block: 2rem; padding: 1rem; border: 1px solid currentColor; }
+.finance-explorer label { display: block; margin-block: 1rem; }
+.finance-explorer input[type=search], .finance-explorer select { display: block; max-width: 100%; }
+.finance-explorer article { border-block-start: 1px solid currentColor; padding-block: 1rem; overflow-wrap: anywhere; }
+.finance-explorer button:focus-visible, .finance-explorer input:focus-visible, .finance-explorer select:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.finance-track { height: 1rem; border: 1px solid currentColor; }
+.finance-track span { display: block; height: 100%; background: currentColor; }
+@media (prefers-reduced-motion: reduce) { .finance-explorer *, .finance-explorer { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
