@@ -679,3 +679,14 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Disconfirmation lab
+
+The native `/synth` law sandbox includes a local proposed-test planner. Visitors
+record a hypothesis, measurable falsifier with units/comparison/timing, proposed
+source and numeric failure threshold. A deterministic `civic-proposed-test.v1`
+receipt binds the plan to the allowlisted scenario, revision, seed, model version
+(or explicitly unavailable version), fixed horizon and major uncertainty.
+Nothing executes visitor text or collects evidence. All plans await review;
+changing the scenario clears the planner. Copy the JSON before leaving.
+See [SHE-644 review and validation](docs/reviews/SHE-644.md).

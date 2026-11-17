@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
+import { DisconfirmationLab } from './DisconfirmationLab';
 import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
@@ -250,6 +251,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
       </button>
     </fieldset>
     <p className="muted s">Reviewed amendment: law {lawId}, {amendment.parameterKey}, {amendment.originalValue} → {amendment.editedValue} {amendment.units}; revision {revision}. Seed {effectiveSeed}; {amendment.horizon} {amendment.clock}s. Synthetic draft only; no legal text or vote is changed.</p>
+    <DisconfirmationLab key={JSON.stringify(context)} context={context} />
     {busy&&<p role="status">Requesting recorded paired worlds (45-second limit)… <button type="button" onClick={()=>{generation.current++;controller.current?.abort();setBusy(false);setDirty(true);setError('Run canceled. You can retry.');}}>Cancel run</button></p>}
     <details><summary>What this amendment models</summary><p>This is a separate reviewed mechanism sandbox: your frozen civic package is not automatically applied. Native React displays actual synthetic HBL model receipts, not screenshots. The control edits a modeled assumption, not the text or legal status of a law.</p><pre className="civic-law-draft">{JSON.stringify(amendment,null,2)}</pre><p>Only this allowlisted parameter is modeled. Arbitrary legal prose has no reviewed simulation mechanism. <a href="/proposals/new">Write a discussion proposal</a> using the existing proposal flow.</p></details>
     {dirty&&<p className="muted s" role="status">The input has changed. Run the model to see recorded behavior; previous results are not reused.</p>}

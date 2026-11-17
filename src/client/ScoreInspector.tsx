@@ -7,6 +7,7 @@ export function ScoreInspector({ pkg }: { pkg: PackageResult }) {
   return <details className="why">
     <summary>Why this plan?</summary>
     <p>Advisory prototype · {audit.version}. Costs and catalog evidence are illustrative assumptions, not verified predictions. Support describes this response’s voices; simulated residents are not verified voters.</p>
+    <p>Source data mode: response scoring inputs (illustrative catalog and participating voices). Seed: unavailable; model version: {audit.version}; horizon: unavailable (score arithmetic only). Major uncertainty: scores cannot establish causal policy effects.</p>
     <p>Base score = sum(raw × weight ÷ divisor) − change penalty + rounding adjustment. Scores use Math.round(x × 1000) ÷ 1000. Display rounding is applied last; use the exact numeric inputs below to reproduce within 1e-9. Selected rank adds the published stability bonus.</p>
     <p>Fairness is an opposition proxy: clamp(1 − 2.5 × strong opposition), rounded to three decimals. It does not measure distributional fairness. Evidence uses the greater of catalog evidence and available impact, clamped to [0,1]. Missing measured impact defaults to zero in scoring; it is not verified zero impact. No confidence interval is available.</p>
     <p>Package spend ${pkg.totalCost}B / ${pkg.budget}B. Greedy selection also applies rights, support, per-need, stability, persistence and churn rules; score order alone does not determine inclusion. This view does not claim global optimality or a budget decision trace.</p>
