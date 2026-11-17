@@ -122,3 +122,26 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Governance prism (SHE-724)
+
+Catalog detail and the Dashboard offer Cost, Law, Time and Lived impact lenses.
+Topic sample links open the Dashboard with the same stable sample/topic IDs.
+Catalog HFL identities never map implicitly to engine or official bill identities.
+All four lenses currently lack reviewed evidence: each says Missing data. Law and
+lived-impact panels optionally quote existing text as hypothetical draft context.
+Catalog provenance retains collection/version and SHA-256 revision; sample panels
+reuse ProposalProvenance, including its stale/unknown source check warning.
+Background sources do not establish policy authority or effects.
+
+Native buttons select or rotate lenses without moving focus. The `lens=0..3`
+query and `prism=static` mode preserve existing search/category/proposal/topic
+parameters; popstate restores the lens and Dashboard selection. Static mode hides
+the decorative rotation only, retaining all navigation and selection controls.
+Reduced motion disables rotation. There is no continuous rendering, polling or
+GPU/canvas dependency in the prism itself. Existing search remains available.
+
+Focused DOM tests exercise empty selection, all missing lenses, stale evidence,
+static mode, focus and history notifications. The Playwright catalog suite adds
+native back/forward, keyboard and reduced-motion checks; execution still requires
+a runner allowing a local server. This is a review candidate, not acceptance.

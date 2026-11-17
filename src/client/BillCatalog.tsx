@@ -1,3 +1,4 @@
+import { GovernancePrism } from './GovernancePrism';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
@@ -26,7 +27,8 @@ export default function BillCatalog() {
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   function update(q: string, c: string) {
-    const next = new URLSearchParams();
+    const next = new URLSearchParams(params);
+    next.delete('q'); next.delete('category');
     if (q) next.set('q', q);
     if (c) next.set('category', c);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
@@ -43,6 +45,7 @@ export default function BillCatalog() {
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
       <h1>{bill.title}</h1>
       <p className="bill-lead">{bill.proposedChange}</p>
+      <GovernancePrism bill={bill} />
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],
         ['Proposed jurisdiction', bill.jurisdiction], ['Trade-offs and safeguards', bill.safeguards],
