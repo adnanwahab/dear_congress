@@ -39,3 +39,11 @@
 .civic-law-draft{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8rem}.civic-law-behavior select{max-width:100%}.civic-law-behavior button{cursor:pointer}.civic-law-behavior :focus-visible{outline:3px solid #9b5700;outline-offset:3px}
 
 @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+
+.rule-circuit{margin:16px 0;padding:12px;border:1px solid currentColor;border-radius:9px;overflow-wrap:anywhere}
+.rule-circuit-nodes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding-left:24px}
+.rule-circuit-nodes li{min-width:0;padding:8px;border:2px solid currentColor;border-radius:8px}
+.rule-circuit-nodes .rule-inferred{border-style:dashed}
+.rule-circuit summary{min-height:44px;touch-action:manipulation;font-weight:650}
+.rule-circuit a{display:inline-block;min-height:44px}
+@media(max-width:740px){.rule-circuit-nodes{grid-template-columns:1fr}}

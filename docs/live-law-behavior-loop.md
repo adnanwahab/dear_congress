@@ -136,3 +136,12 @@ after accessibility verification. The repository's existing CSS source audit
 otherwise scanned nested Playwright dependency/report CSS and exceeded its
 5-second timeout. No assertions or test deadlines were weakened; the final
 unchanged full suite passed536/536 after separating external tool artifacts.
+
+## Rule circuit consumer inspection (SHE-637)
+
+The native viewer includes a static, accessible rule circuit with version-pinned
+consumer documentation/contracts, a separately marked inferred provider link,
+and local reproduction JSON containing exact context, amendment and receipt.
+The v1 receipt still supplies no event trace: the board cannot certify internal
+HBL causal paths. No new provider mechanism or household response is introduced.
+See [SHE-637 scope and acceptance gaps](reviews/SHE-637.md).

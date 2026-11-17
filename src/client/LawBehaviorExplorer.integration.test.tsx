@@ -46,6 +46,17 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests).toHaveLength(1);
     expect(requests[0]).toEqual({href:'https://happybearlandia.fly.dev/api/law-behavior',
       body:{lawId:83,seed:42,population:24,implementationStrength:1}});
+    const board=getByRole(host,'region',{name:'Model rule circuit board'});
+    const summary=board.querySelector('summary')!;
+    // Native disclosures support keyboard and touch without custom pointer handlers.
+    await act(async()=>summary.click());
+    expect(summary.parentElement?.hasAttribute('open')).toBe(true);
+    expect(board.textContent).toContain('population.v1');
+    expect(board.textContent).toContain('Reproduction receipt');
+    const recipe=JSON.parse(board.querySelector('pre')!.textContent!);
+    expect(recipe.receipt).toEqual(receipt(1));
+    expect(recipe.context.seed).toBe(42);
+    expect(recipe.amendment.revision).toBe(1);
     expect(host.textContent).toContain('World A · current rules');
     expect(host.textContent).toContain('World B · edited law');
     expect(host.textContent).toContain('What modeled residents did differently');
@@ -65,6 +76,16 @@ test('native simulate → edit lever → rerun displays actual paired actor chan
     expect(requests[1]?.body.implementationStrength).toBe(.5);
     expect(host.textContent).toContain('Original 100% setting');
     expect(host.textContent).toContain('Recorded difference');
+    const retained=board.querySelector('pre')!.textContent;
+    await act(async()=>getByRole(host,'button',{name:'Run two futures'}).click());
+    expect(board.querySelector('pre')!.textContent).toBe(retained);
+    const media=browser.matchMedia.bind(browser);
+    browser.matchMedia=((query:string)=>({...media(query),matches:true})) as typeof browser.matchMedia;
+    await act(async()=>getByRole(host,'button',{name:'Play recorded behavior'}).click());
+    expect(host.textContent).toContain('minute 0');
+    expect(host.textContent).not.toContain('Pause recorded playback');
+    browser.matchMedia=media;
+
     expect(host.querySelector('iframe')).toBeNull();
   }finally{
     await act(async()=>root.unmount());host.remove();

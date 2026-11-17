@@ -1,6 +1,8 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import './law-behavior-explorer.css';
-import {parseCivicLawContext,civicLawQuery,structuredAmendment,type CivicLawContext} from './civic-law-context';
+import {RuleCircuitBoard} from './RuleCircuitBoard';
+import {motionDisabled} from './motion';
+import {parseCivicLawContext,civicLawQuery,structuredAmendment,reviewedSimulatorInput,type CivicLawContext} from './civic-law-context';
 
 /** Read-only, provenance-tagged synthetic records supplied by the same HBL model that powers World Diff. */
 type Actor = {id:string;label?:string;x?:number;z?:number;[key:string]:string|number|boolean|null|undefined};
@@ -185,7 +187,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
 
   useEffect(()=>()=>{controller.current?.abort();generation.current++;},[]);
   useEffect(()=>{
-    if(!playing||frames.length<2)return;
+    if(!playing||frames.length<2||motionDisabled())return;
     const delay=Math.max(100,Math.min(650,Math.round(6500/(frames.length-1))));
     const timer=window.setInterval(()=>setFrameIndex(old=>{if(old>=frames.length-1){setPlaying(false);return old;}return old+1;}),delay);
     return()=>window.clearInterval(timer);
@@ -206,7 +208,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     try{
       const response=await fetch(new URL('/api/law-behavior',hblOrigin),{
         method:'POST',headers:{'content-type':'application/json'},signal:abort.signal,
-        body:JSON.stringify({lawId,seed:effectiveSeed,population:24,implementationStrength:strength/100})
+        body:JSON.stringify(reviewedSimulatorInput(context))
       });
       const bytes=await response.text();
       if(bytes.length>2_000_000)throw Error('Model receipt exceeds the display limit.');
@@ -231,6 +233,7 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
     <h3>Run two futures for one policy</h3>
     <p>Explore how one reviewed transit or housing assumption changes two synthetic worlds.</p>
     <p className="muted s">Illustrative model, not a forecast or a simulation of your proposed legal text.</p>
+    {!invalidContext&&<RuleCircuitBoard context={context} receipt={receipt} busy={busy} error={error}/>}
     {invalidContext&&<p role="alert">This shared scenario has invalid or unsupported context. Open /synth without these parameters to start a new model scenario.</p>}
     <fieldset disabled={busy||invalidContext} className="civic-law-controls">
       <legend>Change and rerun one supported law model</legend>
@@ -274,9 +277,11 @@ export function LawBehaviorExplorer({seed,hblOrigin}:{seed:number;hblOrigin:stri
             aria-label="Recorded simulation time"/>
         </label>
         <button type="button" disabled={frames.length<2} onClick={()=>{
+          if(motionDisabled()){setPlaying(false);setFrameIndex(old=>(old+1)%frames.length);return;}
           if(playing)setPlaying(false);else{if(frameIndex===frames.length-1)setFrameIndex(0);setPlaying(true);}
         }}>{playing?'Pause recorded playback':'Play recorded behavior'}</button>
       </div>
+      <p className="muted s">With reduced motion or motion off, Play advances one recorded checkpoint per activation.</p>
       <div className="civic-law-lanes">
         <section className="civic-law-lane civic-law-before">
           <h4>World A · current rules</h4>

@@ -22,3 +22,10 @@ export function structuredAmendment(context:CivicLawContext){
  const q=civicLawQuery(context);void q;
  return{schemaVersion:'civic-reviewed-amendment.v1',proposalId:context.proposalId||`demo-law-${context.lawId}`,revision:context.revision,lawId:context.lawId,parameterKey:context.lawId===21?'fixed-rule':'implementationStrength',originalValue:1,editedValue:context.implementationStrength,units:context.lawId===21?'discrete rule':'fraction of reviewed implementation',permittedValues:context.lawId===21?[1]:[0,.25,.5,.75,1],seed:context.seed,population:24,modelVersion:context.modelVersion||null,horizon:context.lawId===83?720:12,clock:context.lawId===83?'minute':'month',status:'local synthetic discussion draft; not a saved proposal, legal amendment, ballot or prediction'};
 }
+
+export type ReviewedSimulatorInput={lawId:21|22|23|83;seed:number;population:24;implementationStrength:0|0.25|0.5|0.75|1};
+/** Construct only the provider allowlist, after validating even programmatic callers. */
+export function reviewedSimulatorInput(context:CivicLawContext):ReviewedSimulatorInput{
+ civicLawQuery(context);
+ return {lawId:context.lawId as ReviewedSimulatorInput['lawId'],seed:context.seed,population:24,implementationStrength:context.implementationStrength as ReviewedSimulatorInput['implementationStrength']};
+}
