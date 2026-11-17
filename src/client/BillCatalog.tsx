@@ -56,7 +56,7 @@ export default function BillCatalog() {
       {bill.id === 'HFL-051' && <section aria-label="Expanded legislative discussion draft"><LegislativeMarkdown source={supplement} /></section>}
       <section><h2>Related draft concepts</h2><ul>{billCollection.bills.filter(b => b.category === bill.category && b.id !== bill.id).slice(0,3).map(b => <li key={b.id}><a href={`/bills/${b.id}`}>{b.id}: {b.title}</a></li>)}</ul></section>
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
-      <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
+      <h1>100 Bills for Human Flourishing</h1><p><a href="/topics">Explore civic problem neighborhoods</a> · Separate illustrative needs and policy catalog; no reviewed binding to these draft bills.</p><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
       <label htmlFor="bill-search">Search bills</label>
       <input id="bill-search" type="search" placeholder="Search bills…" value={query} onChange={e => update(e.target.value, category)} />

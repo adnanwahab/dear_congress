@@ -122,3 +122,31 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## Topic neighborhood discovery (SHE-731)
+
+The catalog and Dashboard link to `/topics`. Each topic hub includes a zoomable
+neighborhood and equivalent static record list with search and selected-record
+relationships. The graph is built exclusively from the existing topic hub payload:
+need blocks, catalog-policy buildings and recorded sample-source streets. HFL IDs
+and immutable revisions stay in the separate bill catalog; no HFL-to-need or
+HFL-to-topic mapping is inferred. Topic chips and background-source provenance
+retain their existing identities and freshness wording.
+
+`nq`, `node`, `view` and `zoom` query parameters preserve neighborhood state without
+replacing the topic filter. Back/forward restores them. Selecting a record focuses
+its details; zoom centers on the selection. Category navigation remains the topic
+list above the neighborhood. The accessible record list remains present in map
+mode, including records outside the zoom viewport. Reduced motion forces the
+static list. Force relaxation is deterministic and bounded, with no animation,
+network polling, geographic basemap or additional dependencies.
+
+The graph displays no journal prose, locations or participation counts. Source
+nodes represent only the hub's eligible fictional repository samples. Their
+freshness is explicitly unassessed; catalog goals and alternatives are marked
+illustrative/hypothetical. Streets describe stored associations, not causation,
+public support or verified outcomes. Original source links and policy anchors
+remain available from the selected details in either mode. Existing background
+source chips below retain their independent stale/missing-source treatment.
+
+Validation and remaining human review are recorded in `reviews/SHE-731.md`.
