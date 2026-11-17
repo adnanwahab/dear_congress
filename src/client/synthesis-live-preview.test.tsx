@@ -39,6 +39,16 @@ test('all eight controls debounce previews, abort stale requests, and Synthesize
     expect(requests[1]!.signal.aborted).toBe(true);
     await settle(1, true);
     expect(host.textContent).not.toContain('obsolete failure');
+    const beforeUndo = requests.length;
+    await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === 'Undo sandbox edit')!.click());
+    await act(async () => { await Bun.sleep(210); });
+    expect(requests.length).toBe(beforeUndo + 1);
+    expect(requests.at(-1)!.body.preview).toBe(true);
+    expect(requests.at(-1)!.body.budget).toBe(40);
+    await act(async () => [...host.querySelectorAll('button')].find(button => button.textContent === 'Redo sandbox edit')!.click());
+    await act(async () => { await Bun.sleep(210); });
+    expect(requests.at(-1)!.body.budget).toBe(45);
+    expect(requests.at(-1)!.body.preview).toBe(true);
     const commit = [...host.querySelectorAll('button')].find(button => button.textContent === 'Synthesize')!;
     await act(async () => commit.click());
     expect(requests.at(-1)!.body.preview).toBe(false);

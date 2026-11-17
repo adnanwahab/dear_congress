@@ -1,3 +1,5 @@
+import { SandboxHistory } from './SandboxHistory';
+import { createSandboxHistory, recordSandbox, restoreSandbox, type SandboxSnapshot } from './sandbox-history';
 import { TopicHubs, TopicReturn } from './TopicHubs';
 import { PlanBudget } from "./PlanBudget";
 import { motionDuration } from "./motion";
@@ -1536,6 +1538,19 @@ type ComparePayload = {
 };
 
 export function SynthView({ state, refresh }: { state: AppState; refresh: () => Promise<void> }) {
+  const [history, setHistory] = useState(() => createSandboxHistory({ weights: state.defaultWeights, lambda: 0.25, budget: 40, packageId: 'A' }));
+  function recordSettings(patch: Partial<SandboxSnapshot>, label: string) {
+    setHistory(previous => recordSandbox(previous, { ...previous.nodes[previous.current]!.snapshot, ...patch }, label));
+  }
+  function restoreSettings(id: number) {
+    const target = history.nodes[id];
+    if (!target) return;
+    changeSettings(() => {
+      setHistory(previous => restoreSandbox(previous, id));
+      setWeights({ ...target.snapshot.weights }); setLambda(target.snapshot.lambda);
+      setBudget(target.snapshot.budget); setActive(target.snapshot.packageId);
+    });
+  }
   const [weights, setWeights] = useState<Weights>(state.defaultWeights);
   const [lambda, setLambda] = useState(0.25);
   const [budget, setBudget] = useState(40);
@@ -1707,7 +1722,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
           proposals={state.proposals}
           compact={side === "blended"}
           onChanged={async () => { await refresh(); await run(); }}
-          onRaiseBudget={(next) => { setBudget(next); void run({ budget: next }); }}
+          onRaiseBudget={(next) => { recordSettings({ budget: next }, "Raised budget"); setBudget(next); void run({ budget: next }); }}
         />
       </div>
     );
@@ -1721,25 +1736,26 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
       <PolicyComparisonPanel />
       <section className="card controls">
         <h2>Synthesis settings</h2>
+        <SandboxHistory history={history} restore={restoreSettings} />
         {livePreview && <p className="note" role="status">Live preview · not saved</p>}
         {synthError && <p role="alert">{synthError}</p>}
         <p className="muted">Experimental settings, not an approved community governance rule.</p>
         {(Object.keys(WEIGHT_LABELS) as (keyof Weights)[]).map((k) => (
           <label key={k} className="slider">
             <span>{WEIGHT_LABELS[k]}</span>
-            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setWeights({ ...weights, [k]: value })); }} />
+            <input type="range" min={0} max={1} step={0.05} value={weights[k]} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => { setWeights({ ...weights, [k]: value }); recordSettings({ weights: { ...weights, [k]: value } }, `Changed ${k} weight`); }); }} />
             <b className="num-s">{weights[k].toFixed(2)}</b>
           </label>
         ))}
         <hr />
         <label className="slider">
           <span>Institutional-change penalty</span>
-          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setLambda(value)); }} />
+          <input type="range" min={0} max={1} step={0.05} value={lambda} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => { setLambda(value); recordSettings({ lambda: value }, "Changed penalty"); }); }} />
           <b className="num-s">{lambda.toFixed(2)}</b>
         </label>
         <label className="slider">
           <span>Annual budget</span>
-          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => setBudget(value)); }} />
+          <input type="range" min={5} max={150} step={5} value={budget} onChange={(e) => { const value = Number(e.target.value); changeSettings(() => { setBudget(value); recordSettings({ budget: value }, "Changed budget"); }); }} />
           <b className="num-s">${budget}B</b>
         </label>
         <button className="big" onClick={() => run()} disabled={busy || Object.values(weights).every(weight => weight === 0)}>{busy ? "Synthesizing…" : "Synthesize"}</button>
@@ -1750,7 +1766,7 @@ export function SynthView({ state, refresh }: { state: AppState; refresh: () => 
         {basePkgs && (
           <div className="pkg-tabs">
             {basePkgs.map((p) => (
-              <button key={p.id} className={`pkg ${p.id === active ? "on" : ""}`} onClick={() => setActive(p.id)}>
+              <button key={p.id} className={`pkg ${p.id === active ? "on" : ""}`} onClick={() => { setActive(p.id); recordSettings({ packageId: p.id }, "Changed package filter"); }}>
                 <span className="pkg-name">Package {p.id} · {p.name}</span>
                 {syntheticCount > 0
                   ? <span className="pkg-sub">sim diff +{(diff[p.id]?.addedBySimulated.length ?? 0)} / -{(diff[p.id]?.removedBySimulated.length ?? 0)} · moved {money(diff[p.id]?.moneyMovedB ?? 0)}</span>

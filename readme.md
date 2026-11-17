@@ -263,6 +263,12 @@ changes across all three packages using public sample journals and deterministic
 simulated residents. It does not use live resident inputs or approve/activate rules.
 See [SHE-310 scope and remaining acceptance](docs/reviews/SHE-310.md).
 
+Advanced synthesis also has page-local branching settings history for weights,
+penalty, budget and package selection. Undo/Redo and Restore only request
+previews; they do not undo public contributions or saved plans. History clears
+when leaving/reloading; copy settings first. See
+[SHE-755 fallback and validation](docs/reviews/SHE-755.md).
+
 ### `POST /api/synthesize` notes
 
 - `preview: true` returns the same plan calculation without changing `lastPlan`, challenger streaks or the database file. Synthesis sliders request previews after a 180 ms pause; Synthesize commits the plan. Preview results use the existing re-rank motion and reduced-motion preference.
