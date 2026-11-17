@@ -57,6 +57,18 @@ both browser builds. Update that hash if editing the inline initializer.
 Supported browsers reveal theme changes from the button in 400 ms. Reduced
 motion and browsers without View Transitions swap immediately.
 
+Visual skin is a separate preference in Participation & privacy → Appearance,
+reachable through Visual skin in shared navigation (More on mobile). Standard
+retains the original presentation; Paper uses warm surfaces and serif headings,
+Orbital cool surfaces and rounded token-based cards, and Terminal green-neutral
+surfaces and monospace headings. All retain the same routes, body text, warnings,
+semantic colors and vote controls. They add no animation, assets or network work.
+The existing System/Light/Dark switch and motion preferences remain independent.
+`civic-skin` persists locally; blocked storage limits selection to this document.
+Choose Standard without reloading to preserve mounted drafts. For recovery use
+`?skin=standard` (or `&skin=standard` with existing parameters); that URL override
+is not saved and reload can lose unsaved drafts. See [skin verification](docs/reviews/SHE-758.md).
+
 ## Measured outcomes (Harris County / Houston)
 
 The repo includes a starter fixture at `data/outcomes.json`, so measured values appear locally without any setup.

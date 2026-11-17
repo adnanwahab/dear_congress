@@ -1,0 +1,13 @@
+/* Appearance only: preserve body typography, semantic colors and all layout/order. */
+:root[data-skin="paper"] { --bg: #f5f1e7; --card: #fffdf7; --radius: 3px; --serif: Georgia, 'Times New Roman', serif; }
+:root[data-skin="orbital"] { --bg: #eef2fa; --card: #fcfdff; --radius: 22px; }
+:root[data-skin="terminal"] { --bg: #eef4f0; --card: #fbfefc; --radius: 2px; --serif: 'Courier New', monospace; }
+:root[data-theme="dark"][data-skin="paper"] { --bg: #201e1a; --card: #2b2823; }
+:root[data-theme="dark"][data-skin="orbital"] { --bg: #141a2b; --card: #202a40; }
+:root[data-theme="dark"][data-skin="terminal"] { --bg: #141e1a; --card: #202d27; }
+.skin-select { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--ink); font-size: 14px; }
+.skin-select select { width: auto; max-width: 100%; min-height: 44px; border-color: var(--muted); }
+.skin-select select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (forced-colors: active) {
+  .skin-select select { color: CanvasText; background: Canvas; border-color: ButtonText; }
+}

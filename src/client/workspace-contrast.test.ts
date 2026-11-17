@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { Window } from 'happy-dom';
 
-const css = (await Promise.all(['styles.css', 'vision-board.css', 'citizen-proposals.css', 'workflow.css', 'documentation.css', 'amendment-editor.css', 'advisory-vote-bars.css'].map(file => Bun.file(new URL(file, import.meta.url)).text()))).join('\n');
+const css = (await Promise.all(['styles.css', 'skins.css', 'vision-board.css', 'citizen-proposals.css', 'workflow.css', 'documentation.css', 'amendment-editor.css', 'advisory-vote-bars.css'].map(file => Bun.file(new URL(file, import.meta.url)).text()))).join('\n');
 
 function luminance(color: string): number {
   const hex = color.replace('#', '');
@@ -19,13 +19,15 @@ function luminance(color: string): number {
 // the affected control structures. This catches cascade regressions that a
 // token-only contrast calculation would miss. Native-browser route QA remains
 // separate: happy-dom does not paint, lay out WebGL, or implement pseudo states.
+for (const skin of ['standard', 'paper', 'orbital', 'terminal'])
 for (const theme of ['light', 'dark']) {
   for (const width of [390, 1280]) {
-    test(`workspace controls meet 4.5:1 (${theme}, ${width}px)`, () => {
+    test(`workspace controls meet 4.5:1 (${skin}, ${theme}, ${width}px)`, () => {
       const window = new Window({ width, settings: { device: { prefersColorScheme: theme === 'dark' ? 'light' : 'dark' } } });
       try {
         expect(window.matchMedia('(prefers-color-scheme: dark)').matches).toBe(theme !== 'dark');
         window.document.documentElement.dataset.theme = theme;
+        window.document.documentElement.dataset.skin = skin;
         window.document.head.innerHTML = `<style>${css}</style>`;
         window.document.body.innerHTML = `
           <div class="product-shell"><div class="civic-shell">
@@ -64,7 +66,7 @@ for (const theme of ['light', 'dark']) {
           expect((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05), element.textContent).toBeGreaterThanOrEqual(4.5);
         }
         expect(window.getComputedStyle(window.document.querySelector('button[data-action]')!).color).toBe(theme === 'dark' ? '#102036' : '#fff');
-        expect(window.getComputedStyle(window.document.querySelector('.panel')!).backgroundColor).toBe(theme === 'dark' ? '#202936' : '#fff');
+        if (skin === 'standard') expect(window.getComputedStyle(window.document.querySelector('.panel')!).backgroundColor).toBe(theme === 'dark' ? '#202936' : '#fff');
       } finally {
         window.happyDOM.abort();
         window.close();

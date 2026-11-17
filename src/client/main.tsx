@@ -1,3 +1,5 @@
+import "./skins.css";
+import { installSkin } from "./skins";
 import { installMotion } from "./motion";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
@@ -6,6 +8,7 @@ import { installStageSwipe } from "./stage-swipe";
 import { installViewTransitions } from "./view-transitions";
 
 installMotion(window);
+installSkin(window);
 import { installScrollReveals } from "./scroll-motion";
 
 installViewTransitions(window);
