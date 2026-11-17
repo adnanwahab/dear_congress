@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { metadataFreshness, type BillObservation, type UnavailableBill, type LegislationSnapshot } from '../shared/legislation';
 export function BillMetadataLane({ bills, unavailable = [], now = Date.now() }: { bills: BillObservation[]; unavailable?: UnavailableBill[]; now?: number }) {
   return <section className="panel" aria-label="Official bill metadata" style={{ overflowWrap: 'anywhere' }}>
-    <h2>Official bill metadata</h2>
+    <h2>Official source references</h2>
+    <p>Official bill metadata · {bills.length} retained reference records · incomplete coverage</p>
     <p>Separate from citizen ideas, drafts and fictional samples. Metadata-only coverage: full text, amendments and complete legal status have not been checked. Enactment does not establish effective dates or measured outcomes.</p>
     {!bills.length && <p>No official bill metadata available. This is not a complete catalog.</p>}
     {unavailable.map(b => <article key={b.id}>
