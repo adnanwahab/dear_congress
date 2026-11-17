@@ -1,0 +1,14 @@
+.research-desk { margin-block: 1.5rem; }
+.research-grid { display: grid; grid-template-columns: var(--desk-columns); align-items: start; }
+.research-grid > section { min-width: 0; overflow-wrap: anywhere; }
+.research-passage { padding: .6rem; margin-block: .5rem; border: 2px solid transparent; }
+.research-passage[data-linked] { border-color: currentColor; background: var(--surface-raised, transparent); }
+.research-passage button { white-space: normal; min-height: 44px; text-align: start; }
+.research-resizer { align-self: stretch; min-height: 100px; cursor: col-resize; touch-action: none; background: linear-gradient(to right, transparent 10px, currentColor 10px, currentColor 12px, transparent 12px); }
+.research-resizer:focus-visible { outline: 3px solid currentColor; outline-offset: -3px; }
+.research-grid[data-stacked="true"] { display: block; }
+.research-grid[data-stacked="true"] > .research-resizer { display: none; }
+@media (max-width: 1000px) {
+  .research-grid { display: block; }
+  .research-resizer { display: none; }
+}

@@ -679,3 +679,11 @@ Automated results do not establish full WCAG conformance or human acceptance.
 independent of citizen submissions, official bill records, sample scoring and
 ballots. Search/filter URLs are shareable. See [catalog import, validation and
 rollback](docs/bill-catalog.md) for deterministic import commands and review gaps.
+
+## Linked research desk
+
+Open Navigation → Research desk (`/draft#research-desk`) to keep the selected
+fictional sample's text, background references and illustrative outcome graph
+visible together. Drag or keyboard-resize dividers; choose Single column for a
+stacked layout. Narrow screens stack automatically with the same information.
+Only layout preferences are stored locally. See [SHE-751 verification and fallback](docs/reviews/SHE-751.md).
