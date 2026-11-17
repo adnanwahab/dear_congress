@@ -107,6 +107,8 @@ The Outcomes measurement prototype also uses explicitly synthetic metrics. Its s
 
 ## Sources and methodology
 
+Inspect the [source registry](/documentation#source-registry) for publishers, original links, retrieval dates, reuse notes, scope and last review. Missing dates and license reviews remain unknown. This partial inventory does not certify public reuse or verify synthetic fixtures as observations.
+
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
 - [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered. Selecting a need previews related aggregate geographic cells. Submitted accounts and simulated estimates stay separate, including in Both mode. Measured conditions appear separately below the map; journal counts are not measurements. If map tiles fail, use the searchable evidence list with the same selected need. Exploring evidence publishes nothing and casts no vote.
 - [Civic plans](/synth) score options under chosen weights and budget. Support, welfare, fairness, feasibility and evidence are model inputs, not independent verification. Costs and legal details in sample options are illustrative. The $40B build-a-plan workbench is a separate, unsaved advisory experiment: drag or use Add/Remove to inspect budget conflicts and a change log. It never publishes, votes or changes saved synthesis; other policy interactions are not modeled.

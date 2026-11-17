@@ -1052,3 +1052,15 @@ authenticated Fly logs destination, and human rollback guidance. Refresh before
 acting; snapshots are stale after 60 seconds. Unknown dependency health and DB
 saturation are explicitly labeled; this is not fleet monitoring. `/healthz` stays
 minimal public process liveness. See [operator limitations](docs/reviews/SHE-971.md).
+
+## Source registry (SHE-886)
+
+`/documentation#source-registry` provides a read-only, partial citation inventory
+with publisher, original URL, retrieval date, licensing note, scope and last
+review. Existing sample background identities and check dates are projected
+without changing their source records. Unknown retrieval and review dates remain
+unknown; public access is not a reuse license. Internal synthetic fixtures are
+explicitly separate from observations and modeled futures are not forecasts.
+Copy/print JSON retains the same caveats. No sources have verified reuse approval
+through this registry. See [SHE-886 review](docs/reviews/SHE-886.md) for remaining
+inventory, licensing and human acceptance work.
