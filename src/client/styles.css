@@ -1104,8 +1104,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 /* First action remains available without demo data or browser storage. */
 .home-start { margin-bottom: 28px; }
 .home-start h1 { font-size: clamp(26px, 3vw, 36px); line-height: 1.2; margin: 0 0 16px; }
-.home-start-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 850px; margin-bottom: 16px; }
+.home-start-choices { display: grid; grid-template-columns: minmax(0, 400px); gap: 8px; max-width: 400px; margin-bottom: 16px; }
 .home-start-choices .dashboard-button { display: flex; align-items: center; justify-content: center; min-height: 48px; text-align: center; box-sizing: border-box; }
+.home-start-secondary { display: flex; align-items: center; min-height: 44px; }
 .home-start > p { max-width: 900px; color: var(--muted); }
 .hero > h2 { font-size: 24px; margin: 0 0 12px; }
 .home-how { margin: 18px 0 24px; }

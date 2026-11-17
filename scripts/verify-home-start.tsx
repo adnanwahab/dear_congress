@@ -24,14 +24,17 @@ const q = () => within(host);
 for (const search of ['', '?proposal=sample%26one']) {
   dom.happyDOM.setURL(`http://localhost/${search}`);
   await act(async () => root.render(<Dashboard key={search} request={request} />));
-  const start = q().getByRole('region', { name: 'Where would you like to start?' });
+  const start = q().getByRole('region', { name: 'Try one civic action in about 60 seconds' });
   const links = within(start).getAllByRole('link');
   assert.equal(links.length, 2);
-  assert.equal(links[0]!.textContent, 'Explore a proposal & advisory vote');
-  assert.equal(links[0]!.getAttribute('href'), `/votes${search}`);
+  assert.equal(links[0]!.textContent, 'Try a sample advisory choice');
+  assert.equal(links[0]!.getAttribute('href'), '/votes?proposal=demo-transit');
   assert.equal(links[1]!.textContent, 'Tell us what needs fixing');
   assert.equal(links[1]!.getAttribute('href'), '/journal');
-  assert.equal(links[0]!.className, links[1]!.className);
+  assert.notEqual(links[0]!.className, links[1]!.className);
+  assert.match(start.textContent!, /Independent demo/);
+  assert.match(start.textContent!, /not an official ballot or public poll/);
+  assert(start.compareDocumentPosition(host.querySelector('.feed-panel')!) & Node.DOCUMENT_POSITION_FOLLOWING);
   assert.match(start.textContent!, /No account is needed/);
   assert.match(start.textContent!, /shared publicly/);
   assert(q().getAllByRole('alert').length >= 1);
@@ -43,9 +46,10 @@ for (const search of ['', '?proposal=sample%26one']) {
 }
 assert(calls.every(path => path === '/api/demo'));
 // Follow the default vote destination: no chooser or additional navigation is needed.
-dom.happyDOM.setURL('http://localhost/votes');
+dom.happyDOM.setURL('http://localhost/votes?proposal=demo-transit');
 await act(async () => root.render(<WorkflowScreen stage="votes" request={async <T,>(path: string) => (path === '/api/state' ? { needs: [], user: { allocation: {} } } : demoPayload({}, 'test')) as T} />));
 assert(q().getByRole('button', { name: /^Cast advisory vote: Support/ }));
+assert.match(host.textContent!, /Run frequent buses on evenings and weekends/i);
 // A failed save remains a failure, never a success notice.
 await act(async () => root.render(<WorkflowScreen key="offline" stage="votes" request={async <T,>(path: string, body?: unknown) => { if (path === '/api/state') return { needs: [], user: { allocation: {} } } as T; if (body) throw new Error('Save unavailable'); return demoPayload({}, 'test') as T; }} />));
 await act(async () => fireEvent.click(q().getByRole('button', { name: /^Cast advisory vote: Support/ })));
