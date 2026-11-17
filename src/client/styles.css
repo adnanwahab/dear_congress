@@ -1089,3 +1089,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 :focus-visible { outline: 3px solid var(--ink, currentColor); outline-offset: 4px; }
 #main-content { scroll-margin-top: 90px; }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } .skip-navigation { background: Canvas; color: CanvasText; } }
+
+.reach-actions { display: none; }
+.reach-preference { display: grid; gap: 8px; margin: 16px 0; }
+.reach-preference select { min-height: 44px; width: 100%; }
+.reach-preference span { font-size: 14px; }
+@media (max-width: 600px) {
+  .reach-actions { display: flex; gap: 12px; padding: 4px 0; }
+  .reach-actions[data-reach="right"] { justify-content: flex-end; }
+  .reach-actions button { min-width: 72px; min-height: 44px; background: #493b80; color: white; border: 1px solid white; border-radius: 8px; }
+  .product-shell:has(.reach-actions) { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
+  .more-sheet .bottom-utilities :is(a, button), .more-heading button { min-height: 44px; display: inline-flex; align-items: center; }
+}
