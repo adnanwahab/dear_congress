@@ -36,3 +36,32 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   }
   expect(writes).toBe(0);
 });
+
+test('atlas static and text navigation preserve filters, focus and back/forward under reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills?view=atlas&scope=federal');
+  const region = page.getByLabel('Browse region', { exact: true });
+  await region.focus();
+  await region.selectOption('south');
+  await expect(region).toBeFocused();
+  const ids = await page.locator('.bill-grid .bill-meta').allTextContents();
+  expect(ids.length).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Use text-only regions / low power', exact: true }).click();
+  await expect(page.locator('.atlas-overview')).toHaveCount(0);
+  expect(await page.locator('.bill-grid .bill-meta').allTextContents()).toEqual(ids);
+  await expect(page.getByRole('button', { name: 'Show geographic overview', exact: true })).toBeFocused();
+  await page.getByLabel('Proposed decision scope', { exact: true }).selectOption('city');
+  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByLabel('Proposed decision scope', { exact: true })).toHaveValue('federal');
+  await expect(region).toHaveValue('south');
+  await page.goForward();
+  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Clear / reset', exact: true }).click();
+  await expect(page.locator('.bill-grid article')).toHaveCount(100);
+  await expect(page).toHaveURL(/\/bills$/);
+  await page.goto('/bills?view=atlas&region=west');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter(v => v.impact === 'critical' || v.impact === 'serious')).toEqual([]);
+});

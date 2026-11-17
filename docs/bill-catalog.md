@@ -122,3 +122,27 @@ approval enforced through actual GitHub protection. Agents do not merge, approve
 enable auto-merge, release or deploy. A human-published validated tagged release
 is required for production; see `launch-merge-policy.md`. Leave SHE-386 open until
 a human verifies acceptance.
+
+## National policy atlas — SHE-725
+
+`/bills?view=atlas` adds an optional static schematic of Census regions. It
+uses no WebGL, external tile service, animation, geolocation, polling or new API.
+The always-available text region selector and scope selector use the same state,
+search, category filters, result cards, source IDs and revisions. The view toggle
+preserves selection; reset clears all filters. Query parameters survive detail
+entry and return and restore on popstate. Dashboard and topic hubs link to the
+catalog without claiming topic/category equivalence or derivation.
+
+The Census geography source and check date are exposed next to the controls.
+The checked-in membership covers 50 states plus DC; territories are not assigned
+to a Census region. Geography checks expire after 30 days and future dates are
+unavailable/stale. These dates never imply independent proposal evidence review.
+The schematic is explicitly not to scale; Alaska/Hawaii are included in West.
+
+No reviewed regional bindings exist for these editorial concepts. Region browsing
+shows federal concepts as hypothetical national scope only. Generic state, city
+and county labels never assign a concept to an actual locality: browse these in
+All regions. Scope/region intersections can therefore be empty. Unknown regions
+fail closed. No map color, count or source reference is regional voter support,
+legal applicability, enacted policy or evidence of an outcome. Official metadata,
+fictional scenarios, citizen submissions and repository ballots remain separate.

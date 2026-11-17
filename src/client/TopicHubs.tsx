@@ -32,6 +32,7 @@ export function TopicHubs({ request }: { request: <T>(path: string) => Promise<T
   }, [id, request, attempt]);
   const samples = items.filter(i => i.topic === topic?.label && sampleMatchesJurisdiction(i.id, jurisdiction.value));
   return <main className="topic-hubs"><CivicHeader stage="Topics" /><h1>{topic ? `${topic.label} topic hub` : 'Topic hubs'}</h1>
+    <p><a href="/bills?view=atlas">Explore the separate draft catalog by region</a>. Topic association does not establish a geographic binding.</p>
     <p>Follow a topic across experiences, needs, competing proposals and evidence. Missing stages remain visible.</p>
     <form role="search" onSubmit={e => e.preventDefault()}><label>Search topics<input type="search" value={query} onChange={e => {
       const value = e.target.value; setQuery(value); const url = new URL(window.location.href);

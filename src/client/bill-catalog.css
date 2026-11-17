@@ -13,3 +13,8 @@
 @media(max-width:600px){.bill-catalog main{padding-top:1.5rem}.bill-chips button{font-size:.9rem}.bill-grid article{padding:1.1rem}}
 /* The catalog owns a dark palette; global light-theme h4 muted text is unreadable here. */
 .bill-document h4{color:inherit}
+.policy-atlas select{display:block;max-width:100%;font:inherit;padding:.6rem;background:#1a2530;color:#fff;border:1px solid #738799;margin:.4rem 0 1rem;min-height:44px}
+.policy-atlas select:focus-visible{outline:3px solid #ffdb85;outline-offset:4px}
+.atlas-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:1rem 0;padding:1rem;border:1px solid #738799;border-radius:12px}
+.atlas-overview p{grid-column:1/-1;margin:0}.atlas-west{grid-column:1;grid-row:2/4}.atlas-midwest{grid-column:2;grid-row:2}.atlas-northeast{grid-column:3;grid-row:2}.atlas-south{grid-column:2/4;grid-row:3}
+/* Static in every motion mode: no WebGL, tiles, polling or animation. */
