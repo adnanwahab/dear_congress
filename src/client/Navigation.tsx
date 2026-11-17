@@ -1,7 +1,8 @@
 import { topicById, topicStageUrl } from '../shared/topic-hubs';
 import { JournalTicker } from "./JournalLive";
 import { CIVIC_STAGES } from '../shared/civic-stages';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SnapSheet } from './SnapSheet';
 const DESTINATIONS = [
   ...CIVIC_STAGES.map(s => ({ href: s.route, label: s.title, icon: s.n === 3 ? 'vote' : s.n === 4 ? 'draft' : 'overview' })),
   { href: '/map', label: 'Map', icon: 'map' },
@@ -20,14 +21,6 @@ function Icon({ name }: { name: string }) {
   return <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
 export function BottomNavigation() {
-  const sheet = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 600px)');
-    const close = () => { if (!media.matches) sheet.current?.close(); };
-    media.addEventListener('change', close);
-    return () => media.removeEventListener('change', close);
-  }, []);
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
   const current = path.replace(/\/+$/, '') || '/';
@@ -40,5 +33,5 @@ export function BottomNavigation() {
       ? topic ? topicStageUrl(d.href.slice(1), topic.id, proposal ?? undefined)
       : `${d.href}${proposal ? `?proposal=${encodeURIComponent(proposal)}` : ''}` : d.href;
   })()} key={d.href} aria-current={current === d.href || (d.href === "/votes" && current === "/vote") ? "page" : undefined}><Icon name={d.icon} /><span>{d.label}</span></a>;
-  return <div className="bottom-bar"><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<button className="bottom-more" aria-haspopup="dialog" aria-controls="mobile-more" aria-expanded={open} onClick={() => { sheet.current?.showModal(); setOpen(true); }}><Icon name="more" /><span>More</span></button></nav><div className="desktop-utilities">{utilities}</div><dialog ref={sheet} id="mobile-more" className="more-sheet" aria-labelledby="more-title" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close(); } }}><div className="more-heading"><h2 id="more-title">More destinations</h2><button autoFocus onClick={() => sheet.current?.close()} aria-label="Close more destinations">Close</button></div><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</dialog></div>;
+  return <div className="bottom-bar"><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<SnapSheet id="mobile-more" title="More destinations" label={<><Icon name="more" /><span>More</span></>} mobileOnly><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</SnapSheet></nav><div className="desktop-utilities">{utilities}</div></div>;
 }
