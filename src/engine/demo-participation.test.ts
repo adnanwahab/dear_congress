@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { DEMO_ITEMS, demoPayload } from './demo';
+import { DEMO_FIXTURE_NAMESPACE, DEMO_ITEMS, demoPayload } from './demo';
 
 test('browser choices remain separate from immutable synthetic totals and unavailable verification', () => {
   const records = {
@@ -9,6 +9,8 @@ test('browser choices remain separate from immutable synthetic totals and unavai
   };
   const before = structuredClone(records);
   const payload = demoPayload(records, 'private-cookie-one');
+  expect(payload.fixtureNamespace).toBe(DEMO_FIXTURE_NAMESPACE);
+  expect(payload.fixtureNamespace).toBe("civic-demo-fixtures.v1");
   expect(payload.items).toEqual(DEMO_ITEMS);
   expect(payload.browserCounts['demo-housing']).toEqual({ support: 1, oppose: 1, unsure: 1 });
   expect(payload.browserCounts['demo-childcare']).toEqual({ support: 0, oppose: 0, unsure: 0 });

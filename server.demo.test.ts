@@ -14,8 +14,9 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
   const path = `/tmp/civic-demo-test-${crypto.randomUUID()}.json`;
   const db = emptyDB(); db.schemaVersion = 2;
   await Bun.write(path, JSON.stringify(db));
-  const previous = { ANON_COOKIE_SECRET: process.env.ANON_COOKIE_SECRET, DB_PATH: process.env.DB_PATH, PORT: process.env.PORT, DEBUG_REQUEST_LOGS: process.env.DEBUG_REQUEST_LOGS, OPENAI_API_KEY: process.env.OPENAI_API_KEY, GEMINI_API_KEY: process.env.GEMINI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
+  const previous = { ADMIN_TOKEN: process.env.ADMIN_TOKEN, ANON_COOKIE_SECRET: process.env.ANON_COOKIE_SECRET, DB_PATH: process.env.DB_PATH, PORT: process.env.PORT, DEBUG_REQUEST_LOGS: process.env.DEBUG_REQUEST_LOGS, OPENAI_API_KEY: process.env.OPENAI_API_KEY, GEMINI_API_KEY: process.env.GEMINI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
   process.env.OPENAI_API_KEY = ''; process.env.GEMINI_API_KEY = ''; process.env.ANTHROPIC_API_KEY = '';
+  process.env.ADMIN_TOKEN = 'isolated-fixture-reset-token';
   process.env.ANON_COOKIE_SECRET = 'demo-integration-only-stable-secret-32-characters';
   process.env.DB_PATH = path; process.env.PORT = '0'; process.env.DEBUG_REQUEST_LOGS = '0';
   let server: { url: URL; stop(force?: boolean): void } | undefined;
@@ -69,6 +70,11 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     const own = await ownRes.json() as DemoPayload;
     expect(own.votes['demo-housing']).toBe(1);
     expect(own.items).toEqual(DEMO_ITEMS);
+    expect(own.fixtureNamespace).toBe('civic-demo-fixtures.v1');
+    const storedIdentities = Object.keys((await Bun.file(path).json()).votesByVoter);
+    const anonymousExport = await (await get('export-reader')).text();
+    for (const identity of storedIdentities) expect(anonymousExport).not.toContain(identity);
+    expect(JSON.parse(anonymousExport).votes).toEqual({});
     expect(own.browserCounts['demo-housing']).toEqual({ support: 1, oppose: 0, unsure: 0 });
     expect(own.verified).toEqual({ status: 'unavailable' });
     const other = await (await get('bob')).json() as DemoPayload;
@@ -87,6 +93,13 @@ test('demo voting is private, replaces prior votes, rejects invalid requests ato
     // Concurrent accepted writes must leave a complete, parseable final snapshot.
     await Promise.all(Array.from({ length: 12 }, (_,i) => post(`parallel-${i}`, { votes: [vote] })));
     expect(Object.keys((await Bun.file(path).json()).votesByVoter).length).toBe(13);
+    const beforeReset = await Bun.file(path).text();
+    const reset = await fetch(new URL('/api/reset', server!.url), {
+      method: 'POST', headers: { authorization: 'Bearer isolated-fixture-reset-token' },
+    });
+    expect(reset.status).toBe(200);
+    expect(await Bun.file(path).text()).toBe(beforeReset);
+    expect((await (await get('alice')).json()).votes['demo-housing']).toBe(-1);
     server!.stop(true);
     server = (await import(`./server.ts?demo-restart=${crypto.randomUUID()}`)).server;
     changed = await (await get('alice')).json() as DemoPayload;

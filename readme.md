@@ -31,7 +31,15 @@ MapLibre JS and `/maplibre.css` load only when a configured map mounts (Needs or
 Synthesize), not on `/` or `/votes`. `bun test src/server/browser-build.test.ts`
 checks the production shell's 250 KB gzip JS budget and deferred map assets.
 
-State is saved to `data/db.json` (delete it or use "Reset demo" to start over).
+State is saved to `data/db.json`. Admin-only `POST /api/reset` refreshes the
+code-only demo fixture cache; it never deletes or rewrites civic records.
+Do not delete the database to reset fictional ballot totals.
+
+`GET /api/demo` labels its code-only catalog with fixture namespace
+`civic-demo-fixtures.v1`. Fictional totals are never imported into voter maps;
+`browserCounts` are calculated separately from persisted anonymous choices.
+Responses expose counts and only the requesting browser’s choices, never browser
+identifiers. Existing legacy ballots remain unchanged during loading.
 
 ## Public guide
 
