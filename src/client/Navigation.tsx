@@ -10,6 +10,7 @@ const DESTINATIONS = [
   ...CIVIC_STAGES.map(s => ({ href: s.route, label: s.title, icon: s.n === 3 ? 'vote' : s.n === 4 ? 'draft' : 'overview' })),
   { href: '/map', label: 'Map', icon: 'map' },
   { href: '/journal', label: 'Journal', icon: 'journal' },
+  { href: '/draft#research-desk', label: 'Research desk', icon: 'draft' },
 ];
 function Icon({ name }: { name: string }) {
   const paths: Record<string,string> = {
