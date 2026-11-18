@@ -1,0 +1,32 @@
+name: Civic policy impact acceptance
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  civic-replay:
+    name: immutable Civic preview replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: npm install --prefix tests/accessibility --ignore-scripts --package-lock=false
+      - run: cd tests/accessibility && npx playwright install --with-deps chromium
+      - run: bun run test:policy-impact-ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: civic-policy-impact-evidence
+          path: artifacts/policy-impact
+          if-no-files-found: error
