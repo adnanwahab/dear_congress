@@ -59,12 +59,11 @@ The checked-in generated fixture test detects stale output.
 
 Collection version 1 and stable HFL IDs are retained. A revision digest covers
 ID, title, category, version and all six fields. Git retains earlier source and
-artifact revisions. The product direction is an editable, revisioned catalog:
-people may propose bill changes, while the original catalog remains immutable.
-Proposed changes must be stored as separate amendment records linked to the
-exact parent bill digest; they must never overwrite source text. An approved
-revision should become a new immutable snapshot with a new digest. The separate
-legislative supplement has its own source and revision identity.
+artifact revisions. The source catalog remains immutable in Git while the product
+direction supports revisioned discussion drafts as separate records tied to an
+exact parent digest. Proposed changes must never overwrite source text. Any
+approved revision should become a new immutable snapshot with a new digest. The
+separate legislative supplement has its own source and revision identity.
 
 The expert-review center described below is implemented in a separate SQLite
 database. Database-backed amendment drafts are not yet implemented. A separate
@@ -92,7 +91,7 @@ mapping and review, not implicit runtime file discovery.
 
 ## Data separation and participation
 
-Curated editorial drafts remain independent of the illustrative engine seed,
+Curated editorial drafts are independent of the illustrative engine seed,
 `citizenProposals`, official legislation metadata and repository PR ballots.
 Catalog amendment and ballot records must use separate storage and totals; they
 must never be mixed with citizen-proposal or repository votes or synthesis scores.
@@ -177,12 +176,10 @@ rights questions, missing-source findings and an unassigned human reviewer/date.
 Cards also label legal authority unverified. HFL-051 has facilities/grants-specific
 prompts and explicitly separates its supplement from the catalog digest. These
 are editorial questions, not source-backed legal conclusions. The original
-catalog, IDs, revisions and supplement remain unchanged. The expert-review
-center accepts public suggestions and verified reviewer decisions bound to the
-current catalog text digest and jurisdiction. Suggestions remain pending and
-cannot approve a category. HFL-051 supplement review is not yet represented in
-the review database; reviewers must treat its separate source revision
-explicitly and not infer that the catalog digest covers it.
+catalog, IDs, revisions and supplement remain unchanged. No review workflow or
+validity transition is implemented; nothing automatically becomes legally valid.
+Future review records must bind exact text and supplement revisions and identify
+a qualified human reviewer, sources, date, findings and remaining uncertainty.
 
 ## Human editorial gate (SHE-878)
 
@@ -194,20 +191,16 @@ unassigned is an explicit gap, not an invented person or an approval.
 
 `src/shared/bill-editorial.ts` derives readiness and fails closed for missing or
 ambiguous records, stale digests, jurisdiction changes, missing assignments,
-incomplete reviews and decisions without a reviewer or review record. The ledger
-remains the static fail-closed baseline. The protected `/review` center uses
-`CATALOG_REVIEWERS` to authenticate server-side reviewer tokens and assign
-legal, evidence, fiscal, editorial and publisher roles. It stores public review
-submissions separately from expert decisions. Decisions and audit events are
-bound to the current bill digest and jurisdiction. Review completion does not
-make a concept introduced legislation, verified evidence or a modeled outcome.
+incomplete reviews and decisions without a reviewer or review record. Detail pages
+expose assignments, review statuses, current digest and blockers; cards always
+expose the blocked publish gate. Review completion does not make a concept
+introduced legislation, verified evidence or a modeled outcome.
 
-The protected publication endpoint records `review_ready` only after a publisher
-role verifies legal, evidence, fiscal, and editorial approval for the exact
-revision. It does not open a ballot; a voting-window and ballot system remain for
-a later implementation. No catalog revision is currently published for voting.
-See [the review center guide](catalog-review-center.md) for authorization and
-backup instructions.
+## Expert review center and ballot integration status (November 18, 2026)
+
+The `/review` workspace displays the original HFL concepts and accepts public evidence suggestions. Reviewer decisions are stored in a separate SQLite database with version-bound snapshots and role-limited bearer credentials; public suggestions never approve a proposal. See [review-center setup](catalog-review-center.md). All present concepts remain unreviewed unless an authorized human records a complete set of decisions. The 110-draft catalog remains a policy concept library, **not statutory law**.
+
+The standalone catalog publication/ballot API is implemented, but its read-only editorial gate still uses the checked-in source review ledger: **the two review and publication workflows are not integrated yet**. A review-center `review_ready` receipt does not itself open recorded voting. Only a separately authorized, immutable published revision can accept nonbinding advisory responses. Never set `advisoryPublicationAllowed` globally or transfer earlier votes to revised text.
 
 ## Governance prism (SHE-724)
 

@@ -220,15 +220,6 @@ These links describe routes available in the application; availability of data a
 
 ## Editing and reviewing the 100-bill catalog
 
-The intended workflow is to let people propose revisions to any of the 100
-discussion drafts without changing the original catalog entry. Each amendment
-must remain linked to its exact parent revision. A private draft should be
-owner-bound; submitting it for public review requires explicit consent and
-moderation. Expert reviewers then assess legal authority, evidence, fiscal
-impact, and editorial/publication readiness for that exact revision. Only an
-authorized human publication action should open a separate advisory ballot.
-Substantive changes create a new revision and require a fresh vote.
-
 The expert-review center is available at [Review](/review). It stores public
 suggestions and verified reviewer decisions in a separate SQLite database,
 bound to each bill's exact revision. Reviewer access is configured server-side;

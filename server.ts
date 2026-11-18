@@ -38,7 +38,6 @@ import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-la
 import { completeJSON, extractWithLLM } from "./src/server/llm-extract";
 import { interpretIdea, recordVariantChoice } from "./src/server/make-possible";
 import { journalClientSchema } from "./src/server/publish-draft";
-import { CatalogReviewStore } from "./src/server/catalog-review";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
 import { applyPurge, planPurge, type PurgeMode } from "./src/server/purge-world-journals";
 import { assessIdea } from "./src/server/assess-idea";
@@ -50,6 +49,7 @@ import { timingSafeEqual } from "node:crypto";
 import { mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createCitizenProposalHandlers } from "./src/server/citizen-proposals";
+import { CatalogReviewStore } from "./src/server/catalog-review";
 import { CatalogBallotStore } from "./src/server/catalog-ballots";
 import { catalogBallotHandlers } from "./src/server/catalog-ballots-api";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
@@ -891,6 +891,7 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+// Human review submissions and decisions use separate SQLite storage; ballots remain independently gated.
 const catalogReviews = new CatalogReviewStore();
 // Separate catalog participation store; existing JSON and developer PR votes are untouched.
 const catalogBallots = new CatalogBallotStore(
@@ -911,10 +912,29 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
   idleTimeout: 255,
   development: process.env.NODE_ENV !== "production",
   routes: {
-    "/api/catalog-review/submissions": { POST: async req => { try { const body=await boundedJson(req,16384); return Response.json(catalogReviews.submit(body),{status:201}); } catch(e) { return Response.json({error:e instanceof Error?e.message:'Review submission failed'},{status:400}); } } },
-    "/api/review/queue": { GET: req => catalogReviews.reviewer(req) ? Response.json({bills:catalogReviews.queue()},{headers:{'cache-control':'no-store'}}) : Response.json({error:'Authorized reviewer required'},{status:401,headers:{'cache-control':'no-store'}}) },
-    "/api/review/bills/:id/decisions": { POST: async req => { try { const body=await boundedJson(req,16384); return Response.json(catalogReviews.decide(req,req.params.id!,body),{status:201}); } catch(e) { const status=(e as {status?:number}).status??400; return Response.json({error:e instanceof Error?e.message:'Decision failed'},{status}); } } },
-    "/api/review/bills/:id/publish": { POST: async req => { try { const body=await boundedJson(req,8192); return Response.json(catalogReviews.publish(req,req.params.id!,body),{status:201}); } catch(e) { const status=(e as {status?:number}).status??400; return Response.json({error:e instanceof Error?e.message:'Publication blocked'},{status}); } } },
+    "/api/catalog-review/submissions": {
+      POST: async req => {
+        try { const body = await boundedJson(req, 16384); return Response.json(catalogReviews.submit(body), {status:201}); }
+        catch (e) { return Response.json({error:e instanceof Error?e.message:"Review submission failed"}, {status:400}); }
+      },
+    },
+    "/api/review/queue": {
+      GET: req => catalogReviews.reviewer(req)
+        ? Response.json({bills:catalogReviews.queue()}, {headers:{"cache-control":"no-store"}})
+        : Response.json({error:"Authorized reviewer required"}, {status:401,headers:{"cache-control":"no-store"}}),
+    },
+    "/api/review/bills/:id/decisions": {
+      POST: async req => {
+        try { const body = await boundedJson(req,16384); return Response.json(catalogReviews.decide(req,req.params.id!,body),{status:201}); }
+        catch (e) { const status=(e as {status?:number}).status??400; return Response.json({error:e instanceof Error?e.message:"Decision failed"},{status}); }
+      },
+    },
+    "/api/review/bills/:id/publish": {
+      POST: async req => {
+        try { const body=await boundedJson(req,8192); return Response.json(catalogReviews.publish(req,req.params.id!,body),{status:201}); }
+        catch (e) { const status=(e as {status?:number}).status??400; return Response.json({error:e instanceof Error?e.message:"Publication blocked"},{status}); }
+      },
+    },
     "/api/plan-rooms": { POST: planRoomsHandler },
     "/api/topics/:id": { GET: (req) => {
       const hub = topicHub(req.params.id ?? "", NEEDS, PROPOSALS, db.entries);
