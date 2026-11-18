@@ -234,3 +234,31 @@ test('durable reviewer revocation survives restart and credential refresh withou
     } finally {ballots.close(); review.close(); rmSync(dir,{recursive:true,force:true});}
   }
 });
+
+test('active credential rotation rejects old tokens and stale process authority while retaining decisions', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'review-active-token-rotation-'));
+  const path = join(dir, 'review.sqlite');
+  const stale = new CatalogReviewStore(path, credentials);
+  let rotated: CatalogReviewStore | undefined;
+  try {
+    stale.decide(auth('legal'), bill.id, { revision: bill.revision,
+      jurisdiction: bill.jurisdiction, category: 'legal', decision: 'approved',
+      reason: 'Isolated credential rotation acceptance fixture.' });
+    const config = credentials.map(row => ({ ...row, token: randomUUID() + randomUUID() }));
+    rotated = new CatalogReviewStore(path, config);
+    for (const row of config) {
+      const role = row.roles[0]!;
+      expect(rotated.reviewer(auth(role), role)).toBeNull();
+      expect(stale.reviewer(auth(role), role)).toBeNull();
+      const request = new Request(origin, { headers: { authorization: 'Bearer ' + row.token } });
+      expect(rotated.reviewer(request, role)?.id).toBe(row.id);
+      expect(rotated.reviewer(request, role === 'publisher' ? 'legal' : 'publisher')).toBeNull();
+    }
+    expect(rotated.db.query('SELECT count(*) n FROM review_decisions').get()).toMatchObject({n:1});
+    expect(rotated.ballotReview(bill).reviewReady).toBe(false);
+    rotated.close();
+    rotated = new CatalogReviewStore(path, config);
+    expect(rotated.reviewer(auth('publisher'), 'publisher')).toBeNull();
+    expect(rotated.db.query('SELECT count(*) n FROM review_decisions').get()).toMatchObject({n:1});
+  } finally { rotated?.close(); stale.close(); rmSync(dir, {recursive:true, force:true}); }
+});
