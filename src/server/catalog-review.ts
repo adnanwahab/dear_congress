@@ -2,7 +2,7 @@ import { Database } from 'bun:sqlite';
 import { timingSafeEqual, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { originalReviewBills } from '../shared/bill-catalog';
+import { originalReviewBills, type CatalogBill } from '../shared/bill-catalog';
 
 export type ReviewRole = 'legal'|'evidence'|'fiscal'|'editorial'|'publisher';
 export type ReviewDecision = 'approved'|'changes_requested'|'declined';
@@ -46,6 +46,37 @@ export class CatalogReviewStore {
   queue(){return originalReviewBills.map(b=>({id:b.id,title:b.title,revision:b.revision,jurisdiction:b.jurisdiction,snapshot:this.db.query('SELECT problem,proposed_change,safeguards,metrics FROM bill_revisions WHERE bill_id=? AND revision=?').get(b.id,b.revision),decisions:this.db.query('SELECT category,decision,reason,sources,reviewer_id,created_at FROM review_decisions WHERE bill_id=? AND revision=? ORDER BY created_at DESC').all(b.id,b.revision),submissions:this.db.query("SELECT id,category,findings,sources,status,created_at FROM review_submissions WHERE bill_id=? AND revision=? ORDER BY created_at DESC").all(b.id,b.revision),publication:this.db.query('SELECT status,reason,reviewer_id,created_at FROM publication_decisions WHERE bill_id=? AND revision=? ORDER BY created_at DESC LIMIT 1').get(b.id,b.revision)}));}
   submit(body:any){const b=originalReviewBills.find(x=>x.id===body.billId);if(!b||body.revision!==b.revision||body.jurisdiction!==b.jurisdiction)throw Error('Stale or unknown bill revision');if(!categories.slice(0,4).includes(body.category))throw Error('Choose legal, evidence, fiscal, or editorial');if(typeof body.findings!=='string'||body.findings.trim().length<20||body.findings.length>10000)throw Error('Findings must be 20–10000 characters');const sources=body.sources??[];if(!Array.isArray(sources)||sources.length>20||sources.some((x:any)=>typeof x!=='string'||x.length>2048||!/^https:\/\//.test(x)))throw Error('Sources must be HTTPS links, up to 20');const id=randomUUID(),now=new Date().toISOString();const tx=this.db.transaction(()=>{this.db.query('INSERT INTO review_submissions VALUES(?,?,?,?,?,?,?,\'pending\',?)').run(id,b.id,b.revision,b.jurisdiction,body.category,body.findings.trim(),JSON.stringify(sources),now);this.db.query('INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(),'public:anonymous','review:suggestion_submitted',b.id,b.revision,b.jurisdiction,JSON.stringify({submissionId:id,category:body.category}),now);});tx();return {id,status:'pending'};}
   decide(req:Request,billId:string,body:any){const reviewer=this.reviewer(req,body.category);if(!reviewer)throw Object.assign(Error('Reviewer authentication or role required'),{status:401});const b=originalReviewBills.find(x=>x.id===billId);if(!b||body.revision!==b.revision||body.jurisdiction!==b.jurisdiction)throw Object.assign(Error('Stale or unknown bill revision'),{status:409});if(!requiredReviews.includes(body.category)||!['approved','changes_requested','declined'].includes(body.decision)||typeof body.reason!=='string'||body.reason.trim().length<10)throw Error('Valid review category, decision, and rationale required');const sources=body.sources??[];if(!Array.isArray(sources)||sources.length>20||sources.some((x:any)=>typeof x!=='string'||x.length>2048||!/^https:\/\//.test(x)))throw Error('Review sources must be HTTPS links, up to 20');const id=randomUUID(),now=new Date().toISOString();const tx=this.db.transaction(()=>{this.db.query('INSERT INTO review_decisions VALUES(?,?,?,?,?,?,?,?,?,?)').run(id,b.id,b.revision,b.jurisdiction,body.category,body.decision,body.reason.trim(),JSON.stringify(sources),reviewer.id,now);this.db.query('INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(),reviewer.id,`review:${body.category}:${body.decision}`,b.id,b.revision,b.jurisdiction,JSON.stringify({decisionId:id,reason:body.reason.trim()}),now);});tx();return {id,reviewer:reviewer.name,createdAt:now};}
-  publish(req:Request,billId:string,body:any){const reviewer=this.reviewer(req,'publisher');if(!reviewer)throw Object.assign(Error('Authorized publisher required'),{status:401});const b=originalReviewBills.find(x=>x.id===billId);if(!b||body.revision!==b.revision||body.jurisdiction!==b.jurisdiction)throw Object.assign(Error('Stale or unknown bill revision'),{status:409});for(const c of requiredReviews){const row=this.db.query('SELECT decision FROM review_decisions WHERE bill_id=? AND revision=? AND jurisdiction=? AND category=? ORDER BY created_at DESC LIMIT 1').get(b.id,b.revision,b.jurisdiction,c) as {decision:string}|null;if(row?.decision!=='approved')throw Object.assign(Error(`Publication blocked: ${c} review is not approved`),{status:409});}if(typeof body.reason!=='string'||body.reason.trim().length<10)throw Error('Publication rationale is required');const id=randomUUID(),now=new Date().toISOString();const tx=this.db.transaction(()=>{this.db.query('INSERT INTO publication_decisions VALUES(?,?,?,?,?,?,?,?)').run(id,b.id,b.revision,b.jurisdiction,'review_ready',body.reason.trim(),reviewer.id,now);this.db.query('INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(),reviewer.id,'publication:review_ready',b.id,b.revision,b.jurisdiction,JSON.stringify({publicationId:id,ballotsOpened:false}),now);});tx();return {id,status:'review_ready',ballotsOpened:false,createdAt:now};}
+
+  /**
+   * The ballot service trusts only a publisher's durable review_ready receipt
+   * that names the exact four latest approval IDs. Suggestions never enter this
+   * gate. A later assessment invalidates the receipt until a human re-attests.
+   */
+  ballotReview(bill: CatalogBill) {
+    const original = originalReviewBills.find(row => row.id === bill.id);
+    const blocked = { reviewReady: false as const };
+    if (!original || original.revision !== bill.revision || original.jurisdiction !== bill.jurisdiction) return blocked;
+    const publication = this.db.query(
+      "SELECT id,status FROM publication_decisions WHERE bill_id=? AND revision=? AND jurisdiction=? ORDER BY rowid DESC LIMIT 1"
+    ).get(bill.id, bill.revision, bill.jurisdiction) as { id: string; status: string } | null;
+    if (!publication || publication.status !== 'review_ready') return blocked;
+    const audit = this.db.query(
+      "SELECT details FROM audit_events WHERE action='publication:review_ready' AND bill_id=? AND revision=? AND jurisdiction=? ORDER BY rowid DESC LIMIT 1"
+    ).get(bill.id, bill.revision, bill.jurisdiction) as { details: string } | null;
+    let receipt: { publicationId?: string; approvedDecisionIds?: string[] };
+    try { receipt = JSON.parse(audit?.details ?? 'null') ?? {}; } catch { return blocked; }
+    if (receipt.publicationId !== publication.id || !Array.isArray(receipt.approvedDecisionIds) || receipt.approvedDecisionIds.length !== 4) return blocked;
+    const decisions = requiredReviews.map(category => this.db.query(
+      "SELECT id,decision,reviewer_id,created_at FROM review_decisions WHERE bill_id=? AND revision=? AND jurisdiction=? AND category=? ORDER BY created_at DESC,rowid DESC LIMIT 1"
+    ).get(bill.id, bill.revision, bill.jurisdiction, category) as { id: string; decision: string; reviewer_id: string; created_at: string } | null);
+    if (decisions.some((row, index) => !row || row.decision !== 'approved' || row.id !== receipt.approvedDecisionIds![index])) return blocked;
+    return { reviewReady: true as const, review: {
+      id: bill.id, revision: bill.revision, jurisdiction: bill.jurisdiction,
+      provenance: 'catalog_review_sqlite_v1' as const,
+      publicationDecisionId: publication.id,
+      approvals: decisions.map((row, index) => ({ id: row!.id, category: requiredReviews[index]!, reviewerId: row!.reviewer_id, recordedAt: row!.created_at })),
+    } };
+  }
+  publish(req:Request,billId:string,body:any){const reviewer=this.reviewer(req,'publisher');if(!reviewer)throw Object.assign(Error('Authorized publisher required'),{status:401});const b=originalReviewBills.find(x=>x.id===billId);if(!b||body.revision!==b.revision||body.jurisdiction!==b.jurisdiction)throw Object.assign(Error('Stale or unknown bill revision'),{status:409});const verified=requiredReviews.map(c=>{const row=this.db.query('SELECT id,decision FROM review_decisions WHERE bill_id=? AND revision=? AND jurisdiction=? AND category=? ORDER BY created_at DESC,rowid DESC LIMIT 1').get(b.id,b.revision,b.jurisdiction,c) as {id:string;decision:string}|null;if(row?.decision!=='approved')throw Object.assign(Error(`Publication blocked: ${c} review is not approved`),{status:409});return row;});if(typeof body.reason!=='string'||body.reason.trim().length<10)throw Error('Publication rationale is required');const id=randomUUID(),now=new Date().toISOString();const tx=this.db.transaction(()=>{this.db.query('INSERT INTO publication_decisions VALUES(?,?,?,?,?,?,?,?)').run(id,b.id,b.revision,b.jurisdiction,'review_ready',body.reason.trim(),reviewer.id,now);this.db.query('INSERT INTO audit_events VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(),reviewer.id,'publication:review_ready',b.id,b.revision,b.jurisdiction,JSON.stringify({publicationId:id,ballotsOpened:false,approvedDecisionIds:verified.map(row=>row.id)}),now);});tx();return {id,status:'review_ready',ballotsOpened:false,createdAt:now};}
   close(){this.db.close();}
 }
