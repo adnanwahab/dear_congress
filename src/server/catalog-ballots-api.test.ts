@@ -56,7 +56,9 @@ test("catalog HTTP publisher checks authorization and same origin before allowin
 
     const fakeVisitor = randomUUID();
     const ballotBody = { revision: bill.revision, publicationId: published.body.publicationId, choice: "support", requestId: randomUUID() };
-    const vote = await payload(await h.vote(request("/api/catalog-bills/" + id + "/ballot", "PUT", ballotBody, { "x-voter-id": fakeVisitor }), id));
+    const deniedVote = await payload(await h.vote(request("/api/catalog-bills/" + id + "/ballot", "PUT", ballotBody, { "x-voter-id": fakeVisitor, origin: "https://evil.example" }), id));
+    expect(deniedVote.status).toBe(403);
+    const vote = await payload(await h.vote(request("/api/catalog-bills/" + id + "/ballot", "PUT", ballotBody, { "x-voter-id": fakeVisitor, origin }), id));
     expect(vote.status).toBe(200);
     expect(vote.body.saved).toBe(true);
     const aggregates = await payload(await h.results(request("/api/catalog-bills/" + id + "/results", "GET"), id));
