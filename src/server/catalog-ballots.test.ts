@@ -118,3 +118,14 @@ test("an unreviewed separate legislative supplement cannot be published as revie
   errorCode(() => store.publish(supplement.id, { ...window(), revision: supplement.revision }, "Human publisher"), "separate_supplement_review_required");
   store.close();
 }));
+
+test("unknown bills and mismatched publication references cannot create ballot rows", () => tempDb(path => {
+  const store = make(path, { reviews });
+  const publication = store.publish(bill.id, window(), "Human publisher");
+  const wrong = { revision: bill.revision, publicationId: randomUUID(), requestId: randomUUID(), choice: "support" };
+  errorCode(() => store.cast(bill.id, wrong, browser1), "publication_revision_mismatch");
+  errorCode(() => store.status("HFL-999"), "catalog_bill_not_found");
+  expect((store.db.query("SELECT count(*) n FROM catalog_current_ballots").get() as { n: number }).n).toBe(0);
+  expect(store.status(bill.id).publication?.id).toBe(publication.publicationId);
+  store.close();
+}));
