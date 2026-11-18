@@ -1,0 +1,25 @@
+name: Persistent policy origin binding
+on:
+  pull_request:
+    paths:
+      - 'src/server/policy-origin-store*'
+      - 'src/shared/policy-demo-catalog.ts'
+      - '.github/workflows/policy-origin-binding.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  binding:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun --no-env-file test
+      - run: bun run typecheck
+      - run: bun --no-env-file run test:routes
