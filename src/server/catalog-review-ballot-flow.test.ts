@@ -193,3 +193,44 @@ test('HFL-051 supplement and self-publishing remain blocked with authenticated f
     expect(review.ballotReview(supplement).reviewReady).toBe(false);
   } finally { review.close(); rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('durable reviewer revocation survives restart and credential refresh without reopening ballots', () => {
+  for (const role of ['legal', 'publisher'] as const) {
+    const dir = mkdtempSync(join(tmpdir(), 'review-revocation-restart-'));
+    const reviewPath = join(dir, 'review.sqlite');
+    let review = new CatalogReviewStore(reviewPath, credentials);
+    const ballots = new CatalogBallotStore(join(dir, 'ballots.sqlite'), {
+      secret, now: () => start, reviews: b => review.ballotReview(b),
+    });
+    try {
+      for (const category of categories) review.decide(auth(category), bill.id, {
+        revision: bill.revision, jurisdiction: bill.jurisdiction, category,
+        decision: 'approved', reason: 'Explicitly authenticated isolated test fixture review.',
+      });
+      review.publish(auth('publisher'), bill.id, {revision: bill.revision,
+        jurisdiction: bill.jurisdiction, reason: 'Test publisher checks four isolated fixture decisions.'});
+      const publication = ballots.publish(bill.id, proposalWindow(), credentials[4]!.id);
+      const browser = randomUUID();
+      const input = {revision: bill.revision, publicationId: publication.publicationId,
+        requestId: randomUUID(), choice: 'support'};
+      ballots.cast(bill.id, input, browser);
+      const revokedId = credentials.find(r => r.roles.includes(role))!.id;
+      review.db.query('UPDATE reviewer_identities SET active=0 WHERE id=?').run(revokedId);
+      expect(review.ballotReview(bill).reviewReady).toBe(false);
+      for (const config of [credentials, credentials.map(r => r.id === revokedId
+        ? {...r, token: 'rotated-isolated-test-token-'.repeat(3)} : r)]) {
+        review.close();
+        review = new CatalogReviewStore(reviewPath, config);
+        const token = config.find(r => r.id === revokedId)!.token;
+        expect(review.reviewer(new Request(origin, {headers:{authorization:'Bearer '+token}}), role)).toBeNull();
+        expect(review.ballotReview(bill).reviewReady).toBe(false);
+        expect(ballots.status(bill.id).state).toBe('closed_or_stale');
+        expect(() => ballots.cast(bill.id, {...input, requestId:randomUUID(), choice:'oppose'}, browser))
+          .toThrow('publication_not_authorized');
+        expect(ballots.status(bill.id, browser).ownChoice).toBe('support');
+        expect(review.db.query('SELECT count(*) n FROM review_decisions').get()).toMatchObject({n:4});
+        expect(review.db.query('SELECT count(*) n FROM publication_decisions').get()).toMatchObject({n:1});
+      }
+    } finally {ballots.close(); review.close(); rmSync(dir,{recursive:true,force:true});}
+  }
+});
