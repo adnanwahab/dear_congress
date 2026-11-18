@@ -5,7 +5,8 @@ import './review-center.css';
 type Category = 'legal' | 'evidence' | 'fiscal' | 'editorial';
 type Decision = { category: Category; decision: string; reason: string; reviewer_id: string; created_at: string; sources: string };
 type Submission = { id: string; category: Category; findings: string; sources: string; status: string; created_at: string };
-type QueueBill = { id: string; revision: string; jurisdiction: string; snapshot: { problem: string; proposed_change: string; safeguards: string; metrics: string }; decisions: Decision[]; submissions: Submission[]; publication?: { status: string; reason: string; reviewer_id: string; created_at: string } | null };
+type SubmittedCatalogAmendment = { id: string; revision: string; text: string; status: "pending_review"; createdAt: string };
+type QueueBill = { id: string; revision: string; jurisdiction: string; snapshot: { problem: string; proposed_change: string; safeguards: string; metrics: string }; decisions: Decision[]; submissions: Submission[]; amendments?: SubmittedCatalogAmendment[]; publication?: { status: string; reason: string; reviewer_id: string; created_at: string } | null };
 const categories: Category[] = ['legal', 'fiscal', 'evidence', 'editorial'];
 const categoryNames: Record<Category, string> = { legal: 'Legal', fiscal: 'Fiscal', evidence: 'Evidence', editorial: 'Editorial' };
 const validBill = (id: string | null) => originalReviewBills.find(b => b.id === id);
@@ -241,6 +242,16 @@ export default function ReviewCenter() {
           </form>
           <h3>Decision history</h3>{selectedQueue.decisions.length ? selectedQueue.decisions.map((d, i) => <details key={`${d.category}-${d.created_at}-${i}`} className="review-history-item"><summary>{categoryNames[d.category]} · {d.decision} · {d.reviewer_id}</summary><p>{d.reason}</p><small>{d.created_at} · exact revision {selectedQueue.revision}</small></details>) : <p className="review-muted">No decisions recorded for this revision.</p>}
           <h3>Submitted findings</h3>{selectedQueue.submissions.length ? selectedQueue.submissions.map(s => <details key={s.id} className="review-history-item"><summary>{categoryNames[s.category]} suggestion · {s.status}</summary><p>{s.findings}</p><ul>{readSources(s.sources).map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></li>)}</ul></details>) : <p className="review-muted">No public suggestions yet.</p>}
+          <h3>Proposed amendments · pending review</h3>
+          <p className="review-muted">These are unverified submissions about this exact discussion concept. Reading them does not mean an expert accepted them, published new statutory text, or approved a ballot.</p>
+          {selectedQueue.amendments?.length ? selectedQueue.amendments.map(amendment =>
+            <details key={amendment.id} className="review-history-item">
+              <summary>Proposed amendment · {new Date(amendment.createdAt).toLocaleString()}</summary>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{amendment.text}</p>
+              <small>Pending review · Record {amendment.id} · Exact revision {amendment.revision}</small>
+            </details>
+          ) : <p className="review-muted">No proposed amendments awaiting review for this revision.</p>}
+
         </section>}
         {reviewerSignedIn && publisherAvailable && selectedQueue && <section className="review-form-card review-publisher-card" aria-label="Advisory publication">
           <span className="review-eyebrow">Authorized human publisher</span>
