@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import manifest from '../generated/bill-visualizations.json';
 import { billCollection } from './bill-catalog';
 
@@ -40,5 +41,20 @@ describe('version-pinned, individually stored bill scenes', () => {
     expect(keys).not.toContain('cost');
     expect(keys).not.toContain('impact');
     expect(keys).not.toContain('voteCount');
+  });
+  test('the checked-in manifest can be rebuilt byte-for-byte', () => {
+    const result = spawnSync(process.execPath, ['scripts/build-bill-visualizations.mjs', '--check'], {
+      cwd: process.cwd(), encoding: 'utf8', timeout: 30_000,
+    });
+    if (result.status !== 0) throw new Error(result.stdout + '\\n' + result.stderr);
+    expect(result.status).toBe(0);
+  });
+
+  test('carousel keyboard and thumbnail interactions work without network access', () => {
+    const result = spawnSync(process.execPath, ['scripts/verify-law-carousel-ui.tsx'], {
+      cwd: process.cwd(), encoding: 'utf8', timeout: 30_000,
+    });
+    if (result.status !== 0) throw new Error(result.stdout + '\\n' + result.stderr);
+    expect(result.status).toBe(0);
   });
 });
