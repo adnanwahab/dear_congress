@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "policy-impact-preview.v1",
+  "source": {
+    "system": "civic-synthesis-demo",
+    "proposalId": "synthetic-housing-policy",
+    "versionId": "housing-demo-v2",
+    "contentHash": "bcb6466a4803cc00cdba7102c4c4d2bc8925d09cb046737a314390af5421be8e",
+    "type": "bill",
+    "title": "Synthetic housing policy: additional parcel entitlements",
+    "url": "https://example.org/synthetic-housing-policy/v2",
+    "visibility": "public"
+  },
+  "legal": {
+    "baseVersionId": "housing-demo-v1",
+    "clauses": [
+      {
+        "clauseId": "housing-section-2",
+        "sourcePolicyId": "h_lots",
+        "operation": "add",
+        "beforeText": "",
+        "afterText": "Section 2. Permit additional homes on eligible residential parcels through the reviewed housing and zoning mechanism."
+      }
+    ]
+  },
+  "baseline": {
+    "kind": "prior-proposal-version",
+    "versionId": "housing-demo-v1",
+    "label": "Synthetic prior proposal without additional parcel entitlements"
+  },
+  "simulation": {
+    "seed": 42,
+    "runs": 100,
+    "months": 24
+  }
+}
