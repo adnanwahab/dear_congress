@@ -63,9 +63,10 @@ test("production HTML build retains executable assets and the social PNG has its
 });
 
 test("recovered product routes resolve, including trailing slash, while privacy remains static", async () => {
-  for (const path of ["/map", "/published", "/draft", "/sponsors", "/outcomes", "/documentation", "/map/"]) {
+  for (const path of ["/map", "/published", "/draft", "/sponsors", "/outcomes", "/documentation", "/review", "/map/"]) {
     expect(renderPage(shell, path, []).status).toBe(200);
   }
+  expect(await renderPage(shell, "/review", []).text()).toContain("Expert review center");
 });
 
 test('speculation is limited to same-origin navigation routes and prioritizes the next stage', async () => {
