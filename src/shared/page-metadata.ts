@@ -2,7 +2,7 @@ import { TOPICS } from './topics';
 import { CIVIC_STAGES } from './civic-stages';
 export const SITE_URL = "https://civic-synthesis.fly.dev";
 export const SITE_NAME = "Civic Synthesis";
-export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
+export const DEFAULT_DESCRIPTION = "Explore 100 draft policy ideas for arts, science, health, learning, and a more creative civic future. Compare possibilities, understand safeguards, and participate in civic discussion.";
 
 export const PAGE_TITLES: Record<string, string> = {
   "/bills": "100 Bills for Human Flourishing",
