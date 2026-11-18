@@ -64,8 +64,8 @@ export default function LegalLatencyLab() {
         <div className="csh-ll-controls">
           <div className="csh-ll-slider-wrap">
             <div className="csh-ll-slider-label"><label htmlFor="csh-ll-rtt">Change the illustrative network latency</label><output htmlFor="csh-ll-rtt">{roundTripMs} ms</output></div>
-            <input id="csh-ll-rtt" type="range" min={150} max={500} step={25} value={roundTripMs} onChange={event => setRoundTripMs(Number(event.target.value))} />
-            <div className="csh-ll-slider-endpoints"><span>150 ms</span><span>500 ms</span></div>
+            <input id="csh-ll-rtt" type="range" min={200} max={500} step={25} value={roundTripMs} onChange={event => setRoundTripMs(Number(event.target.value))} />
+            <div className="csh-ll-slider-endpoints"><span>200 ms</span><span>500 ms</span></div>
           </div>
           <div className="csh-ll-actions">
             <button type="button" onClick={() => setPlaying(value => !value)} aria-pressed={!playing}>{playing ? 'Ⅱ Pause' : '▶ Resume'}</button>
