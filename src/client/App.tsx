@@ -26,7 +26,7 @@ import { MutationError } from './mutation-status';
 import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
-import { Dashboard } from "./Dashboard";
+const Dashboard = lazy(() => import("./Dashboard").then(m => ({ default: m.Dashboard })));
 import { pageTitle, SITE_URL } from "../shared/page-metadata";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type {
@@ -168,7 +168,7 @@ const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
 const AccountScreen = lazy(() => import("./AccountScreen"));
-import WorkflowScreen from "./WorkflowScreen";
+const WorkflowScreen = lazy(() => import("./WorkflowScreen"));
 
 const CivicHouse = lazy(() => import("./CivicHouse"));
 export function App() {
