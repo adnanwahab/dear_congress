@@ -1,5 +1,6 @@
 import { LocalChallenges } from './LocalChallenges';
 import { SideQuest } from './SideQuest';
+import { GovernancePrism } from './GovernancePrism';
 import { TopicChip } from './TopicChip';
 import { Skeleton } from './LoadingSkeleton';
 import type { CSSProperties } from 'react';
@@ -37,6 +38,11 @@ const dateLabel = (value: string) => new Date(value).toLocaleDateString(undefine
 export function Dashboard({ request }: { request: Request }) {
   const [data, setData] = useState<DemoPayload | null>(readProposalSnapshot);
   const [selected, setSelected] = useState<string | null>(() => new URLSearchParams(window.location.search).get('proposal'));
+  useEffect(() => {
+    const restore = () => setSelected(new URLSearchParams(window.location.search).get('proposal'));
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState(0);
   const [error, setError] = useState('');
@@ -100,6 +106,7 @@ export function Dashboard({ request }: { request: Request }) {
       {error && <div className="dashboard-alert" role="alert">{error} <button onClick={() => load().then(() => setError('')).catch(() => setError('Still unable to connect. Please try again shortly.'))}>Try again</button></div>}
       <LocalChallenges items={items} loading={!data && !error} failed={sampleLoadFailed} />
       <SurpriseExplorer items={items} loaded={!!data} failed={!!error} />
+      <GovernancePrism sample={item} />
       <div className="triple-grid">
         <section className="panel feed-panel"><div className="panel-head"><h2>Explore changes</h2></div><ProposalGallery items={items} loaded={!!data} failed={!!error} selected={item?.id} busy={busy} onSelect={select} />
         </section>

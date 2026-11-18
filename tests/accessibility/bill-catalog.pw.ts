@@ -47,3 +47,27 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   }
   expect(writes).toBe(0);
 });
+
+test('governance prism retains selection, history and keyboard focus in reduced motion and static mode', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills/HFL-051?q=HFL-051&lens=0');
+  const prism = page.getByRole('region', { name: 'Governance prism', exact: true });
+  const next = prism.getByRole('button', { name: 'Rotate next lens' });
+  await next.focus();
+  await page.keyboard.press('Enter');
+  await expect(next).toBeFocused();
+  await expect(prism.getByRole('region', { name: 'Law lens', exact: true })).toContainText('Hypothetical draft context');
+  await expect(page).toHaveURL(/HFL-051\?q=HFL-051&lens=1/);
+  expect(await prism.locator('.prism-shape').evaluate(el => getComputedStyle(el).transitionDuration)).toBe('0s');
+  await page.goBack();
+  await expect(prism.getByRole('region', { name: 'Cost lens', exact: true })).toContainText('Missing data');
+  await page.goForward();
+  await expect(prism.getByRole('region', { name: 'Law lens', exact: true })).toBeVisible();
+  await prism.getByRole('button', { name: 'Static / low-power view' }).click();
+  await expect(prism.locator('.prism-shape')).toBeHidden();
+  await next.click();
+  await expect(prism.getByRole('region', { name: 'Time lens', exact: true })).toContainText('Missing data');
+  await page.getByRole('link', { name: '← All 100 proposals' }).click();
+  await expect(page.getByRole('searchbox', { name: 'Search bills' })).toHaveValue('HFL-051');
+  await expect(page.locator('.bill-grid article')).toHaveCount(1);
+});

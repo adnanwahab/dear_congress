@@ -41,6 +41,18 @@ for (const text of ['Third Places for Everyone Act', 'Unknown until assessed', '
 for (const text of ['Human editorial review gate', 'Human review incomplete', 'publication unavailable']) assert(container.textContent!.includes(text), text);
 assert.equal(container.querySelectorAll('input,form').length, 0);
 assert.equal(writes, 0);
+const nextLens = [...container.querySelectorAll('button')].find(b => b.textContent === 'Rotate next lens')!;
+nextLens.focus();
+await act(async () => nextLens.click());
+assert.equal(document.activeElement, nextLens);
+assert.equal(container.querySelector('[aria-label="Law lens"]')?.textContent?.includes('Hypothetical draft context'), true);
+assert.equal(window.location.pathname, '/bills/HFL-051');
+assert.equal(new URLSearchParams(window.location.search).get('lens'), '1');
+await act(async () => { window.history.replaceState(null, '', '/bills/HFL-051?lens=3&prism=static'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert(container.querySelector('[aria-label="Lived impact lens"]'));
+assert.equal(container.querySelector('.governance-prism')?.getAttribute('data-static'), 'true');
+await act(async () => { window.history.replaceState(null, '', '/bills/HFL-051?lens=0'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+assert(container.querySelector('[aria-label="Cost lens"]'));
 await act(async () => detailRoot.unmount());
 await dom.happyDOM.close();
 console.log('PASS catalog: 100 cards, search, category intersection, reset, history restoration, detail and zero writes');
