@@ -30,6 +30,7 @@ export interface PublishCitizenProposalInput extends CitizenProposalInput {
 }
 
 export interface CitizenProposalView extends CitizenProposalInput {
+  provenance?: "synthetic";
   id: string;
   status: "published";
   advisory: true;
@@ -58,6 +59,12 @@ export interface CitizenProposalCommentRecord extends CitizenProposalComment {
 
 /** Server-only persistence fields. Never return this object directly from an API. */
 export interface CitizenProposalRecord extends CitizenProposalInput {
+  versionVotes?: Record<string, Record<string, AdvisoryChoice>>;
+  versionBallotEvents?: { version: number; voterHash: string; choice: AdvisoryChoice | null; createdAt: string }[];
+  legalVersions?: import("./policy-preview").ProposalVersion[];
+  policyPreviews?: import("./policy-preview").PolicyPreview[];
+  provenance?: "synthetic";
+  versionWriteKeys?: Record<string, { bodyHash: string; version: number }>;
   id: string;
   createdAt: string;
   publishedAt: string;

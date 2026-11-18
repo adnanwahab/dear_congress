@@ -49,11 +49,12 @@ export function speculationRules(path: string) {
 
 export function renderPage(shell: string, path: string, proposals: CitizenProposalRecord[]) {
   path = path.replace(/\/+$/, "") || "/";
+  const fixturePath = process.env.NODE_ENV !== "production" && process.env.HBL_PREVIEW_FIXTURE === "1" && /^\/proposals\/demo-housing-fixture\/versions\/[12](?:\/impact)?$/.test(path);
   const proposal = path.startsWith("/proposals/") && path !== "/proposals/new"
-    ? proposals.find((item) => `/proposals/${encodeURIComponent(item.id)}` === path) : undefined;
+    ? proposals.find((item) => (`/proposals/${encodeURIComponent(item.id)}` === path || new RegExp(`^/proposals/${encodeURIComponent(item.id)}/versions(?:/[1-9][0-9]*(?:/impact)?)?$`).test(path))) : undefined;
   const repositoryVote = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path);
   const bill = billCollection.bills.find(b => path === `/bills/${b.id}`);
-  const found = Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
+  const found = fixturePath || Object.hasOwn(PAGE_TITLES, path) || path === "/vote/" || !!proposal || !!bill || repositoryVote || /^\/live\/[0-9a-f]{8}$/.test(path);
   const title = bill ? `${bill.id}: ${bill.title} | ${SITE_NAME}` : proposal ? `${proposal.title} | ${SITE_NAME}` : repositoryVote ? `Repository voting | ${SITE_NAME}` : found ? pageTitle(path === "/vote/" ? "/vote" : path) : `Page not found | ${SITE_NAME}`;
   const description = bill ? `${bill.proposedChange} Unreviewed editorial draft concept; not introduced legislation.` : proposal ? proposal.problem.slice(0, 240) : found ? DEFAULT_DESCRIPTION : "This page could not be found. Explore the proposal feed or citizen votes.";
   // A callback keeps public text such as $&, $` and $' literal rather than

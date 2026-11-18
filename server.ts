@@ -1,3 +1,4 @@
+import { policyPreviewFixture, fixtureViewer, fixtureScript } from "./src/server/policy-preview-fixture";
 import { recordPriorities } from "./src/server/priority-history";
 import { PlanRooms, roomHandler } from './src/server/plan-rooms';
 import { proposalEmbed } from './src/server/proposal-embed';
@@ -428,7 +429,7 @@ const save = (recordHistory = true) => {
   void write.then(() => { pendingWrites--; }, () => { pendingWrites--; writeFailures++; });
   return write;
 };
-const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save });
+const citizenProposalHandlers = createCitizenProposalHandlers({ getStore: () => db, save, hbl: { url: HBL_URL, token: process.env.HBL_INTEGRATION_TOKEN }, siteUrl: SITE_URL });
 function dashboardState(voterId: string) {
   const day = new Date().toISOString().slice(0, 10);
   if (!demoCache || demoCache.day !== day) demoCache = { day, payload: demoPayload(db.votesByVoter, "") };
@@ -1052,6 +1053,18 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       PUT: (req) => catalogHandlers.saveAmendmentDraft(req, req.params.id!),
     },
 
+    "/api/policy-preview-fixture": { GET: () => process.env.NODE_ENV !== "production" && process.env.HBL_PREVIEW_FIXTURE === "1" ? Response.json(policyPreviewFixture()) : new Response("Not found", {status:404}) },
+    "/policy-preview-fixture": { GET: () => process.env.NODE_ENV !== "production" && process.env.HBL_PREVIEW_FIXTURE === "1" ? securityHeaders(new Response(fixtureViewer, {headers:{"content-type":"text/html"}})) : new Response("Not found", {status:404}) },
+    "/policy-preview-fixture.js": { GET: () => process.env.NODE_ENV !== "production" && process.env.HBL_PREVIEW_FIXTURE === "1" ? securityHeaders(new Response(fixtureScript, {headers:{"content-type":"text/javascript"}})) : new Response("Not found", {status:404}) },
+    "/api/citizen-proposals/demo-housing": { POST: req => citizenProposalHandlers.demo(req) },
+    "/api/citizen-proposals/:id/versions": {
+      GET: req => citizenProposalHandlers.versions(req, req.params.id!),
+      POST: req => citizenProposalHandlers.revise(req, req.params.id!),
+    },
+    "/api/citizen-proposals/:id/versions/:version/impact": {
+      GET: req => citizenProposalHandlers.impact(req, req.params.id!, req.params.version!),
+      POST: req => citizenProposalHandlers.impact(req, req.params.id!, req.params.version!),
+    },
     "/api/citizen-proposals": {
       GET: (req) => citizenProposalHandlers.list(req),
       POST: (req) => citizenProposalHandlers.publish(req),

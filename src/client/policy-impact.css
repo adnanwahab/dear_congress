@@ -1,0 +1,11 @@
+.pi { margin: 24px auto; max-width: 1100px; }
+.pi h2 { margin-top: 2rem; }
+.pi label { display: block; margin: 12px 0; }
+.pi input:not([type=checkbox]), .pi textarea, .pi select { display: block; width: 100%; box-sizing: border-box; padding: 12px; font: inherit; }
+.pi-diff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pi-diff > div { min-width: 0; padding: 16px; border: 1px solid currentColor; }
+.pi-diff > div:first-child { background: #fff0ee; color: #63211b; }
+.pi-diff > div:last-child { background: #edfff0; color: #164425; }
+.pi pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.pi iframe { width: 100%; min-height: 680px; border: 1px solid #737b75; border-radius: 12px; }
+@media(max-width: 650px) { .pi-diff { grid-template-columns: 1fr; } .pi iframe { min-height: 520px; } }

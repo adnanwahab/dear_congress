@@ -1,3 +1,4 @@
+import { PolicyImpact, HousingDemoButton } from "./PolicyImpact";
 import { CivicTimeline } from './CivicTimeline';
 import SaveToJourney from './SaveToJourney';
 import { WorldPortal } from './WorldPortal';
@@ -62,7 +63,7 @@ function detailUrl(id: string) { return `/proposals/${encodeURIComponent(id)}`; 
 
 export function isCitizenProposalPath(pathname: string) {
   const path = pathname.replace(/\/+$/, "") || "/";
-  return path === "/votes" || path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+$/.test(path);
+  return path === "/votes" || path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+(?:\/versions(?:\/\d+(?:\/impact)?)?)?$/.test(path);
 }
 
 function Notice({ children, error = false }: { children: ReactNode; error?: boolean }) {
@@ -88,8 +89,11 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
 
 export function CitizenProposalsApp() {
   const path = window.location.pathname.replace(/\/+$/, "");
+  if (path === "/proposals/new" && new URLSearchParams(window.location.search).get("demo") === "housing") return <Shell current="new"><HousingDemoButton /></Shell>;
   if (path === "/proposals/new" && new URLSearchParams(window.location.search).get("guided") === "1") return <Shell current="new"><ProposalWorkspace /></Shell>;
   if (path === "/proposals/new") return <Shell current="new"><ProposalEditor /></Shell>;
+  const versionPath = path.match(/^\/proposals\/([^/]+)\/versions(?:\/(\d+)(\/impact)?)?$/);
+  if (versionPath) return <Shell current="detail"><PolicyImpact id={decodeURIComponent(versionPath[1]!)} selectedVersion={versionPath[2] ? Number(versionPath[2]) : undefined} impact={!!versionPath[3]} /></Shell>;
   if (path.startsWith("/proposals/")) {
     let id: string;
     try { id = decodeURIComponent(path.slice("/proposals/".length)); }
@@ -120,7 +124,7 @@ function ProposalBoard({ feed }: { feed: boolean }) {
   return <>
     <section className="cp-hero">
       <div><p className="cp-eyebrow">{feed ? "THE PUBLIC PROPOSAL FEED" : "YOUR VOICE, A CONCRETE CHANGE"}</p>
-        <h1>{feed ? "See what people want to change." : "A better rule starts with an idea."}</h1>
+        <h1>{feed ? "See what people want to change." : "A better rule starts with an idea."}</h1><HousingDemoButton />
         <p className="cp-lede">Put a change into words. Read what others propose. Help shape the next conversation with an advisory vote.</p>
         <div className="cp-actions"><a className="cp-button" href="/proposals/new">＋ Propose a law</a><a className="cp-text-link" href="/journal">Start with your experience <span aria-hidden="true">↗</span></a></div>
       </div>
@@ -355,7 +359,9 @@ function ProposalDetail({ id }: { id: string }) {
     {loading && <p className="cp-loading" role="status">Loading this proposal…</p>}
     {!loading && error && <div className="cp-panel"><h1>{notFound ? "Proposal not found." : "This proposal couldn’t load."}</h1><Notice error>{error}</Notice>{!notFound && <button className="cp-button" onClick={() => setAttempt(n => n + 1)}>Try again</button>}<a className="cp-text-link" href="/votes">Browse published proposals →</a></div>}
     {!loading && !error && proposal && <>
-      <header className="cp-detail-heading"><div className="cp-card-top"><span className="cp-tag">{placeLabel(proposal)}</span><span>Citizen proposal · Open for advisory votes</span></div><h1>{proposal.title}</h1><p id="cp-source-status" tabIndex={-1}>Citizen-authored text. Official bill status and supporting information have not been verified.</p><p>Published <time dateTime={proposal.publishedAt}>{dateLabel(proposal.publishedAt)}</time></p></header>
+      <header className="cp-detail-heading"><div className="cp-card-top"><span className="cp-tag">{placeLabel(proposal)}</span><span>Citizen proposal · Open for advisory votes</span></div><h1>{proposal.title}</h1><p id="cp-source-status" tabIndex={-1}>{proposal.provenance === "synthetic" ? "Synthetic example text. No official legislation or real-world evidence." : "Citizen-authored text. Official bill status and supporting information have not been verified."}</p><p>Published <time dateTime={proposal.publishedAt}>{dateLabel(proposal.publishedAt)}</time></p></header>
+      <a className="cp-button" href={`/proposals/${encodeURIComponent(id)}/versions`}>See What Changes · edit and compare versions</a>
+      <p><a href="/proposals/new?demo=housing">Try the public synthetic housing demo</a></p>
       <ProposalReadingHelp />
       <div className="cp-detail-layout"><article className="cp-panel cp-proposal-text"><section><p className="cp-eyebrow">01 · THE PROBLEM</p><h2>Why this matters</h2><p>{proposal.problem}</p></section><section className="cp-change"><p className="cp-eyebrow">02 · THE PROPOSAL</p><h2>What would change</h2><p>{proposal.proposedChange}</p></section><section><p className="cp-eyebrow">03 · WHERE IT APPLIES</p><h2>{placeLabel(proposal)}</h2>{proposal.jurisdiction === "unsure" && <p>The appropriate jurisdiction still needs to be identified.</p>}</section>{proposal.supportingInfo && <section><p className="cp-eyebrow">04 · SUPPORTING INFORMATION</p><h2>Sources, benefits, and open questions</h2><p>{proposal.supportingInfo}</p></section>}{proposal.sourceEntryId && <section className="cp-origin"><p className="cp-eyebrow">STARTED WITH AN EXPERIENCE</p><p>This proposal was created from a shared journal entry.</p><a className="cp-text-link" href={`/journal#entry-${encodeURIComponent(proposal.sourceEntryId)}`}>Read the source journal entry →</a></section>}</article>
         <aside className="cp-panel cp-vote-panel" aria-labelledby="cp-vote-title"><p className="cp-eyebrow">ADD YOUR VOICE</p><h2 id="cp-vote-title">What do you think?</h2><p>You can change or remove your choice at any time.</p><div className="cp-vote-buttons" role="group" aria-label="Your advisory response">{ADVISORY_CHOICES.map(choice => <button key={choice} className={`cp-vote-choice cp-choice-${choice}${proposal.ownVote === choice ? " cp-choice-selected" : ""}`} aria-pressed={proposal.ownVote === choice} disabled={voting || commenting} onClick={() => vote(choice)}><span>{proposal.ownVote === choice ? "✓ " : ""}{choiceLabels[choice]}</span><b>{proposal.counts[choice].toLocaleString()}</b></button>)}</div><p className="cp-response-total"><b>{proposal.countTotal.toLocaleString()}</b> advisory response{proposal.countTotal === 1 ? "" : "s"} from browsers</p><p className="cp-vote-caveat" id="cp-browser-identity" tabIndex={-1}>One current choice per browser identity. These counts do not verify residency or represent a public poll.</p>{proposal.ownVote && <button className="cp-inline-button" disabled={voting || commenting} onClick={() => vote(null)}>Remove my response</button>}{voting && <p role="status">Saving your response…</p>}{voteError && <Notice error>{voteError}</Notice>}<p className="cp-save-status" role="status">{status}</p><div className="cp-vote-boundary" id="cp-advisory-process" tabIndex={-1}><b>What happens next?</b><p>This proposal stays available for public discussion and advisory voting. Adoption by a government requires a separate process.</p></div></aside>
