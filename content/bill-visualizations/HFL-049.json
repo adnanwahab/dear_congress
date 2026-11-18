@@ -1,7 +1,7 @@
 {
   "schema": "civic-synthesis/bill-visualization/v1",
   "billId": "HFL-049",
-  "sourceRevision": "309eda1f8452ff80e17e3e71f2993b2561d382c6a11660690b9a143df9139231",
+  "sourceRevision": "ae4d9bf0676e7bdee3a04f18dab4031360cecc36efe5d40f8fface942972d2ea",
   "layout": "comparison",
   "motif": "work",
   "focusDimension": "Time",
