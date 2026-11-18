@@ -13,7 +13,7 @@ let writes = 0;
 globalThis.fetch = async () => { writes++; throw new Error('Catalog must not fetch or submit'); };
 await act(async () => root.render(<BillCatalog />));
 assert.equal(container.querySelectorAll('article').length, 110);
-assert.equal(container.querySelectorAll('.bill-chips [aria-pressed]').length, 11);
+assert.equal(container.querySelectorAll('.bill-chips [aria-pressed]').length, 12);
 for (const card of container.querySelectorAll('article')) assert(card.textContent!.includes('Legal authority: unverified'));
 for (const card of container.querySelectorAll('article')) assert.match(card.textContent!, /Publish gate: blocked/);
 const input = container.querySelector('input')!;
