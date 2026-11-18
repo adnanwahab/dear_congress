@@ -9,6 +9,7 @@ export default function AccountScreen() {
     <h1>Participation &amp; privacy</h1>
     <ParticipationNotice />
     <GraphicsSettings />
+    <section className="panel"><h2>Research desk layout</h2><p>The research desk saves only pane widths and the single-column preference in this browser. It does not save political preferences or change proposal text, drafts or votes. When storage is blocked, the layout lasts for this page only. Use Reset desk layout on the desk to restore equal panes.</p><a href="/draft#research-desk">Open research desk</a></section>
     <PrivateJourney />
     <EvidenceNotebook />
     <CivicPassport />

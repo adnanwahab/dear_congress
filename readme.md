@@ -217,3 +217,11 @@ Other application pages:
 - Experiments: [Civic House](/?house=1), [Civic Adventure](/?quest=1), and [Sample proposal presenter](/feed?presenter=1).
 
 These links describe routes available in the application; availability of data and actions varies by page. Advisory participation is not an official vote, and catalog drafts remain subject to their displayed editorial review gates.
+
+## Linked research desk
+
+Open Navigation → Research desk (`/draft#research-desk`) to keep the selected
+fictional sample's text, background references and illustrative outcome graph
+visible together. Drag or keyboard-resize dividers; choose Single column for a
+stacked layout. Only layout preferences are stored locally; see
+[SHE-751 verification and fallback](docs/reviews/SHE-751.md).
