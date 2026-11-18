@@ -5,7 +5,7 @@ import ledger from '../../content/bill-collections/eudaimonia-100-reviews.json';
 
 test('all 110 concepts have current, explicitly unassigned blocked review records', () => {
   expect(ledger).toHaveLength(110);
-  expect(new Set(ledger.map(row => row.id)).size).toBe(100);
+  expect(new Set(ledger.map(row => row.id)).size).toBe(110);
   for (const bill of billCollection.bills) {
     const gate = editorialGate(bill);
     expect(gate.review?.revision).toBe(bill.revision);
