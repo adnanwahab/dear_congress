@@ -67,6 +67,36 @@ A trustworthy dashboard should report these separately:
 
 **Our goal is 100% opportunity to be heard and increasingly shared solutions—not a mandatory 100% “yes.”** Civil rights and fundamental protections are not waived merely because a majority, or even a large majority, supports something.
 
+### Next feature: Consensus Workbench (proposed)
+
+**Turn a “No” into a constructive amendment—without asking anyone to abandon their principles.**
+
+The **Consensus Workbench** is a proposed deliberation space where participants can explain what would need to change for them to support a specific proposal. HELIOSAI can help organize objections and suggest **reviewable alternative drafts** that respond to multiple concerns. People—not the model—decide whether the new version earns their support.
+
+#### Example journey
+
+1. **Read and vote.** A person reviews a particular proposal version and chooses **Support**, **Oppose**, or **Unsure**. Their recorded choice is never inferred from a comment.
+2. **Explain an objection (optional).** Someone who votes **Oppose** or **Unsure** may answer: **“What would need to change for you to support this?”** A person who supports the proposal can suggest improvements too.
+3. **Identify common ground.** HELIOSAI groups similar *arguments and requested changes*, points out genuine agreement, and preserves incompatible objections separately. Summaries remain editable, attributable only with consent, and open to challenge.
+4. **Propose amendments.** Participants or human reviewers can turn ideas into amendments. HELIOSAI may generate multiple clearly labeled draft options and a **no-change** option, with clause-level diffs, trade-offs, source citations, and uncertainty.
+5. **Review and compare.** Show the original, each amendment, affected groups, relevant evidence, and optional [HappyBearLandia](https://github.com/adnanwahab/happybearlandia) simulation scenarios. Simulated impacts stay labeled as forecasts, not observed outcomes.
+6. **Publish a new version for a fresh vote.** A human moderator/editor approves publication of a revision. Substantive changes create a new version and open a new advisory ballot; earlier votes and objections remain traceable rather than being silently transferred.
+7. **Learn from remaining disagreement.** Track which objections were addressed, which remain unresolved, how participation changes, and whether the revised text earns broader **voluntary** support across the eligible participant population.
+
+**The product question changes from “Did this proposal win?” to “What would make this proposal better for more people?”**
+
+#### First MVP
+
+- A **“Suggest an amendment”** action beside the advisory vote, with an optional objection field and a direct-edit option for people who prefer to draft text themselves.
+- A public **objection and amendment board** showing status: *open → under discussion → included, declined, or unresolved*, with human-written reasons and privacy-aware moderation.
+- A HELIOSAI **“Compare draft options”** assistant that summarizes proposed changes neutrally, cites the comments/evidence it actually used, and produces side-by-side diffs for **human review**.
+- A **proposal-version timeline** that connects each draft, objection, amendment, human decision, and separate advisory vote, with counts and participation denominators.
+- A progress view tracking **objections addressed, versions deliberated, participant coverage, and unresolved concerns**. Never show “100% consensus” without specifying the exact electorate, version, and denominator.
+
+**Guardrails:** Participation is voluntary; the right to dissent remains protected. No AI-generated vote, assumed consent, targeted political persuasion, automated legal enactment, or automatic GitHub merge. Legally protected rights, private journals, minority concerns, accessibility, and human review are not negotiable shortcuts.
+
+This is a **proposed feature**, not a claim that the complete Consensus Workbench is already implemented.
+
 ## 2. Lower legal latency: from years toward daily feedback
 
 **Legal latency** is the time between a public problem being noticed and a useful, accountable response. We want to shrink the parts of that delay that better software, participation, and institutions can responsibly improve.
@@ -153,7 +183,7 @@ These systems must remain separate. See [repository voting](docs/repository-voti
 | Phase | Deliverable | Proof we should demand |
 | --- | --- | --- |
 | **1 · Trustworthy daily participation** | Accessible journal → need → proposal → explicit advisory vote; versioned receipts, opt-in consent, corrections, and clear labels. | Privacy and authorization tests; accurate denominators; usable mobile and accessible journeys. |
-| **2 · Deliberation that improves proposals** | Shared-goal maps, objection tracking, amendment workbench, alternative comparison, and HELIOSAI-assisted summaries. | Human-reviewed neutral summaries; minority concerns preserved; visible improvement across proposal versions. |
+| **2 · Deliberation that improves proposals** | Shared-goal maps, the Consensus Workbench, opt-in objections, human-reviewed amendment drafts, proposal-version revoting, alternative comparison, and HELIOSAI-assisted summaries. | Human-reviewed neutral summaries; minority concerns preserved; visible improvement across proposal versions. |
 | **3 · Evidence before scale** | Source-linked simulation comparisons and templates for authorized, pre-registered policy pilots. | Reproducible scenarios; external review; published benefits, harms, and null results. |
 | **4 · Measurable institutional response** | Verified links to agency/legislative submissions, status events, response deadlines, and observed outcomes. | Documented official responses and independently measured listening, proposal, decision, and outcome latency. |
 
