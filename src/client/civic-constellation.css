@@ -1,0 +1,9 @@
+.civic-constellation { margin-block: 2rem; padding: 1rem; border: 1px solid currentColor; border-radius: 1rem; overflow-wrap: anywhere; }
+.civic-constellation input[type=checkbox] { width: auto; }
+.civic-orbit { position: relative; width: min(100%, 24rem); aspect-ratio: 1; border: 2px solid currentColor; border-radius: 50%; margin: 2rem auto; }
+.civic-orbit-center { position: absolute; top: 42%; left: 30%; width: 40%; text-align: center; }
+.civic-orbit button { position: absolute; transform: translate(-50%, -50%); min-width: 2.75rem; min-height: 2.75rem; }
+.civic-constellation li { margin-block: .75rem; }
+.civic-constellation :focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+/* Deliberately static: no animation, canvas, WebGL or continuous render loop. */
+@media (prefers-reduced-motion: reduce) { .civic-orbit { display: none; } }
