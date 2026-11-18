@@ -100,7 +100,7 @@ export function CatalogAmendments({
         body: JSON.stringify({ revision, text: trimmed, requestId, confirmForReview: true }),
       });
       const data = await readResponse<SaveResponse>(response);
-      if (!data.saved || !data.receipt?.id || data.amendment?.revision !== revision)
+      if (!data.saved || !data.receipt?.id || data.amendment?.revision !== revision || data.amendment.status !== "pending_review")
         throw Error("The database did not confirm an amendment receipt.");
       // A successful commit is not undone by a subsequent refresh failure.
       setEntries(current => [data.amendment, ...current.filter(item => item.id !== data.amendment.id)]);
@@ -142,7 +142,7 @@ export function CatalogAmendments({
     <form onSubmit={event => void submit(event)}>
       <label htmlFor={"amendment-" + billId}>Proposed amendment</label>
       <textarea id={"amendment-" + billId} rows={4} minLength={20} maxLength={4000}
-        value={text} onChange={event => { onTextChange(event.target.value); setPreview(false); }}
+        value={text} disabled={busy} onChange={event => { onTextChange(event.target.value); setPreview(false); }}
         placeholder="I would change this bill by…" required />
       <p className="amendment-hint">{trimmed.length}/4,000 characters · Minimum 20</p>
       <div className="amendment-actions">
