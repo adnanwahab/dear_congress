@@ -163,6 +163,7 @@ const EMPTY_FLOW: PublishFlow = {
 const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ default: m.PriorityHistory })));
 const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
+const CivicLanding = lazy(() => import("./CivicLanding"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
@@ -188,7 +189,7 @@ export function App() {
     : isCitizenProposalPath(path) && !stages[path] ? <CitizenProposalsApp />
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
-    : path === "/" ? <Dashboard request={api} /> : <LegacyApp />;
+    : path === "/" ? <CivicLanding /> : path === "/dashboard" ? <Dashboard request={api} /> : <LegacyApp />;
   return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
