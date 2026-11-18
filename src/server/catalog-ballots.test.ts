@@ -52,7 +52,8 @@ test("verified exact revision, admin-authorized publish, separate browser ballot
   const publication = store.publish(bill.id, window(), "Human publisher");
   expect(store.status(bill.id, browser1).state).toBe("open");
   expect(store.status(bill.id, browser1).counts?.total).toBe(0);
-  errorCode(() => store.publish(bill.id, window(), "Human publisher"), "revision_already_published");
+  expect(store.publish(bill.id, window(), "Human publisher")).toEqual(publication);
+  errorCode(() => store.publish(bill.id, { ...window(), closesAt: new Date(start + 120 * 60_000).toISOString() }, "Human publisher"), "revision_already_published");
   const requestId = randomUUID();
   const body = { publicationId: publication.publicationId, revision: bill.revision, requestId, choice: "support" };
   const first = store.cast(bill.id, body, browser1);
@@ -67,7 +68,9 @@ test("verified exact revision, admin-authorized publish, separate browser ballot
   expect(store.status(bill.id, browser2).ownChoice).toBe("oppose");
   store.close();
 
-  store = make(path, { reviews });
+  store = make(path, { reviews, now: () => start + 5 * 60_000 });
+  // Retry after the original opening time is outside the new-window tolerance.
+  expect(store.publish(bill.id, window(), "Human publisher")).toEqual(publication);
   expect(store.status(bill.id, browser1).ownChoice).toBe("support");
   expect(store.cast(bill.id, body, browser1).replayed).toBe(true);
   store.cast(bill.id, { ...body, requestId: randomUUID(), choice: "unsure" }, browser1);

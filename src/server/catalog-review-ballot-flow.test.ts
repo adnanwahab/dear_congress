@@ -67,12 +67,19 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     expect(ballots.draftStatus(bill.id, browser).counts.total).toBe(1);
     expect(review.queue().find(b => b.id === bill.id)?.submissions).toHaveLength(1);
 
+    for (const original of originalReviewBills) expect(review.ballotReview(original).reviewReady).toBe(false);
+    expect(() => review.publish(auth('legal'), bill.id, { revision: bill.revision,
+      jurisdiction: bill.jurisdiction, reason: 'Unauthorized publisher attempt.' })).toThrow('Authorized publisher');
     // Every category must be approved by a properly authenticated human reviewer.
     for (const category of categories) {
       expect(() => review.decide(auth("publisher"), bill.id, {
         revision: bill.revision, jurisdiction: bill.jurisdiction, category,
         decision: "approved", reason: "Reviewed source and scope.",
       })).toThrow("Reviewer authentication");
+      expect(() => review.publish(auth('publisher'), bill.id, { revision: bill.revision,
+        jurisdiction: bill.jurisdiction, reason: 'Missing required category must block.' })).toThrow('not approved');
+      expect(() => review.decide(auth(category), bill.id, { revision: '0'.repeat(64),
+        jurisdiction: bill.jurisdiction, category, decision: 'approved', reason: 'Mismatched source digest.' })).toThrow('Stale');
       review.decide(auth(category), bill.id, {
         revision: bill.revision, jurisdiction: bill.jurisdiction, category,
         decision: "approved", reason: "Reviewed source and scope.",
@@ -87,6 +94,10 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     });
     expect(attestation.status).toBe("review_ready");
     expect(review.ballotReview(bill).reviewReady).toBe(true);
+    expect(review.ballotReview({ ...bill, revision: 'f'.repeat(64) }).reviewReady).toBe(false);
+    expect(review.ballotReview({ ...bill, jurisdiction: 'different jurisdiction' }).reviewReady).toBe(false);
+    expect(review.publish(publisher, bill.id, { revision: bill.revision, jurisdiction: bill.jurisdiction,
+      reason: 'Repeated publication readiness request.' }).id).toBe(attestation.id);
     expect(ballots.status(bill.id).state).toBe("awaiting_publication");
 
     // The publisher role opens the actual advisory ballot; draft choices stay separate.
@@ -117,6 +128,38 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     expect(ballots.status(bill.id, browser).counts?.total).toBe(1);
     expect(ballots.status(bill.id, browser).ownChoice).toBe("unsure");
 
+    // Exact publication retries and both databases survive restart without duplicating audit.
+    expect(ballots.publish(bill.id, proposalWindow(), credentials[4]!.id).publicationId).toBe(publication.publicationId);
+    ballots.close();
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials);
+    ballots = new CatalogBallotStore(ballotPath, { secret, now: () => start, reviews: b => review.ballotReview(b) });
+    expect(ballots.status(bill.id, browser).ownChoice).toBe('unsure');
+    expect(ballots.status(bill.id).state).toBe('open');
+    expect(ballots.publish(bill.id, proposalWindow(), credentials[4]!.id).publicationId).toBe(publication.publicationId);
+    expect(review.db.query('SELECT count(*) n FROM publication_decisions').get()).toMatchObject({ n: 1 });
+    expect(() => review.db.exec('DELETE FROM publication_decisions')).toThrow('append-only');
+    // Removing configured reviewers fails closed even with durable approved history.
+    review.close();
+    review = new CatalogReviewStore(reviewPath, []);
+    expect(review.ballotReview(bill).reviewReady).toBe(false);
+    expect(ballots.status(bill.id).state).toBe('closed_or_stale');
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials.filter(r => r.id !== credentials[4]!.id));
+    expect(review.ballotReview(bill).reviewReady).toBe(false);
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials.filter(r => r.id !== credentials[0]!.id));
+    expect(review.ballotReview(bill).reviewReady).toBe(false);
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials.map(r => r.id === credentials[0]!.id ? { ...r, roles: [] } : r));
+    expect(review.ballotReview(bill).reviewReady).toBe(false);
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials);
+    review.db.query('UPDATE reviewer_identities SET active=0 WHERE id=?').run(credentials[0]!.id);
+    expect(review.reviewer(auth('legal'), 'legal')).toBeNull();
+    expect(review.ballotReview(bill).reviewReady).toBe(false);
+    review.db.query('UPDATE reviewer_identities SET active=1 WHERE id=?').run(credentials[0]!.id);
+
     // A later expert decision invalidates the exact review receipt and closes writes.
     review.decide(auth("legal"), bill.id, { revision: bill.revision, jurisdiction: bill.jurisdiction,
       category: "legal", decision: "changes_requested",
@@ -132,4 +175,21 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     review.close();
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+
+test('HFL-051 supplement and self-publishing remain blocked with authenticated fixtures', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'review-separation-'));
+  const combined = { ...credentials[0]!, roles: ['legal', 'publisher'] as ReviewRole[] };
+  const review = new CatalogReviewStore(join(dir, 'review.sqlite'), [combined, ...credentials.slice(1)]);
+  try {
+    for (const category of categories) review.decide(auth(category), bill.id, {
+      revision: bill.revision, jurisdiction: bill.jurisdiction, category, decision: 'approved', reason: 'Explicit test authenticated approval.' });
+    expect(() => review.publish(auth('legal'), bill.id, { revision: bill.revision,
+      jurisdiction: bill.jurisdiction, reason: 'Cannot attest my own approval.' })).toThrow('Separate human publisher');
+    const supplement = originalReviewBills.find(b => b.id === 'HFL-051')!;
+    expect(() => review.publish(auth('publisher'), supplement.id, { revision: supplement.revision,
+      jurisdiction: supplement.jurisdiction, reason: 'Catalog digest excludes the supplement.' })).toThrow('supplement');
+    expect(review.ballotReview(supplement).reviewReady).toBe(false);
+  } finally { review.close(); rmSync(dir, { recursive: true, force: true }); }
 });
