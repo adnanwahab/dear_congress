@@ -49,6 +49,8 @@ import { timingSafeEqual } from "node:crypto";
 import { mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createCitizenProposalHandlers } from "./src/server/citizen-proposals";
+import { CatalogBallotStore } from "./src/server/catalog-ballots";
+import { catalogBallotHandlers } from "./src/server/catalog-ballots-api";
 import { CELL_SIZE_DEG, cellCoord, storeRealCoord, storeSimulatedCoord } from "./src/server/geo-cell";
 import {
   loadOutcomesFile,
@@ -888,6 +890,16 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
+// Separate catalog participation store; existing JSON and developer PR votes are untouched.
+const catalogBallots = new CatalogBallotStore(
+  process.env.CATALOG_DB_PATH ?? `${DB_PATH}.catalog.sqlite`,
+  { secret: process.env.ANON_COOKIE_SECRET ?? "local-development-catalog-secret-not-for-production" },
+);
+const catalogHandlers = catalogBallotHandlers(catalogBallots, {
+  adminToken: ADMIN_TOKEN,
+  publisherId: process.env.CATALOG_PUBLISHER_ID?.trim() ?? "",
+  expectedOrigin: (req) => publicSecurity.origin(req),
+});
 const planRoomsHandler = roomHandler(new PlanRooms(), req => publicSecurity.origin(req));
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
@@ -982,6 +994,20 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/state": {
       OPTIONS: (req) => new Response(null, { status: 204, headers: readCorsHeaders(req) }),
       GET: (req) => withReadCors(req, Response.json(state(resolveVoterId(req)))),
+    },
+
+    "/api/catalog-bills/:id": {
+      GET: (req) => catalogHandlers.detail(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/results": {
+      GET: (req) => catalogHandlers.results(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/ballot": {
+      GET: (req) => catalogHandlers.ballot(req, req.params.id!),
+      PUT: (req) => catalogHandlers.vote(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/publications": {
+      POST: (req) => catalogHandlers.publish(req, req.params.id!),
     },
 
     "/api/citizen-proposals": {
