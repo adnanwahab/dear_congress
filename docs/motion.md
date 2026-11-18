@@ -426,6 +426,35 @@ active default kill switch and human review. Browser choices are advisory;
 production requires a human-published tagged release. This implementation does
 not inspect or attest live protection/environment configuration.
 
+## Graphics quality (SHE-749)
+
+Participation & privacy → Graphics quality (`/account#graphics`, also in More)
+selects Auto, Lite, Standard or Cinematic independently of motion. Optional
+MapLibre needs/jurisdiction maps use pixel-density caps of 1, 1.5 and 2,
+bounded by device density. Auto starts Standard; 60 active render intervals
+above 24 ms lower one tier. Three sample windows below 18 ms raise one tier.
+Idle gaps over 100 ms and hidden documents discard samples. Stats beside each
+ready map expose effective tier, density and average active frame interval;
+these are render-event intervals, not GPU benchmarks or a device capability claim.
+No polling render loop or telemetry is introduced. All tiers have a zero
+optional-particle budget because this app currently has no particle renderer.
+
+Choose Lite manually for low power; there is no reliable universal OS low-power
+signal. Choice uses the separate `civic:graphics` browser key; blocked storage
+retains only the current-page choice. Changing quality updates the existing map
+without remounting forms, changing filters, dropping features or writing civic data.
+The existing `motion.ts` reduced-motion/off behavior remains authoritative for
+animation. Theme and first-run demo are unchanged.
+
+Fallback: missing WebGL, provider errors or a 10-second load timeout retain the
+existing map-free text summaries and manual map retry. Quality cannot repair
+network/provider failures. Needs and jurisdiction facts remain in ordinary text
+at every tier; no geographic feature or political option is culled for performance.
+Run `bun test src/client/graphics.test.ts src/client/optional-map.test.tsx` for
+adaptation, persistence failure, cleanup and map fallback regressions. Physical
+low-end phone profiling and a keyboard/touch/screen-reader journey remain human
+acceptance checks; automated timing fixtures do not establish device performance.
+
 ## Read-only presenter (SHE-600)
 
 Use **More → Present sample proposals**, or `/feed?presenter=1`. The existing six
