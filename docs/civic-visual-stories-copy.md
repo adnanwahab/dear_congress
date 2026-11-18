@@ -3,7 +3,7 @@
 **Editorial working document · November 18, 2026**  
 **Source:** `civic-synthesis-visual-landing.html` (the current seven-story prototype)
 
-This document is for revising the text together. The main landing-page copy below preserves the rendered prototype's order and wording. The appendix transcribes the default visible copy of each of the six embedded demos; some additional messages appear only after interacting with a demo. All examples and visualizations are illustrative, not live voting, laws or policy results.
+This document is for revising the landing-page text together. The main copy below preserves the prototype's order and wording. The companion complete text inventory and Word edition also transcribe the default visible text of the six embedded demos; some additional messages appear only after interacting with a diagram. All examples are illustrative, not live votes, laws or measured policy results.
 
 ---
 
