@@ -458,3 +458,11 @@ controls with visible focus and no drag requirement. Styles wrap long content,
 stack at mobile widths and disable motion under reduced-motion preferences.
 Native mobile, keyboard/screen-reader and visual verification remains required;
 DOM tests do not establish native accessibility acceptance.
+
+## Public legal versions and See What Changes
+
+The original proposal remains immutable version 1. Its publishing browser can now
+save additional public clause versions through **See What Changes** on the detail.
+Private amendment preparation above is unchanged. Revised versions do not inherit
+advisory responses; their own responses require deliberate renewed participation.
+See [workflow, API, HBL contract, fixture and limitations](policy-impact-preview.md).

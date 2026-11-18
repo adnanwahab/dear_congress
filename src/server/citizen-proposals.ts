@@ -1,3 +1,5 @@
+import { createPreview, saveVersion, versionData, submitPreview, versions, type HblConfig } from "./policy-preview";
+import { HOUSING_DEMO_TITLE, HOUSING_DEMO_TEXT } from "../shared/policy-preview";
 import { createHash } from "node:crypto";
 import {
   CONTRIBUTION_ROLES, ADVISORY_CHOICES, CITIZEN_PROPOSAL_LIMITS, PROPOSAL_JURISDICTIONS,
@@ -90,6 +92,7 @@ export function citizenProposalView(record: CitizenProposalRecord, voterId?: str
     if (ADVISORY_CHOICES.includes(choice)) counts[choice] += 1;
   }
   return {
+    ...(record.provenance ? { provenance: record.provenance } : {}),
     id: record.id,
     title: record.title,
     problem: record.problem,
@@ -165,8 +168,13 @@ export function voteCitizenProposal(store: CitizenProposalStore, id: string, vot
     throw new CitizenProposalError("choice must be support, oppose, unsure, or null to remove your vote.");
   }
   const record = findCitizenProposal(store, id);
-  if (body.choice === null) delete record.votesByVoterHash[key];
-  else record.votesByVoterHash[key] = body.choice as AdvisoryChoice;
+  const version = body.proposalVersion ?? 1;
+  if (!Number.isSafeInteger(version) || !versions(record).some(v => v.version === version)) throw new CitizenProposalError("Saved ballot version not found.", 409);
+  const votes = version === 1 ? record.votesByVoterHash : ((record.versionVotes ??= {})[String(version)] ??= {});
+  if ((votes[key] ?? null) === body.choice) return record;
+  if (body.choice === null) delete votes[key];
+  else votes[key] = body.choice as AdvisoryChoice;
+  if (version !== 1) (record.versionBallotEvents ??= []).push({ version: Number(version), voterHash: key, choice: body.choice as AdvisoryChoice | null, createdAt: new Date().toISOString() });
   return record;
 }
 
@@ -326,6 +334,8 @@ function json(value: unknown, status = 200) {
 export function createCitizenProposalHandlers(deps: {
   getStore: () => CitizenProposalStore;
   save: () => Promise<unknown>;
+  hbl?: HblConfig;
+  siteUrl?: string;
 }) {
   let writes: Promise<unknown> = Promise.resolve();
   function serialized<T>(run: () => Promise<T>) {
@@ -341,7 +351,57 @@ export function createCitizenProposalHandlers(deps: {
       return json({ error: "The proposal could not be saved. Please retry; your draft has been kept." }, 500);
     }
   }
+  const inFlight = new Set<string>();
+  const checkedAt = new Map<string, number>();
+  function refresh(record: CitizenProposalRecord) {
+    for (const preview of record.policyPreviews ?? []) if (preview.remoteId && ["queued", "running"].includes(preview.status) && Date.now() - (checkedAt.get(preview.id) ?? 0) > 10000) {
+      checkedAt.set(preview.id, Date.now()); schedule(record, preview);
+    }
+  }
+  function schedule(record: CitizenProposalRecord, preview: import("../shared/policy-preview").PolicyPreview) {
+    if (inFlight.has(preview.id) || preview.status === "unsupported" || preview.status === "completed" && preview.results) return;
+    inFlight.add(preview.id);
+    void submitPreview(structuredClone(preview), deps.hbl ?? { url: "https://happybearlandia.fly.dev" }).then(patch => serialized(async () => {
+      const previous = structuredClone(preview);
+      Object.assign(preview, patch);
+      try { await deps.save(); } catch { Object.assign(preview, previous); }
+    })).finally(() => inFlight.delete(preview.id));
+  }
   return {
+    versions: (req: Request, id: string) => handle(() => { const record = findCitizenProposal(deps.getStore(), id); refresh(record); return versionData(record, requestVoter(req, false) ?? ""); }),
+    revise: (req: Request, id: string) => handle(async () => {
+      const voter = requestVoter(req, true)!; const body = await readBody(req);
+      return serialized(async () => {
+        const record = findCitizenProposal(deps.getStore(), id), previous = structuredClone(record);
+        const version = saveVersion(record, voter, body);
+        try { await deps.save(); } catch (error) { Object.keys(record).forEach(k => delete (record as any)[k]); Object.assign(record, previous); throw error; }
+        return { version, impactUrl: `/proposals/${encodeURIComponent(id)}/versions/${version.version}/impact` };
+      });
+    }),
+    impact: (req: Request, id: string, version: string) => handle(async () => {
+      const record = findCitizenProposal(deps.getStore(), id);
+      if (!versions(record).some(v => v.version === Number(version))) throw new CitizenProposalError("Saved version not found.", 404);
+      if (req.method === "GET") { refresh(record); return versionData(record, requestVoter(req, false) ?? ""); }
+      const voter = requestVoter(req, true)!; const body = await readBody(req);
+      return serialized(async () => {
+        const previous = structuredClone(record.policyPreviews);
+        const preview = createPreview(record, voter, Number(version), body, deps.siteUrl ?? new URL(req.url).origin);
+        try { await deps.save(); } catch (error) { record.policyPreviews = previous; throw error; }
+        schedule(record, preview);
+        return { preview };
+      });
+    }),
+    demo: (req: Request) => handle(async () => {
+      const voter = requestVoter(req, true)!; const body = await readBody(req);
+      return serialized(async () => {
+        const store = deps.getStore(), previous = structuredClone(store.citizenProposals);
+        const { record } = publishCitizenProposal(store, voter, { ...body, title: HOUSING_DEMO_TITLE, problem: "Public synthetic demonstration, not an official bill or real-world evidence.", proposedChange: HOUSING_DEMO_TEXT[0], jurisdiction: "city" });
+        record.provenance = "synthetic";
+        if (!record.legalVersions) saveVersion(record, voter, { title: record.title, type: "bill", expectedVersion: 1, clauses: [{ clauseId: "section-0", text: HOUSING_DEMO_TEXT[0] }, { clauseId: "section-1", text: HOUSING_DEMO_TEXT[1] }], confirmedPublic: true, idempotencyKey: body.idempotencyKey });
+        try { await deps.save(); } catch (error) { store.citizenProposals = previous; throw error; }
+        return { proposal: citizenProposalView(record, voter) };
+      });
+    }),
     list: (req: Request) => handle(() => {
       const voter = requestVoter(req, false);
       const proposals = [...(deps.getStore().citizenProposals ?? [])]
@@ -374,10 +434,10 @@ export function createCitizenProposalHandlers(deps: {
       const body = await readBody(req);
       return serialized(async () => {
         const store = deps.getStore();
-        const previous = { ...findCitizenProposal(store, id).votesByVoterHash };
+        const previous = structuredClone(findCitizenProposal(store, id));
         const record = voteCitizenProposal(store, id, voter, body);
         try { await deps.save(); }
-        catch (error) { record.votesByVoterHash = previous; throw error; }
+        catch (error) { record.votesByVoterHash = previous.votesByVoterHash; record.versionVotes = previous.versionVotes; record.versionBallotEvents = previous.versionBallotEvents; throw error; }
         return { proposal: citizenProposalView(record, voter) };
       });
     }),

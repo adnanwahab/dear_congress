@@ -157,3 +157,14 @@ Protect old `/api/journal`, `/api/journal/:id`, `/api/entries`, `/api/entries/ev
 ## Data retention
 
 Define and document retention for raw journals, consent evidence, ballot revisions and admin audit trails. Delete/erase personal data as required by applicable policy/law, while describing limits on previously published content and legitimate immutable audit records. No personal information is used to personalize political persuasion or hidden scoring.
+
+## Implemented public legal versions and policy previews
+
+See [See What Changes API and integration](docs/policy-impact-preview.md) for the
+implemented cookie-authorized `/api/citizen-proposals/:id/versions` and linked
+`/versions/:version/impact` operations. Records extend existing citizen proposals
+with immutable `legalVersions`, isolated `versionVotes`/`versionBallotEvents`,
+`versionWriteKeys`, and retained `policyPreviews`. Original published text and
+version-1 totals remain unchanged. The companion handoff is
+`policy-impact-preview.v1`; source version hashes and canonical handoff diff hashes
+are distinct, documented identities. No private journals or repository votes enter it.

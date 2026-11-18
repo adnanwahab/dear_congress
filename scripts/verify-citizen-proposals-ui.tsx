@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const testDirectory = await mkdtemp(join(tmpdir(), 'civic-proposals-ui-'));
 const child = Bun.spawn([process.execPath, 'server.ts'], {
   cwd: fileURLToPath(new URL('..', import.meta.url)),
-  env: { PATH: process.env.PATH ?? '', PORT: '0', DB_PATH: join(testDirectory, 'db.json'), NODE_ENV: 'production', ANON_COOKIE_SECRET: 'isolated-ui-cookie-secret-at-least-32-characters', DEBUG_REQUEST_LOGS: '0', OPENAI_API_KEY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' },
+  env: { PATH: process.env.PATH ?? '', PORT: '0', DB_PATH: join(testDirectory, 'db.json'), NODE_ENV: 'production', ANON_COOKIE_SECRET: 'isolated-ui-cookie-secret-at-least-32-characters', DEBUG_REQUEST_LOGS: '0', ADMIN_TOKEN: 'ui-test-reset-only', OPENAI_API_KEY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '' },
   stdin: 'ignore', stdout: 'pipe', stderr: 'pipe',
 });
 let startup = '';
@@ -114,7 +114,7 @@ try {
   assert.equal((await api('/api/citizen-proposals/' + id)).proposal.countTotal, 0);
   const beforeTimeline = writeRequests;
   await render(detailPath);
-  await until(() => !!query().queryByRole('heading', { name: 'Publish one clear permit checklist' }), 'detail');
+  await until(() => !!query().queryByRole('heading', { name: 'Publish one clear permit checklist', level: 1 }), 'detail');
   const timeline = query().getByRole('region', { name: 'Civic milestone timeline' });
   const sourceProposal = (await api('/api/citizen-proposals/' + id)).proposal;
   assert.equal(timeline.querySelector('time')?.getAttribute('datetime'), sourceProposal.publishedAt);
@@ -145,7 +145,7 @@ try {
   assert.equal(help.open, false);
   assert.equal(document.activeElement, summary);
   assert.equal(writeRequests, beforeHelp, 'Reading help must never write or vote');
-  assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'true');
+  assert.equal(query().getByRole('button', { name: /^(?:✓ )?Support 1$/ }).getAttribute('aria-pressed'), 'true');
   assert.equal((document.getElementById('comment-name') as HTMLInputElement).value, 'Keep my name');
   assert.equal((document.getElementById('comment-text') as HTMLTextAreaElement).value, 'Keep this unsent question');
   assert.equal(query().getByRole('heading', { name: 'What would change' }).parentElement!.textContent, originalText);
@@ -164,8 +164,8 @@ try {
   await until(() => !!query().queryByText('Your advisory response is saved: Support.'), 'second support');
   browserCookie = firstCookie;
   await render(detailPath);
-  await until(() => !!query().queryByRole('button', { name: /^Support 1$/ }), 'first browser shared counts');
-  assert.equal(query().getByRole('button', { name: /^Support 1$/ }).getAttribute('aria-pressed'), 'false');
+  await until(() => !!query().queryByRole('button', { name: /^(?:✓ )?Support 1$/ }), 'first browser shared counts');
+  assert.equal(query().getByRole('button', { name: /^(?:✓ )?Support 1$/ }).getAttribute('aria-pressed'), 'false');
   check('Independent browser identity sees shared totals and its own choice');
   const beforeAmendment = await api('/api/citizen-proposals/' + id);
   await click('Suggest amendment');
@@ -218,8 +218,12 @@ try {
   check('Journal conversion pre-fills the problem without publication or automatic policy text');
   await click('Save draft');
   const journalDraftURL = dom.location.href;
-  const resetResponse = await nativeFetch(base + '/api/reset', { method: 'POST' });
+  const resetResponse = await nativeFetch(base + '/api/reset', { method: 'POST', headers: { authorization: 'Bearer ui-test-reset-only' } });
   assert.equal(resetResponse.status, 200);
+  // Reset intentionally retains cited journals. Hide this isolated source through
+  // the existing moderation boundary to test an actually unavailable source.
+  const hiddenSource = await nativeFetch(base + '/api/admin/moderation', { method: 'POST', headers: { authorization: 'Bearer ui-test-reset-only', origin: base, 'content-type': 'application/json' }, body: JSON.stringify({ entryId: entry.id, action: 'hide', reason: 'Isolated UI missing-source fixture' }) });
+  assert.equal(hiddenSource.status, 200);
   await render(journalDraftURL);
   await fill('proposal-title', 'Keep a proposal after its source is removed');
   await fill('proposal-change', 'Retain the copied experience and allow review without a stale link.');

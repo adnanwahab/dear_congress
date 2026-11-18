@@ -46,7 +46,7 @@ const LawBehaviorExplorer = lazy(() => import("./LawBehaviorExplorer").then(m =>
 const CitizenProposalsApp = lazy(() => import("./CitizenProposals").then(m => ({ default: m.CitizenProposalsApp })));
 const isCitizenProposalPath = (pathname: string) => {
   const path = pathname.replace(/\/+$/, "") || "/";
-  return path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+$/.test(path);
+  return path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+(?:\/versions(?:\/\d+(?:\/impact)?)?)?$/.test(path);
 };
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";

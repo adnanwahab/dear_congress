@@ -252,9 +252,25 @@ test("public proposals survive server restarts with independent browser votes an
       expect(publicJson).not.toContain(privateValue);
     }
 
+    const revision = { expectedVersion: 1, title: input.title, type: "bill", clauses: [{clauseId:"section-1",text:"Add weekend service to this proposed pilot."}], confirmedPublic:true, idempotencyKey:crypto.randomUUID() };
+    expect((await api(server, `${detail}/versions`, {voter:otherVoter,body:revision})).status).toBe(403);
+    await ok(server, `${detail}/versions`, {voter:author,body:revision});
+    await ok(server, `${detail}/versions`, {voter:author,body:revision});
+    const previewInput = {baseVersion:1,confirmedPublicTransfer:true};
+    await ok(server, `${detail}/versions/2/impact`, {voter:author,body:previewInput});
+    await ok(server, `${detail}/versions/2/impact`, {voter:author,body:previewInput});
+    await ok(server, `${detail}/vote`, {voter:otherVoter,body:{proposalVersion:2,choice:"oppose"}});
+    const frozen = await ok<import("./src/shared/policy-preview").ProposalVersionData>(server, `${detail}/versions`, {voter:author});
+    expect(frozen.versions).toHaveLength(2); expect(frozen.previews).toHaveLength(1);
+    expect(frozen.previews[0]!.status).toBe("unsupported");
+    expect(frozen.responses?.["2"]?.counts).toEqual({support:0,oppose:1,unsure:0});
+    expect((await fetch(new URL(`/proposals/${published.id}/versions/2/impact`,server.url))).status).toBe(200);
+    expect((await fetch(new URL("/api/policy-preview-fixture",server.url))).status).toBe(404);
     await server.stop();
     server = await startServer(dbPath);
     servers.push(server);
+    const restoredVersions = await ok<import("./src/shared/policy-preview").ProposalVersionData>(server, `${detail}/versions`, {voter:author});
+    expect(restoredVersions).toEqual(frozen);
     const restarted = (await ok<{ proposal: CitizenProposalView }>(server, detail, { voter: otherVoter })).proposal;
     expect(restarted.counts).toEqual({ support: 1, oppose: 0, unsure: 0 });
     expect(restarted.countTotal).toBe(1);
@@ -270,6 +286,7 @@ test("public proposals survive server restarts with independent browser votes an
     const reset = await fetch(new URL("/api/reset", server.url), { method: "POST", headers: { authorization: "Bearer integration-reset-admin" } });
     expect(reset.status).toBe(200);
     expect((await ok<{ proposal: CitizenProposalView }>(server, detail, { voter: otherVoter })).proposal).toEqual(restarted);
+    expect((await ok<import("./src/shared/policy-preview").ProposalVersionData>(server, `${detail}/versions`, {voter:author}))).toEqual(frozen);
     expect((await ok<{ entry: typeof source }>(server, `${base}/journal/${source.id}`)).entry).toEqual(source);
 
     for (const path of ["/", "/journal", "/needs", "/vote", "/synth", "/votes", "/feed", "/proposals/new", `/proposals/${published.id}`]) {

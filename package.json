@@ -8,6 +8,7 @@
     "test": "bun test",
     "benchmark:ingestion": "bun src/ingestion/benchmark.ts",
     "test:routes": "bun scripts/smoke-routes.ts",
+    "test:policy-impact-ui": "bun scripts/verify-policy-impact-ui.mjs",
     "test:proposals-ui": "bun scripts/verify-citizen-proposals-ui.tsx",
     "test:law-carousel": "bun scripts/verify-law-carousel-ui.tsx",
     "visualizations:build": "bun scripts/build-bill-visualizations.mjs",
