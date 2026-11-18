@@ -891,16 +891,17 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
-// Human review submissions and decisions use separate SQLite storage; ballots remain independently gated.
+// Review decisions remain separate from ballots; their publisher-attested snapshots now provide the ballot gate.
 const catalogReviews = new CatalogReviewStore();
 // Separate catalog participation store; existing JSON and developer PR votes are untouched.
 const catalogBallots = new CatalogBallotStore(
   process.env.CATALOG_DB_PATH ?? `${DB_PATH}.catalog.sqlite`,
-  { secret: process.env.ANON_COOKIE_SECRET ?? "local-development-catalog-secret-not-for-production" },
+  { secret: process.env.ANON_COOKIE_SECRET ?? "local-development-catalog-secret-not-for-production", reviews: bill => catalogReviews.ballotReview(bill) },
 );
 const catalogHandlers = catalogBallotHandlers(catalogBallots, {
   adminToken: ADMIN_TOKEN,
   publisherId: process.env.CATALOG_PUBLISHER_ID?.trim() ?? "",
+  publisherRole: req => catalogReviews.reviewer(req, 'publisher')?.id ?? null,
   expectedOrigin: (req) => publicSecurity.origin(req),
 });
 const planRoomsHandler = roomHandler(new PlanRooms(), req => publicSecurity.origin(req));
