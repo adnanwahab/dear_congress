@@ -17,6 +17,7 @@ import { PlaceCosts } from './PlaceCosts';
 import { CivicConstellation } from './CivicConstellation';
 import { PolicyQuestions } from './PolicyQuestions';
 import { FinanceExplorer } from './FinanceExplorer';
+import { Exhibition } from './Exhibition';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -59,7 +60,7 @@ export default function BillCatalog() {
   const gate = bill ? editorialGate(bill) : undefined;
   const results = atlasBills(searchBills(query, category), params);
   const back = `/bills${params.size ? '?' + params : ''}`;
-  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
+  return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>{params.has('exhibit') ? <Exhibition /> : <><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
     <CivicCrossword /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>
       <a href={back}>← All 100 proposals</a>
@@ -89,6 +90,7 @@ export default function BillCatalog() {
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
       <p><a href="/bills?finance=1#finance-title">Explore public finance · hypothetical example</a></p>
       {params.get('finance') === '1' && <FinanceExplorer />}
+      <p><a href="/bills?exhibit=builder">Build a civic exhibition</a></p>
       <h1>100 Bills for Human Flourishing</h1><p><a href="/topics">Explore civic problem neighborhoods</a> · Separate illustrative needs and policy catalog; no reviewed binding to these draft bills.</p><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
       <PolicyAtlas params={params} change={changeAtlas} />
@@ -102,6 +104,6 @@ export default function BillCatalog() {
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept · Legal authority: unverified</p><p>Publish gate: blocked · Human review required</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
       <details><summary>Compare local cost context</summary><PlaceCosts /></details>
     </>}
-    {id && <TownHallGame />}
+    {id && <TownHallGame />}</>}
   </main></div>;
 }
