@@ -1,6 +1,8 @@
 import data from '../generated/eudaimonia-100.json';
 export const billCollection = data;
 export type CatalogBill = typeof data.bills[number];
+/** The original HFL-001–HFL-100 set used by the expert-review workflow. */
+export const originalReviewBills = data.bills.filter(b => /^HFL-\d{3}$/.test(b.id) && Number(b.id.slice(4)) <= 100);
 export function searchBills(query: string, category: string) {
   const terms = query.trim().toLocaleLowerCase('en-US').split(/\s+/).filter(Boolean);
   return data.bills.filter(b => (!category || b.category === category) && terms.every(term =>

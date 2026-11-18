@@ -109,6 +109,13 @@
 .csh-bill-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;font-size:12px}
 .csh-bill-bottom>span{color:#547568;font-size:11px}
 .csh-bill-bottom a{font-weight:850;text-decoration:none;border-bottom:1px solid;white-space:nowrap}
+.csh-webgpu-ad{display:flex;align-items:center;gap:10px;margin:0 0 17px;padding:11px 12px;border:1px solid #d5d1ef;border-radius:12px;background:linear-gradient(105deg,#f1edff,#f2f8f4);text-decoration:none;color:#343351!important;transition:border-color .18s,transform .18s}
+.csh-webgpu-ad:hover{border-color:#8270be;transform:translateY(-2px)}
+.csh-webgpu-mark{width:30px;height:30px;display:grid;place-items:center;flex:none;border-radius:9px;background:#8170bb;color:#fff;font-size:18px}
+.csh-webgpu-copy{display:grid;gap:2px;min-width:0}
+.csh-webgpu-copy strong{font:800 10px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.1em;color:#68599b}
+.csh-webgpu-copy small{font-size:11px;line-height:1.35;color:#59645f}
+.csh-webgpu-arrow{margin-left:auto;font-weight:800;color:#68599b}
 .csh-no-results{text-align:center;background:#fff;border:1px dashed #9eafa7;border-radius:16px;padding:40px}
 .csh-more-row{display:flex;justify-content:center;margin-top:28px}
 .csh-provenance{font-size:12px;color:#75837a;margin-top:16px!important}

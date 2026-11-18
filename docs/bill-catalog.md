@@ -22,9 +22,9 @@ bun run test:routes
 
 The implementation below documents the *original* 100-record introduction and its earlier acceptance history. Those historical results are not claimed as verification of the 110-record expansion.
 
-The review candidate adds `/bills` and `/bills/HFL-001` through
-`/bills/HFL-100`, including `/bills/HFL-051`. Published, Feed, Votes and the
-navigation utilities link to it. Unknown IDs return HTTP 404. Search uses all
+The current public catalog index is `/votes`; the retired `/bills` index redirects
+there. Individual `/bills/HFL-001` through `/bills/HFL-110` detail URLs remain
+available for bookmarks and deep links. Unknown IDs return HTTP 404. Search uses all
 six fields, category, title and ID; whitespace-separated terms must all match.
 `?q=HFL-051&category=Friendship%2C+community%2C+and+belonging` is shareable.
 Filters intersect, and Clear / reset restores all 100 records. History entries
@@ -59,12 +59,17 @@ The checked-in generated fixture test detects stale output.
 
 Collection version 1 and stable HFL IDs are retained. A revision digest covers
 ID, title, category, version and all six fields. Git retains earlier source and
-artifact revisions. This is a read-only catalog, not a revision database or an
-advisory publishing API. No votes or comments are stored in this artifact, so
-reimport cannot delete them or move them to changed text. Any future publishing
-implementation must retain immutable snapshots, obtain authorized review, and
-bind ballots to both source kind and reviewed text revision. Catalog revision
-digests do not include the separate legislative supplement.
+artifact revisions. The source catalog remains immutable in Git while the product
+direction supports revisioned discussion drafts as separate records tied to an
+exact parent digest. Proposed changes must never overwrite source text. Any
+approved revision should become a new immutable snapshot with a new digest. The
+separate legislative supplement has its own source and revision identity.
+
+The expert-review center described below is implemented in a separate SQLite
+database. Database-backed amendment drafts are not yet implemented. A separate
+revision-bound catalog ballot API and UI exist, but publication still consults
+the source-controlled review ledger, not the new review database. The new
+review-ready record does not publish a ballot.
 
 ## HFL-051 legislative supplement
 
@@ -88,13 +93,22 @@ mapping and review, not implicit runtime file discovery.
 
 Curated editorial drafts are independent of the illustrative engine seed,
 `citizenProposals`, official legislation metadata and repository PR ballots.
-They do not appear in their API responses or vote totals and do not enter
-synthesis scoring. They have no sponsors, endorsements, votes, official status,
-verified evidence or assessed cost. Detail pages say “Unknown until assessed”.
-The catalog makes no API writes. “Prepare your own private civic proposal” opens
-the existing guided workspace without copying catalog content or source identity.
-No catalog voting link is enabled. Authorized, revision-aware advisory publication
-is a prerequisite for any future participation transition.
+Catalog amendment and ballot records must use separate storage and totals; they
+must never be mixed with citizen-proposal or repository votes or synthesis scores.
+The intended workflow is: save a private, owner-bound amendment draft; submit it
+for moderation with explicit consent; obtain expert review; then publish an
+approved, immutable revision for a separately identified advisory ballot.
+Ballots must bind to the exact bill revision, accept an explicit support, oppose
+or unsure choice, and require a fresh choice after every published revision.
+Unreviewed drafts remain readable and labeled as discussion drafts. Reviewed
+does not mean endorsed, enacted, independently validated, or officially sponsored.
+
+The expert-review workflow and a separate exact-publication ballot API are
+implemented. Amendment storage is still planned. The ballot publication gate
+still uses the source-controlled editorial ledger; the database review-center
+decisions are not yet connected to it, and no original catalog revision is
+eligible for an advisory ballot. Detail pages must label evidence, costs,
+jurisdiction, and review status accurately until authorized publication occurs.
 
 ## Validation and remaining human review
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { billCollection, searchBills, type CatalogBill } from '../shared/bill-catalog';
+import { originalReviewBills, searchBills, type CatalogBill } from '../shared/bill-catalog';
 import './review-center.css';
 
 type Category = 'legal' | 'evidence' | 'fiscal' | 'editorial';
@@ -8,7 +8,7 @@ type Submission = { id: string; category: Category; findings: string; sources: s
 type QueueBill = { id: string; revision: string; jurisdiction: string; snapshot: { problem: string; proposed_change: string; safeguards: string; metrics: string }; decisions: Decision[]; submissions: Submission[] };
 const categories: Category[] = ['legal', 'fiscal', 'evidence', 'editorial'];
 const categoryNames: Record<Category, string> = { legal: 'Legal', fiscal: 'Fiscal', evidence: 'Evidence', editorial: 'Editorial' };
-const validBill = (id: string | null) => billCollection.bills.find(b => b.id === id);
+const validBill = (id: string | null) => originalReviewBills.find(b => b.id === id);
 const requestedBill = () => typeof window === 'undefined' ? null : validBill(new URLSearchParams(window.location.search).get('bill'));
 const readSources = (raw: string) => { try { return JSON.parse(raw) as string[]; } catch { return []; } };
 
@@ -27,10 +27,10 @@ export default function ReviewCenter() {
   const [sources, setSources] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState('');
 
-  const selectedBill = validBill(selectedId) ?? billCollection.bills[0]!;
+  const selectedBill = validBill(selectedId) ?? originalReviewBills[0]!;
   const queueById = useMemo(() => new Map(bills.map(b => [b.id, b])), [bills]);
   const selectedQueue = queueById.get(selectedBill.id);
-  const visibleBills = useMemo(() => searchBills(query, '').filter(b => {
+  const visibleBills = useMemo(() => searchBills(query, '').filter(b => Number(b.id.slice(4)) <= 100).filter(b => {
     const q = queueById.get(b.id);
     if (!q || filter === 'all') return true;
     const complete = categories.every(c => latestDecision(q, c)?.decision === 'approved');
@@ -87,9 +87,12 @@ export default function ReviewCenter() {
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error ?? 'Could not submit this suggestion.');
-      setSubmissionStatus('Suggestion received and pending expert review. It is not an approval.');
+      setSubmissionStatus('Saved to the review database. Pending expert review; this is not an approval.');
       setFindings(''); setSources('');
-      if (reviewerSignedIn) await refreshQueue();
+      if (reviewerSignedIn) {
+        try { await refreshQueue(); }
+        catch { setSubmissionStatus('Saved to the review database. The queue did not refresh; reload it to see the suggestion.'); }
+      }
     } catch (error) { setSubmissionStatus(error instanceof Error ? error.message : 'Could not submit this suggestion.'); }
   }
 
@@ -117,9 +120,10 @@ export default function ReviewCenter() {
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error ?? 'Could not save this decision.');
-      setStatus(`Decision recorded by ${data.reviewer}.`);
-      await refreshQueue();
+      setStatus(`Decision saved to the review database by ${data.reviewer}.`);
       form.reset();
+      try { await refreshQueue(); }
+      catch { setStatus(`Decision saved to the review database by ${data.reviewer}, but the queue did not refresh.`); }
     } catch (error) { setStatus(error instanceof Error ? error.message : 'Could not save this decision.'); }
   }
 
@@ -137,7 +141,7 @@ export default function ReviewCenter() {
 
     <div className="review-layout">
       <aside className="review-browser" aria-label="Bill browser">
-        <div className="review-browser-heading"><div><span className="review-eyebrow">Catalog</span><h2>100 bills</h2></div><span className="review-count">{visibleBills.length}</span></div>
+        <div className="review-browser-heading"><div><span className="review-eyebrow">Original HFL catalog</span><h2>100 bills</h2></div><span className="review-count">{visibleBills.length}</span></div>
         <label className="review-search-label" htmlFor="review-search">Search bills</label>
         <input id="review-search" className="review-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="ID, title, topic…" />
         {reviewerSignedIn && <label className="review-filter-label" htmlFor="review-filter">Queue</label>}

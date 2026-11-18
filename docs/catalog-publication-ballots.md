@@ -14,7 +14,7 @@ SQLite with one attached Fly volume is an early single-writer pilot, **not** a g
 
 Only an authorized human operator with a configured ADMIN_TOKEN can call the publication endpoint. The server also needs CATALOG_PUBLISHER_ID for a trusted configured actor label, not a name supplied in the HTTP request. Publication requires a same-origin request, an immutable current HFL source revision, a specified UTC opening/closing window and all four human review categories approved for that exact text and jurisdiction.
 
-The current reviewer lookup still comes from src/shared/bill-editorial.ts and its source-controlled editorial ledger. **There is no production database-backed review center or independently verified expert-identity system yet**. Do not claim the publisher credential proves legal/fiscal/research qualifications. The next work needs authenticated, assigned reviewers and durable approval receipts wired into this lookup; until then, all 100 real source records fail the human review gate. Do not add fake approvals or set advisoryPublicationAllowed to unconditional true.
+The protected `/review` center now stores suggestions and reviewer decisions in a separate database, using server-configured reviewer credentials. The ballot publication lookup still comes from `src/shared/bill-editorial.ts` and its source-controlled editorial ledger; review-center decisions and its `review_ready` record are not yet wired into that gate. No production reviewer credentials or approvals are configured. Do not claim a configured token proves legal/fiscal/research qualifications, and do not add fake approvals or set `advisoryPublicationAllowed` to unconditional true. Until the review center is deliberately integrated with publication authorization and actual human decisions are recorded for each exact revision, all 100 original source records remain blocked.
 
 HFL-051 is additionally held until its separate legislative supplement receives a revision-specific review binding; the catalog digest alone does not cover that supplement.
 
@@ -43,7 +43,7 @@ Use an isolated test directory and stable ANON_COOKIE_SECRET (32+ characters). R
 
 Test fixtures inject synthetic complete reviews; they **do not** authorize production bills. Also verify an isolated server restart, current-vote restoration, replayed idempotent request receipts, rejection of stale revisions and unauthorized publishers, and protection against cross-origin writes.
 
-Actual deployment/browser acceptance, real reviewer identity verification, public voting windows, reviewer UI, multi-writer behavior, migrations from static catalog to edited versions, and scale testing are separate human-reviewed milestones.
+Actual deployment/browser acceptance, reviewer identity verification beyond configured credentials, connecting database review decisions to ballot publication, public voting windows, multi-writer behavior, migrations from static catalog to edited versions, and scale testing are separate human-reviewed milestones.
 
 ## Safe deployment / rollback
 

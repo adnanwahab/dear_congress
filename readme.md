@@ -218,6 +218,19 @@ Other application pages:
 
 These links describe routes available in the application; availability of data and actions varies by page. Advisory participation is not an official vote, and catalog drafts remain subject to their displayed editorial review gates.
 
+## Editing and reviewing the 100-bill catalog
+
+The expert-review center is available at [Review](/review). It stores public
+suggestions and verified reviewer decisions in a separate SQLite database,
+bound to each bill's exact revision. Reviewer access is configured server-side;
+without configured credentials, review decisions fail closed. The publication
+endpoint records that a revision is review-ready; it does not itself open a
+ballot. A separate exact-publication ballot API exists, but it still uses the
+existing publication gate and is not connected to this review database yet.
+Amendment persistence remains unimplemented, and no bill is currently eligible
+for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
+and [catalog workflow and safeguards](docs/bill-catalog.md).
+
 ## Linked research desk
 
 Open Navigation → Research desk (`/draft#research-desk`) to keep the selected
@@ -225,10 +238,3 @@ fictional sample's text, background references and illustrative outcome graph
 visible together. Drag or keyboard-resize dividers; choose Single column for a
 stacked layout. Only layout preferences are stored locally; see
 [SHE-751 verification and fallback](docs/reviews/SHE-751.md).
-
-
-## Review center for policy discussion drafts
-
-Open [Expert review center](/review) to read an exact HFL concept and submit sources or review suggestions. Reviewers configured by an operator with dedicated credentials may record jurisdiction- and revision-specific legal, evidence, fiscal and editorial decisions in the separate SQLite review database. Public suggestions are **not** expert approvals. See [review center setup](docs/catalog-review-center.md).
-
-The catalog now contains **110 discussion drafts**. The original source remains in Git. The separate catalog publication/ballot API is implemented, but the review center's approval records are **not yet connected to that API**; the static editorial ledger remains the ballot gate, and no draft is authorized for recorded advisory voting. Private amendment storage and complete statutory legislative text are separate future features. Do not treat a review-ready state as a published ballot.

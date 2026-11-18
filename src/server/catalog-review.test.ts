@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CatalogReviewStore } from './catalog-review';
-import { billCollection } from '../shared/bill-catalog';
+import { billCollection, originalReviewBills } from '../shared/bill-catalog';
 
 describe('catalog expert review persistence and authorization', () => {
   test('decisions persist across restart and retain an audit event', () => {
@@ -11,9 +11,10 @@ describe('catalog expert review persistence and authorization', () => {
     const path = join(dir, 'test.sqlite');
     const token = 'a'.repeat(40);
     const reviewers = [{ id: 'legal-1', name: 'Legal Reviewer', token, roles: ['legal' as const] }];
-    const bill = billCollection.bills[58]!;
+    const bill = originalReviewBills[58]!;
     try {
       let store = new CatalogReviewStore(path, reviewers);
+      expect(store.queue()).toHaveLength(100);
       const req = new Request('https://local/api', { headers: { authorization: `Bearer ${token}` } });
       store.decide(req, bill.id, { revision: bill.revision, jurisdiction: bill.jurisdiction, category: 'legal', decision: 'approved', reason: 'Reviewed the cited authority and limitations.' });
       store.close();
@@ -30,11 +31,13 @@ describe('catalog expert review persistence and authorization', () => {
     const dir = mkdtempSync(join(tmpdir(), 'catalog-review-'));
     const token = 'b'.repeat(40);
     const store = new CatalogReviewStore(join(dir, 'test.sqlite'), [{ id: 'evidence-1', name: 'Evidence Reviewer', token, roles: ['evidence'] }]);
-    const bill = billCollection.bills[58]!;
+    const bill = originalReviewBills[58]!;
     try {
       expect(() => store.decide(new Request('https://local'), bill.id, { revision: bill.revision, jurisdiction: bill.jurisdiction, category: 'legal', decision: 'approved', reason: 'This should be rejected.' })).toThrow();
       const req = new Request('https://local', { headers: { authorization: `Bearer ${token}` } });
       expect(() => store.decide(req, bill.id, { revision: 'stale', jurisdiction: bill.jurisdiction, category: 'evidence', decision: 'approved', reason: 'This revision has changed.' })).toThrow('Stale');
+      const outsideOriginalSet = billCollection.bills.find(candidate => candidate.id === 'HFL-101')!;
+      expect(() => store.submit({ billId: outsideOriginalSet.id, revision: outsideOriginalSet.revision, jurisdiction: outsideOriginalSet.jurisdiction, category: 'evidence', findings: 'This bill is outside the original review set.' })).toThrow('Stale');
       expect((store.db.query('SELECT count(*) n FROM review_decisions').get() as { n: number }).n).toBe(0);
     } finally { store.close(); rmSync(dir, { recursive: true, force: true }); }
   });
@@ -43,7 +46,7 @@ describe('catalog expert review persistence and authorization', () => {
     const path = join(dir, 'test.sqlite');
     const token = 'c'.repeat(40);
     const reviewers = [{ id: 'publisher-1', name: 'Publisher', token, roles: ['publisher' as const] }];
-    const bill = billCollection.bills[58]!;
+    const bill = originalReviewBills[58]!;
     try {
       let store = new CatalogReviewStore(path, reviewers);
       const submission = store.submit({ billId: bill.id, revision: bill.revision, jurisdiction: bill.jurisdiction, category: 'evidence', findings: 'The evidence section needs an additional primary source.', sources: ['https://example.org/source'] });

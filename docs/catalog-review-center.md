@@ -34,7 +34,9 @@ events retain reviewer, category, revision digest, jurisdiction, and timestamp.
 Stale digests are rejected. The publisher endpoint separately checks that legal,
 evidence, fiscal, and editorial decisions all approve the exact current revision.
 It records `review_ready`; it does not open a public ballot. Public ballots remain
-closed for the later revision-aware voting implementation.
+subject to the separate exact-publication ballot service and its existing review
+ledger gate. The database review decisions recorded here are not yet connected
+to that publication gate, so a `review_ready` record alone cannot open a ballot.
 
 Back up the separate SQLite file using SQLite's online backup API or while the
 application is stopped, including its WAL state. Do not copy only the main file
