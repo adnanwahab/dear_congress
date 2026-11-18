@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CatalogBill } from '../shared/bill-catalog';
+import { billCollection, type CatalogBill } from '../shared/bill-catalog';
 import type { DemoItem } from '../engine/demo';
 import { ProposalProvenance } from './ProposalProvenance';
 import './governance-prism.css';
@@ -41,7 +41,7 @@ export function GovernancePrism({ bill, sample }: { bill?: CatalogBill; sample?:
         <div className="prism-shape" aria-hidden="true" style={{ transform: `rotateY(${view.static ? 0 : -view.lens * 90}deg)` }}>{PRISM_LENSES.map((label, index) => <span key={label} style={{ transform: `rotateY(${index * 90}deg) translateZ(48px)` }}>{label}</span>)}</div>
         <h3>{PRISM_LENSES[view.lens]}</h3><p><strong>Missing data.</strong> {missing[view.lens]}</p>
         {hypothetical && <p><strong>Hypothetical draft context, not evidence:</strong> {hypothetical}</p>}
-        {bill && <p>Source: <a href={`/bills/${bill.id}`}>{bill.id} · eudaimonia-100 · version 1 · editorial draft</a><br />Revision: {bill.revision}<br />Evidence not assessed; catalog date 2026-11-13 is not an evidence check date.</p>}
+        {bill && <p>Source: <a href={`/bills/${bill.id}`}>{bill.id} · {billCollection.metadata.collection_id} · version {billCollection.metadata.version} · editorial draft</a><br />Revision: {bill.revision}<br />Evidence not assessed; catalog date {billCollection.metadata.date} is not an evidence check date.</p>}
       </div>
       {sample && <ProposalProvenance item={sample} compact />}
     </>}
