@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-095",
+  "sourceRevision": "1240a742393ad8b34055db0d58724cb011057606e724fd3f738286802bce4419",
+  "layout": "comparison",
+  "motif": "nature",
+  "focusDimension": "Time",
+  "accent": "#b7da91",
+  "curation": "seeded-from-catalog"
+}

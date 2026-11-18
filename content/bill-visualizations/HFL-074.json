@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-074",
+  "sourceRevision": "39e388c2342a9f4731f838eb682419d1d18ae3a231047521a1048c1fcef91197",
+  "layout": "timeline",
+  "motif": "democracy",
+  "focusDimension": "Justice",
+  "accent": "#85e3d7",
+  "curation": "seeded-from-catalog"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-080",
+  "sourceRevision": "85c2d415b9690ad1e688c441189e8835defc8fde30b499a506a0572358265df9",
+  "layout": "timeline",
+  "motif": "democracy",
+  "focusDimension": "Agency",
+  "accent": "#85e3d7",
+  "curation": "seeded-from-catalog"
+}

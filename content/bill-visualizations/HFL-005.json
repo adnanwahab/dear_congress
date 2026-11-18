@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-005",
+  "sourceRevision": "1637c398e6ac67fe5fc85a7fcffbc5bc1a0b4ec625fe5a4597d696adf463a2a6",
+  "layout": "journey",
+  "motif": "security",
+  "focusDimension": "Economic security",
+  "accent": "#8be5b7",
+  "curation": "seeded-from-catalog"
+}

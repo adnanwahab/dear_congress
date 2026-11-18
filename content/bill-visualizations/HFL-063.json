@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-063",
+  "sourceRevision": "6f8ba13ce35ea4e510a74208787a8697764a9309abe65f2a3b745beb660f7667",
+  "layout": "journey",
+  "motif": "justice",
+  "focusDimension": "Justice",
+  "accent": "#efa9d9",
+  "curation": "seeded-from-catalog"
+}
