@@ -240,7 +240,7 @@ button {cursor:pointer}
  const learningLine=root.querySelector('#learning-line');
  const annualLine=root.querySelector('#annual-line');
  const learnDesc=root.querySelector('#learning-description');
- function mark(el,week,kind){const m=doc.createElement('span');m.className='tl-marker';m.style.left=Math.min(99,100*week/52)+'%';m.title=kind+' at week '+week;m.setAttribute('aria-label',m.title);el.appendChild(m)}
+ function mark(el,week,kind){const m=doc.createElement('span');m.className='tl-marker';m.style.left=Math.min(99,100*week/52)+'%';m.title=kind+' at week '+week;m.setAttribute('role','img');m.setAttribute('aria-label',m.title);el.appendChild(m)}
  function renderModel(){
   const f=+freq.value, r=+review.value, weeks=4+f+r, n=Math.floor(52/weeks);
   freqOut.textContent=f+' weeks';reviewOut.textContent=r+' weeks';

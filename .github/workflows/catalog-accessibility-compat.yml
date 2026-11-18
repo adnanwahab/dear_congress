@@ -1,0 +1,34 @@
+name: Catalog accessibility compatibility
+on:
+  pull_request:
+    paths:
+      - 'src/client/BillCatalog.tsx'
+      - 'src/client/bill-catalog.css'
+      - 'public/civic-visual-stories/latency.html'
+      - 'tests/accessibility/catalog-compat.pw.ts'
+      - '.github/workflows/catalog-accessibility-compat.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts --no-package-lock
+        working-directory: tests/accessibility
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/accessibility
+      - run: npx playwright test catalog-compat.pw.ts
+        working-directory: tests/accessibility
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalog-compat-${{ github.sha }}
+          path: artifacts/accessibility
+          if-no-files-found: warn
