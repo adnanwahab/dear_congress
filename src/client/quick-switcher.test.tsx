@@ -11,7 +11,8 @@ test('catalog preserves proposal routing and finds words across title and stage'
   expect(matchDestinations('Cap childcare')[0]?.href).toBe('/votes?proposal=demo-childcare');
   expect(matchDestinations('affordable childcare').some(r => r.href === '/needs?need=childcare')).toBe(true);
   expect(matchDestinations('zzzzzz')).toHaveLength(0);
-  expect(pageTitle('/')).toBe('Overview | Civic Synthesis');
+  expect(pageTitle('/')).toBe('Civic Renaissance — 100 Bills for Human Flourishing | Civic Synthesis');
+  expect(pageTitle('/dashboard')).toBe('Original dashboard | Civic Synthesis');
 });
 
 test('global shortcut, field exclusion, combobox navigation, escape and focus restoration', async () => {

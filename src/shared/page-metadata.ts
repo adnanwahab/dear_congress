@@ -2,7 +2,7 @@ import { TOPICS } from './topics';
 import { CIVIC_STAGES } from './civic-stages';
 export const SITE_URL = "https://civic-synthesis.fly.dev";
 export const SITE_NAME = "Civic Synthesis";
-export const DEFAULT_DESCRIPTION = "Share everyday needs, discuss citizen proposals, and explore advisory votes and illustrative civic plans.";
+export const DEFAULT_DESCRIPTION = "Explore 100 draft policy ideas for arts, science, health, learning, and a more creative civic future. Compare possibilities, understand safeguards, and participate in civic discussion.";
 
 export const PAGE_TITLES: Record<string, string> = {
   "/bills": "100 Bills for Human Flourishing",
@@ -13,7 +13,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",
   "/journals": "Journal", "/api-docs": "Journal API",
   "/privacy": "Privacy & removal",
-  "/": "Overview", "/journal": "Journal", "/needs": "Shared needs",
+  "/": "Civic Renaissance — 100 Bills for Human Flourishing", "/dashboard": "Original dashboard", "/journal": "Journal", "/needs": "Shared needs",
   "/proposals/new": "Propose a law",
   "/synth": "Explore civic plans", "/embed": "Civic synthesis demo",
   ...Object.fromEntries(CIVIC_STAGES.map(s => [s.route, s.title])),
