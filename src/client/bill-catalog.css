@@ -22,3 +22,4 @@
 .atlas-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:1rem 0;padding:1rem;border:1px solid #738799;border-radius:12px}
 .atlas-overview p{grid-column:1/-1;margin:0}.atlas-west{grid-column:1;grid-row:2/4}.atlas-midwest{grid-column:2;grid-row:2}.atlas-northeast{grid-column:3;grid-row:2}.atlas-south{grid-column:2/4;grid-row:3}
 /* Static in every motion mode: no WebGL, tiles, polling or animation. */
+.bill-catalog select{display:block;box-sizing:border-box;max-width:100%;width:100%;padding:.8rem;background:#1a2530;color:#fff;border:1px solid #738799;font:inherit;margin:.5rem 0 1rem}.bill-catalog select:focus-visible,.bill-catalog article:focus-visible{outline:3px solid #ffdb85;outline-offset:4px}.bill-catalog fieldset{min-width:0;margin:1rem 0;border:1px solid #738799}.bill-catalog button:disabled{opacity:.6;cursor:not-allowed}
