@@ -50,7 +50,7 @@ const jump = container.querySelector('[data-law-id="HFL-090"]') as HTMLButtonEle
 await act(async () => jump.click());
 assert.match(selection(), /HFL-090/);
 assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Public Futures Simulation/);
-assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Models reproducible/);
+assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Reproducibility and independent replication/);
 assert.equal(calls, 0);
 await act(async () => root.unmount());
 console.log('Law carousel: 110 scenes, deep link, keyboard navigation, wrap, input exclusion, thumbnail selection, no fetch passed.');
