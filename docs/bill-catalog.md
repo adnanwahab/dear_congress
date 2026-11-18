@@ -1,5 +1,27 @@
 # Human Flourishing draft catalog
 
+## November 18, 2026: expanded editorial collection (v2)
+
+The current catalog contains **110 unreviewed proposals** across 11 categories, HFL-001 through HFL-110. The existing collection ID and filenames `eudaimonia-100` remain as stable provenance identifiers for the original series; the collection title, version and date are updated to **110 Bills for Human Flourishing**, version 2, dated 2026-11-18. Do not interpret the old filename as a current count.
+
+- Seven original entries were rewritten in-place, retaining their IDs but receiving new per-record SHA-256 revisions: HFL-021, HFL-038, HFL-049, HFL-071, HFL-075, HFL-085 and HFL-090. All other original 93 per-record revisions remain unchanged.
+- HFL-101 through HFL-110 belong to a new tenth-bill category, **Global cooperation and future institutions**: Global Water and Sanitation Compact; Democratic Rights and Due Process Charter; Global Civic Deliberation Protocol; Public Law Version Control Act; Pandemic Early-Warning Commons; Open Science and Public Discovery Act; AI Safety and Human Control Compact; Climate Adaptation and Clean Energy Accord; Anti-Corruption and Public Asset Traceability Act; Peaceful Conflict Prevention and Displacement Protection Act.
+- The catalog importer now enforces exactly 110 sequential IDs, 11 named categories with 10 records each, safe plain text, stable deterministic hashes and a narrow **international** proposal scope for prospective multilateral cooperation. International proposals **do not** presume a world legislature, a concluded treaty, domestic enactment or the authority to compel any country.
+- The review ledger covers all 110 current revisions. All new and revised entries remain unassigned, legal/evidence/fiscal reviews are pending, and publication is blocked. Public advisory participation requires independent human review and an explicitly authorized, immutable revision-aware publication process.
+- Each draft has a revision-pinned illustration. The law carousel, category filters, sitemap, route checks, screen labels and editorial provenance must include the ten new IDs without altering earlier votes, publications or receipts.
+
+Before considering merge, run:
+```sh
+bun scripts/import-eudaimonia.mjs content/bill-collections/eudaimonia-100.md --dry-run
+bun scripts/import-eudaimonia.mjs content/bill-collections/eudaimonia-100.md --out src/generated/eudaimonia-100.json
+bun run visualizations:check
+bun test
+bun run typecheck
+bun run test:routes
+```
+
+The implementation below documents the *original* 100-record introduction and its earlier acceptance history. Those historical results are not claimed as verification of the 110-record expansion.
+
 The review candidate adds `/bills` and `/bills/HFL-001` through
 `/bills/HFL-100`, including `/bills/HFL-051`. Published, Feed, Votes and the
 navigation utilities link to it. Unknown IDs return HTTP 404. Search uses all
