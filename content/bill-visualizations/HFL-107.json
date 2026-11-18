@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-107",
+  "sourceRevision": "2dfba3ae88a1b751fabecf847bf8c8ad309452fe0262e379effce14c42845f12",
+  "layout": "systems",
+  "motif": "democracy",
+  "focusDimension": "Agency",
+  "accent": "#9eb8fc",
+  "curation": "seeded-from-catalog"
+}
