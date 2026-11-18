@@ -89,7 +89,7 @@ export default function BillCatalog() {
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
       <p><a href="/bills?finance=1#finance-title">Explore public finance · hypothetical example</a></p>
       {params.get('finance') === '1' && <FinanceExplorer />}
-      <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
+      <h1>100 Bills for Human Flourishing</h1><p><a href="/topics">Explore civic problem neighborhoods</a> · Separate illustrative needs and policy catalog; no reviewed binding to these draft bills.</p><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
       <PolicyAtlas params={params} change={changeAtlas} />
       <label htmlFor="bill-search">Search bills</label>

@@ -219,3 +219,22 @@ parameter; selection preserves catalog filters and popstate restores selection.
 Missing questions and text, empty search and unverified evidence have explicit
 states. No network requests, storage writes, votes or participation transitions
 are added.
+
+## Topic neighborhood discovery (SHE-731)
+
+The catalog and Dashboard link to `/topics`. Each topic hub includes a zoomable
+neighborhood and equivalent static record list with search and selected-record
+relationships. The graph is built exclusively from the existing topic hub payload:
+need blocks, catalog-policy buildings and recorded sample-source streets. HFL IDs
+and immutable revisions stay in the separate bill catalog; no HFL-to-need or
+HFL-to-topic mapping is inferred.
+
+`nq`, `node`, `view` and `zoom` query parameters preserve neighborhood state
+without replacing the topic filter. Back/forward restores them. Reduced motion
+forces the static list. The bounded deterministic layout has no animation, network
+polling, geographic basemap or additional dependency.
+
+The graph displays no journal prose, locations or participation counts. Source
+nodes represent only eligible fictional repository samples. Their freshness is
+explicitly unassessed; catalog goals and alternatives are illustrative/hypothetical.
+Streets describe stored associations, not causation, public support or outcomes.
