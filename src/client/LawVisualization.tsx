@@ -21,7 +21,7 @@ export function LawVisualization({ bill, scene }: { bill: CatalogBill; scene: La
   const revisionMismatch = bill.revision !== scene.sourceRevision;
   const style = { '--scene-accent': scene.accent } as CSSProperties;
 
-  return <article className={`law-scene law-scene--${scene.layout}`} style={style}
+  return <div role="group" className={`law-scene law-scene--${scene.layout}`} style={style}
     aria-label={`Visualization of draft concept ${bill.id}: ${bill.title}`}>
     <div className="law-scene__heading">
       <div className="law-scene__motif" aria-hidden="true">{motifSymbols[scene.motif] ?? '✦'}</div>
@@ -60,5 +60,5 @@ export function LawVisualization({ bill, scene }: { bill: CatalogBill; scene: La
       </div>
     </div>
     <p className="law-scene__disclaimer">Illustrative design, not an enacted law, forecast, evaluated outcome, verified causal claim or funding commitment.</p>
-  </article>;
+  </div>;
 }
