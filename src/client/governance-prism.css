@@ -1,0 +1,11 @@
+.governance-prism{border:1px solid #738799;border-radius:12px;padding:1rem;margin:1.5rem 0;overflow-wrap:anywhere}
+.prism-controls{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.prism-controls button{min-height:44px;white-space:normal}
+.prism-controls button[aria-pressed=true]{outline:2px solid currentColor;outline-offset:2px}
+.prism-panel{border-inline-start:3px solid #738799;padding-inline-start:1rem}
+.prism-shape{position:relative;width:96px;height:64px;margin:1rem;transform-style:preserve-3d;transition:transform calc(260ms * var(--motion-scale,1)) ease-out}
+.governance-prism[data-static=true] .prism-shape{display:none}
+@media(prefers-reduced-motion:reduce){.prism-shape{transition:none;transform:none!important}}
+html[data-motion=off] .prism-shape{transition:none}
+
+.prism-shape span{position:absolute;inset:0;display:grid;place-items:center;background:#1a2934;color:#e6edf3;border:1px solid #738799;backface-visibility:hidden;font-size:.85rem}

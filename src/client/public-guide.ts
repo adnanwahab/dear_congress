@@ -100,6 +100,8 @@ The law behavior sandbox can write a Letter from a possible 2035 labeled **Simul
 
 Official bill metadata on [Published](/published) is a separate source-backed reference. The official lane may be empty until an operator imports a record. Follow its original source link and check jurisdiction, reported action and retrieval date. Imported detail metadata does not verify current legal status, enactment or effective dates. A real institution's link provides background; it does not verify the fictional proposal beside it. Unavailable or stale information is not proof of a current official status.
 
+The governance prism on the home page and [draft catalog](/bills) switches between Cost, Law, Time and Lived impact for the selected proposal. Missing data means no reviewed evidence is bound to that lens. Hypothetical draft context is not evidence. Use Static / low-power view for the same controls without rotation; reduced-motion preferences also disable rotation. Changing lenses does not vote or submit anything.
+
 The optional Steelman challenge on the fictional transit argument map is a sandbox self-review. Add an opposing summary and a source passage, then check fidelity, evidence and completeness. AI scoring is off; models can misread context and cannot certify truth or fairness. Skip or clear the exercise at any time. Responses stay in page memory, are lost on navigation, and never change saved votes or model projections. Supplied sources are not verified.
 
 ## Listen or read before deciding

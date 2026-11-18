@@ -5,6 +5,7 @@ import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
 import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
 import { GlossaryText } from './CivicGlossary';
+import { GovernancePrism } from './GovernancePrism';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import { editorialGate } from '../shared/bill-editorial';
@@ -53,6 +54,7 @@ export default function BillCatalog() {
       <p className="bill-meta">{bill.id} · Proposed jurisdiction: {bill.jurisdiction} · Draft concept</p>
       <h1>{bill.title}</h1>
       <p className="bill-lead">{bill.proposedChange}</p>
+      <GovernancePrism bill={bill} />
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],
         ['Proposed jurisdiction', bill.jurisdiction], ['Trade-offs and safeguards', bill.safeguards],
