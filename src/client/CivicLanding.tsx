@@ -60,7 +60,7 @@ export default function CivicLanding() {
           <div>
             <p className="csh-eyebrow">THE FUTURE IS A PUBLIC PROJECT</p>
             <h1>Imagine wildly.<br/><em>Govern wisely.</em></h1>
-            <p className="csh-lead">What if democracy felt like building the future together? Discover <strong>{ideaCount} bold policy ideas</strong> for healthier communities, more creativity, better science, and lives worth living.</p>
+            <p className="csh-lead">What if we could listen, improve a proposal, and understand its consequences much faster—without rushing human judgment? Explore <strong>{ideaCount} bold policy drafts</strong> and help shape better ideas together.</p>
             <div className="csh-hero-buttons">
               <a className="csh-button csh-dark" href="#ideas">Explore the {ideaCount} ideas <span aria-hidden="true">↘</span></a>
               <a className="csh-button csh-light" href="/proposals/new">Propose your own <span aria-hidden="true">↗</span></a>
@@ -78,33 +78,45 @@ export default function CivicLanding() {
           </div>
         </div>
       </section>
-      <div className="csh-tape"><div className="csh-container">
-        <div><strong>{ideaCount}</strong><span>original ideas worth discussing</span></div>
-        <div><strong>{categories.length}</strong><span>areas of human flourishing</span></div>
-        <div><strong>∞</strong><span>possible futures to explore</span></div>
+      <div className="csh-tape"><div className="csh-container" aria-label="Three civic design ideas">
+        <div><strong>40d</strong><span>historical Georgia–Maine letter + reply (1799)</span></div>
+        <div><strong>&lt;1s</strong><span>illustrative Georgia–Shenzhen network round trip today</span></div>
+        <div><strong>100%</strong><span>voluntary consensus: an aspiration, not an achieved result</span></div>
       </div></div>
-      <section className="csh-section csh-imagine" id="vision">
+      <section className="csh-section csh-imagine" id="vision" aria-labelledby="csh-vision-title">
         <div className="csh-container">
-          <p className="csh-section-kicker">01 / A CIVIC RENAISSANCE</p>
-          <div className="csh-section-head"><h2>More wonder.<br/><em>More possibility.</em></h2><p>Good policy should make room for more than survival. It should help people create, discover, connect, and delight in being alive.</p></div>
-          <div className="csh-features">
+          <p className="csh-section-kicker">01 / THREE IDEAS FOR A FASTER, WISER DEMOCRACY</p>
+          <div className="csh-section-head"><h2 id="csh-vision-title">From horse-speed mail<br/>to <em>continuous dialogue.</em></h2><p>We can shorten the time between a question and a better draft. The goal is faster learning and broader participation, never less evidence, fewer rights, or rushed lawmaking.</p></div>
+          <div className="csh-features csh-principles">
             <article className="csh-feature csh-pink">
-              <div className="csh-feature-top"><span className="csh-feature-id">HFL-059 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🎭</span></div>
-              <h3>Let a thousand art scenes bloom.</h3><p>Bring public art, music, performances, and creative programs to more neighborhoods, with community-led choices and transparent grants.</p>
-              <a href="/bills/HFL-059">Explore the Public Arts and Music Act ↗</a><span className="csh-feature-bg" aria-hidden="true">✺</span>
+              <div className="csh-feature-top"><span className="csh-feature-id">01 / LEGAL LATENCY</span><span className="csh-feature-emoji" aria-hidden="true">⌛</span></div>
+              <h3>What if feedback traveled at network speed?</h3>
+              <p>In 1776, correspondence moved by post road and rider. A documented benchmark from 1799: a Savannah–Portland letter and reply typically took about 40 days. Modern network transit can take fractions of a second—even between Georgia and Shenzhen.</p>
+              <div className="csh-latency-compare" aria-label="Communication round-trip comparison, historical and illustrative">
+                <div><span>1799 · SAVANNAH ↔ PORTLAND</span><strong>~40 days</strong><small>Letter + reply · historical estimate</small></div>
+                <div><span>TODAY · GEORGIA ↔ SHENZHEN</span><strong>~0.2–0.5 sec</strong><small>Illustrative network RTT · not live-measured</small></div>
+              </div>
+              <a href="https://press.uchicago.edu/ucp/books/book/chicago/P/bo4134270.html">Historical source: The Postal Age ↗</a><span className="csh-feature-bg" aria-hidden="true">↝</span>
             </article>
             <article className="csh-feature csh-lav">
-              <div className="csh-feature-top"><span className="csh-feature-id">HFL-106 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🔬</span></div>
-              <h3>A public R&amp;D moonshot.</h3><p>Imagine larger, accountable funding for high-risk research, open science, public laboratories, and unexpected breakthroughs.</p>
-              <a href="/bills/HFL-106">Explore the Open Science and Public Discovery Act ↗</a><span className="csh-feature-bg" aria-hidden="true">✳</span>
+              <div className="csh-feature-top"><span className="csh-feature-id">02 / VOLUNTARY CONSENSUS</span><span className="csh-feature-emoji" aria-hidden="true">◎</span></div>
+              <h3>Can a plan get to 100% support?</h3>
+              <p>Our hypothesis: with enough listening, evidence, and careful redesign, a proposal might become good enough that everyone <em>wants</em> to support it. Treat objections as insight, not obstacles to erase.</p>
+              <div className="csh-civic-loop" aria-label="Propose, hear objections, revise, and ask again"><span>Propose</span><span>Listen</span><span>Revise</span><span>Recheck</span></div>
+              <p className="csh-principle-note"><strong>A north star, not a claim:</strong> 100% voluntary support is not guaranteed. Show the denominator, participation, unresolved objections, and each revision. No coerced agreement, and silence never counts as a yes.</p>
+              <a href="/votes">Explore advisory participation ↗</a><span className="csh-feature-bg" aria-hidden="true">✳</span>
             </article>
             <article className="csh-feature csh-yellow">
-              <div className="csh-feature-top"><span className="csh-feature-id">HFL-090 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🪐</span></div>
-              <h3>Try the future before it arrives.</h3><p>Explore public policy simulations that show uncertainty, alternatives, assumptions, and who benefits or gets left out.</p>
-              <a href="/bills/HFL-090">Explore the Public Futures Simulation Act ↗</a><span className="csh-feature-bg" aria-hidden="true">◎</span>
+              <div className="csh-feature-top"><span className="csh-feature-id">03 / HELIOS-INSPIRED PHILOSOPHY</span><span className="csh-feature-emoji" aria-hidden="true">✺</span></div>
+              <h3>AI helps us think. People stay in charge.</h3>
+              <p>HELIOS in <em>Deus Ex</em> imagines computing that synthesizes society's input. Keep the exciting idea of continuous feedback; reject the fantasy of an unaccountable machine ruler.</p>
+              <div className="csh-civic-loop" aria-label="Listen, explain trade-offs, simulate outcomes, preserve human authority"><span>Listen</span><span>Explain</span><span>Simulate</span><span>Human review</span></div>
+              <p className="csh-principle-note">The principles: participatory democracy, transparent reasoning, epistemic humility, protected dissent, and contestable AI advice. Advisory input does not itself enact laws.</p>
+              <a href="/bills/HFL-090">Explore public futures simulation ↗</a><span className="csh-feature-bg" aria-hidden="true">◎</span>
             </article>
           </div>
-          <div className="csh-idea-banner"><div><strong>Imagine creative cities, citizen science, libraries that double as laboratories.</strong><p>Arts and R&amp;D expansions are new discussion directions, not enacted policies or verified budgets. The new open-science concept is now HFL-106 in the 110-draft catalog.</p></div><a href="/proposals/new">Add your idea ↗</a></div>
+          <p className="csh-foundation-footnote">Sources and limits: <a href="https://press.uchicago.edu/ucp/books/book/chicago/P/bo4134270.html">David M. Henkin, <em>The Postal Age</em></a> documents the 1799 mail example; it is not a measured 1776 delivery time. The modern round-trip range is an illustration, not an instrumented Georgia–Shenzhen benchmark; real routing varies. Compare <a href="https://hatsnet.io/docs/network/latency/regions/north-america-to-asia-pacific">intercontinental network measurements</a>. HELIOS is <a href="https://en.wikiquote.org/wiki/Deus_Ex">fictional inspiration from <em>Deus Ex</em></a>, not the site's governing authority. Network latency is not legislative decision time.</p>
+          <div className="csh-idea-banner"><div><strong>Speed up learning. Keep democracy accountable.</strong><p>People need time to understand, disagree, and change their minds. Expert review, publication checks, rights, and legal processes remain essential.</p></div><a href="/proposals/new">Propose an improvement ↗</a></div>
         </div>
       </section>
       <section className="csh-section" id="how">
