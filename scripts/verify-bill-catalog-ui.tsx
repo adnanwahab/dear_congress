@@ -12,7 +12,7 @@ const root = createRoot(container);
 let writes = 0;
 globalThis.fetch = async () => { writes++; throw new Error('Catalog must not fetch or submit'); };
 await act(async () => root.render(<BillCatalog />));
-assert.equal(container.querySelectorAll('article').length, 100);
+assert.equal(container.querySelectorAll('article').length, 110);
 assert.equal(container.querySelectorAll('.bill-chips [aria-pressed]').length, 11);
 for (const card of container.querySelectorAll('article')) assert(card.textContent!.includes('Legal authority: unverified'));
 for (const card of container.querySelectorAll('article')) assert.match(card.textContent!, /Publish gate: blocked/);
@@ -27,7 +27,7 @@ assert.match(link.getAttribute('href')!, /^\/bills\/HFL-051\?q=HFL-051$/);
 await act(async () => { (container.querySelector('.bill-chips [aria-pressed="false"]') as HTMLButtonElement).click(); });
 assert.match(container.textContent!, /No draft concepts match/);
 await act(async () => { const reset = [...container.querySelectorAll('button')].find(b => b.textContent === 'Clear / reset')!; reset.click(); });
-assert.equal(container.querySelectorAll('article').length, 100);
+assert.equal(container.querySelectorAll('article').length, 110);
 assert.equal(window.location.search, '');
 // Restored URL drives controls and results on native history notification.
 await act(async () => { window.history.replaceState(null, '', '/bills?q=HFL-051'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
@@ -69,4 +69,4 @@ await act(async () => { window.history.replaceState(null, '', '/bills/HFL-051?le
 assert(container.querySelector('[aria-label="Cost lens"]'));
 await act(async () => detailRoot.unmount());
 await dom.happyDOM.close();
-console.log('PASS catalog: 100 cards, search, category intersection, reset, history restoration, detail and zero writes');
+console.log('PASS catalog: 110 cards, search, category intersection, reset, history restoration, detail and zero writes');
