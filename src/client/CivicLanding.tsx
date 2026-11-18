@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import './civic-landing.css';
+import LegalLatencyLab from './LegalLatencyLab';
 
 const CATEGORY_LABELS: Record<string, string> = {
   'Economic security and freedom from desperation': 'Economic freedom',
@@ -96,7 +97,7 @@ export default function CivicLanding() {
                 <div><span>1799 · SAVANNAH ↔ PORTLAND</span><strong>~40 days</strong><small>Letter + reply · historical estimate</small></div>
                 <div><span>TODAY · GEORGIA ↔ SHENZHEN</span><strong>~0.2–0.5 sec</strong><small>Illustrative network RTT · not live-measured</small></div>
               </div>
-              <a href="https://press.uchicago.edu/ucp/books/book/chicago/P/bo4134270.html">Historical source: The Postal Age ↗</a><span className="csh-feature-bg" aria-hidden="true">↝</span>
+              <a href="#latency-lab">Explore the animated latency comparison ↘</a><span className="csh-feature-bg" aria-hidden="true">↝</span>
             </article>
             <article className="csh-feature csh-lav">
               <div className="csh-feature-top"><span className="csh-feature-id">02 / VOLUNTARY CONSENSUS</span><span className="csh-feature-emoji" aria-hidden="true">◎</span></div>
@@ -115,6 +116,7 @@ export default function CivicLanding() {
               <a href="/bills/HFL-090">Explore public futures simulation ↗</a><span className="csh-feature-bg" aria-hidden="true">◎</span>
             </article>
           </div>
+          <LegalLatencyLab />
           <p className="csh-foundation-footnote">Sources and limits: <a href="https://press.uchicago.edu/ucp/books/book/chicago/P/bo4134270.html">David M. Henkin, <em>The Postal Age</em></a> documents the 1799 mail example; it is not a measured 1776 delivery time. The modern round-trip range is an illustration, not an instrumented Georgia–Shenzhen benchmark; real routing varies. Compare <a href="https://hatsnet.io/docs/network/latency/regions/north-america-to-asia-pacific">intercontinental network measurements</a>. HELIOS is <a href="https://en.wikiquote.org/wiki/Deus_Ex">fictional inspiration from <em>Deus Ex</em></a>, not the site's governing authority. Network latency is not legislative decision time.</p>
           <div className="csh-idea-banner"><div><strong>Speed up learning. Keep democracy accountable.</strong><p>People need time to understand, disagree, and change their minds. Expert review, publication checks, rights, and legal processes remain essential.</p></div><a href="/proposals/new">Propose an improvement ↗</a></div>
         </div>
