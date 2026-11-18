@@ -207,7 +207,7 @@ hypothesis: if the plan is good enough, hopefully everyone wants to support it. 
 
 ## Page directory
 
-Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [100-bill catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
+Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [110-draft catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
 
 Other application pages:
 
