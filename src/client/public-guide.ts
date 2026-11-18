@@ -156,6 +156,8 @@ Optional related reading on the dashboard and sample journey offers one source r
 
 ## Sources and methodology
 
+Inspect the [source registry](/documentation#source-registry) for publishers, original links, retrieval dates, reuse notes, scope and last review. Missing dates and license reviews remain unknown. This partial inventory does not certify public reuse or verify synthetic fixtures as observations.
+
 - [Published](/published) separates official bill metadata from fictional scenarios. Use each record's original link for its exact source rather than treating a summary as law.
 - [Shared needs](/needs) groups journal inputs and priorities; extraction can be mistaken. Check the original text and correct labels where offered. Selecting a need previews related aggregate geographic cells. Submitted accounts and simulated estimates stay separate, including in Both mode. Measured conditions appear separately below the map; journal counts are not measurements. If map tiles fail, use the searchable evidence list with the same selected need. Exploring evidence publishes nothing and casts no vote.
 - [Neighborhood budget demo](/map) lets you place fictional projects with 100 hypothetical credits. Allocations stay only in page memory and disappear on reload; nothing is submitted or funded. Coverage and beneficiaries follow declared fictional assumptions, not measured use or verified civic participation. Select a project and use Place buttons with touch or keyboard, or drag onto a block.
