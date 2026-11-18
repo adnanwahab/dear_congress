@@ -98,7 +98,7 @@ test("published ballot is closed immediately if the review record is revoked, an
 test("window, snapshot and identity checks fail closed", () => tempDb(path => {
   const early = make(path, { reviews, now: () => start - 30_000 });
   const pub = early.publish(bill.id, window(), "Human publisher");
-  const cast = (requestId: string, choice: unknown, user=browser1) =>
+  const cast = (requestId: string, choice: unknown, user: string = browser1) =>
     early.cast(bill.id, { revision: bill.revision, publicationId: pub.publicationId, requestId, choice }, user);
   expect(early.status(bill.id).state).toBe("scheduled");
   errorCode(() => cast(randomUUID(), "support"), "voting_window_closed");
