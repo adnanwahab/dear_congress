@@ -30,7 +30,7 @@ async function readResponse<T>(response: Response): Promise<T> {
   try { body = await response.json(); }
   catch { throw new Error("The server returned an unreadable response. Your last change may need verification."); }
   if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : "The request was not confirmed.");
-  return body as T;
+  return body as unknown as T;
 }
 
 /**
@@ -126,7 +126,7 @@ export function CatalogAmendments({
       const data = await readResponse<{ saved: boolean; receipt?: { id: string } }>(response);
       if (!data.saved || !data.receipt?.id) throw Error("Withdrawal was not confirmed.");
       setEntries(current => current.map(entry => entry.id === id
-        ? { ...entry, status: "withdrawn", text: "", withdrawnAt: new Date().toISOString() } : entry));
+        ? { ...entry, status: "withdrawn" as const, text: "", withdrawnAt: new Date().toISOString() } : entry));
       setStatus("Amendment withdrawn. Its text is no longer in the active review queue. Receipt: " + data.receipt.id);
       try { await refresh(); }
       catch { setLoadError("Withdrawal saved, but the list did not refresh. Reload to verify."); }
