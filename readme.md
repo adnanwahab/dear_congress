@@ -2,6 +2,10 @@
 
 ### Listen every day. Find common ground. Test ideas. Improve public policy.
 
+
+![magi.gif](magi.gif)
+
+
 **Dear Congress** is an open-source experiment in making democracy a continuous, evidence-informed conversation instead of something people can meaningfully influence only every few years.
 
 We want to make it easier for people to describe what they need, discover where their goals overlap, deliberate over concrete proposals, and follow ideas from a first draft through real-world outcomes.
