@@ -103,12 +103,15 @@ or unsure choice, and require a fresh choice after every published revision.
 Unreviewed drafts remain readable and labeled as discussion drafts. Reviewed
 does not mean endorsed, enacted, independently validated, or officially sponsored.
 
-The expert-review workflow and a separate exact-publication ballot API are
-implemented. Amendment storage is still planned. The ballot publication gate
-still uses the source-controlled editorial ledger; the database review-center
-decisions are not yet connected to it, and no original catalog revision is
-eligible for an advisory ballot. Detail pages must label evidence, costs,
-jurisdiction, and review status accurately until authorized publication occurs.
+The expert-review workflow and exact-publication ballot API are implemented.
+In the integration branch, the ballot publication gate consumes a publisher-attested,
+revision-pinned review snapshot from SQLite. Four human roles must record
+approvals and a separate authorized publisher must open the voting window.
+Prior to that action, votes shown on unpublished concepts are explicitly labeled
+draft feedback and are never transferred to published ballots.
+Database-backed amendment drafts remain planned. No original catalog bill is
+automatically approved or published. Detail pages must label evidence, costs,
+jurisdiction, and review status accurately.
 
 ## Validation and remaining human review
 
