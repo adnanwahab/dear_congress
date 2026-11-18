@@ -200,7 +200,7 @@ introduced legislation, verified evidence or a modeled outcome.
 
 The `/review` workspace displays the original HFL concepts and accepts public evidence suggestions. Reviewer decisions are stored in a separate SQLite database with version-bound snapshots and role-limited bearer credentials; public suggestions never approve a proposal. See [review-center setup](catalog-review-center.md). All present concepts remain unreviewed unless an authorized human records a complete set of decisions. The 110-draft catalog remains a policy concept library, **not statutory law**.
 
-The standalone catalog publication/ballot API is implemented, but its read-only editorial gate still uses the checked-in source review ledger: **the two review and publication workflows are not integrated yet**. A review-center `review_ready` receipt does not itself open recorded voting. Only a separately authorized, immutable published revision can accept nonbinding advisory responses. Never set `advisoryPublicationAllowed` globally or transfer earlier votes to revised text.
+The standalone catalog publication/ballot API now receives the exact SQLite review-center attestation, with independently authorized publication required to open the ballot. A review-center `review_ready` receipt does not itself open recorded voting. Only a separately authorized, immutable published revision can accept nonbinding advisory responses. Never set `advisoryPublicationAllowed` globally or transfer earlier votes to revised text.
 
 ## Governance prism (SHE-724)
 
@@ -280,3 +280,8 @@ The graph displays no journal prose, locations or participation counts. Source
 nodes represent only eligible fictional repository samples. Their freshness is
 explicitly unassessed; catalog goals and alternatives are illustrative/hypothetical.
 Streets describe stored associations, not causation, public support or outcomes.
+
+
+## Review-to-ballot integration (current implementation candidate)
+
+Draft feedback may be saved to SQLite immediately for the current source revision, but is not a vote on a published ballot. Four role-authorized expert approvals plus a publisher's durable review-ready attestation are required before a publisher opens a separate, time-limited advisory ballot. The two types of participation remain isolated and previous choices do not transfer. HFL-051 retains an additional legislative-supplement review hold.
