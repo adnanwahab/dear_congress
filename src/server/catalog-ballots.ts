@@ -9,7 +9,13 @@ import { editorialGate, type EditorialReview } from "../shared/bill-editorial";
 export class CatalogBallotError extends Error {
   constructor(readonly status: number, readonly code: string) { super(code); }
 }
-type Gate = { reviewReady: boolean; review?: EditorialReview };
+/** Version-pinned, human-attested approval snapshot from the review SQLite store. */
+export type DatabaseReviewSnapshot = {
+  id: string; revision: string; jurisdiction: string;
+  provenance: "catalog_review_sqlite_v1"; publicationDecisionId: string;
+  approvals: Array<{ id: string; category: string; reviewerId: string; recordedAt: string }>;
+};
+type Gate = { reviewReady: boolean; review?: EditorialReview | DatabaseReviewSnapshot };
 export type ReviewLookup = (bill: CatalogBill) => Gate;
 export type AdvisoryChoice = "support" | "oppose" | "unsure";
 type PublicationRow = {
