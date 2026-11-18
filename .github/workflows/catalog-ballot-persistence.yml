@@ -1,0 +1,42 @@
+name: Catalog ballot persistence acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/verify-catalog-ballot-persistence.mjs'
+      - 'src/client/CatalogAdvisoryBallot.tsx'
+      - 'src/server/catalog-*.ts'
+      - '.github/workflows/catalog-ballot-persistence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    # Run44402464746 measured 9m40s fetching 32.1MB of Ubuntu browser packages
+    # before tests. Match existing browser CI budget; test/request deadlines stay.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck
+      - run: bun run test:routes
+      - run: npm install --prefix tests/accessibility --ignore-scripts --package-lock=false
+      - run: cd tests/accessibility && npx playwright install --with-deps chromium
+      - run: bun --no-env-file scripts/verify-catalog-ballot-persistence.mjs
+        env:
+          CATALOG_BALLOT_OUTPUT: artifacts/catalog-ballot-persistence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalog-ballot-persistence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/catalog-ballot-persistence
+          if-no-files-found: error
