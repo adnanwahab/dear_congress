@@ -18,7 +18,7 @@ export default function LegalLatencyLab() {
   const [playing, setPlaying] = useState(true);
   const [replay, setReplay] = useState(0);
 
-  const durationRatio = durationRatio(roundTripMs);
+  const comparisonRatio = durationRatio(roundTripMs);
   const networkPosition = logPosition(roundTripMs);
 
   return (
@@ -57,7 +57,7 @@ export default function LegalLatencyLab() {
         <div className="csh-ll-result">
           <div>
             <span className="csh-ll-result-label">DIFFERENCE IN ROUND-TRIP DURATION</span>
-            <strong>{NUMBER.format(durationRatio)}<small>×</small></strong>
+            <strong>{NUMBER.format(comparisonRatio)}<small>×</small></strong>
           </div>
           <p>At {roundTripMs} ms per network round trip, the 40-day mail interval is that many times longer. This compares durations, <b>not</b> the speed of passing a law.</p>
         </div>
