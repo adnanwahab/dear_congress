@@ -48,8 +48,6 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
       return store.cast(id, await boundedJson(req, 4096), voter);
     }),
     publish: (req: Request, id: string) => response(async () => {
-      if (req.headers.get("origin") !== config.expectedOrigin(req))
-        throw new CatalogBallotError(403, "same_origin_required");
       const rolePublisher = config.publisherRole?.(req) ?? null;
       const adminPublisher = config.adminToken && moderationAuthorized(req, config.adminToken)
         ? config.publisherId : null;
@@ -57,6 +55,8 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
       const publisher = rolePublisher || adminPublisher;
       if (!publisher || publisher.length > 120)
         throw new CatalogBallotError(401, "publisher_auth_required");
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
       return store.publish(id, await boundedJson(req, 4096), publisher);
     }),
   };
