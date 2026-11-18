@@ -31,6 +31,25 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
     }),
     ballot: (req: Request, id: string) => response(() => store.status(id, viewer(req))),
     draftFeedback: (req: Request, id: string) => response(() => store.draftStatus(id, viewer(req))),
+    amendments: (req: Request, id: string) => response(() => {
+      const browserId = viewer(req);
+      if (!browserId) throw new CatalogBallotError(401, "browser_identity_required");
+      return store.ownAmendments(id, browserId);
+    }),
+    submitAmendment: (req: Request, id: string) => response(async () => {
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
+      const browserId = viewer(req);
+      if (!browserId) throw new CatalogBallotError(401, "browser_identity_required");
+      return store.submitAmendment(id, await boundedJson(req, 8192), browserId);
+    }),
+    withdrawAmendment: (req: Request, id: string, amendmentId: string) => response(async () => {
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
+      const browserId = viewer(req);
+      if (!browserId) throw new CatalogBallotError(401, "browser_identity_required");
+      return store.withdrawAmendment(id, amendmentId, await boundedJson(req, 4096), browserId);
+    }),
     saveDraftFeedback: (req: Request, id: string) => response(async () => {
       if (req.headers.get("origin") !== config.expectedOrigin(req))
         throw new CatalogBallotError(403, "same_origin_required");
