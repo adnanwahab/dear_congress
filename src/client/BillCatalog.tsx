@@ -13,6 +13,7 @@ import { atlasBills } from '../shared/policy-atlas';
 import { editorialGate } from '../shared/bill-editorial';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
 import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
+import { PlaceCosts } from './PlaceCosts';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -92,6 +93,7 @@ export default function BillCatalog() {
       {!results.length && <p>No draft concepts match your search, category and geographic scope. Clear the filters to browse all 100 proposals.</p>}
       <TownHallGame />
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept · Legal authority: unverified</p><p>Publish gate: blocked · Human review required</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
+      <details><summary>Compare local cost context</summary><PlaceCosts /></details>
     </>}
     {id && <TownHallGame />}
   </main></div>;

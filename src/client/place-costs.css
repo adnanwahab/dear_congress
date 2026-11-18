@@ -1,0 +1,6 @@
+.place-costs { margin-block: 2rem; padding: 1rem; border: 1px solid currentColor; border-radius: .5rem; }
+.place-cost-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 1.5rem; }
+.place-costs label { display: grid; gap: .4rem; margin-block: 1rem; }
+.place-costs select, .place-costs input { width: 100%; max-width: 30rem; min-height: 2.75rem; color: inherit; background: var(--panel, #17202d); font: inherit; }
+.place-costs a { text-decoration: underline; overflow-wrap: anywhere; }
+.place-costs :focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
