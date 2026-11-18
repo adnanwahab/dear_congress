@@ -1,0 +1,30 @@
+import { test, expect } from '@playwright/test';
+
+test('finance keyboard selection, real history and reduced-motion text parity', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills?finance=1');
+  const explorer = page.locator('.finance-explorer');
+  const search = explorer.getByRole('searchbox', { name: 'Search agencies and programs' });
+  await search.focus();
+  await page.keyboard.type('city');
+  await expect(search).toBeFocused();
+  await expect(explorer.locator('article')).toHaveCount(1);
+  await explorer.getByRole('button', { name: 'Select Example city program', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(explorer.getByRole('button', { name: 'Select Example city program', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await explorer.getByRole('button', { name: 'Expand transfers for Example city program' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(explorer.getByText('Receipts 60 = transfers 0 + final spending 50 + unresolved 10. Arithmetic reconciles; coverage is incomplete.')).toBeVisible();
+  await page.goBack();
+  await expect(explorer.getByRole('button', { name: 'Expand transfers for Example city program' })).toHaveAttribute('aria-expanded', 'false');
+  await page.goForward();
+  await expect(explorer.getByRole('button', { name: 'Collapse transfers for Example city program' })).toHaveAttribute('aria-expanded', 'true');
+  const totals = await explorer.getByText(/Full example reconciliation/).textContent();
+  await explorer.getByRole('checkbox', { name: 'Low-power text view' }).check();
+  await expect(explorer.locator('.finance-track')).toHaveCount(0);
+  await expect(explorer.getByText(totals!, { exact: true })).toBeVisible();
+  await expect(explorer.getByRole('button', { name: 'Select Example city program', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await explorer.getByLabel('Accounting dataset').selectOption('verified');
+  await expect(explorer.getByText(/No compatible accounting dataset available/)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});

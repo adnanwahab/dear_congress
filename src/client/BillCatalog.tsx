@@ -16,6 +16,7 @@ import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
 import { PlaceCosts } from './PlaceCosts';
 import { CivicConstellation } from './CivicConstellation';
 import { PolicyQuestions } from './PolicyQuestions';
+import { FinanceExplorer } from './FinanceExplorer';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -86,6 +87,8 @@ export default function BillCatalog() {
       {bill.id === 'HFL-051' && <section aria-label="Expanded legislative discussion draft"><LegislativeMarkdown source={supplement} /></section>}
       <section><h2>Related draft concepts</h2><ul>{billCollection.bills.filter(b => b.category === bill.category && b.id !== bill.id).slice(0,3).map(b => <li key={b.id}><a href={`/bills/${b.id}`}>{b.id}: {b.title}</a></li>)}</ul></section>
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
+      <p><a href="/bills?finance=1#finance-title">Explore public finance · hypothetical example</a></p>
+      {params.get('finance') === '1' && <FinanceExplorer />}
       <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
       <PolicyAtlas params={params} change={changeAtlas} />
