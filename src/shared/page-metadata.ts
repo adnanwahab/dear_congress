@@ -5,7 +5,6 @@ export const SITE_NAME = "Civic Synthesis";
 export const DEFAULT_DESCRIPTION = "Explore 110 draft policy ideas for arts, science, health, learning, and a more creative civic future. Compare possibilities, understand safeguards, and participate in civic discussion.";
 
 export const PAGE_TITLES: Record<string, string> = {
-  "/bills": "110 Bills for Human Flourishing",
   "/topics": "Topic hubs",
   ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),
   "/account": "Participation & privacy",

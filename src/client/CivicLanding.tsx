@@ -175,6 +175,11 @@ export default function CivicLanding() {
           {matches.length ? <div className="csh-bills">{visible.map(b => <article className="csh-bill" key={b.id}>
             <div className="csh-bill-header"><span>{b.id}</span><span>DRAFT CONCEPT</span></div>
             <h3>{b.title}</h3><p>{b.proposedChange}</p>
+            <a className="csh-webgpu-ad" href="#studio" aria-label="WebGPU futures lab coming soon; explore the current illustrative sandbox">
+              <span className="csh-webgpu-mark" aria-hidden="true">✳</span>
+              <span className="csh-webgpu-copy"><strong>WEBGPU FUTURES LAB</strong><small>Coming soon · explore possible futures</small></span>
+              <span className="csh-webgpu-arrow" aria-hidden="true">↗</span>
+            </a>
             <div className="csh-bill-bottom"><span>{CATEGORY_LABELS[b.category] || b.category}</span><a href={'/bills/' + encodeURIComponent(b.id)} aria-label={'Read ' + b.id + ': ' + b.title}>Explore draft ↗</a></div>
           </article>)}</div> : <div className="csh-no-results">No drafts match these filters. Try another search or select All ideas.</div>}
           {matches.length > 9 && <div className="csh-more-row"><button type="button" className="csh-button csh-light" onClick={() => { setExpanded(!expanded); if (expanded) document.getElementById('ideas')?.scrollIntoView({ behavior: 'smooth' }); }}>{expanded ? 'Show fewer ideas ↑' : 'Show all ' + matches.length + ' matching ideas ↓'}</button></div>}

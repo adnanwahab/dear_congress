@@ -22,9 +22,9 @@ bun run test:routes
 
 The implementation below documents the *original* 100-record introduction and its earlier acceptance history. Those historical results are not claimed as verification of the 110-record expansion.
 
-The review candidate adds `/bills` and `/bills/HFL-001` through
-`/bills/HFL-100`, including `/bills/HFL-051`. Published, Feed, Votes and the
-navigation utilities link to it. Unknown IDs return HTTP 404. Search uses all
+The current public catalog index is `/votes`; the retired `/bills` index redirects
+there. Individual `/bills/HFL-001` through `/bills/HFL-110` detail URLs remain
+available for bookmarks and deep links. Unknown IDs return HTTP 404. Search uses all
 six fields, category, title and ID; whitespace-separated terms must all match.
 `?q=HFL-051&category=Friendship%2C+community%2C+and+belonging` is shareable.
 Filters intersect, and Clear / reset restores all 100 records. History entries
