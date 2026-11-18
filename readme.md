@@ -202,3 +202,5 @@ For project scope and safeguards, see [Data model and proposed API](04_DATA_MODE
 **What if public policy worked more like a well-run learning system—people were heard continually, different communities could discover shared interests, proposals could be improved in public, and institutions could respond with evidence instead of silence?**
 
 That is what Dear Congress / Civic Synthesis is exploring. **Consensus is earned, legality is respected, and outcomes matter more than a unanimous-looking dashboard.**
+
+hypothesis: if the plan is good enough, hopefully everyone wants to support it. so we can iterate till it gets 100% support and carefully design to save iteration cycles.
