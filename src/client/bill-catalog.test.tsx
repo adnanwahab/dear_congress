@@ -48,3 +48,19 @@ test('every curated draft exposes unresolved authority review without inferring 
   const thirdPlaces = renderToStaticMarkup(<LegalAuthorityChecklist bill={billCollection.bills.find(b => b.id === 'HFL-051')!} />);
   for (const text of ['operating grants', 'procurement', 'religious freedom', 'not included in the catalog digest']) expect(thirdPlaces).toContain(text);
 });
+
+test('question exploration has an empty state and static motion-independent interface', async () => {
+  const { PolicyQuestions } = await import('./PolicyQuestions');
+  const previous = globalThis.window;
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { location: { search: '?question=legal' }, matchMedia: () => ({ matches: true }) } });
+  try {
+    const empty = renderToStaticMarkup(<PolicyQuestions bill={null} />);
+    expect(empty).toContain('No draft text is available');
+    const html = renderToStaticMarkup(<PolicyQuestions bill={billCollection.bills[0]!} />);
+    expect(html).toContain('Legal basis has not been assessed');
+    expect(html).toContain('View underlying catalog text');
+    expect(html).toContain('Evidence freshness: not checked');
+    expect(html).not.toContain('canvas');
+    expect(html).toContain('aria-pressed="true"');
+  } finally { Object.defineProperty(globalThis, 'window', { configurable: true, value: previous }); }
+});

@@ -203,3 +203,19 @@ and county labels never assign a concept to an actual locality: browse these in
 All regions. Unknown regions fail closed. No map color, count or source reference
 is regional voter support, legal applicability, enacted policy or evidence of an
 outcome.
+
+## Practical question exploration (SHE-728)
+
+Each catalog detail offers five branching questions: who, cost, implementation,
+legal basis and risk. Answers cite the existing HFL record, collection version and
+revision and expose the exact relevant field through native details and field
+anchors. They describe hypothetical intentions only. Fiscal cost and legal basis
+remain unassessed; the dated editorial record is never labeled current verified
+evidence. No external evidence or official-legislation identity is inferred.
+
+The interface is static for every motion preference, using native search, buttons,
+focusable answer headings, details and links. `question` is a shareable URL
+parameter; selection preserves catalog filters and popstate restores selection.
+Missing questions and text, empty search and unverified evidence have explicit
+states. No network requests, storage writes, votes or participation transitions
+are added.

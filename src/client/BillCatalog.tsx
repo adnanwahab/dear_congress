@@ -15,6 +15,7 @@ import supplement from '../../content/bill-details/HFL-051.md' with { type: 'tex
 import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
 import { PlaceCosts } from './PlaceCosts';
 import { CivicConstellation } from './CivicConstellation';
+import { PolicyQuestions } from './PolicyQuestions';
 import { CivicHeader } from './CivicHeader';
 import './bill-catalog.css';
 
@@ -65,6 +66,7 @@ export default function BillCatalog() {
       <h1>{bill.title}</h1>
       <p className="bill-lead">{bill.proposedChange}</p>
       <GovernancePrism bill={bill} />
+      <PolicyQuestions key={bill.id} bill={bill} />
       <dl className="bill-fields">{[
         ['Purpose / problem', bill.problem], ['Proposed change', bill.proposedChange],
         ['Proposed jurisdiction', bill.jurisdiction], ['Trade-offs and safeguards', bill.safeguards],
@@ -73,7 +75,7 @@ export default function BillCatalog() {
         ['Fiscal estimate', 'Unknown until assessed'],
         ['Status / provenance', 'Unreviewed editorial policy concept · eudaimonia-100 · version 1 · 2026-11-13'],
         ['Immutable catalog revision (SHA-256)', bill.revision],
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      ].map(([label, value]) => <div id={({'Proposed change': 'catalog-proposedChange', 'Proposed jurisdiction': 'catalog-jurisdiction', 'Trade-offs and safeguards': 'catalog-safeguards', 'Success metrics': 'catalog-metrics'} as Record<string, string>)[label!]} key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
       <LegalAuthorityChecklist bill={bill} />
       <section className="bill-notice" aria-label="Human editorial review gate"><h2>Human editorial review gate</h2>
         <p>{gate?.reviewReady ? 'Editorial record complete; advisory publication remains unavailable.' : 'Human review incomplete. Advisory publication unavailable: this revision is blocked from publication.'}</p>

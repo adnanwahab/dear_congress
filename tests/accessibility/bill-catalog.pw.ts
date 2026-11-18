@@ -95,3 +95,25 @@ test('atlas text navigation preserves filters and history under reduced motion',
   await expect(page.locator('.bill-grid article')).toHaveCount(100);
   await expect(page).toHaveURL(/\/bills$/);
 });
+
+test('static policy questions retain focus, filters and history with reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills/HFL-051?q=HFL-051&question=who');
+  const questions = page.getByRole('navigation', { name: 'Policy questions' });
+  const search = page.getByRole('searchbox', { name: 'Search questions' });
+  await search.fill('no matching question');
+  await expect(search).toBeFocused();
+  await expect(page.getByRole('status')).toContainText('No questions match');
+  await page.getByRole('button', { name: 'Clear question search' }).click();
+  await questions.getByRole('button', { name: 'What could it cost?' }).click();
+  await expect(page.getByRole('heading', { name: 'What could it cost?' })).toBeFocused();
+  await expect(page).toHaveURL(/q=HFL-051&question=cost/);
+  await questions.getByRole('button', { name: 'What could go wrong?' }).click();
+  await page.goBack();
+  await expect(questions.getByRole('button', { name: 'What could it cost?' })).toHaveAttribute('aria-pressed', 'true');
+  await page.goForward();
+  await expect(questions.getByRole('button', { name: 'What could go wrong?' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('main')).toContainText('Evidence freshness: not checked');
+  await page.getByText('View underlying catalog text', { exact: true }).click();
+  await expect(page.locator('details[open]')).toContainText('stable operating budgets');
+});
