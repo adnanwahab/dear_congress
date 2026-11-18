@@ -11,6 +11,12 @@ interface BallotStatus {
   electorate: "unverified_browser_identities";
   binding: false;
 }
+interface DraftFeedbackStatus {
+  billId: string; revision: string; state: "accepting" | "closed";
+  counts: { support: number; oppose: number; unsure: number; total: number };
+  ownChoice: Choice | null;
+  kind: "unpublished_draft_feedback";
+}
 const titles: { choice: Choice; label: string }[] = [
   { choice: "support", label: "Yes" },
   { choice: "oppose", label: "No" },
@@ -23,18 +29,30 @@ async function readStatus(billId: string, signal?: AbortSignal): Promise<BallotS
   if (!response.ok) throw new Error("Ballot status is temporarily unavailable.");
   return await response.json() as BallotStatus;
 }
+async function readDraftFeedback(billId: string, signal?: AbortSignal): Promise<DraftFeedbackStatus> {
+  const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/draft-feedback", {
+    credentials: "same-origin", cache: "no-store", signal,
+  });
+  if (!response.ok) throw new Error("Draft feedback status is temporarily unavailable.");
+  return await response.json() as DraftFeedbackStatus;
+}
 export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; revision: string }) {
   const [ballot, setBallot] = useState<BallotStatus | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState("");
-  const [illustrativeChoice, setIllustrativeChoice] = useState<Choice | null>(null);
+  const [draft, setDraft] = useState<DraftFeedbackStatus | null>(null);
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [draftReceipt, setDraftReceipt] = useState("");
   useEffect(() => {
     const controller = new AbortController();
-    setBallot(null); setError(""); setReceipt(""); setIllustrativeChoice(null);
-    void readStatus(billId, controller.signal).then(setBallot).catch(e => {
-      if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Ballot status unavailable.");
-    });
+    setBallot(null); setDraft(null); setError(""); setReceipt(""); setDraftReceipt("");
+    void Promise.all([readStatus(billId, controller.signal), readDraftFeedback(billId, controller.signal)])
+      .then(([nextBallot, nextDraft]) => {
+        if (!controller.signal.aborted) { setBallot(nextBallot); setDraft(nextDraft); }
+      }).catch(e => {
+        if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Participation status unavailable.");
+      });
     return () => controller.abort();
   }, [billId, revision]);
   async function cast(choice: Choice | null) {
@@ -57,6 +75,25 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
       setError(e instanceof Error ? e.message : "Vote status is unknown. Reload to verify before submitting again.");
     } finally { setBusy(false); }
   }
+  async function saveDraft(choice: Choice | null) {
+    if (!draft || draft.state !== "accepting" || draftBusy) return;
+    setDraftBusy(true); setError(""); setDraftReceipt("");
+    try {
+      const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/draft-feedback", {
+        method: "PUT", credentials: "same-origin", cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ revision, choice, requestId: crypto.randomUUID() }),
+      });
+      const data = await response.json() as { saved?: boolean; receipt?: { id: string }; error?: string };
+      if (!response.ok || !data.saved || !data.receipt?.id)
+        throw new Error(data.error || "Draft feedback could not be confirmed. Check before retrying.");
+      const refreshed = await readDraftFeedback(billId);
+      setDraft(refreshed);
+      setDraftReceipt(data.receipt.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We could not confirm the draft feedback save. Reload to verify.");
+    } finally { setDraftBusy(false); }
+  }
   return <section className="votes-response" aria-label="Catalog advisory participation">
     <h3>What do you think?</h3>
     {!ballot && !error && <p role="status">Checking whether this bill is open for advisory voting…</p>}
@@ -65,14 +102,18 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
       This revision is {ballot.state === "awaiting_review" ? "awaiting human review" : ballot.state === "awaiting_publication" ? "awaiting authorized publication" : ballot.state === "scheduled" ? "scheduled for a later advisory vote" : "not currently open for advisory voting"}.
       No catalog vote has been submitted.
     </p>}
-    {ballot && ballot.state !== "open" && <div>
-      <p><strong>Local interactive demonstration only. No vote is submitted or recorded.</strong></p>
-      <div className="votes-choice-row" role="group" aria-label="Illustrative response only">
+    {ballot && ballot.state !== "open" && !ballot.publication && draft?.state === "accepting" && <div>
+      <p><strong>Save early feedback on this unpublished discussion draft.</strong> This records a non-binding browser response in a separate database, not a published advisory ballot. It does not approve the bill or carry over to a later ballot.</p>
+      <div className="votes-choice-row" role="group" aria-label="Unpublished draft feedback">
         {titles.map(item => <button type="button" key={item.choice}
-          aria-pressed={illustrativeChoice === item.choice}
-          onClick={() => setIllustrativeChoice(item.choice)}>{item.label}</button>)}
+          aria-pressed={draft.ownChoice === item.choice} disabled={draftBusy}
+          onClick={() => void saveDraft(item.choice)}>{item.label}</button>)}
       </div>
-      {illustrativeChoice && <p role="status">Illustrative choice: {illustrativeChoice}. This was not saved or counted.</p>}
+      {draft.ownChoice && <button type="button" disabled={draftBusy} onClick={() => void saveDraft(null)}>Withdraw draft feedback</button>}
+      {draftBusy && <p role="status">Saving draft feedback…</p>}
+      {draftReceipt && <p role="status">Saved to the draft-feedback database, not a published ballot. Receipt: <code>{draftReceipt}</code></p>}
+      <p>Your current draft response: {draft.ownChoice ?? "none"}.</p>
+      <p>Draft feedback from unverified browsers: {draft.counts.support} yes · {draft.counts.oppose} no · {draft.counts.unsure} unsure. These are not votes in an authorized ballot, verified people, or representative opinion.</p>
     </div>}
     {ballot?.state === "open" && ballot.publication && <div>
       <p>Non-binding advisory poll about this exact reviewed proposal revision. Participation is voluntary; one choice per unverified browser identity, not one verified person or a government election.</p>

@@ -35,8 +35,7 @@ Stale digests are rejected. The publisher endpoint separately checks that legal,
 evidence, fiscal, and editorial decisions all approve the exact current revision.
 It records `review_ready`; it does not open a public ballot. Public ballots remain
 subject to the separate exact-publication ballot service and its existing review
-ledger gate. The database review decisions recorded here are not yet connected
-to that publication gate, so a `review_ready` record alone cannot open a ballot.
+ledger gate. The database review decisions are now connected to the publication gate using an audit receipt pinned to all four approval IDs. A `review_ready` record alone cannot open a ballot; an authorized publisher must separately open a time-limited window.
 
 Back up the separate SQLite file using SQLite's online backup API or while the
 application is stopped, including its WAL state. Do not copy only the main file
@@ -44,3 +43,14 @@ while writes are active. Restore to a new path, verify the review queue and audi
 events, then change `CATALOG_REVIEW_DB` during a separately authorized release.
 Rollback is forward-safe: retain the database and point the app to the prior
 compatible image. Never delete or overwrite production participation data.
+
+
+## From expert decisions to a ballot (review-integration branch)
+
+1. Anyone can submit a source-linked suggestion; it is saved as pending and cannot approve anything.
+2. Configured legal, evidence, fiscal, and editorial reviewers independently record decisions with reasons and sources for the exact revision.
+3. A separately configured `publisher` reviewer records `review_ready`; the immutable audit receipt binds the four latest approval IDs. A new expert decision invalidates the attestation.
+4. The publisher opens a separate seven-day advisory ballot from `/review` (or calls the protected publications API with an explicit UTC window). That is the first point at which the published-ballot store accepts votes.
+5. Published-ballot votes and earlier unpublished draft feedback remain separate forever. An amendment requires a new source revision and a fresh ballot.
+
+To test locally, configure `CATALOG_REVIEWERS` with authorized reviewer roles including `publisher`, keep `CATALOG_REVIEW_DB` and `CATALOG_DB_PATH` on persistent paths, and run `bun test src/server/catalog-review-ballot-flow.test.ts`. A reviewer token is a credential, not proof of professional qualifications. Never use fixtures as real reviews.

@@ -220,15 +220,19 @@ These links describe routes available in the application; availability of data a
 
 ## Editing and reviewing the 100-bill catalog
 
-The expert-review center is available at [Review](/review). It stores public
-suggestions and verified reviewer decisions in a separate SQLite database,
-bound to each bill's exact revision. Reviewer access is configured server-side;
-without configured credentials, review decisions fail closed. The publication
-endpoint records that a revision is review-ready; it does not itself open a
-ballot. A separate exact-publication ballot API exists, but it still uses the
-existing publication gate and is not connected to this review database yet.
-Amendment persistence remains unimplemented, and no bill is currently eligible
-for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
+The expert-review center is available at [Review](/review). It saves public
+suggestions as pending and role-authenticated reviewer decisions to SQLite,
+all bound to an immutable bill revision and jurisdiction. Configured human
+legal, evidence, fiscal, and editorial reviewers must record approvals before
+a separate human publisher can attest readiness and open a dated advisory
+ballot. The publisher-attested SQLite review snapshot—not the static editorial
+ledger—is the publication gate in this integration branch.
+Until that separate publication occurs, Yes/No/Unsure responses on original
+catalog concepts save only as **unpublished draft feedback**, never as an
+authorized advisory ballot. Earlier responses are not transferred when a
+ballot opens. Reviewer credentials alone do not verify professional expertise,
+and amendment persistence remains unimplemented. See
+[review setup and backup guidance](docs/catalog-review-center.md)
 and [catalog workflow and safeguards](docs/bill-catalog.md).
 
 ## Linked research desk
@@ -238,3 +242,8 @@ fictional sample's text, background references and illustrative outcome graph
 visible together. Drag or keyboard-resize dividers; choose Single column for a
 stacked layout. Only layout preferences are stored locally; see
 [SHE-751 verification and fallback](docs/reviews/SHE-751.md).
+
+
+### Review and voting workflow (integration branch)
+
+At `/review`, public submissions save to the SQLite review database as **pending suggestions**, not expert approvals. Four configured human review roles can record revision-specific decisions, and a publisher then attests review readiness before separately opening an advisory ballot. At `/votes?bill=HFL-001`, Yes/No/Unsure responses before publication save as **unpublished draft feedback** with a server receipt. Those responses are distinct from recorded votes on an authorized, immutable, published ballot and are never carried into it. This branch requires tests, human reviewers, and operator deployment before production use. See `docs/catalog-review-center.md` and `docs/catalog-publication-ballots.md`.

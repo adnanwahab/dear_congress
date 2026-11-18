@@ -891,16 +891,17 @@ function recordStats(run: () => unknown) {
 }
 const observeRepositoryVote = (activity: VoteActivity) => recordStats(() => launchStats.vote(activity));
 const publicSecurity = createPublicSecurity();
-// Human review submissions and decisions use separate SQLite storage; ballots remain independently gated.
+// Review decisions remain separate from ballots; their publisher-attested snapshots now provide the ballot gate.
 const catalogReviews = new CatalogReviewStore();
 // Separate catalog participation store; existing JSON and developer PR votes are untouched.
 const catalogBallots = new CatalogBallotStore(
   process.env.CATALOG_DB_PATH ?? `${DB_PATH}.catalog.sqlite`,
-  { secret: process.env.ANON_COOKIE_SECRET ?? "local-development-catalog-secret-not-for-production" },
+  { secret: process.env.ANON_COOKIE_SECRET ?? "local-development-catalog-secret-not-for-production", reviews: bill => catalogReviews.ballotReview(bill) },
 );
 const catalogHandlers = catalogBallotHandlers(catalogBallots, {
   adminToken: ADMIN_TOKEN,
   publisherId: process.env.CATALOG_PUBLISHER_ID?.trim() ?? "",
+  publisherRole: req => catalogReviews.reviewer(req, 'publisher')?.id ?? null,
   expectedOrigin: (req) => publicSecurity.origin(req),
 });
 const planRoomsHandler = roomHandler(new PlanRooms(), req => publicSecurity.origin(req));
@@ -919,9 +920,16 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
     "/api/review/queue": {
-      GET: req => catalogReviews.reviewer(req)
-        ? Response.json({bills:catalogReviews.queue()}, {headers:{"cache-control":"no-store"}})
-        : Response.json({error:"Authorized reviewer required"}, {status:401,headers:{"cache-control":"no-store"}}),
+      GET: req => {
+        const reviewer = catalogReviews.reviewer(req);
+        return reviewer
+          ? Response.json({ bills: catalogReviews.queue(), reviewer: {
+              id: reviewer.id, name: reviewer.name, roles: reviewer.roles,
+            } }, { headers: { "cache-control": "no-store" } })
+          : Response.json({ error: "Authorized reviewer required" }, {
+              status: 401, headers: { "cache-control": "no-store" },
+            });
+      },
     },
     "/api/review/bills/:id/decisions": {
       POST: async req => {
@@ -1034,6 +1042,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     },
     "/api/catalog-bills/:id/publications": {
       POST: (req) => catalogHandlers.publish(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/draft-feedback": {
+      GET: (req) => catalogHandlers.draftFeedback(req, req.params.id!),
+      PUT: (req) => catalogHandlers.saveDraftFeedback(req, req.params.id!),
     },
 
     "/api/citizen-proposals": {

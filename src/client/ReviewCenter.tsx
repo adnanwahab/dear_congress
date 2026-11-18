@@ -5,7 +5,7 @@ import './review-center.css';
 type Category = 'legal' | 'evidence' | 'fiscal' | 'editorial';
 type Decision = { category: Category; decision: string; reason: string; reviewer_id: string; created_at: string; sources: string };
 type Submission = { id: string; category: Category; findings: string; sources: string; status: string; created_at: string };
-type QueueBill = { id: string; revision: string; jurisdiction: string; snapshot: { problem: string; proposed_change: string; safeguards: string; metrics: string }; decisions: Decision[]; submissions: Submission[] };
+type QueueBill = { id: string; revision: string; jurisdiction: string; snapshot: { problem: string; proposed_change: string; safeguards: string; metrics: string }; decisions: Decision[]; submissions: Submission[]; publication?: { status: string; reason: string; reviewer_id: string; created_at: string } | null };
 const categories: Category[] = ['legal', 'fiscal', 'evidence', 'editorial'];
 const categoryNames: Record<Category, string> = { legal: 'Legal', fiscal: 'Fiscal', evidence: 'Evidence', editorial: 'Editorial' };
 const validBill = (id: string | null) => originalReviewBills.find(b => b.id === id);
@@ -26,6 +26,10 @@ export default function ReviewCenter() {
   const [findings, setFindings] = useState('');
   const [sources, setSources] = useState('');
   const [submissionStatus, setSubmissionStatus] = useState('');
+  const [publisherAvailable, setPublisherAvailable] = useState(false);
+  const [publicationReason, setPublicationReason] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [openedBallots, setOpenedBallots] = useState<Record<string, string>>({});
 
   const selectedBill = validBill(selectedId) ?? originalReviewBills[0]!;
   const queueById = useMemo(() => new Map(bills.map(b => [b.id, b])), [bills]);
@@ -69,10 +73,12 @@ export default function ReviewCenter() {
       const data = await response.json();
       if (!response.ok) throw Error(data.error ?? 'Reviewer sign-in failed.');
       setBills(data.bills as QueueBill[]);
+      setPublisherAvailable(Array.isArray(data.reviewer?.roles) && data.reviewer.roles.includes('publisher'));
       setReviewerSignedIn(true);
       setStatus('Signed in. Decisions remain tied to each exact revision.');
     } catch (error) {
       setReviewerSignedIn(false);
+      setPublisherAvailable(false);
       setStatus(error instanceof Error ? error.message : 'Could not load the review queue.');
     }
   }
@@ -101,6 +107,7 @@ export default function ReviewCenter() {
     const data = await response.json();
     if (!response.ok) throw Error(data.error ?? 'Could not refresh the review queue.');
     setBills(data.bills as QueueBill[]);
+    setPublisherAvailable(Array.isArray(data.reviewer?.roles) && data.reviewer.roles.includes('publisher'));
   }
 
   async function decide(e: React.FormEvent<HTMLFormElement>) {
@@ -125,6 +132,44 @@ export default function ReviewCenter() {
       try { await refreshQueue(); }
       catch { setStatus(`Decision saved to the review database by ${data.reviewer}, but the queue did not refresh.`); }
     } catch (error) { setStatus(error instanceof Error ? error.message : 'Could not save this decision.'); }
+  }
+
+
+  async function attestReview() {
+    if (!publisherAvailable || !selectedQueue || approvedCount !== 4 || publishing) return;
+    setPublishing(true); setStatus('Saving publisher review-readiness decision…');
+    try {
+      const response = await fetch(`/api/review/bills/${selectedBill.id}/publish`, {
+        method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ revision: selectedBill.revision, jurisdiction: selectedBill.jurisdiction,
+          reason: publicationReason.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok || data.status !== 'review_ready') throw Error(data.error ?? 'Review-readiness record not confirmed.');
+      setStatus('Saved review-ready attestation. No advisory ballot has opened yet.');
+      await refreshQueue();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not attest review readiness.');
+    } finally { setPublishing(false); }
+  }
+
+  async function openAdvisoryBallot() {
+    if (!publisherAvailable || selectedQueue?.publication?.status !== 'review_ready' || publishing) return;
+    setPublishing(true); setStatus('Opening the reviewed advisory voting window…');
+    try {
+      const now = Date.now();
+      const response = await fetch(`/api/catalog-bills/${selectedBill.id}/publications`, {
+        method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ revision: selectedBill.revision, opensAt: new Date(now).toISOString(),
+          closesAt: new Date(now + 7 * 86_400_000).toISOString() }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.publicationId) throw Error(data.error ?? 'Could not confirm an open ballot.');
+      setOpenedBallots(current => ({ ...current, [selectedBill.id]: data.publicationId }));
+      setStatus(`Advisory ballot opened for ${selectedBill.id}. Record: ${data.publicationId}. No votes were created automatically.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not open the advisory ballot.');
+    } finally { setPublishing(false); }
   }
 
   const source = selectedQueue?.snapshot ?? { problem: selectedBill.problem, proposed_change: selectedBill.proposedChange, safeguards: selectedBill.safeguards, metrics: selectedBill.metrics };
@@ -196,6 +241,21 @@ export default function ReviewCenter() {
           </form>
           <h3>Decision history</h3>{selectedQueue.decisions.length ? selectedQueue.decisions.map((d, i) => <details key={`${d.category}-${d.created_at}-${i}`} className="review-history-item"><summary>{categoryNames[d.category]} · {d.decision} · {d.reviewer_id}</summary><p>{d.reason}</p><small>{d.created_at} · exact revision {selectedQueue.revision}</small></details>) : <p className="review-muted">No decisions recorded for this revision.</p>}
           <h3>Submitted findings</h3>{selectedQueue.submissions.length ? selectedQueue.submissions.map(s => <details key={s.id} className="review-history-item"><summary>{categoryNames[s.category]} suggestion · {s.status}</summary><p>{s.findings}</p><ul>{readSources(s.sources).map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></li>)}</ul></details>) : <p className="review-muted">No public suggestions yet.</p>}
+        </section>}
+        {reviewerSignedIn && publisherAvailable && selectedQueue && <section className="review-form-card review-publisher-card" aria-label="Advisory publication">
+          <span className="review-eyebrow">Authorized human publisher</span>
+          <h2>Review readiness &amp; ballot</h2>
+          <p>First record a publisher attestation after four expert approvals. Then open a separate, seven-day non-binding advisory ballot for this exact revision. No prior draft feedback becomes a vote.</p>
+          <label htmlFor="review-publication-reason">Why is this concept ready for advisory publication?</label>
+          <textarea id="review-publication-reason" minLength={10} maxLength={4000} value={publicationReason}
+            onChange={event => setPublicationReason(event.target.value)}
+            placeholder="Explain which reviews you checked and any remaining limitations…" />
+          <button type="button" disabled={publishing || approvedCount !== 4 || publicationReason.trim().length < 10}
+            onClick={() => void attestReview()}>Record review ready</button>
+          <button type="button" disabled={publishing || selectedQueue.publication?.status !== 'review_ready' || !!openedBallots[selectedBill.id]}
+            onClick={() => void openAdvisoryBallot()}>Open seven-day advisory ballot</button>
+          {openedBallots[selectedBill.id] && <p role="status">Ballot opened. <a href={`/votes?bill=${selectedBill.id}`}>View the advisory ballot</a></p>}
+          <p className="review-muted">HFL-051's separate legislative supplement is not covered by catalog approvals. The server will not publish it without its own review binding.</p>
         </section>}
         <p className="review-feedback" role="status" aria-live="polite">{status}</p>
       </aside>
