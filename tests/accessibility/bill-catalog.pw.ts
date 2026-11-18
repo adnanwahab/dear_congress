@@ -15,7 +15,7 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
     throw new Error('Catalog control unreachable by keyboard');
   }
   await page.goto('/bills');
-  await expect(page.locator('.bill-grid article')).toHaveCount(100);
+  await expect(page.locator('.bill-grid article')).toHaveCount(110);
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to main content', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
@@ -67,7 +67,7 @@ test('governance prism retains selection, history and keyboard focus in reduced 
   await expect(prism.locator('.prism-shape')).toBeHidden();
   await next.click();
   await expect(prism.getByRole('region', { name: 'Time lens', exact: true })).toContainText('Missing data');
-  await page.getByRole('link', { name: '← All 100 proposals' }).click();
+  await page.getByRole('link', { name: '← All 110 proposals' }).click();
   await expect(page.getByRole('searchbox', { name: 'Search bills' })).toHaveValue('HFL-051');
   await expect(page.locator('.bill-grid article')).toHaveCount(1);
 });
@@ -92,7 +92,7 @@ test('atlas text navigation preserves filters and history under reduced motion',
   await page.goForward();
   await expect(page.locator('.bill-grid article')).toHaveCount(0);
   await page.getByRole('button', { name: 'Clear / reset', exact: true }).click();
-  await expect(page.locator('.bill-grid article')).toHaveCount(100);
+  await expect(page.locator('.bill-grid article')).toHaveCount(110);
   await expect(page).toHaveURL(/\/bills$/);
 });
 
