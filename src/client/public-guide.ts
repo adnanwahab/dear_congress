@@ -37,6 +37,8 @@ Votes also offers a mini citizen-jury rehearsal for three opt-in seats sharing o
 
 The [transit sample argument map](/votes?proposal=demo-transit) includes Fact-check detective. Classify four editorial examples about a separate historical bill, then reveal the original Congress.gov source, date and reasoning. Practice has no political score and saves nothing. It is not a vote or verified civic participation. The bundled excerpt works offline after the page loads; the full source link needs connectivity.
 
+The [national policy atlas](/bills?view=atlas) explores hypothetical draft concepts using Census regions. Text-only region navigation provides the same filters and selection. Colors never represent verified voter support. Federal concepts have hypothetical national scope; state, county and city concepts have no reviewed regional binding and remain under All regions. Geography sources do not verify proposal evidence.
+
 ## Does my vote count?
 
 Voting is optional. Support, Oppose, Not sure and Skip are available together in the advisory controls. No new choice is selected by default. Skip — read without voting opens the sample draft, records no vote and leaves any saved choice unchanged. Reading and skipping do not count as votes.

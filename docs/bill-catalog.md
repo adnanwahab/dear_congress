@@ -182,3 +182,24 @@ Focused DOM tests exercise empty selection, all missing lenses, stale evidence,
 static mode, focus and history notifications. The Playwright catalog suite adds
 native back/forward, keyboard and reduced-motion checks; execution still requires
 a runner allowing a local server. This is a review candidate, not acceptance.
+
+## National policy atlas — SHE-725
+
+`/bills?view=atlas` adds an optional static schematic of Census regions. It
+uses no WebGL, external tile service, animation, geolocation, polling or new API.
+The always-available text region and scope selectors share the search, category
+filters, result cards, source IDs and revisions. Query parameters survive detail
+entry and return and restore on popstate.
+
+The Census geography source and check date are exposed next to the controls.
+The checked-in membership covers 50 states plus DC; territories are not assigned
+to a Census region. Geography checks expire after 30 days and future dates are
+unavailable/stale. These dates never imply independent proposal evidence review.
+The schematic is explicitly not to scale; Alaska/Hawaii are included in West.
+
+No reviewed regional bindings exist for these editorial concepts. Region browsing
+shows federal concepts as hypothetical national scope only. Generic state, city
+and county labels never assign a concept to an actual locality: browse these in
+All regions. Unknown regions fail closed. No map color, count or source reference
+is regional voter support, legal applicability, enacted policy or evidence of an
+outcome.

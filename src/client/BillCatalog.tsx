@@ -6,8 +6,10 @@ import { MissingVoice } from './MissingVoice';
 import { PolicyPinball } from './PolicyPinball';
 import { GlossaryText } from './CivicGlossary';
 import { GovernancePrism } from './GovernancePrism';
+import { PolicyAtlas } from './PolicyAtlas';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
+import { atlasBills } from '../shared/policy-atlas';
 import { editorialGate } from '../shared/bill-editorial';
 import supplement from '../../content/bill-details/HFL-051.md' with { type: 'text' };
 import { LegalAuthorityChecklist } from './LegalAuthorityChecklist';
@@ -36,16 +38,22 @@ export default function BillCatalog() {
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   function update(q: string, c: string) {
-    const next = new URLSearchParams();
-    if (q) next.set('q', q);
-    if (c) next.set('category', c);
+    const next = new URLSearchParams(params);
+    if (q) next.set('q', q); else next.delete('q');
+    if (c) next.set('category', c); else next.delete('category');
+    window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
+    setParams(next);
+  }
+  function changeAtlas(key: string, value: string) {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value); else next.delete(key);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
     setParams(next);
   }
   const id = window.location.pathname.replace(/\/+$/, '').split('/')[2];
   const bill = billCollection.bills.find(b => b.id === id);
   const gate = bill ? editorialGate(bill) : undefined;
-  const results = searchBills(query, category);
+  const results = atlasBills(searchBills(query, category), params);
   const back = `/bills${params.size ? '?' + params : ''}`;
   return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
     <CivicCrossword /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
@@ -76,11 +84,12 @@ export default function BillCatalog() {
     </> : <><h1>Draft concept not found</h1><a href="/bills">Browse all proposals</a></> : <>
       <h1>100 Bills for Human Flourishing</h1><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
+      <PolicyAtlas params={params} change={changeAtlas} />
       <label htmlFor="bill-search">Search bills</label>
       <input id="bill-search" type="search" placeholder="Search bills…" value={query} onChange={e => update(e.target.value, category)} />
       <div className="bill-chips" role="group" aria-label="Filter by category"><button aria-pressed={!category} onClick={() => update(query, '')}>All categories</button>{billCollection.categories.map(c => <button key={c} aria-pressed={category === c} onClick={() => update(query, category === c ? '' : c)}>{c}</button>)}</div>
-      <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => update('', '')}>Clear / reset</button></div>
-      {!results.length && <p>No draft concepts match your search and category. Clear the filters to browse all 100 proposals.</p>}
+      <div className="bill-results"><p role="status" aria-live="polite">{results.length} {results.length === 1 ? 'proposal' : 'proposals'} found</p><button onClick={() => { window.history.pushState(null, '', window.location.pathname); setParams(new URLSearchParams()); }}>Clear / reset</button></div>
+      {!results.length && <p>No draft concepts match your search, category and geographic scope. Clear the filters to browse all 100 proposals.</p>}
       <TownHallGame />
       <div className="bill-grid">{results.map(b => <article key={b.id}><p className="bill-meta">{b.id} · {b.jurisdiction} · Draft concept · Legal authority: unverified</p><p>Publish gate: blocked · Human review required</p><p className="bill-category">{b.category}</p><h2>{b.title}</h2><p>{b.proposedChange}</p><a href={`/bills/${b.id}${params.size ? '?' + params : ''}`} aria-label={`Explore proposal ${b.id}: ${b.title}`}>Explore proposal →</a></article>)}</div>
     </>}
