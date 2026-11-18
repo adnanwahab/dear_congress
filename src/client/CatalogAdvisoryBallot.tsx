@@ -28,9 +28,10 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState("");
+  const [illustrativeChoice, setIllustrativeChoice] = useState<Choice | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    setBallot(null); setError(""); setReceipt("");
+    setBallot(null); setError(""); setReceipt(""); setIllustrativeChoice(null);
     void readStatus(billId, controller.signal).then(setBallot).catch(e => {
       if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Ballot status unavailable.");
     });
@@ -64,6 +65,15 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
       This revision is {ballot.state === "awaiting_review" ? "awaiting human review" : ballot.state === "awaiting_publication" ? "awaiting authorized publication" : ballot.state === "scheduled" ? "scheduled for a later advisory vote" : "not currently open for advisory voting"}.
       No catalog vote has been submitted.
     </p>}
+    {ballot && ballot.state !== "open" && <div>
+      <p><strong>Local interactive demonstration only. No vote is submitted or recorded.</strong></p>
+      <div className="votes-choice-row" role="group" aria-label="Illustrative response only">
+        {titles.map(item => <button type="button" key={item.choice}
+          aria-pressed={illustrativeChoice === item.choice}
+          onClick={() => setIllustrativeChoice(item.choice)}>{item.label}</button>)}
+      </div>
+      {illustrativeChoice && <p role="status">Illustrative choice: {illustrativeChoice}. This was not saved or counted.</p>}
+    </div>}
     {ballot?.state === "open" && ballot.publication && <div>
       <p>Non-binding advisory poll about this exact reviewed proposal revision. Participation is voluntary; one choice per unverified browser identity, not one verified person or a government election.</p>
       <div className="votes-choice-row" role="group" aria-label="Your advisory choice">
