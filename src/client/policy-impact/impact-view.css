@@ -1,0 +1,18 @@
+.impact-view { max-width: 72rem; min-width: 0; margin-inline: auto; line-height: 1.6; overflow-wrap: anywhere; }
+.impact-view * { box-sizing: border-box; }
+.impact-view nav { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; }
+.impact-view nav ul { padding-inline-start: 1.4rem; }
+.impact-view a { text-decoration: underline; }
+.impact-view button { min-height: 44px; padding: .65rem 1rem; cursor: pointer; }
+.impact-view :focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
+.impact-redline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.impact-view pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; border: 1px solid currentColor; padding: .8rem; }
+.impact-view del { text-decoration: line-through; }
+.impact-view ins { text-decoration: underline; text-decoration-style: double; }
+.impact-table { max-width: 100%; overflow-x: auto; }
+.impact-table table { width: 100%; border-collapse: collapse; }
+.impact-table th, .impact-table td { text-align: left; vertical-align: top; border: 1px solid currentColor; padding: .65rem; min-width: 10rem; }
+.impact-view dd { margin-inline-start: 1rem; }
+.impact-view iframe { display: block; border: 1px solid currentColor; width: 100%; height: clamp(22rem, 70vh, 52rem); }
+@media (max-width: 40rem) { .impact-redline { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .impact-view *, .impact-view *::before, .impact-view *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
