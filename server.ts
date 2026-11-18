@@ -1036,6 +1036,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/catalog-bills/:id/publications": {
       POST: (req) => catalogHandlers.publish(req, req.params.id!),
     },
+    "/api/catalog-bills/:id/draft-feedback": {
+      GET: (req) => catalogHandlers.draftFeedback(req, req.params.id!),
+      PUT: (req) => catalogHandlers.saveDraftFeedback(req, req.params.id!),
+    },
 
     "/api/citizen-proposals": {
       GET: (req) => citizenProposalHandlers.list(req),
