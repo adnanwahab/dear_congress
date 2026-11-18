@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Window } from 'happy-dom';
 import ReviewCenter from './ReviewCenter';
-import { billCollection } from '../shared/bill-catalog';
+import { originalReviewBills } from '../shared/bill-catalog';
 
 const priorWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 function restoreWindow() {
@@ -15,12 +15,13 @@ test('review center opens on the proposal document with searchable catalog and c
   Object.defineProperty(globalThis, 'window', { value: window, configurable: true });
   try {
     window.document.body.innerHTML = renderToStaticMarkup(<ReviewCenter />);
-    expect(window.document.querySelectorAll('.review-bill-option')).toHaveLength(billCollection.bills.length);
+    expect(window.document.querySelectorAll('.review-bill-option')).toHaveLength(100);
     expect(window.document.querySelector('#selected-bill-title')?.textContent).toBe('Public Arts and Music Act');
     expect(window.document.querySelector('.review-document')?.textContent).toContain('The problem');
     expect(window.document.querySelector('.review-document')?.textContent).toContain('Proposed change');
     expect(window.document.querySelector('.review-document')?.textContent).toContain('Full statutory text has not been supplied');
     expect(window.document.querySelector('.review-workspace')?.textContent).toContain('Submit for human review');
+    expect(window.document.querySelector('.review-workspace')?.textContent).toContain('It will be a suggestion for human review, not an approval.');
     expect(window.document.querySelector('#suggestion-findings')).not.toBeNull();
     expect(window.document.querySelector('.review-signin[open]')).toBeNull();
     expect(window.document.querySelector('#reviewer-token')).not.toBeNull();
@@ -35,7 +36,7 @@ test('a valid bill deep link selects its exact bill and presents the mobile deta
   Object.defineProperty(globalThis, 'window', { value: window, configurable: true });
   try {
     window.document.body.innerHTML = renderToStaticMarkup(<ReviewCenter />);
-    expect(window.document.querySelector('#selected-bill-title')?.textContent).toBe(billCollection.bills.find(b => b.id === 'HFL-060')?.title);
+    expect(window.document.querySelector('#selected-bill-title')?.textContent).toBe(originalReviewBills.find(b => b.id === 'HFL-060')?.title);
     expect(window.document.querySelector('.review-center')?.className).toContain('review-center--mobile-detail');
     expect(window.document.querySelector('.review-back')?.textContent).toContain('Back to bills');
   } finally {

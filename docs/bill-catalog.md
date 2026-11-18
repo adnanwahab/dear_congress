@@ -67,8 +67,10 @@ revision should become a new immutable snapshot with a new digest. The separate
 legislative supplement has its own source and revision identity.
 
 The expert-review center described below is implemented in a separate SQLite
-database. Database-backed amendment drafts and catalog ballots are not yet
-implemented; the `/votes` choice and amendment controls remain local demos.
+database. Database-backed amendment drafts are not yet implemented. A separate
+revision-bound catalog ballot API and UI exist, but publication still consults
+the source-controlled review ledger, not the new review database. The new
+review-ready record does not publish a ballot.
 
 ## HFL-051 legislative supplement
 
@@ -102,10 +104,12 @@ or unsure choice, and require a fresh choice after every published revision.
 Unreviewed drafts remain readable and labeled as discussion drafts. Reviewed
 does not mean endorsed, enacted, independently validated, or officially sponsored.
 
-The expert-review workflow is implemented, but amendment storage and ballots
-are still planned. The current catalog has no ballot API and no revision is
+The expert-review workflow and a separate exact-publication ballot API are
+implemented. Amendment storage is still planned. The ballot publication gate
+still uses the source-controlled editorial ledger; the database review-center
+decisions are not yet connected to it, and no original catalog revision is
 eligible for an advisory ballot. Detail pages must label evidence, costs,
-jurisdiction, and review status accurately until human decisions are recorded.
+jurisdiction, and review status accurately until authorized publication occurs.
 
 ## Validation and remaining human review
 
