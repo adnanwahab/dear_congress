@@ -71,3 +71,27 @@ test('governance prism retains selection, history and keyboard focus in reduced 
   await expect(page.getByRole('searchbox', { name: 'Search bills' })).toHaveValue('HFL-051');
   await expect(page.locator('.bill-grid article')).toHaveCount(1);
 });
+
+test('atlas text navigation preserves filters and history under reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/bills?view=atlas&scope=federal');
+  const region = page.getByLabel('Browse region', { exact: true });
+  await region.focus();
+  await region.selectOption('south');
+  await expect(region).toBeFocused();
+  const ids = await page.locator('.bill-grid .bill-meta').allTextContents();
+  expect(ids.length).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Use text-only regions / low power', exact: true }).click();
+  await expect(page.locator('.atlas-overview')).toHaveCount(0);
+  expect(await page.locator('.bill-grid .bill-meta').allTextContents()).toEqual(ids);
+  await page.getByLabel('Proposed decision scope', { exact: true }).selectOption('city');
+  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByLabel('Proposed decision scope', { exact: true })).toHaveValue('federal');
+  await expect(region).toHaveValue('south');
+  await page.goForward();
+  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Clear / reset', exact: true }).click();
+  await expect(page.locator('.bill-grid article')).toHaveCount(100);
+  await expect(page).toHaveURL(/\/bills$/);
+});
