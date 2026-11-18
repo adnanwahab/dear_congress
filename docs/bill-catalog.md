@@ -182,6 +182,12 @@ expose assignments, review statuses, current digest and blockers; cards always
 expose the blocked publish gate. Review completion does not make a concept
 introduced legislation, verified evidence or a modeled outcome.
 
+## Expert review center and ballot integration status (November 18, 2026)
+
+The `/review` workspace displays the original HFL concepts and accepts public evidence suggestions. Reviewer decisions are stored in a separate SQLite database with version-bound snapshots and role-limited bearer credentials; public suggestions never approve a proposal. See [review-center setup](catalog-review-center.md). All present concepts remain unreviewed unless an authorized human records a complete set of decisions. The 110-draft catalog remains a policy concept library, **not statutory law**.
+
+The standalone catalog publication/ballot API is implemented, but its read-only editorial gate still uses the checked-in source review ledger: **the two review and publication workflows are not integrated yet**. A review-center `review_ready` receipt does not itself open recorded voting. Only a separately authorized, immutable published revision can accept nonbinding advisory responses. Never set `advisoryPublicationAllowed` globally or transfer earlier votes to revised text.
+
 ## Governance prism (SHE-724)
 
 Catalog detail and the Dashboard offer Cost, Law, Time and Lived impact lenses.

@@ -225,3 +225,10 @@ fictional sample's text, background references and illustrative outcome graph
 visible together. Drag or keyboard-resize dividers; choose Single column for a
 stacked layout. Only layout preferences are stored locally; see
 [SHE-751 verification and fallback](docs/reviews/SHE-751.md).
+
+
+## Review center for policy discussion drafts
+
+Open [Expert review center](/review) to read an exact HFL concept and submit sources or review suggestions. Reviewers configured by an operator with dedicated credentials may record jurisdiction- and revision-specific legal, evidence, fiscal and editorial decisions in the separate SQLite review database. Public suggestions are **not** expert approvals. See [review center setup](docs/catalog-review-center.md).
+
+The catalog now contains **110 discussion drafts**. The original source remains in Git. The separate catalog publication/ballot API is implemented, but the review center's approval records are **not yet connected to that API**; the static editorial ledger remains the ballot gate, and no draft is authorized for recorded advisory voting. Private amendment storage and complete statutory legislative text are separate future features. Do not treat a review-ready state as a published ballot.

@@ -164,6 +164,7 @@ const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ defa
 const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const CivicLanding = lazy(() => import("./CivicLanding"));
+const ReviewCenter = lazy(() => import("./ReviewCenter"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
 const JournalScreen = lazy(() => import("./JournalScreen"));
@@ -184,6 +185,7 @@ export function App() {
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
     : path === "/votes" ? <BillCatalog masterDetail />
     : path === "/bills" || path.startsWith("/bills/") ? <BillCatalog />
+    : path === "/review" ? <ReviewCenter />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
