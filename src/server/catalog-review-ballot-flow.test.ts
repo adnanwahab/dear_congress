@@ -87,6 +87,8 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     });
     expect(attestation.status).toBe("review_ready");
     expect(review.ballotReview(bill).reviewReady).toBe(true);
+    expect(review.ballotReview({ ...bill, revision: "0".repeat(64) }).reviewReady).toBe(false);
+    expect(review.ballotReview({ ...bill, jurisdiction: "other-jurisdiction" }).reviewReady).toBe(false);
     expect(ballots.status(bill.id).state).toBe("awaiting_publication");
 
     // The publisher role opens the actual advisory ballot; draft choices stay separate.
@@ -112,10 +114,52 @@ test("review and ballot SQLite stores form a one-way, revision-locked approval f
     expect(() => ballots.saveDraftChoice(bill.id, {
       revision: bill.revision, requestId: randomUUID(), choice: "oppose",
     }, browser)).toThrow("draft_feedback_closed_after_publication");
-    ballots.cast(bill.id, { revision: bill.revision, publicationId: publication.publicationId,
-      requestId: randomUUID(), choice: "unsure" }, browser);
+    const vote = { revision: bill.revision, publicationId: publication.publicationId,
+      requestId: randomUUID(), choice: "unsure" };
+    const saved = ballots.cast(bill.id, vote, browser);
+    ballots.close();
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials);
+    ballots = new CatalogBallotStore(ballotPath, {
+      secret, now: () => start, reviews: b => review.ballotReview(b),
+    });
+    expect(ballots.cast(bill.id, vote, browser).receipt).toEqual(saved.receipt);
+    expect(ballots.cast(bill.id, vote, browser).replayed).toBe(true);
     expect(ballots.status(bill.id, browser).counts?.total).toBe(1);
     expect(ballots.status(bill.id, browser).ownChoice).toBe("unsure");
+
+    const withdrawal = { ...vote, requestId: randomUUID(), choice: null };
+    const withdrawn = ballots.cast(bill.id, withdrawal, browser);
+    expect(withdrawn.receipt.choice).toBeNull();
+    ballots.close();
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials);
+    ballots = new CatalogBallotStore(ballotPath, {
+      secret, now: () => start, reviews: b => review.ballotReview(b),
+    });
+    expect(ballots.status(bill.id, browser).counts?.total).toBe(0);
+    expect(ballots.status(bill.id, browser).ownChoice).toBeNull();
+    expect(ballots.cast(bill.id, withdrawal, browser).receipt).toEqual(withdrawn.receipt);
+    ballots.cast(bill.id, { ...vote, requestId: randomUUID() }, browser);
+
+    // Role removal must close the gate even though durable approval IDs still match.
+    for (const role of ["legal", "publisher"] as const) {
+      review.close();
+      review = new CatalogReviewStore(reviewPath, credentials.map(r => ({
+        ...r, roles: r.roles.filter(value => value !== role),
+      })));
+      expect(review.ballotReview(bill).reviewReady).toBe(false);
+      expect(ballots.status(bill.id, browser).state).toBe("closed_or_stale");
+      expect(() => ballots.cast(bill.id, { ...vote, requestId: randomUUID() }, browser))
+        .toThrow("publication_not_authorized");
+      if (role === "legal") expect(() => review.publish(auth("publisher"), bill.id, {
+        revision: bill.revision, jurisdiction: bill.jurisdiction,
+        reason: "Reattestation cannot bypass a removed reviewer role.",
+      })).toThrow("legal review is not approved");
+    }
+    review.close();
+    review = new CatalogReviewStore(reviewPath, credentials);
+    expect(ballots.status(bill.id, browser).state).toBe("open");
 
     // A later expert decision invalidates the exact review receipt and closes writes.
     review.decide(auth("legal"), bill.id, { revision: bill.revision, jurisdiction: bill.jurisdiction,
