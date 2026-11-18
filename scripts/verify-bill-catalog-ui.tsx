@@ -39,7 +39,21 @@ const detailRoot = createRoot(container);
 await act(async () => detailRoot.render(<BillCatalog />));
 for (const text of ['Third Places for Everyone Act', 'Unknown until assessed', 'Statutory text', 'Proposed funding scenarios', 'Con arguments', 'Evidence plan', 'Review before participation', 'Immutable catalog revision', 'Legal-authority checklist', 'Legal review status: unverified', 'Unassigned / not reviewed']) assert(container.textContent!.includes(text), text);
 for (const text of ['Human editorial review gate', 'Human review incomplete', 'publication unavailable']) assert(container.textContent!.includes(text), text);
-assert.equal(container.querySelectorAll('input,form').length, 0);
+assert.equal(container.querySelectorAll('input,form').length, 1);
+const questionSearch = container.querySelector('#policy-question-search') as HTMLInputElement;
+questionSearch.focus();
+await act(async () => fireEvent.input(questionSearch, { target: { value: 'cost' } }));
+assert.equal(document.activeElement, questionSearch);
+await act(async () => (container.querySelector('[aria-label="Policy questions"] button') as HTMLButtonElement).click());
+assert.equal(new URLSearchParams(window.location.search).get('question'), 'cost');
+assert.match(document.activeElement!.textContent!, /What could it cost/);
+assert.match(container.textContent!, /Evidence freshness: not checked/);
+assert.equal(container.querySelector('a[href="#catalog-metrics"]')?.textContent?.includes('HFL-051'), true);
+for (const question of ['risk', 'cost']) {
+  await act(async () => { window.history.replaceState(null, '', `/bills/HFL-051?q=parks&question=${question}`); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
+  assert.equal(container.querySelector('[aria-label="Policy questions"] [aria-pressed="true"]')?.textContent?.includes(question === 'risk' ? 'wrong' : 'cost'), true);
+  assert.equal(questionSearch.value, '');
+}
 assert.equal(writes, 0);
 const nextLens = [...container.querySelectorAll('button')].find(b => b.textContent === 'Rotate next lens')!;
 nextLens.focus();
