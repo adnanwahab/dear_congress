@@ -22,16 +22,18 @@ const titles: { choice: Choice; label: string }[] = [
   { choice: "oppose", label: "No" },
   { choice: "unsure", label: "Unsure" },
 ];
+const requestDeadline = (signal?: AbortSignal) => signal
+  ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000);
 async function readStatus(billId: string, signal?: AbortSignal): Promise<BallotStatus> {
   const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/ballot", {
-    credentials: "same-origin", cache: "no-store", signal,
+    credentials: "same-origin", cache: "no-store", signal: requestDeadline(signal),
   });
   if (!response.ok) throw new Error("Ballot status is temporarily unavailable.");
   return await response.json() as BallotStatus;
 }
 async function readDraftFeedback(billId: string, signal?: AbortSignal): Promise<DraftFeedbackStatus> {
   const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/draft-feedback", {
-    credentials: "same-origin", cache: "no-store", signal,
+    credentials: "same-origin", cache: "no-store", signal: requestDeadline(signal),
   });
   if (!response.ok) throw new Error("Draft feedback status is temporarily unavailable.");
   return await response.json() as DraftFeedbackStatus;
@@ -61,7 +63,7 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
     const requestId = crypto.randomUUID();
     try {
       const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/ballot", {
-        method: "PUT", credentials: "same-origin", cache: "no-store",
+        method: "PUT", credentials: "same-origin", cache: "no-store", signal: requestDeadline(),
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ revision, publicationId: ballot.publication.id, choice, requestId }),
       });
@@ -80,7 +82,7 @@ export function CatalogAdvisoryBallot({ billId, revision }: { billId: string; re
     setDraftBusy(true); setError(""); setDraftReceipt("");
     try {
       const response = await fetch("/api/catalog-bills/" + encodeURIComponent(billId) + "/draft-feedback", {
-        method: "PUT", credentials: "same-origin", cache: "no-store",
+        method: "PUT", credentials: "same-origin", cache: "no-store", signal: requestDeadline(),
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ revision, choice, requestId: crypto.randomUUID() }),
       });
