@@ -84,12 +84,12 @@ for (const screen of ['home', 'feed', 'published'] as const) {
     assert.equal(laneButton('Fictional samples').getAttribute('aria-pressed'), 'true');
     await act(async () => { laneButton('Unreviewed concepts').click(); await new Promise(r => setTimeout(r, 30)); });
     assert.equal(container.querySelector('.proposal-search'), null);
-    assert.match(container.textContent!, /Unreviewed concepts: Showing 100 of 100/);
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 110 of 110/);
     const conceptSearch = container.querySelector('[aria-label="Unreviewed concepts"] input')!;
     await act(async () => { fireEvent.input(conceptSearch, { target: { value: 'zzzz-no-match' } }); });
-    assert.match(container.textContent!, /Unreviewed concepts: Showing 0 of 100/);
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 0 of 110/);
     await act(async () => { ([...container.querySelectorAll('button')].find(b => b.textContent === 'Reset concept filters') as HTMLButtonElement).click(); });
-    assert.match(container.textContent!, /Unreviewed concepts: Showing 100 of 100/);
+    assert.match(container.textContent!, /Unreviewed concepts: Showing 110 of 110/);
     assert.equal(laneButton('Unreviewed concepts').getAttribute('aria-pressed'), 'true');
     await act(async () => { laneButton('Official source references').click(); });
     assert.equal(container.querySelector('[aria-label="Unreviewed concepts"]'), null);
