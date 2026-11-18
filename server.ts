@@ -920,9 +920,16 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       },
     },
     "/api/review/queue": {
-      GET: req => catalogReviews.reviewer(req)
-        ? Response.json({bills:catalogReviews.queue()}, {headers:{"cache-control":"no-store"}})
-        : Response.json({error:"Authorized reviewer required"}, {status:401,headers:{"cache-control":"no-store"}}),
+      GET: req => {
+        const reviewer = catalogReviews.reviewer(req);
+        return reviewer
+          ? Response.json({ bills: catalogReviews.queue(), reviewer: {
+              id: reviewer.id, name: reviewer.name, roles: reviewer.roles,
+            } }, { headers: { "cache-control": "no-store" } })
+          : Response.json({ error: "Authorized reviewer required" }, {
+              status: 401, headers: { "cache-control": "no-store" },
+            });
+      },
     },
     "/api/review/bills/:id/decisions": {
       POST: async req => {
