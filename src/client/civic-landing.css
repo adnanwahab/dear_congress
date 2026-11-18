@@ -200,3 +200,23 @@
 @media(max-width:980px){.csh-lab-frame{grid-template-columns:1fr 1fr}.csh-lab-panel{padding:25px}.csh-lab-ledger article{padding:19px}}
 @media(max-width:720px){.csh-lab-frame{display:block}.csh-lab-panel:first-child{border-right:0;border-bottom:1px solid #dce1df}.csh-lab-panel{padding:25px 20px}.csh-lab-ledger{grid-template-columns:1fr}.csh-lab-ledger article+article{border-left:0;border-top:1px solid #d9dfdd}.csh-links>a[href="#studio"]{display:none}.csh-home .csh-hero-art{box-shadow:10px 11px 0 #dbe3df}}
 @media(prefers-reduced-motion:reduce){.csh-home .csh-hero-art:after,.csh-lab-track>div,.csh-lab-stacked span{animation:none!important;transition:none!important}}
+
+
+/* Civic principles: three high-signal ideas added above the existing working lab/catalog. */
+.csh-home .csh-principles{grid-template-columns:repeat(3,minmax(0,1fr))}
+.csh-home .csh-principles .csh-feature{min-height:555px;min-width:0}
+.csh-home .csh-principles .csh-feature h3{font-size:clamp(25px,2.45vw,33px);max-width:none;margin-top:19px}
+.csh-home .csh-principles .csh-feature p{max-width:none}
+.csh-latency-compare{display:grid;gap:8px;margin:18px 0 22px;position:relative;z-index:2}
+.csh-latency-compare>div{background:#fff9;border:1px solid #293e4129;border-radius:13px;padding:11px 13px}
+.csh-latency-compare span,.csh-latency-compare small{display:block;font:750 10px/1.5 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.025em}
+.csh-latency-compare strong{display:block;font-size:30px;letter-spacing:-.06em;line-height:1.15;margin:4px 0}
+.csh-latency-compare small{font-weight:550;color:#4a5b58}
+.csh-civic-loop{display:flex;flex-wrap:wrap;gap:7px;margin:21px 0 16px;position:relative;z-index:2}
+.csh-civic-loop span{border:1px solid #26383569;background:#ffffff95;border-radius:20px;padding:6px 10px;font-size:11px;font-weight:850}
+.csh-civic-loop span+span:before{content:'→ ';opacity:.7}
+.csh-home .csh-principles .csh-principle-note{font-size:12px;line-height:1.55;color:#344543;margin-bottom:18px}
+.csh-home .csh-foundation-footnote{font-size:12px;line-height:1.7;color:#5e6967;margin:21px 0 0}
+.csh-foundation-footnote a{font-weight:750;text-underline-offset:3px}
+@media(max-width:980px){.csh-home .csh-principles{grid-template-columns:1fr}.csh-home .csh-principles .csh-feature,.csh-home .csh-principles .csh-feature:first-child{grid-row:auto;min-height:0}}
+@media(max-width:650px){.csh-home .csh-tape .csh-container{grid-template-columns:1fr;min-height:0;padding:10px 0;gap:0}.csh-home .csh-tape .csh-container>div{padding:11px 0;gap:17px}.csh-home .csh-tape .csh-container>div+div{border-top:1px solid #35513a33}.csh-home .csh-tape span{max-width:none;font-size:12px}.csh-home .csh-principles .csh-feature{padding:24px 20px}}
