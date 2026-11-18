@@ -15,11 +15,15 @@ try {
     if(noGpu) await context.addInitScript(()=>Object.defineProperty(navigator,'gpu',{get:()=>undefined,configurable:true}));
     const page=await context.newPage();
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
-    page.on('request',request=>assert.equal(request.method(),'GET','Live acceptance must remain read-only.'));
+    page.on('request',request=>{
+      assert.equal(request.method(),'GET','Live acceptance must remain read-only.');
+      assert.equal(request.headers().authorization,undefined,'No bearer credential belongs in browser requests.');
+    });
     const response=await page.goto(target);
     assert.equal(response.status(),200);
     await page.waitForFunction(()=>window.hblPolicyImpact?.getState().selected,{timeout:90000});
     const mode={name:noGpu?'forced-no-webgpu':'browser-default',headers:response.headers(),errors,checkpoints:[]};
+    assert.match(mode.headers['content-security-policy'],/frame-ancestors [^;]*https:\/\/civic-synthesis\.fly\.dev(?:;| |$)/);
     mode.gpu=await page.evaluate(async()=>{if(!navigator.gpu)return {available:false};try {const a=await navigator.gpu.requestAdapter();return {available:!!a,info:a?.info?{vendor:a.info.vendor,architecture:a.info.architecture,device:a.info.device,description:a.info.description}:null};}catch(e){return {available:false,error:e.message};}});
     const identity=await page.evaluate(()=>{const s=window.hblPolicyImpact.getState();return {modelVersion:s.manifest.modelVersion,input:s.manifest.input,job:s.results.job,runIndex:s.runIndex,seed:s.results.runs.find(r=>r.runIndex===s.runIndex).seed};});
     mode.identity=identity;
@@ -95,6 +99,7 @@ try {
   assert.ok(sandbox);
   assert.ok(!sandbox.includes('allow-top-navigation'));
   report.civic={url:civicUrl,iframe,sandbox,headers:response.headers(),text:await page.locator('main').innerText()};
+  assert.ok(report.civic.headers['content-security-policy'].split(';').map(s=>s.trim()).includes("frame-src 'self' https://happybearlandia.fly.dev"));
   report.civic.deployment=await (await page.request.get('https://civic-synthesis.fly.dev/version')).json();
   const versions=await (await page.request.get('https://civic-synthesis.fly.dev/api/citizen-proposals/citizen_c8aae87d-c360-4439-a4f2-6dce82442ad1/versions')).json();
   const linked=versions.previews.find(p=>p.remoteId===preview);
