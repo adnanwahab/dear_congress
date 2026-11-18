@@ -29,6 +29,8 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
     }),
     ballot: (req: Request, id: string) => response(() => store.status(id, viewer(req))),
     vote: (req: Request, id: string) => response(async () => {
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
       // Never accept a browser-provided x-voter-id. Shared middleware replaces it
       // with its signed-cookie-derived identity before this handler executes.
       const voter = viewer(req);
