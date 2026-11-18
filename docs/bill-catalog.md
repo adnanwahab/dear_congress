@@ -1,5 +1,27 @@
 # Human Flourishing draft catalog
 
+## November 18, 2026: expanded editorial collection (v2)
+
+The current catalog contains **110 unreviewed proposals** across 11 categories, HFL-001 through HFL-110. The existing collection ID and filenames `eudaimonia-100` remain as stable provenance identifiers for the original series; the collection title, version and date are updated to **110 Bills for Human Flourishing**, version 2, dated 2026-11-18. Do not interpret the old filename as a current count.
+
+- Seven original entries were rewritten in-place, retaining their IDs but receiving new per-record SHA-256 revisions: HFL-021, HFL-038, HFL-049, HFL-071, HFL-075, HFL-085 and HFL-090. All other original 93 per-record revisions remain unchanged.
+- HFL-101 through HFL-110 belong to a new tenth-bill category, **Global cooperation and future institutions**: Global Water and Sanitation Compact; Democratic Rights and Due Process Charter; Global Civic Deliberation Protocol; Public Law Version Control Act; Pandemic Early-Warning Commons; Open Science and Public Discovery Act; AI Safety and Human Control Compact; Climate Adaptation and Clean Energy Accord; Anti-Corruption and Public Asset Traceability Act; Peaceful Conflict Prevention and Displacement Protection Act.
+- The catalog importer now enforces exactly 110 sequential IDs, 11 named categories with 10 records each, safe plain text, stable deterministic hashes and a narrow **international** proposal scope for prospective multilateral cooperation. International proposals **do not** presume a world legislature, a concluded treaty, domestic enactment or the authority to compel any country.
+- The review ledger covers all 110 current revisions. All new and revised entries remain unassigned, legal/evidence/fiscal reviews are pending, and publication is blocked. Public advisory participation requires independent human review and an explicitly authorized, immutable revision-aware publication process.
+- Each draft has a revision-pinned illustration. The law carousel, category filters, sitemap, route checks, screen labels and editorial provenance must include the ten new IDs without altering earlier votes, publications or receipts.
+
+Before considering merge, run:
+```sh
+bun scripts/import-eudaimonia.mjs content/bill-collections/eudaimonia-100.md --dry-run
+bun scripts/import-eudaimonia.mjs content/bill-collections/eudaimonia-100.md --out src/generated/eudaimonia-100.json
+bun run visualizations:check
+bun test
+bun run typecheck
+bun run test:routes
+```
+
+The implementation below documents the *original* 100-record introduction and its earlier acceptance history. Those historical results are not claimed as verification of the 110-record expansion.
+
 The review candidate adds `/bills` and `/bills/HFL-001` through
 `/bills/HFL-100`, including `/bills/HFL-051`. Published, Feed, Votes and the
 navigation utilities link to it. Unknown IDs return HTTP 404. Search uses all
@@ -37,16 +59,12 @@ The checked-in generated fixture test detects stale output.
 
 Collection version 1 and stable HFL IDs are retained. A revision digest covers
 ID, title, category, version and all six fields. Git retains earlier source and
-artifact revisions. The product direction is an editable, revisioned catalog:
-people may propose bill changes, while the original catalog remains immutable.
-Proposed changes must be stored as separate amendment records linked to the
-exact parent bill digest; they must never overwrite source text. An approved
-revision should become a new immutable snapshot with a new digest. The separate
-legislative supplement has its own source and revision identity.
-
-The expert-review center described below is implemented in a separate SQLite
-database. Database-backed amendment drafts and catalog ballots are not yet
-implemented; the `/votes` choice and amendment controls remain local demos.
+artifact revisions. This is a read-only catalog, not a revision database or an
+advisory publishing API. No votes or comments are stored in this artifact, so
+reimport cannot delete them or move them to changed text. Any future publishing
+implementation must retain immutable snapshots, obtain authorized review, and
+bind ballots to both source kind and reviewed text revision. Catalog revision
+digests do not include the separate legislative supplement.
 
 ## HFL-051 legislative supplement
 
@@ -68,22 +86,15 @@ mapping and review, not implicit runtime file discovery.
 
 ## Data separation and participation
 
-Curated editorial drafts remain independent of the illustrative engine seed,
+Curated editorial drafts are independent of the illustrative engine seed,
 `citizenProposals`, official legislation metadata and repository PR ballots.
-Catalog amendment and ballot records must use separate storage and totals; they
-must never be mixed with citizen-proposal or repository votes or synthesis scores.
-The intended workflow is: save a private, owner-bound amendment draft; submit it
-for moderation with explicit consent; obtain expert review; then publish an
-approved, immutable revision for a separately identified advisory ballot.
-Ballots must bind to the exact bill revision, accept an explicit support, oppose
-or unsure choice, and require a fresh choice after every published revision.
-Unreviewed drafts remain readable and labeled as discussion drafts. Reviewed
-does not mean endorsed, enacted, independently validated, or officially sponsored.
-
-The expert-review workflow is implemented, but amendment storage and ballots
-are still planned. The current catalog has no ballot API and no revision is
-eligible for an advisory ballot. Detail pages must label evidence, costs,
-jurisdiction, and review status accurately until human decisions are recorded.
+They do not appear in their API responses or vote totals and do not enter
+synthesis scoring. They have no sponsors, endorsements, votes, official status,
+verified evidence or assessed cost. Detail pages say “Unknown until assessed”.
+The catalog makes no API writes. “Prepare your own private civic proposal” opens
+the existing guided workspace without copying catalog content or source identity.
+No catalog voting link is enabled. Authorized, revision-aware advisory publication
+is a prerequisite for any future participation transition.
 
 ## Validation and remaining human review
 
@@ -151,12 +162,10 @@ rights questions, missing-source findings and an unassigned human reviewer/date.
 Cards also label legal authority unverified. HFL-051 has facilities/grants-specific
 prompts and explicitly separates its supplement from the catalog digest. These
 are editorial questions, not source-backed legal conclusions. The original
-catalog, IDs, revisions and supplement remain unchanged. The expert-review
-center accepts public suggestions and verified reviewer decisions bound to the
-current catalog text digest and jurisdiction. Suggestions remain pending and
-cannot approve a category. HFL-051 supplement review is not yet represented in
-the review database; reviewers must treat its separate source revision
-explicitly and not infer that the catalog digest covers it.
+catalog, IDs, revisions and supplement remain unchanged. No review workflow or
+validity transition is implemented; nothing automatically becomes legally valid.
+Future review records must bind exact text and supplement revisions and identify
+a qualified human reviewer, sources, date, findings and remaining uncertainty.
 
 ## Human editorial gate (SHE-878)
 
@@ -168,20 +177,16 @@ unassigned is an explicit gap, not an invented person or an approval.
 
 `src/shared/bill-editorial.ts` derives readiness and fails closed for missing or
 ambiguous records, stale digests, jurisdiction changes, missing assignments,
-incomplete reviews and decisions without a reviewer or review record. The ledger
-remains the static fail-closed baseline. The protected `/review` center uses
-`CATALOG_REVIEWERS` to authenticate server-side reviewer tokens and assign
-legal, evidence, fiscal, editorial and publisher roles. It stores public review
-submissions separately from expert decisions. Decisions and audit events are
-bound to the current bill digest and jurisdiction. Review completion does not
-make a concept introduced legislation, verified evidence or a modeled outcome.
+incomplete reviews and decisions without a reviewer or review record. Detail pages
+expose assignments, review statuses, current digest and blockers; cards always
+expose the blocked publish gate. Review completion does not make a concept
+introduced legislation, verified evidence or a modeled outcome.
 
-The protected publication endpoint records `review_ready` only after a publisher
-role verifies legal, evidence, fiscal, and editorial approval for the exact
-revision. It does not open a ballot; a voting-window and ballot system remain for
-a later implementation. No catalog revision is currently published for voting.
-See [the review center guide](catalog-review-center.md) for authorization and
-backup instructions.
+## Expert review center and ballot integration status (November 18, 2026)
+
+The `/review` workspace displays the original HFL concepts and accepts public evidence suggestions. Reviewer decisions are stored in a separate SQLite database with version-bound snapshots and role-limited bearer credentials; public suggestions never approve a proposal. See [review-center setup](catalog-review-center.md). All present concepts remain unreviewed unless an authorized human records a complete set of decisions. The 110-draft catalog remains a policy concept library, **not statutory law**.
+
+The standalone catalog publication/ballot API is implemented, but its read-only editorial gate still uses the checked-in source review ledger: **the two review and publication workflows are not integrated yet**. A review-center `review_ready` receipt does not itself open recorded voting. Only a separately authorized, immutable published revision can accept nonbinding advisory responses. Never set `advisoryPublicationAllowed` globally or transfer earlier votes to revised text.
 
 ## Governance prism (SHE-724)
 

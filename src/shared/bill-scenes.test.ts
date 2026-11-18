@@ -10,7 +10,7 @@ const scenes = manifest.visualizations;
 const definitionsRoot = join(process.cwd(), 'content', 'bill-visualizations');
 
 describe('version-pinned, individually stored bill scenes', () => {
-  test('all 100 catalog bills have one and only one scene', () => {
+  test('all 110 catalog bills have one and only one scene', () => {
     expect(manifest.schema).toBe('civic-synthesis/bill-visualizations-manifest/v1');
     expect(manifest.sourceCollection).toBe('eudaimonia-100');
     expect(scenes.length).toBe(bills.length);

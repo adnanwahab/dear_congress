@@ -207,7 +207,7 @@ hypothesis: if the plan is good enough, hopefully everyone wants to support it. 
 
 ## Page directory
 
-Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [100-bill catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
+Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [110-draft catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
 
 Other application pages:
 
@@ -218,23 +218,17 @@ Other application pages:
 
 These links describe routes available in the application; availability of data and actions varies by page. Advisory participation is not an official vote, and catalog drafts remain subject to their displayed editorial review gates.
 
-## Editing and reviewing the 100-bill catalog
+## Linked research desk
 
-The intended workflow is to let people propose revisions to any of the 100
-discussion drafts without changing the original catalog entry. Each amendment
-must remain linked to its exact parent revision. A private draft should be
-owner-bound; submitting it for public review requires explicit consent and
-moderation. Expert reviewers then assess legal authority, evidence, fiscal
-impact, and editorial/publication readiness for that exact revision. Only an
-authorized human publication action should open a separate advisory ballot.
-Substantive changes create a new revision and require a fresh vote.
+Open Navigation → Research desk (`/draft#research-desk`) to keep the selected
+fictional sample's text, background references and illustrative outcome graph
+visible together. Drag or keyboard-resize dividers; choose Single column for a
+stacked layout. Only layout preferences are stored locally; see
+[SHE-751 verification and fallback](docs/reviews/SHE-751.md).
 
-The expert-review center is available at [Review](/review). It stores public
-suggestions and verified reviewer decisions in a separate SQLite database,
-bound to each bill's exact revision. Reviewer access is configured server-side;
-without configured credentials, review decisions fail closed. The publication
-endpoint can record that a revision is review-ready but does not open a ballot.
-Amendment persistence and catalog ballots remain unimplemented; bill-detail
-choices and amendment previews are local demonstrations, and no catalog bill is
-currently eligible for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
-and [catalog workflow and safeguards](docs/bill-catalog.md).
+
+## Review center for policy discussion drafts
+
+Open [Expert review center](/review) to read an exact HFL concept and submit sources or review suggestions. Reviewers configured by an operator with dedicated credentials may record jurisdiction- and revision-specific legal, evidence, fiscal and editorial decisions in the separate SQLite review database. Public suggestions are **not** expert approvals. See [review center setup](docs/catalog-review-center.md).
+
+The catalog now contains **110 discussion drafts**. The original source remains in Git. The separate catalog publication/ballot API is implemented, but the review center's approval records are **not yet connected to that API**; the static editorial ledger remains the ballot gate, and no draft is authorized for recorded advisory voting. Private amendment storage and complete statutory legislative text are separate future features. Do not treat a review-ready state as a published ballot.

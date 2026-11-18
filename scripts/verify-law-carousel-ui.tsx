@@ -22,7 +22,7 @@ const keyboard = async (key: string, target: Element | null = container.querySel
   assert(target, 'target exists');
   await act(async () => target!.dispatchEvent(new dom.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
 };
-assert.equal(container.querySelectorAll('.law-carousel__thumb').length, 100);
+assert.equal(container.querySelectorAll('.law-carousel__thumb').length, 110);
 assert.match(selection(), /HFL-051.*Third Places/);
 assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Access to free gathering spaces/);
 assert.equal(container.querySelector('.law-carousel__thumb--active')?.getAttribute('data-law-id'), 'HFL-051');
@@ -35,9 +35,9 @@ assert.match(selection(), /HFL-051/);
 await keyboard('Home');
 assert.match(selection(), /HFL-001/);
 await keyboard('End');
-assert.match(selection(), /HFL-100/);
+assert.match(selection(), /HFL-110/);
 await keyboard('ArrowRight');
-assert.match(selection(), /HFL-001/, 'next wraps at end of all 100 drafts');
+assert.match(selection(), /HFL-001/, 'next wraps at end of all 110 drafts');
 
 const input = document.createElement('input');
 container.querySelector('.law-carousel')!.append(input);
@@ -50,7 +50,7 @@ const jump = container.querySelector('[data-law-id="HFL-090"]') as HTMLButtonEle
 await act(async () => jump.click());
 assert.match(selection(), /HFL-090/);
 assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Public Futures Simulation/);
-assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Models reproducible/);
+assert.match(container.querySelector('.law-carousel__stage')!.textContent!, /Reproducibility and independent replication/);
 assert.equal(calls, 0);
 await act(async () => root.unmount());
-console.log('Law carousel: 100 scenes, deep link, keyboard navigation, wrap, input exclusion, thumbnail selection, no fetch passed.');
+console.log('Law carousel: 110 scenes, deep link, keyboard navigation, wrap, input exclusion, thumbnail selection, no fetch passed.');

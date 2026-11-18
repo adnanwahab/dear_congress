@@ -49,7 +49,7 @@ export default function CivicLanding() {
       <div className="csh-container csh-nav-inner">
         <a className="csh-brand" href="/" aria-label="Civic Synthesis homepage"><span className="csh-brand-icon" aria-hidden="true">✳</span><span>civic synthesis<span className="csh-brand-dot">.</span></span></a>
         <nav className="csh-links" aria-label="Homepage navigation">
-          <a href="/votes">Explore 100 Bills</a>
+          <a href="/votes">Explore {ideaCount} Bills</a>
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
@@ -60,9 +60,9 @@ export default function CivicLanding() {
           <div>
             <p className="csh-eyebrow">THE FUTURE IS A PUBLIC PROJECT</p>
             <h1>Imagine wildly.<br/><em>Govern wisely.</em></h1>
-            <p className="csh-lead">What if democracy felt like building the future together? Discover <strong>100 bold policy ideas</strong> for healthier communities, more creativity, better science, and lives worth living.</p>
+            <p className="csh-lead">What if democracy felt like building the future together? Discover <strong>{ideaCount} bold policy ideas</strong> for healthier communities, more creativity, better science, and lives worth living.</p>
             <div className="csh-hero-buttons">
-              <a className="csh-button csh-dark" href="#ideas">Explore the 100 ideas <span aria-hidden="true">↘</span></a>
+              <a className="csh-button csh-dark" href="#ideas">Explore the {ideaCount} ideas <span aria-hidden="true">↘</span></a>
               <a className="csh-button csh-light" href="/proposals/new">Propose your own <span aria-hidden="true">↗</span></a>
             </div>
             <p className="csh-hero-note"><span className="csh-green-dot" aria-hidden="true"/>Open for imagination. Grounded in evidence, review, and real people.</p>
@@ -89,22 +89,22 @@ export default function CivicLanding() {
           <div className="csh-section-head"><h2>More wonder.<br/><em>More possibility.</em></h2><p>Good policy should make room for more than survival. It should help people create, discover, connect, and delight in being alive.</p></div>
           <div className="csh-features">
             <article className="csh-feature csh-pink">
-              <div className="csh-feature-top"><span className="csh-feature-id">HFL-059 · IN THE 100</span><span className="csh-feature-emoji" aria-hidden="true">🎭</span></div>
+              <div className="csh-feature-top"><span className="csh-feature-id">HFL-059 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🎭</span></div>
               <h3>Let a thousand art scenes bloom.</h3><p>Bring public art, music, performances, and creative programs to more neighborhoods, with community-led choices and transparent grants.</p>
               <a href="/bills/HFL-059">Explore the Public Arts and Music Act ↗</a><span className="csh-feature-bg" aria-hidden="true">✺</span>
             </article>
             <article className="csh-feature csh-lav">
-              <div className="csh-feature-top"><span className="csh-feature-id">NEW CONCEPT · NOT IN THE 100</span><span className="csh-feature-emoji" aria-hidden="true">🔬</span></div>
+              <div className="csh-feature-top"><span className="csh-feature-id">HFL-106 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🔬</span></div>
               <h3>A public R&amp;D moonshot.</h3><p>Imagine larger, accountable funding for high-risk research, open science, public laboratories, and unexpected breakthroughs.</p>
-              <a href="/proposals/new">Help draft an R&amp;D funding proposal ↗</a><span className="csh-feature-bg" aria-hidden="true">✳</span>
+              <a href="/bills/HFL-106">Explore the Open Science and Public Discovery Act ↗</a><span className="csh-feature-bg" aria-hidden="true">✳</span>
             </article>
             <article className="csh-feature csh-yellow">
-              <div className="csh-feature-top"><span className="csh-feature-id">HFL-090 · IN THE 100</span><span className="csh-feature-emoji" aria-hidden="true">🪐</span></div>
+              <div className="csh-feature-top"><span className="csh-feature-id">HFL-090 · IN THE 110</span><span className="csh-feature-emoji" aria-hidden="true">🪐</span></div>
               <h3>Try the future before it arrives.</h3><p>Explore public policy simulations that show uncertainty, alternatives, assumptions, and who benefits or gets left out.</p>
               <a href="/bills/HFL-090">Explore the Public Futures Simulation Act ↗</a><span className="csh-feature-bg" aria-hidden="true">◎</span>
             </article>
           </div>
-          <div className="csh-idea-banner"><div><strong>Imagine creative cities, citizen science, libraries that double as laboratories.</strong><p>Arts and R&amp;D expansions are new discussion directions, not enacted policies, verified budgets, or additions silently inserted into the 100-bill catalog.</p></div><a href="/proposals/new">Add your idea ↗</a></div>
+          <div className="csh-idea-banner"><div><strong>Imagine creative cities, citizen science, libraries that double as laboratories.</strong><p>Arts and R&amp;D expansions are new discussion directions, not enacted policies or verified budgets. The new open-science concept is now HFL-106 in the 110-draft catalog.</p></div><a href="/proposals/new">Add your idea ↗</a></div>
         </div>
       </section>
       <section className="csh-section" id="how">
@@ -155,7 +155,7 @@ export default function CivicLanding() {
             </div>
           </div>
           <div className="csh-lab-ledger" aria-label="How proposals should be evaluated">
-            <article><small>01 / STATUS</small><h3>Know what’s a draft.</h3><p>All 100 original HFL concepts are editorial drafts, not introduced or enacted laws.</p></article>
+            <article><small>01 / STATUS</small><h3>Know what’s a draft.</h3><p>All 110 current HFL concepts are editorial drafts, not introduced or enacted laws.</p></article>
             <article><small>02 / EVIDENCE</small><h3>Keep unknowns visible.</h3><p>Fiscal cost and independent evidence review are outstanding, not zero.</p></article>
             <article><small>03 / PEOPLE</small><h3>Humans make the call.</h3><p>Review safeguards and jurisdiction before any eligible advisory vote. <a href="/bills/HFL-090">Inspect a draft ↗</a></p></article>
           </div>
@@ -164,9 +164,9 @@ export default function CivicLanding() {
       <section className="csh-section csh-catalog" id="ideas">
         <div className="csh-container">
           <p className="csh-section-kicker">04 / THE IDEA LIBRARY</p>
-          <div className="csh-section-head"><h2>100 bills.<br/>100 starting points.</h2><p>Explore the full original collection, from affordable housing and community art to safer technology and public futures research.</p></div>
+          <div className="csh-section-head"><h2>110 bills.<br/>110 starting points.</h2><p>Explore the expanded draft collection, from affordable housing and community art to safer technology and public futures research.</p></div>
           <p className="csh-catalog-notice"><strong>DISCUSSION DRAFTS</strong> These are unreviewed editorial concepts, not enacted laws, legislative filings, costed plans, or live ballots.</p>
-          <div className="csh-catalog-controls"><label className="csh-search"><span aria-hidden="true">⌕</span><span className="csh-sr-only">Search the 100 policy drafts</span><input type="search" value={query} placeholder="Search an idea, problem, or possibility…" onChange={e => { setQuery(e.target.value); setExpanded(false); }}/></label><span role="status" aria-live="polite">{'Showing ' + visible.length + ' of ' + matches.length + ' ideas'}</span></div>
+          <div className="csh-catalog-controls"><label className="csh-search"><span aria-hidden="true">⌕</span><span className="csh-sr-only">Search the 110 policy drafts</span><input type="search" value={query} placeholder="Search an idea, problem, or possibility…" onChange={e => { setQuery(e.target.value); setExpanded(false); }}/></label><span role="status" aria-live="polite">{'Showing ' + visible.length + ' of ' + matches.length + ' ideas'}</span></div>
           <div className="csh-chips" role="group" aria-label="Filter ideas by theme">
             <button type="button" aria-pressed={category === 'all'} onClick={() => selectCategory('all')}>✳ All ideas</button>
             <button type="button" className="csh-creative-chip" aria-pressed={category === 'creative'} onClick={() => selectCategory('creative')}>🎨 Arts &amp; science</button>
@@ -178,7 +178,7 @@ export default function CivicLanding() {
             <div className="csh-bill-bottom"><span>{CATEGORY_LABELS[b.category] || b.category}</span><a href={'/bills/' + encodeURIComponent(b.id)} aria-label={'Read ' + b.id + ': ' + b.title}>Explore draft ↗</a></div>
           </article>)}</div> : <div className="csh-no-results">No drafts match these filters. Try another search or select All ideas.</div>}
           {matches.length > 9 && <div className="csh-more-row"><button type="button" className="csh-button csh-light" onClick={() => { setExpanded(!expanded); if (expanded) document.getElementById('ideas')?.scrollIntoView({ behavior: 'smooth' }); }}>{expanded ? 'Show fewer ideas ↑' : 'Show all ' + matches.length + ' matching ideas ↓'}</button></div>}
-          <p className="csh-provenance">Original 100 Bills for Human Flourishing, curated November 13, 2026. The catalog preserves all original HFL IDs and draft descriptions.</p>
+          <p className="csh-provenance">110 Bills for Human Flourishing, expanded November 18, 2026. IDs HFL-001–HFL-100 are preserved; seven texts were revised and HFL-101–HFL-110 were added. All drafts still require review.</p>
         </div>
       </section>
       <section className="csh-end"><div className="csh-container csh-end-inner"><div><p className="csh-section-kicker">05 / WRITE THE NEXT CHAPTER</p><h2>The future isn’t fixed.<br/><em>It’s a conversation.</em></h2><p>What would you change first? Start with the experience you know, propose a concrete idea, or explore how different choices could change everyday life.</p></div><a className="csh-button" href="/proposals/new">Start a proposal ↗</a></div></section>

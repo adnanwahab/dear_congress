@@ -205,7 +205,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-021",
-      "sourceRevision": "009ccd1b7f48f964dd1a5d00503a33ab2004baff20528cff230cfb0b22493128",
+      "sourceRevision": "43981baa43e5c2e96a29648eee493681e8d60b3c1e1ec67925d2dd24ebc711ae",
       "layout": "systems",
       "motif": "health",
       "focusDimension": "Health",
@@ -375,7 +375,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-038",
-      "sourceRevision": "caf28031b4f1fe15ff11bbacd22deac816f9d4b591138fb334a2148d44ed8175",
+      "sourceRevision": "e2f95729de73963babcc8b8106a89c4655b7c2031c2dd44830bf2ebbb84770eb",
       "layout": "timeline",
       "motif": "learning",
       "focusDimension": "Education",
@@ -485,7 +485,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-049",
-      "sourceRevision": "309eda1f8452ff80e17e3e71f2993b2561d382c6a11660690b9a143df9139231",
+      "sourceRevision": "ae4d9bf0676e7bdee3a04f18dab4031360cecc36efe5d40f8fface942972d2ea",
       "layout": "comparison",
       "motif": "work",
       "focusDimension": "Time",
@@ -705,7 +705,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-071",
-      "sourceRevision": "f93a84003549269fdc5f1779cab361496380d0bc22cdfaf16245a6504d0844ab",
+      "sourceRevision": "203606a006676f5d5526816085ff0c25e0e6bd21e5a333c207866f1ba2e46419",
       "layout": "timeline",
       "motif": "democracy",
       "focusDimension": "Justice",
@@ -745,7 +745,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-075",
-      "sourceRevision": "1322cc82e7c153b5045b21b31da6a0249a10948ba5856666a9f06a1b21cde90f",
+      "sourceRevision": "90881326ec0ab06bfe90b31f24e0e1d61a9977e6907c75a1d357595806c56fc1",
       "layout": "timeline",
       "motif": "democracy",
       "focusDimension": "Agency",
@@ -845,7 +845,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-085",
-      "sourceRevision": "bb74ba2bc599569c8c250609a0179eded5199ddf3ba8ae039b146849f2f75d7c",
+      "sourceRevision": "b18d8a59aa130fe5038eefe3925fff966107c66e39675442cd1d840351c1ce7b",
       "layout": "systems",
       "motif": "technology",
       "focusDimension": "Health",
@@ -895,7 +895,7 @@
     {
       "schema": "civic-synthesis/bill-visualization/v1",
       "billId": "HFL-090",
-      "sourceRevision": "f83a9024dc4339546ed16f0348179fc2fa9ae9232a6edee73c4a255a5e7c5356",
+      "sourceRevision": "0258109602e5a7428d17c6ba854affe43af4e485c4e3bdf5e55ba194afb602dd",
       "layout": "systems",
       "motif": "technology",
       "focusDimension": "Agency",
@@ -1000,6 +1000,106 @@
       "motif": "nature",
       "focusDimension": "Environment",
       "accent": "#b7da91",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-101",
+      "sourceRevision": "0b55a52c982af4d266a6e85c4f7d23a5a099979671539858dd6be307f3537544",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Health",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-102",
+      "sourceRevision": "0901d619d0ad2090e7229a8c39398a684d585d17d7e22131ed89f28485e7ef31",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Justice",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-103",
+      "sourceRevision": "dc2d82d0812a5c0a41bc4612b2d5aeec9081a20892cd67260995e2cdb75ab7c4",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Agency",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-104",
+      "sourceRevision": "d937b03bb8969d18a17b3f2602a5353c2637a41387b920a17e4303efe6558376",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Agency",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-105",
+      "sourceRevision": "57fb62c5124d6922172d6aef36c6533f0cda101f7c4c380db8bec1dd74238311",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Health",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-106",
+      "sourceRevision": "390c9278cbaad4d5c9bab2ee298615bf7bd633ba6a8e47df60c6e0d00f89f46c",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Education",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-107",
+      "sourceRevision": "2dfba3ae88a1b751fabecf847bf8c8ad309452fe0262e379effce14c42845f12",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Agency",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-108",
+      "sourceRevision": "3705786d91c8b5ea9772cf75992afb408b2d1183c788cfd3362df820944bdd72",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Environment",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-109",
+      "sourceRevision": "aeadb8bd561d904d64729eadab92a4add09dac9669a95f910a59d75f65210ad9",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Justice",
+      "accent": "#9eb8fc",
+      "curation": "seeded-from-catalog"
+    },
+    {
+      "schema": "civic-synthesis/bill-visualization/v1",
+      "billId": "HFL-110",
+      "sourceRevision": "0fc3b7743befdd3aba5b3eafbbf894802178748318ee25d643210dfdfd306028",
+      "layout": "systems",
+      "motif": "democracy",
+      "focusDimension": "Justice",
+      "accent": "#9eb8fc",
       "curation": "seeded-from-catalog"
     }
   ]
