@@ -20,7 +20,7 @@ const reviews: ReviewLookup = b => editorialGate(b, [activeReview(b)]);
 const start = Date.parse("2026-11-18T12:00:00Z");
 const window = () => ({
   revision: bill.revision,
-  opensAt: new Date(start).toISOString(),
+  opensAt: new Date(start + 119_000).toISOString(),
   closesAt: new Date(start + 60 * 60_000).toISOString(),
 });
 function tempDb(run: (path: string) => void) {
