@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { billCollection, type CatalogBill } from '../shared/bill-catalog';
 import {
   billDimensions, billRelatedness, billsForFocus, dimensionCount,
@@ -35,7 +35,7 @@ function dimensionPosition(index: number) {
   const angle = index / dimensions.length * Math.PI * 2 - Math.PI / 2;
   return { x: 500 + Math.cos(angle) * 202, y: 282 + Math.sin(angle) * 198 };
 }
-function isActivation(event: React.KeyboardEvent) {
+function isActivation(event: KeyboardEvent) {
   return event.key === 'Enter' || event.key === ' ';
 }
 
