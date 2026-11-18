@@ -207,7 +207,7 @@ hypothesis: if the plan is good enough, hopefully everyone wants to support it. 
 
 ## Page directory
 
-Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [100-bill catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
+Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [110-draft catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
 
 Other application pages:
 
@@ -233,8 +233,17 @@ The expert-review center is available at [Review](/review). It stores public
 suggestions and verified reviewer decisions in a separate SQLite database,
 bound to each bill's exact revision. Reviewer access is configured server-side;
 without configured credentials, review decisions fail closed. The publication
-endpoint can record that a revision is review-ready but does not open a ballot.
-Amendment persistence and catalog ballots remain unimplemented; bill-detail
-choices and amendment previews are local demonstrations, and no catalog bill is
-currently eligible for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
+endpoint records that a revision is review-ready; it does not itself open a
+ballot. A separate exact-publication ballot API exists, but it still uses the
+existing publication gate and is not connected to this review database yet.
+Amendment persistence remains unimplemented, and no bill is currently eligible
+for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
 and [catalog workflow and safeguards](docs/bill-catalog.md).
+
+## Linked research desk
+
+Open Navigation → Research desk (`/draft#research-desk`) to keep the selected
+fictional sample's text, background references and illustrative outcome graph
+visible together. Drag or keyboard-resize dividers; choose Single column for a
+stacked layout. Only layout preferences are stored locally; see
+[SHE-751 verification and fallback](docs/reviews/SHE-751.md).

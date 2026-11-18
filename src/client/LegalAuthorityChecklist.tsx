@@ -4,8 +4,11 @@ import type { CatalogBill } from '../shared/bill-catalog';
  * No reviewed state is inferred or persisted by this read-only catalog. */
 export function LegalAuthorityChecklist({ bill }: { bill: CatalogBill }) {
   const thirdPlaces = bill.id === 'HFL-051';
+  const international = bill.jurisdiction === 'international';
   const hypothesis = thirdPlaces
     ? 'Hypothesis only: a city might support noncommercial gathering spaces through facilities or operating grants. The city, enabling authority, appropriation process and limits have not been identified or verified.'
+    : international
+    ? 'Hypothesis only: multiple sovereign governments might negotiate a voluntary agreement and adopt implementing measures through their own lawful processes. No world legislature, treaty, or legal authority is presumed.'
     : `Hypothesis only: the proposed ${bill.jurisdiction} jurisdiction might enact this concept. A reviewer must identify the responsible body, specific constitutional, statutory or charter authority, and required enactment and funding process.`;
   return <section className="bill-notice" aria-labelledby="legal-authority-heading">
     <h2 id="legal-authority-heading">Legal-authority checklist</h2>
@@ -15,10 +18,10 @@ export function LegalAuthorityChecklist({ bill }: { bill: CatalogBill }) {
       <div><dt>Authority hypothesis — unresolved</dt><dd>{hypothesis}</dd></div>
       <div><dt>Preemption questions — unresolved</dt><dd>{thirdPlaces
         ? 'Do state or federal rules limit city facilities, grants, procurement or funding conditions? Which local charter, budget and program rules apply?'
-        : 'Could state or federal law preempt this proposal? Do existing laws, delegated powers or intergovernmental responsibilities limit the proposed action?'}</dd></div>
+        : international ? 'Which treaties, domestic constitutional approvals, sovereign responsibilities and enforceability limits would apply? Which governments would have to consent?' : 'Could state or federal law preempt this proposal? Do existing laws, delegated powers or intergovernmental responsibilities limit the proposed action?'}</dd></div>
       <div><dt>Rights questions — unresolved</dt><dd>{thirdPlaces
         ? 'How would access and grant criteria protect equal treatment, disability access, speech, religious freedom and visitor privacy? What complaint and appeal protections are needed?'
-        : 'What constitutional and civil-rights questions arise, including equal treatment, due process, speech, disability access and privacy? Which safeguards and remedies require review?'}</dd></div>
+        : international ? 'How would participating countries protect equal treatment, fundamental rights, humanitarian obligations, privacy, local self-determination and enforceable remedies?' : 'What constitutional and civil-rights questions arise, including equal treatment, due process, speech, disability access and privacy? Which safeguards and remedies require review?'}</dd></div>
       <div><dt>Draft-specific review context</dt><dd>{bill.proposedChange} Existing safeguard prompt: {bill.safeguards}</dd></div>
       <div><dt>Authority sources / findings</dt><dd>None recorded. Obtain primary legal sources and document scope, conflicting interpretations and remaining uncertainty.</dd></div>
       <div><dt>Human reviewer / review date</dt><dd>Unassigned / not reviewed. A qualified human reviewer must record their name, date, sources and findings for this exact draft and any supplement before a validity finding can be displayed.</dd></div>

@@ -30,7 +30,8 @@ try {
     assert.equal((await hub.json()).topic.id, topic);
   }
   assert.equal((await get('/topics/unknown')).status, 404);
-  assert.equal((await get('/bills/HFL-101')).status, 404);
+  assert.equal((await get('/bills/HFL-110')).status, 200);
+  assert.equal((await get('/bills/HFL-111')).status, 404);
   assert.equal((await get('/api/topics/unknown')).status, 404);
   const proposalCard = await get('/embed/v1?proposal=demo-housing');
   assert.equal(proposalCard.status, 200);

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-108",
+  "sourceRevision": "3705786d91c8b5ea9772cf75992afb408b2d1183c788cfd3362df820944bdd72",
+  "layout": "systems",
+  "motif": "democracy",
+  "focusDimension": "Environment",
+  "accent": "#9eb8fc",
+  "curation": "seeded-from-catalog"
+}
