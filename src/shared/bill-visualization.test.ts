@@ -6,8 +6,8 @@ const bills = billCollection.bills;
 
 describe('Human Flourishing visualization data', () => {
   test('derives categories and tags from the catalog without invented impacts', () => {
-    expect(bills).toHaveLength(100);
-    expect(billCollection.categories).toHaveLength(10);
+    expect(bills).toHaveLength(110);
+    expect(billCollection.categories).toHaveLength(11);
     expect(billCollection.categories.every(category => bills.filter(bill => bill.category === category).length === 10)).toBe(true);
     const dimensions = flourishingDimensions(bills);
     expect(dimensions).toContain('Relationships');
@@ -21,7 +21,7 @@ describe('Human Flourishing visualization data', () => {
     expect(matches).toHaveLength(10);
     expect(matches.every(bill => billDimensions(bill).includes('Relationships'))).toBe(true);
     expect(billsForFocus(bills, { dimension: 'No such tag' })).toHaveLength(0);
-    expect(billsForFocus(bills, null)).toHaveLength(100);
+    expect(billsForFocus(bills, null)).toHaveLength(110);
   });
 
   test('co-occurrences count shared tags only, not effects or correlations', () => {
