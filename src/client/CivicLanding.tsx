@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import './civic-landing.css';
+import { CivicVisualStories } from './CivicVisualStories';
 
 const CATEGORY_LABELS: Record<string, string> = {
   'Economic security and freedom from desperation': 'Economic freedom',
@@ -49,6 +50,7 @@ export default function CivicLanding() {
       <div className="csh-container csh-nav-inner">
         <a className="csh-brand" href="/" aria-label="Civic Synthesis homepage"><span className="csh-brand-icon" aria-hidden="true">✳</span><span>civic synthesis<span className="csh-brand-dot">.</span></span></a>
         <nav className="csh-links" aria-label="Homepage navigation">
+          <a href="#visual-stories">Visual stories</a>
           <a href="/votes">Explore {ideaCount} Bills</a>
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>
@@ -78,11 +80,6 @@ export default function CivicLanding() {
           </div>
         </div>
       </section>
-      <div className="csh-tape"><div className="csh-container" aria-label="Three civic design ideas">
-        <div><strong>40d</strong><span>historical Georgia–Maine letter + reply (1799)</span></div>
-        <div><strong>&lt;1s</strong><span>illustrative Georgia–Shenzhen network round trip today</span></div>
-        <div><strong>100%</strong><span>voluntary consensus: an aspiration, not an achieved result</span></div>
-      </div></div>
       <section className="csh-section csh-imagine" id="vision" aria-labelledby="csh-vision-title">
         <div className="csh-container">
           <p className="csh-section-kicker">01 / THREE IDEAS FOR A FASTER, WISER DEMOCRACY</p>
@@ -119,6 +116,7 @@ export default function CivicLanding() {
           <div className="csh-idea-banner"><div><strong>Speed up learning. Keep democracy accountable.</strong><p>People need time to understand, disagree, and change their minds. Expert review, publication checks, rights, and legal processes remain essential.</p></div><a href="/proposals/new">Propose an improvement ↗</a></div>
         </div>
       </section>
+      <CivicVisualStories />
       <section className="csh-section" id="how">
         <div className="csh-container">
           <p className="csh-section-kicker">02 / HOW WE BUILD TOGETHER</p>
