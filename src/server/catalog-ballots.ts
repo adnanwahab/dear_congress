@@ -4,7 +4,7 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { billCollection, type CatalogBill } from "../shared/bill-catalog";
-import { editorialGate, type EditorialReview } from "../shared/bill-editorial";
+import type { EditorialReview } from "../shared/bill-editorial";
 
 export class CatalogBallotError extends Error {
   constructor(readonly status: number, readonly code: string) { super(code); }
@@ -48,8 +48,8 @@ function object(value: unknown): Record<string, unknown> {
 }
 /**
  * Pilot uses a single-writer durable SQLite store. The production review source
- * must supply a genuinely reviewed record; the default reads the existing
- * fail-closed JSON ledger. Never interpret a browser preference as an approval.
+ * must supply authenticated database readiness; the default denies publication.
+ * Never interpret a browser preference as an approval.
  */
 export class CatalogBallotStore {
   readonly db: Database;
@@ -61,7 +61,7 @@ export class CatalogBallotStore {
       throw new Error("Catalog ballots require a stable 32+ character cookie secret");
     this.secret = options.secret;
     this.now = options.now ?? Date.now;
-    this.reviews = options.reviews ?? (bill => editorialGate(bill));
+    this.reviews = options.reviews ?? (() => ({ reviewReady: false }));
     mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec([
@@ -251,12 +251,18 @@ export class CatalogBallotStore {
     if (!gate.reviewReady || !gate.review || gate.review.revision !== bill.revision || gate.review.jurisdiction !== bill.jurisdiction)
       throw new CatalogBallotError(409, "human_review_incomplete");
     const now = this.now(), openedAt = date(body.opensAt), closesAt = date(body.closesAt);
-    if (openedAt < now - MINUTE || openedAt > now + 180 * DAY || closesAt <= Math.max(openedAt, now) || closesAt > openedAt + 180 * DAY)
-      throw new CatalogBallotError(400, "invalid_ballot_window");
     const reviewSnapshot = JSON.stringify(gate.review), publicationId = randomUUID();
     return this.atomic(() => {
-      if (this.db.query("SELECT id FROM catalog_publications WHERE bill_id=? AND revision=?").get(id, bill.revision))
-        throw new CatalogBallotError(409, "revision_already_published");
+      const existing = this.db.query("SELECT * FROM catalog_publications WHERE bill_id=? AND revision=?").get(id, bill.revision) as PublicationRow | null;
+      if (existing) {
+        if (existing.publisher !== publisher || existing.opened_at !== openedAt || existing.closes_at !== closesAt ||
+          existing.review_snapshot !== reviewSnapshot || !this.eligible(bill, existing))
+          throw new CatalogBallotError(409, "revision_already_published");
+        return { publicationId: existing.id, billId: id, revision: existing.revision, publisher,
+          publishedAt: new Date(existing.published_at).toISOString(), opensAt: new Date(openedAt).toISOString(), closesAt: new Date(closesAt).toISOString() };
+      }
+      if (openedAt < now - MINUTE || openedAt > now + 180 * DAY || closesAt <= Math.max(openedAt, now) || closesAt > openedAt + 180 * DAY)
+        throw new CatalogBallotError(400, "invalid_ballot_window");
       const former = this.latest(id);
       if (former?.state === "open") {
         this.db.query("UPDATE catalog_publications SET state='closed' WHERE id=?").run(former.id);
