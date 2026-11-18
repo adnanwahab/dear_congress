@@ -22,7 +22,7 @@ export interface PolicyPreview {
   id: string;
   payload: PolicyImpactPayload;
   createdAt: string;
-  status: 'queued' | 'running' | 'completed' | 'unavailable' | 'unsupported';
+  status: 'queued' | 'running' | 'partial' | 'completed' | 'failed' | 'unavailable' | 'unsupported';
   attempts: number;
   remoteId?: string;
   url?: string;

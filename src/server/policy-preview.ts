@@ -107,7 +107,7 @@ export async function submitPreview(preview: PolicyPreview, config: HblConfig, f
     const origin = hblOrigin(config);
     for (let n = 0; n < 3; n++) {
       attempts++;
-      const retry = preview.remoteId && preview.status === 'unavailable';
+      const retry = preview.remoteId && ['unavailable','failed'].includes(preview.status);
       const path = preview.remoteId ? `/api/policy-previews/${encodeURIComponent(preview.remoteId)}${retry ? '/retry' : ''}` : '/api/policy-previews';
       let response: Response;
       try { response = await fetcher(origin + path, { method: preview.remoteId && !retry ? 'GET' : 'POST', redirect: 'error', signal: AbortSignal.timeout(8000),
@@ -122,6 +122,8 @@ export async function submitPreview(preview: PolicyPreview, config: HblConfig, f
       if (text.includes(config.token)) throw new Error('Unsafe metadata');
       const data = JSON.parse(text);
       const status = data.job?.status;
+      if (preview.remoteMetadata?.modelVersion && typeof data.modelVersion === 'string' && data.modelVersion !== preview.remoteMetadata.modelVersion) throw new Error('Model version changed');
+      if (data.input !== undefined && canonical(data.input) !== canonical(preview.payload)) throw new Error('Frozen inputs changed');
       if (typeof data.id !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(data.id) || (preview.remoteId && data.id !== preview.remoteId)) throw new Error('Invalid preview');
       const url = new URL(data.url);
       if (url.origin !== origin || url.pathname !== '/world/impact' || url.searchParams.get('preview') !== data.id || url.username || url.password || url.hash || [...url.searchParams.keys()].some(k => k !== 'preview')) throw new Error('Invalid canonical URL');
@@ -142,7 +144,7 @@ export async function submitPreview(preview: PolicyPreview, config: HblConfig, f
         } catch { /* Viewer remains usable when the optional recorded result sample is too large. */ }
       }
       const remoteMetadata = { ...preview.remoteMetadata, ...(typeof data.modelVersion === 'string' ? {modelVersion:data.modelVersion} : {}), ...(typeof data.mappingVersion === 'string' ? {mappingVersion:data.mappingVersion} : {}), ...(Array.isArray(data.parameterDiff) ? {parameterDiff:data.parameterDiff} : {}), job:data.job };
-      return { results, remoteMetadata, remoteId: data.id, url: url.href, status: ['failed', 'partial', 'unavailable'].includes(status) ? 'unavailable' : status,
+      return { results, remoteMetadata, remoteId: data.id, url: url.href, status,
         attempts: preview.attempts + attempts, updatedAt: new Date().toISOString(), message: ['failed', 'partial', 'unavailable'].includes(status) ? 'Simulator reports incomplete or unavailable results. Open HBL for retained results and retry details.' : undefined };
     }
   } catch { /* Never return remote error bodies, credentials or invented outcomes. */ }
