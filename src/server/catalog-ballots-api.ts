@@ -30,6 +30,14 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
       return aggregates;
     }),
     ballot: (req: Request, id: string) => response(() => store.status(id, viewer(req))),
+    draftFeedback: (req: Request, id: string) => response(() => store.draftStatus(id, viewer(req))),
+    saveDraftFeedback: (req: Request, id: string) => response(async () => {
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
+      const voter = viewer(req);
+      if (!voter) throw new CatalogBallotError(401, "browser_identity_required");
+      return store.saveDraftChoice(id, await boundedJson(req, 4096), voter);
+    }),
     vote: (req: Request, id: string) => response(async () => {
       if (req.headers.get("origin") !== config.expectedOrigin(req))
         throw new CatalogBallotError(403, "same_origin_required");
