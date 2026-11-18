@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-105",
+  "sourceRevision": "57fb62c5124d6922172d6aef36c6533f0cda101f7c4c380db8bec1dd74238311",
+  "layout": "systems",
+  "motif": "democracy",
+  "focusDimension": "Health",
+  "accent": "#9eb8fc",
+  "curation": "seeded-from-catalog"
+}

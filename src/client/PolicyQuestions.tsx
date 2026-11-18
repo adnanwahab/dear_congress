@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CatalogBill } from '../shared/bill-catalog';
+import { billCollection, type CatalogBill } from '../shared/bill-catalog';
 
 const branches = [
   { id: 'who', question: 'Who could this affect?', field: 'proposedChange', next: ['cost', 'implementation'] },
@@ -41,8 +41,8 @@ export function PolicyQuestions({ bill }: { bill: CatalogBill | null }) {
       {branch && <>
         <p><strong>Hypothetical · unreviewed catalog text</strong></p>
         <p>{branch.id === 'cost' ? 'Fiscal estimate unknown until assessed. The catalog supplies proposed success metrics, not a budget or a finding of cost effectiveness.' : branch.id === 'legal' ? 'Legal basis has not been assessed. The proposed jurisdiction below is an editorial suggestion, not verified statutory authority.' : branch.id === 'implementation' ? 'Implementation has not been assessed. The catalog suggests a jurisdiction; responsible agencies, timing and delivery arrangements require review.' : branch.id === 'risk' ? 'These are proposed safeguards, not evidence that risks have been resolved.' : 'The proposed change describes intended scope; eligibility and actual effects have not been independently assessed.'}</p>
-        <a className="workflow-source-status" href={`#catalog-${branch.field}`}>Source: {bill.id} · eudaimonia-100 v1 · underlying {branch.field} text</a>
-        <p>Evidence freshness: not checked. Catalog dated 2026-11-13; no verified current evidence is registered. Revision: {bill.revision}</p>
+        <a className="workflow-source-status" href={`#catalog-${branch.field}`}>Source: {bill.id} · {billCollection.metadata.collection_id} v{billCollection.metadata.version} · underlying {branch.field} text</a>
+        <p>Evidence freshness: not checked. Catalog dated {billCollection.metadata.date}; no verified current evidence is registered. Revision: {bill.revision}</p>
         <details><summary>View underlying catalog text</summary><p>{bill[branch.field]}</p></details>
         <p>Where next?</p><div className="bill-chips">{branch.next.map(id => <button key={id} onClick={() => choose(id)}>{branches.find(b => b.id === id)!.question}</button>)}</div>
       </>}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-106",
+  "sourceRevision": "390c9278cbaad4d5c9bab2ee298615bf7bd633ba6a8e47df60c6e0d00f89f46c",
+  "layout": "systems",
+  "motif": "democracy",
+  "focusDimension": "Education",
+  "accent": "#9eb8fc",
+  "curation": "seeded-from-catalog"
+}

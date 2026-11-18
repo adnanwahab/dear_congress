@@ -12,8 +12,8 @@ type Focus = { dimension: string; category?: string } | null;
 const fullCatalog = billCollection.bills;
 const categories = billCollection.categories;
 const dimensions = flourishingDimensions(fullCatalog);
-const categoryNames = ['Security', 'Housing', 'Health', 'Learning', 'Work', 'Belonging', 'Justice', 'Democracy', 'Technology', 'Nature'];
-const categoryColors = ['#9de8b3', '#ffce87', '#ec98ae', '#b9a2fc', '#80bedf', '#ffb987', '#f29fcd', '#88d8d2', '#a7eaff', '#afd482'];
+const categoryNames = ['Security', 'Housing', 'Health', 'Learning', 'Work', 'Belonging', 'Justice', 'Democracy', 'Technology', 'Nature', 'Global'];
+const categoryColors = ['#9de8b3', '#ffce87', '#ec98ae', '#b9a2fc', '#80bedf', '#ffb987', '#f29fcd', '#88d8d2', '#a7eaff', '#afd482', '#9eb8fc'];
 const dimensionNames: Record<string, string> = {
   'Economic security': 'Security', Agency: 'Agency', Health: 'Health', Time: 'Time',
   Justice: 'Justice', Environment: 'Nature', Relationships: 'Connection', Education: 'Learning',
@@ -27,8 +27,8 @@ function position(bill: CatalogBill) {
   const angle = -Math.PI / 2 + (slot / 10) * Math.PI * 2;
   const radius = slot % 2 ? 74 : 66;
   return {
-    x: 104 + (category % 5) * 196 + Math.cos(angle) * radius,
-    y: 178 + Math.floor(category / 5) * 286 + Math.sin(angle) * radius,
+    x: 84 + (category % 6) * 166 + Math.cos(angle) * (radius - 17),
+    y: 170 + Math.floor(category / 6) * 287 + Math.sin(angle) * (radius - 17),
   };
 }
 function dimensionPosition(index: number) {
@@ -71,7 +71,7 @@ export function BillVisualizations({ bills = fullCatalog }: { bills?: readonly C
     <div className="bill-viz__intro">
       <div>
         <p className="bill-viz__eyebrow">THE HUMAN FLOURISHING ATLAS · CATALOG VIEW</p>
-        <h2 id="bill-viz-title">100 ideas. A connected picture.</h2>
+        <h2 id="bill-viz-title">{fullCatalog.length} ideas. A connected picture.</h2>
         <p>Explore what the proposals aim to change and the measures they suggest tracking.</p>
       </div>
       <div className="bill-viz__stats" aria-label="Catalog totals">
@@ -103,12 +103,12 @@ export function BillVisualizations({ bills = fullCatalog }: { bills?: readonly C
       <div className="bill-viz__main">
         {view === 'constellation' && <>
           <div className="bill-viz__graphic">
-            <svg viewBox="0 0 1000 616" role="group" aria-label="Ten clusters of draft bills. Select a point to inspect its proposal.">
+            <svg viewBox="0 0 1000 616" role="group" aria-label="Eleven clusters of draft bills. Select a point to inspect its proposal.">
               {categories.map((category, i) => {
-                const centerX = 104 + (i % 5) * 196;
-                const centerY = 178 + Math.floor(i / 5) * 286;
+                const centerX = 84 + (i % 6) * 166;
+                const centerY = 170 + Math.floor(i / 6) * 287;
                 return <g key={category}>
-                  <circle cx={centerX} cy={centerY} r="85" fill={categoryColors[i]} fillOpacity=".055"
+                  <circle cx={centerX} cy={centerY} r="72" fill={categoryColors[i]} fillOpacity=".055"
                     stroke={categoryColors[i]} strokeOpacity=".23" strokeWidth="1.5" strokeDasharray="3 8" />
                   <text x={centerX} y={centerY} textAnchor="middle" className="bill-viz__cluster-name">{categoryNames[i]}</text>
                   <text x={centerX} y={centerY + 20} textAnchor="middle" className="bill-viz__cluster-count">
@@ -204,7 +204,7 @@ export function BillVisualizations({ bills = fullCatalog }: { bills?: readonly C
               </tr>)}</tbody>
             </table>
           </div>
-          <p className="bill-viz__note">A bill can carry multiple flourishing tags, so columns do not sum to 100. Values are classifications, not forecasts, funding or public support.</p>
+          <p className="bill-viz__note">A bill can carry multiple flourishing tags, so columns do not sum to {fullCatalog.length}. Values are classifications, not forecasts, funding or public support.</p>
         </>}
 
         <div className="bill-viz__matches">

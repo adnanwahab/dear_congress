@@ -1,7 +1,7 @@
 {
   "schema": "civic-synthesis/bill-visualization/v1",
   "billId": "HFL-038",
-  "sourceRevision": "caf28031b4f1fe15ff11bbacd22deac816f9d4b591138fb334a2148d44ed8175",
+  "sourceRevision": "e2f95729de73963babcc8b8106a89c4655b7c2031c2dd44830bf2ebbb84770eb",
   "layout": "timeline",
   "motif": "learning",
   "focusDimension": "Education",

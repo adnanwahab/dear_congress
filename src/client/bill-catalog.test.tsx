@@ -12,6 +12,8 @@ test('search covers every catalog field and combines category with all terms', (
   expect(searchBills('repeat attendance', '')[0]?.id).toBe('HFL-051');
   expect(searchBills('hfl-051', billCollection.categories[0]!)).toHaveLength(0);
   expect(searchBills('no-such-draft', '')).toHaveLength(0);
+  expect(searchBills('hfl-110', '')[0]?.title).toBe('Peaceful Conflict Prevention and Displacement Protection Act');
+  expect(searchBills('paper-backed', '')[0]?.id).toBe('HFL-071');
 });
 test('supplemental Markdown is structural text and escapes hostile content', () => {
   const html = renderToStaticMarkup(<LegislativeMarkdown source={'# Title\n\n## Funding\n\n- First\n- Second\n\n<script>alert(1)</script>\n\n[click](javascript:alert(1))'} />);
@@ -29,7 +31,7 @@ test('all detail routes resolve with correct source metadata, unknown IDs remain
     expect(await response.text()).toContain(bill.id);
     expect(sitemap([])).toContain(`/bills/${bill.id}`);
   }
-  expect(renderPage('', '/bills/HFL-101', []).status).toBe(404);
+  expect(renderPage('', '/bills/HFL-111', []).status).toBe(404);
 });
 test('catalog UI controls, restored URL and expanded detail are isolated from APIs', async () => {
   const child = Bun.spawn([process.execPath, 'scripts/verify-bill-catalog-ui.tsx'], { stdout: 'pipe', stderr: 'pipe' });

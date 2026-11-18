@@ -3,9 +3,9 @@ import { billCollection } from './bill-catalog';
 import { editorialGate, type EditorialReview } from './bill-editorial';
 import ledger from '../../content/bill-collections/eudaimonia-100-reviews.json';
 
-test('all 100 concepts have current, explicitly unassigned blocked review records', () => {
-  expect(ledger).toHaveLength(100);
-  expect(new Set(ledger.map(row => row.id)).size).toBe(100);
+test('all 110 concepts have current, explicitly unassigned blocked review records', () => {
+  expect(ledger).toHaveLength(110);
+  expect(new Set(ledger.map(row => row.id)).size).toBe(110);
   for (const bill of billCollection.bills) {
     const gate = editorialGate(bill);
     expect(gate.review?.revision).toBe(bill.revision);
@@ -13,6 +13,7 @@ test('all 100 concepts have current, explicitly unassigned blocked review record
     expect(gate.review?.author).toBeNull();
     expect(gate.review?.editor).toBeNull();
     expect(gate.reviewReady).toBe(false);
+    expect(gate.review?.publication.status).toBe('blocked');
     expect(gate.advisoryPublicationAllowed).toBe(false);
   }
 });

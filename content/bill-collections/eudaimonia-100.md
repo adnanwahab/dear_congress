@@ -1,9 +1,9 @@
 ---
 schema: civic-synthesis-bill-collection/v1
 collection_id: eudaimonia-100
-collection_title: 100 Bills for Human Flourishing
-version: 1
-date: 2026-11-13
+collection_title: 110 Bills for Human Flourishing
+version: 2
+date: 2026-11-18
 language: en-US
 source_type: editorial_policy_concepts
 record_type: draft_proposals_not_enacted_law
@@ -13,9 +13,9 @@ costs: unestimated
 impact_evidence: requires_independent_review
 ---
 
-# 100 Bills for Human Flourishing
+# 110 Bills for Human Flourishing
 
-A catalog of **100 original policy concepts**, organized around *eudaimonia*: health, security, agency, meaningful work, learning, social connection, justice, and the natural world.
+A catalog of **110 editorial policy concepts**, organized around *eudaimonia*: health, security, agency, meaningful work, learning, social connection, justice, and the natural world.
 
 > **Important:** These are discussion drafts—not introduced congressional legislation, enacted laws, election measures, costed forecasts, or official government endorsements. Jurisdiction is the suggested primary level of government and needs legal review. Every impact claim, cost, and constitutional issue must be assessed before legislative publication. An advisory vote is not a verified election.
 
@@ -220,10 +220,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-021: Affordable Essential Healthcare Act
 
 * **Jurisdiction:** federal
-* **Problem:** People delay necessary care because of coverage gaps and cost.
-* **Proposed change:** Offer affordable access to essential preventive, primary, and catastrophic care through coverage reforms.
-* **Trade-offs and safeguards:** Compare financing pathways, provider capacity, and fiscal sustainability.
-* **Success metrics:** Care delayed due to cost; preventable hospitalizations.
+* **Problem:** Essential care can be unaffordable or unavailable even when a person has nominal coverage.
+* **Proposed change:** Define an essential-care package that includes evidence-based prevention, primary care, urgent care and protection from catastrophic costs; publicly compare sustainable financing options, provider capacity and enforceable patient remedies before enactment.
+* **Trade-offs and safeguards:** Publish independent cost and capacity estimates, protect patient choice and clinical judgment, guarantee accessible appeals, and phase implementation against measured workforce capacity.
+* **Success metrics:** Care delayed for cost reasons; access and wait times; household medical spending; appeal resolution; fiscal and workforce sustainability.
 * **Flourishing dimensions:** Health; Economic security
 
 ### HFL-022: Primary Care Everywhere Act
@@ -372,13 +372,13 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 * **Success metrics:** Counselor caseloads; wait times for student support.
 * **Flourishing dimensions:** Health; Education
 
-### HFL-038: Critical Thinking and Civic Virtue Act
+### HFL-038: Civic Reasoning and Media Literacy Act
 
 * **Jurisdiction:** state
-* **Problem:** Students need skills for reasoning and constructive disagreement.
-* **Proposed change:** Teach practical logic, media literacy, civil dialogue, empathy, and constitutional reasoning.
-* **Trade-offs and safeguards:** Keep curricula transparent and nonpartisan; protect freedom of conscience.
-* **Success metrics:** Critical-thinking assessments; civic literacy; student feedback.
+* **Problem:** People need practical tools to evaluate claims, reason across differences and participate without ideological pressure.
+* **Proposed change:** Teach age-appropriate logic, source evaluation, statistical reasoning, media literacy, civil dialogue and constitutional reasoning through publicly reviewed curricula.
+* **Trade-offs and safeguards:** Protect viewpoint diversity, academic freedom, freedom of conscience and parental transparency; prohibit compelled ideological assent and ensure independent curriculum review.
+* **Success metrics:** Media-literacy and civic-reasoning assessments; viewpoint-neutrality complaints; student and educator feedback.
 * **Flourishing dimensions:** Education; Justice; Agency
 
 ### HFL-039: Earn While You Learn Act
@@ -476,10 +476,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-049: Four-Day Workweek Experiment Act
 
 * **Jurisdiction:** federal
-* **Problem:** Time pressure can undermine health and relationships.
-* **Proposed change:** Fund opt-in shorter-workweek trials with independent measurement of output, staffing, and well-being.
-* **Trade-offs and safeguards:** Do not infer one work pattern suits every sector or shift worker.
-* **Success metrics:** Productivity per hour; employee well-being; service quality.
+* **Problem:** The effects of shorter working weeks differ across industries, service obligations and worker schedules.
+* **Proposed change:** Fund opt-in, sector-specific shorter-workweek trials that compare multiple scheduling models against credible baselines, including staffing, productivity, worker well-being and service quality.
+* **Trade-offs and safeguards:** Require informed worker participation, preserve pay and benefit transparency, protect shift and hourly workers, and publish independent results without assuming universal applicability.
+* **Success metrics:** Output and service quality; hours and staffing coverage; worker well-being; retention; effects on hourly earnings.
 * **Flourishing dimensions:** Time; Health; Relationships
 
 ### HFL-050: Right to Disconnect Act
@@ -680,10 +680,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-071: Secure and Convenient Voting Act
 
 * **Jurisdiction:** federal
-* **Problem:** Some eligible voters face avoidable participation barriers while election security requires public confidence.
-* **Proposed change:** Expand accessible voting options and require verifiable paper-backed audits and transparent security standards.
-* **Trade-offs and safeguards:** Respect state administration and protect eligibility, privacy, and accessibility.
-* **Success metrics:** Eligible voter participation; audit completion; access barriers.
+* **Problem:** Voters face unequal access and coercion risks, while public trust requires independently verifiable elections.
+* **Proposed change:** Expand accessible voting methods, including reliable non-digital options, and require auditable paper-backed records, independent risk-limiting audits and transparent election-security standards.
+* **Trade-offs and safeguards:** Protect ballot secrecy, eligibility, freedom from coercion, disability access and independent election administration; do not treat an unaudited internet vote as a public election.
+* **Success metrics:** Verified participation and access barriers; audit completion and discrepancy resolution; coercion reports; accessibility performance.
 * **Flourishing dimensions:** Justice; Agency
 
 ### HFL-072: Citizen Legislative Agenda Act
@@ -716,10 +716,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-075: Every Bill in Plain English Act
 
 * **Jurisdiction:** federal
-* **Problem:** Long legal documents are difficult for ordinary people to evaluate.
-* **Proposed change:** Publish accessible summaries of major bills, including costs, effects, and uncertainty, alongside full text.
-* **Trade-offs and safeguards:** Prevent misleading summaries and preserve access to authoritative legal language.
-* **Success metrics:** Summary availability; comprehension testing; correction rate.
+* **Problem:** People cannot reliably compare legislation when summaries omit costs, opposing reasoning or the history of changes.
+* **Proposed change:** Publish accessible multilingual plain-language summaries alongside authoritative full legal text, reviewed fiscal notes, competing analyses, source citations and an immutable public amendment history.
+* **Trade-offs and safeguards:** Keep translations and summaries clearly subordinate to authoritative legal text; publish corrections, uncertainty and viewpoint-diverse reviews without suppressing legitimate dissent.
+* **Success metrics:** Summary and translation coverage; comprehension testing; amendment traceability; correction turnaround; public access.
 * **Flourishing dimensions:** Agency; Education
 
 ### HFL-076: National Flourishing Budget Act
@@ -808,10 +808,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-085: Children's Digital Safety by Design Act
 
 * **Jurisdiction:** federal
-* **Problem:** Online services can expose children to privacy and safety risks.
-* **Proposed change:** Require age-appropriate privacy and safety defaults, independently audited for high-risk services.
-* **Trade-offs and safeguards:** Preserve minors' privacy and rights to information; avoid blanket surveillance.
-* **Success metrics:** Youth privacy incidents; safety-control effectiveness.
+* **Problem:** Children can face online harms, while poorly designed safeguards can undermine privacy, access and lawful expression.
+* **Proposed change:** Require proportionate age-appropriate safety and privacy defaults for higher-risk digital services, with independently evaluated protections that do not presume blanket identity verification.
+* **Trade-offs and safeguards:** Avoid invasive identity collection, generalized surveillance and broad restrictions on lawful expression; preserve access to information, parental choice where appropriate, appeals and independent audits.
+* **Success metrics:** Verified safety incidents; privacy and identity-collection complaints; false restrictions; accessibility; audit findings.
 * **Flourishing dimensions:** Health; Justice
 
 ### HFL-086: Affordable Broadband Access Act
@@ -853,10 +853,10 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 ### HFL-090: Public Futures Simulation Act
 
 * **Jurisdiction:** federal
-* **Problem:** Policy debates often hide assumptions about long-term effects.
-* **Proposed change:** Publish transparent scenario models for major proposals when feasible, with uncertainty and reproducible assumptions.
-* **Trade-offs and safeguards:** Do not treat modeled outcomes as predictions or allow opaque scoring to decide policy.
-* **Success metrics:** Models reproducible; assumptions disclosed; post-policy validation.
+* **Problem:** Policy debates often obscure competing futures, uncertain assumptions and reasons models may fail.
+* **Proposed change:** For major proposals when feasible, publish multiple contrasting scenarios with open assumptions, reproducible models, independent validation, uncertainty ranges and later comparisons against observed outcomes.
+* **Trade-offs and safeguards:** Disclose model limitations, distributional effects, input provenance and conflicts of interest; never present simulations as certainties or substitute automated scores for democratic judgment.
+* **Success metrics:** Reproducibility and independent replication; documented uncertainty; scenario diversity; post-implementation prediction error.
 * **Flourishing dimensions:** Agency; Education; Environment
 
 ## Nature, safety, and future generations
@@ -950,6 +950,98 @@ A catalog of **100 original policy concepts**, organized around *eudaimonia*: he
 * **Trade-offs and safeguards:** Avoid speculative precision and protect democratic decision-making authority.
 * **Success metrics:** Long-term assessments published; assumptions and revisions tracked.
 * **Flourishing dimensions:** Environment; Justice; Agency
+
+## Global cooperation and future institutions
+
+### HFL-101: Global Water and Sanitation Compact
+
+* **Jurisdiction:** international
+* **Problem:** Many communities lack reliable safe drinking water, sanitation and hygiene infrastructure.
+* **Proposed change:** Propose a voluntary multilateral financing and standards compact supporting locally governed safe water, sanitation, maintenance and independent service monitoring.
+* **Trade-offs and safeguards:** Respect local stewardship, affordability, ecological limits and community consent; publish financing obligations and accessible grievance mechanisms.
+* **Success metrics:** Households with safely managed water and sanitation; service reliability; water quality; access gaps.
+* **Flourishing dimensions:** Health; Environment; Justice
+
+### HFL-102: Democratic Rights and Due Process Charter
+
+* **Jurisdiction:** international
+* **Problem:** Majority decisions can overlook fundamental liberties, minorities and people without effective legal remedies.
+* **Proposed change:** Develop a model charter for voluntary national adoption protecting equal dignity, expression, conscience, privacy, association, independent courts and fair due process.
+* **Trade-offs and safeguards:** No global government or binding charter is presumed; preserve local democratic authority, minority rights and judicial independence, with enforceable local remedies.
+* **Success metrics:** Independent rights assessments; access to remedies; fair-trial indicators; reported rights violations.
+* **Flourishing dimensions:** Justice; Agency
+
+### HFL-103: Global Civic Deliberation Protocol
+
+* **Jurisdiction:** international
+* **Problem:** Cross-border civic discussion lacks interoperable, accessible and accountable methods for reviewing proposals.
+* **Proposed change:** Develop a federated multilingual public standard for transparent proposals, evidence, objections, version histories and deliberation without imposing a single worldwide electorate.
+* **Trade-offs and safeguards:** Protect dissent, anonymity where appropriate, minority participation, accessibility and data minimization; define governing authority for each decision before any vote.
+* **Success metrics:** Accessibility coverage; participation diversity; objections resolved; independent protocol audits.
+* **Flourishing dimensions:** Agency; Justice; Education
+
+### HFL-104: Public Law Version Control Act
+
+* **Jurisdiction:** federal
+* **Problem:** Legislative edits can be difficult for residents and reviewers to trace across drafts and amendments.
+* **Proposed change:** Require authenticated, tamper-evident public text versions, human-readable diffs, source-linked amendments and review receipts for covered legislative proposals.
+* **Trade-offs and safeguards:** Protect deliberative privilege and legitimate confidential material; do not treat an online revision or a rollback as enacted law without the required legislative process.
+* **Success metrics:** Amendments traceable to authors and versions; version integrity checks; correction and access times.
+* **Flourishing dimensions:** Agency; Justice; Education
+
+### HFL-105: Pandemic Early-Warning Commons
+
+* **Jurisdiction:** international
+* **Problem:** Infectious threats can spread across borders before accurate warnings and coordinated responses reach affected communities.
+* **Proposed change:** Negotiate voluntary rapid data-sharing, laboratory support, independent scientific analysis and equitable response coordination with clear public alert thresholds.
+* **Trade-offs and safeguards:** Apply privacy-preserving reporting, scientific scrutiny, proportionality, public accountability and safeguards against misuse or inequitable access.
+* **Success metrics:** Outbreak detection delays; reporting quality; equitable response access; independent after-action findings.
+* **Flourishing dimensions:** Health; Justice; Education
+
+### HFL-106: Open Science and Public Discovery Act
+
+* **Jurisdiction:** federal
+* **Problem:** Research advances can be slowed by inaccessible results, weak replication incentives and fragmented scientific infrastructure.
+* **Proposed change:** Fund open research tools, reproducible public-interest science, independent replication and ambitious investigator-led discovery through transparent competitive programs.
+* **Trade-offs and safeguards:** Protect research ethics, sensitive data, academic freedom, legitimate security needs and fair intellectual-property arrangements.
+* **Success metrics:** Open access and reuse; independent replications; research participation; scientific infrastructure availability.
+* **Flourishing dimensions:** Education; Agency; Health
+
+### HFL-107: AI Safety and Human Control Compact
+
+* **Jurisdiction:** international
+* **Problem:** High-impact AI systems can create cross-border risks without consistent evaluation, incident reporting or meaningful human accountability.
+* **Proposed change:** Pursue interoperable voluntary standards for proportionate predeployment risk testing, serious-incident reporting, independent review and human control of high-impact AI.
+* **Trade-offs and safeguards:** Protect civil liberties, open research, due process, security-sensitive information and proportionate burdens; international commitments require national authorization.
+* **Success metrics:** Independent evaluations completed; serious incidents addressed; effective appeals; remedial response time.
+* **Flourishing dimensions:** Agency; Justice; Health
+
+### HFL-108: Climate Adaptation and Clean Energy Accord
+
+* **Jurisdiction:** international
+* **Problem:** Climate hazards and energy transition costs cross borders while local infrastructure and financing needs vary.
+* **Proposed change:** Negotiate measurable cooperation on clean power, resilient grids, disaster adaptation, technology sharing and fairly financed locally chosen implementation plans.
+* **Trade-offs and safeguards:** Require transparent finance, credible environmental reviews, community consultation and noncoercive nationally authorized participation.
+* **Success metrics:** Energy reliability; verified emissions trends; adaptation coverage; disaster losses; equitable funding delivery.
+* **Flourishing dimensions:** Environment; Health; Justice
+
+### HFL-109: Anti-Corruption and Public Asset Traceability Act
+
+* **Jurisdiction:** federal
+* **Problem:** Opaque procurement, conflicts of interest and poorly documented public assets can undermine trust and effective services.
+* **Proposed change:** Publish searchable procurement decisions, beneficial-ownership disclosures where legally authorized, conflicts of interest and independently auditable public-asset ledgers.
+* **Trade-offs and safeguards:** Protect whistleblowers, privacy, due process, legitimate commercial confidentiality and national-security exceptions subject to oversight.
+* **Success metrics:** Competitive procurement share; audit findings resolved; conflicts disclosed; recovered public assets.
+* **Flourishing dimensions:** Justice; Agency; Economic security
+
+### HFL-110: Peaceful Conflict Prevention and Displacement Protection Act
+
+* **Jurisdiction:** international
+* **Problem:** Armed conflict and forced displacement threaten civilian safety, human rights and access to basic needs.
+* **Proposed change:** Develop voluntary cross-border arrangements for preventive mediation, civilian protection, humanitarian access and fair treatment of displaced people under applicable law.
+* **Trade-offs and safeguards:** Preserve humanitarian neutrality, informed consent, non-refoulement where applicable, local representation and independent monitoring; avoid involuntary relocation.
+* **Success metrics:** Civilian protection access; humanitarian delivery; safe dispute resolution; displacement-related rights violations.
+* **Flourishing dimensions:** Justice; Health; Agency
 
 ## Appendix: publishing and evaluation standards
 

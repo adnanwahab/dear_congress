@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-102",
+  "sourceRevision": "0901d619d0ad2090e7229a8c39398a684d585d17d7e22131ed89f28485e7ef31",
+  "layout": "systems",
+  "motif": "democracy",
+  "focusDimension": "Justice",
+  "accent": "#9eb8fc",
+  "curation": "seeded-from-catalog"
+}
