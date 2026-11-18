@@ -7,6 +7,7 @@ import { PolicyPinball } from './PolicyPinball';
 import { GlossaryText } from './CivicGlossary';
 import { GovernancePrism } from './GovernancePrism';
 import { PolicyAtlas } from './PolicyAtlas';
+import { BillVisualizations } from './BillVisualizations';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import { atlasBills } from '../shared/policy-atlas';
@@ -93,6 +94,7 @@ export default function BillCatalog() {
       <p><a href="/bills?exhibit=builder">Build a civic exhibition</a></p>
       <h1>100 Bills for Human Flourishing</h1><p><a href="/topics">Explore civic problem neighborhoods</a> · Separate illustrative needs and policy catalog; no reviewed binding to these draft bills.</p><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
+      <BillVisualizations bills={results} />
       <PolicyAtlas params={params} change={changeAtlas} />
       <label htmlFor="bill-search">Search bills</label>
       <input id="bill-search" type="search" placeholder="Search bills…" value={query} onChange={e => update(e.target.value, category)} />

@@ -1,0 +1,93 @@
+.bill-viz {
+  --viz-panel: #101e2c;
+  --viz-border: #365368;
+  margin: 2.5rem 0;
+  padding: clamp(1rem, 2.8vw, 2rem);
+  border: 1px solid #456579;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 77% -15%, rgba(78,170,203,.18), transparent 52%),
+    radial-gradient(ellipse at 0% 48%, rgba(92,214,166,.09), transparent 50%),
+    #0b1522;
+  color: #ecf6fb;
+  box-shadow: 0 18px 65px rgba(0,0,0,.19);
+}
+.bill-viz h2 { font-size: clamp(1.4rem, 3.2vw, 2.35rem); letter-spacing: -.04em; line-height: 1.16; margin: .1rem 0 .6rem; color: #fff; }
+.bill-viz h3 { font-size: 1.12rem; line-height: 1.32; margin: .35rem 0 .6rem; }
+.bill-viz p { margin: .65rem 0; }
+.bill-viz__intro { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.bill-viz__intro > div:first-child { flex: 1 1 320px; }
+.bill-viz__intro > div:first-child > p:last-child { color: #b8cad6; }
+.bill-viz__eyebrow, .bill-viz__detail-overline { text-transform: uppercase; letter-spacing: .13em; color: #8adfd2; font-weight: 750; font-size: .7rem; }
+.bill-viz__stats { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.bill-viz__stats > div { display: flex; flex-direction: column; align-items: flex-start; padding: .4rem .8rem; border-left: 1px solid #486376; }
+.bill-viz__stats strong { font-size: 1.6rem; font-weight: 800; letter-spacing: -.045em; line-height: 1.1; }
+.bill-viz__stats span { color: #aac1cd; font-size: .75rem; white-space: nowrap; }
+.bill-viz__tabs { margin: 1.5rem 0 .6rem; display: flex; flex-wrap: wrap; gap: .55rem; }
+.bill-catalog .bill-viz__tabs > button { padding: .7rem 1.15rem; font-size: .88rem; min-height: 44px; background: #162637; border: 1px solid #436070; border-radius: 10px; font-weight: 650; }
+.bill-catalog .bill-viz__tabs > button[aria-pressed=true] { background: #a8e9d8; color: #0a252a; border-color: #a8e9d8; }
+.bill-viz__explainer { color: #b2c7d3; font-size: .87rem; max-width: 95ch; }
+.bill-viz__filters { display: flex; flex-wrap: wrap; gap: .42rem; align-items: center; margin: 1.1rem 0; }
+.bill-viz__filters > span { color: #afc7d4; font-size: .75rem; margin-right: .4rem; white-space: nowrap; }
+.bill-catalog .bill-viz__filters > button { padding: .32rem .72rem; min-height: 37px; font-size: .76rem; border-radius: 100px; background: #172a39; border-color: #36576c; display: inline-flex; align-items: center; gap: .38rem; }
+.bill-catalog .bill-viz__filters > button[aria-pressed=true] { background: #b9e8d7; color: #092a24; }
+.bill-viz__dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.bill-catalog .bill-viz__filters > button.bill-viz__clear { color: #ffcaad; border-color: #8e6659; }
+.bill-viz__workspace { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(250px, .8fr); gap: 1rem; align-items: start; }
+.bill-viz__main { min-width: 0; }
+.bill-viz__graphic { border-radius: 16px; background: radial-gradient(ellipse at center, rgba(34,80,100,.16), rgba(10,22,34,.25) 65%); border: 1px solid rgba(117,150,166,.27); overflow: hidden; }
+.bill-viz__graphic svg { display: block; width: 100%; height: auto; }
+.bill-viz__cluster-name { font-size: 14px; fill: #e7f6f8; font-weight: 650; }
+.bill-viz__cluster-count { font-size: 11px; fill: #94b0bf; }
+.bill-viz__point, .bill-viz__network-point { cursor: pointer; }
+.bill-viz__point--dim { cursor: not-allowed; pointer-events: none; }
+.bill-viz__point:focus-visible, .bill-viz__network-point:focus-visible { outline: none; stroke: #fff8b3; stroke-width: 5px; }
+.bill-viz__network-count { font-size: 24px; fill: #fff; font-weight: 800; pointer-events: none; }
+.bill-viz__network-label { font-size: 16px; fill: #e8f4f8; font-weight: 600; pointer-events: none; }
+.bill-viz__network-point:hover circle, .bill-viz__point:hover { filter: brightness(1.35); }
+.bill-viz__legend { display: flex; flex-wrap: wrap; gap: .5rem .9rem; margin: .85rem 0 1.2rem; font-size: .73rem; color: #aebfc9; }
+.bill-viz__legend span { display: inline-flex; align-items: center; gap: .3rem; }
+.bill-viz__legend i, .bill-viz__category-key { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.bill-viz__note { color: #a8bdc8; font-size: .78rem; margin: .8rem 0 1.2rem; line-height: 1.55; }
+.bill-viz__heatmap { overflow-x: auto; border: 1px solid #38586b; border-radius: 12px; margin-bottom: .5rem; }
+.bill-viz__heatmap table { width: 100%; min-width: 650px; border-collapse: separate; border-spacing: 3px 5px; padding: .5rem; font-variant-numeric: tabular-nums; font-size: .74rem; }
+.bill-viz__heatmap caption { color: #d2e8f1; text-align: left; font-weight: 700; padding: .6rem .5rem; }
+.bill-viz__heatmap th { padding: .3rem; font-weight: 650; line-height: 1.3; color: #c3d8e4; }
+.bill-viz__heatmap thead th { max-width: 68px; overflow-wrap: anywhere; text-align: center; }
+.bill-viz__heatmap tbody th { text-align: left; white-space: nowrap; }
+.bill-viz__heatmap td { padding: 0; text-align: center; }
+.bill-catalog .bill-viz__heatmap td button { display: block; margin: 0; min-height: 35px; width: 100%; padding: .25rem; border: 1px solid transparent; border-radius: 5px; text-align: center; color: #fff; font-size: .83rem; font-weight: 760; }
+.bill-catalog .bill-viz__heatmap td button[aria-pressed=true] { color: #0d2a24; border-color: #f8e6a4; outline: 2px solid #f8e6a4; }
+.bill-catalog .bill-viz__heatmap td button:disabled { opacity: .55; }
+.bill-viz__matches { padding-top: .8rem; border-top: 1px solid #2e4b5b; }
+.bill-viz__matches h3 { margin-bottom: .1rem; }
+.bill-viz__matches p { color: #aac1cd; font-size: .81rem; }
+.bill-viz__matches ol { list-style: none; padding: 0; margin: .9rem 0 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .35rem; }
+.bill-viz__matches li { min-width: 0; }
+.bill-catalog .bill-viz__matches li button { background: #152535; border: 1px solid #324f61; padding: .5rem .65rem; min-height: 44px; width: 100%; border-radius: 7px; font-size: .74rem; text-align: left; line-height: 1.4; }
+.bill-catalog .bill-viz__matches li button span { color: #80d6c7; font-weight: 700; white-space: nowrap; }
+.bill-catalog .bill-viz__matches li button[aria-pressed=true] { background: #214a53; color: #fff; border-color: #92dfd0; }
+.bill-viz__detail { padding: 1.1rem; border-radius: 16px; border: 1px solid #456476; background: linear-gradient(160deg,#172e3d,#132431); position: sticky; top: 1rem; }
+.bill-viz__detail-id { font-size: .77rem; color: #8ce2d0; font-weight: 750; }
+.bill-viz__detail h3 { color: #fff; font-size: clamp(1.15rem,2vw,1.45rem); line-height: 1.2; letter-spacing: -.02em; margin: .3rem 0 .8rem; }
+.bill-viz__detail-lead { font-size: .88rem; line-height: 1.55; color: #e6f3f4; }
+.bill-viz__detail dl { margin: 1.3rem 0; display: grid; gap: .6rem; }
+.bill-viz__detail dt { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: #84dcd0; }
+.bill-viz__detail dd { font-size: .81rem; color: #c1d2dd; margin: .2rem 0 .45rem; line-height: 1.55; }
+.bill-catalog .bill-viz__detail a.bill-viz__open { display: inline-flex; border-radius: 9px; background: #b8e7d7; color: #102927; font-weight: 750; text-decoration: none; padding: .65rem .9rem; font-size: .82rem; min-height: 44px; box-sizing: border-box; align-items: center; }
+.bill-viz__disclosure { border-top: 1px solid #456476; padding-top: 1rem; margin-top: 1.2rem!important; font-size: .69rem; color: #a9bcc7; line-height: 1.55; }
+@media (max-width: 800px) {
+  .bill-viz__workspace { grid-template-columns: 1fr; }
+  .bill-viz__detail { position: static; }
+}
+@media (max-width: 520px) {
+  .bill-viz { border-radius: 16px; }
+  .bill-viz__stats { width: 100%; justify-content: space-between; }
+  .bill-viz__stats > div { padding: .3rem .45rem; }
+  .bill-viz__matches ol { grid-template-columns: 1fr; }
+  .bill-viz__tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .bill-catalog .bill-viz__tabs > button { font-size: .72rem; padding: .55rem .5rem; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bill-viz *, .bill-viz *::before, .bill-viz *::after { animation: none!important; transition: none!important; }
+}
