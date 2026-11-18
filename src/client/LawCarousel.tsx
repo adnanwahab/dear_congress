@@ -51,7 +51,7 @@ export function LawCarousel({ bills }: { bills: readonly CatalogBill[] }) {
     }
     rail.addEventListener('wheel', handleWheel, { passive: false });
     return () => rail.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [billIds]);
 
   useEffect(() => () => window.clearTimeout(scrollTimerRef.current), []);
 
@@ -60,8 +60,15 @@ export function LawCarousel({ bills }: { bills: readonly CatalogBill[] }) {
     const thumbnail = rail?.querySelector<HTMLElement>(`[data-law-id="${id}"]`);
     if (!rail || !thumbnail) return;
     const target = thumbnail.offsetLeft + thumbnail.offsetWidth / 2 - rail.clientWidth / 2;
-    rail.scrollTo({ left: target, behavior: 'auto' });
+    if (typeof rail.scrollTo === 'function') rail.scrollTo({ left: target, behavior: 'auto' });
+    else rail.scrollLeft = target;
   }
+
+  useEffect(() => {
+    if (!active) return;
+    const frame = window.requestAnimationFrame(() => centerThumbnail(active.id));
+    return () => window.cancelAnimationFrame(frame);
+  }, [billIds]);
 
   function choose(id: string, center = true) {
     if (!bills.some(bill => bill.id === id)) return;
