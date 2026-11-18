@@ -217,3 +217,24 @@ Other application pages:
 - Experiments: [Civic House](/?house=1), [Civic Adventure](/?quest=1), and [Sample proposal presenter](/feed?presenter=1).
 
 These links describe routes available in the application; availability of data and actions varies by page. Advisory participation is not an official vote, and catalog drafts remain subject to their displayed editorial review gates.
+
+## Editing and reviewing the 100-bill catalog
+
+The intended workflow is to let people propose revisions to any of the 100
+discussion drafts without changing the original catalog entry. Each amendment
+must remain linked to its exact parent revision. A private draft should be
+owner-bound; submitting it for public review requires explicit consent and
+moderation. Expert reviewers then assess legal authority, evidence, fiscal
+impact, and editorial/publication readiness for that exact revision. Only an
+authorized human publication action should open a separate advisory ballot.
+Substantive changes create a new revision and require a fresh vote.
+
+The expert-review center is available at [Review](/review). It stores public
+suggestions and verified reviewer decisions in a separate SQLite database,
+bound to each bill's exact revision. Reviewer access is configured server-side;
+without configured credentials, review decisions fail closed. The publication
+endpoint can record that a revision is review-ready but does not open a ballot.
+Amendment persistence and catalog ballots remain unimplemented; bill-detail
+choices and amendment previews are local demonstrations, and no catalog bill is
+currently eligible for advisory voting. See [review setup and backup guidance](docs/catalog-review-center.md)
+and [catalog workflow and safeguards](docs/bill-catalog.md).
