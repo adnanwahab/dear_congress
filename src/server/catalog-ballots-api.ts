@@ -7,6 +7,8 @@ import { CatalogBallotError, type CatalogBallotStore } from "./catalog-ballots";
 export function catalogBallotHandlers(store: CatalogBallotStore, config: {
   adminToken: string;
   publisherId: string;
+  /** Optional catalog reviewer role: permits the human publisher to use one credential for both stages. */
+  publisherRole?: (req: Request) => string | null;
   expectedOrigin: (req: Request) => string;
 }) {
   const json = (value: unknown, status = 200) => Response.json(value, {
@@ -38,15 +40,16 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
       return store.cast(id, await boundedJson(req, 4096), voter);
     }),
     publish: (req: Request, id: string) => response(async () => {
-      if (!config.adminToken || !moderationAuthorized(req, config.adminToken))
-        throw new CatalogBallotError(401, "publisher_auth_required");
       if (req.headers.get("origin") !== config.expectedOrigin(req))
         throw new CatalogBallotError(403, "same_origin_required");
-      // This is an operator-configured identity, never an untrusted request field.
-      // A future review center should replace this with a verified role session.
-      if (!config.publisherId || config.publisherId.length > 120)
-        throw new CatalogBallotError(503, "publisher_identity_not_configured");
-      return store.publish(id, await boundedJson(req, 4096), config.publisherId);
+      const rolePublisher = config.publisherRole?.(req) ?? null;
+      const adminPublisher = config.adminToken && moderationAuthorized(req, config.adminToken)
+        ? config.publisherId : null;
+      // Both paths get their identity from server-side credentials, never request JSON.
+      const publisher = rolePublisher || adminPublisher;
+      if (!publisher || publisher.length > 120)
+        throw new CatalogBallotError(401, "publisher_auth_required");
+      return store.publish(id, await boundedJson(req, 4096), publisher);
     }),
   };
 }
