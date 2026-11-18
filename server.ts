@@ -923,7 +923,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       GET: req => {
         const reviewer = catalogReviews.reviewer(req);
         return reviewer
-          ? Response.json({ bills: catalogReviews.queue(), reviewer: {
+          ? Response.json({ bills: catalogReviews.queue().map(bill => ({
+              ...bill, amendments: catalogBallots.pendingAmendmentsForReviewer(bill.id),
+            })), reviewer: {
               id: reviewer.id, name: reviewer.name, roles: reviewer.roles,
             } }, { headers: { "cache-control": "no-store" } })
           : Response.json({ error: "Authorized reviewer required" }, {
@@ -1046,6 +1048,13 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/catalog-bills/:id/draft-feedback": {
       GET: (req) => catalogHandlers.draftFeedback(req, req.params.id!),
       PUT: (req) => catalogHandlers.saveDraftFeedback(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/amendments": {
+      GET: (req) => catalogHandlers.amendments(req, req.params.id!),
+      POST: (req) => catalogHandlers.submitAmendment(req, req.params.id!),
+    },
+    "/api/catalog-bills/:id/amendments/:amendmentId/withdraw": {
+      POST: (req) => catalogHandlers.withdrawAmendment(req, req.params.id!, req.params.amendmentId!),
     },
 
     "/api/citizen-proposals": {
