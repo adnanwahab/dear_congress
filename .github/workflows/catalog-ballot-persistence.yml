@@ -12,7 +12,9 @@ permissions:
 jobs:
   acceptance:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Run44402464746 measured 9m40s fetching 32.1MB of Ubuntu browser packages
+    # before tests. Match existing browser CI budget; test/request deadlines stay.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
