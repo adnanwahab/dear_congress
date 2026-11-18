@@ -20,7 +20,7 @@ const reviews: ReviewLookup = b => editorialGate(b, [activeReview(b)]);
 const start = Date.parse("2026-11-18T12:00:00Z");
 const window = () => ({
   revision: bill.revision,
-  opensAt: new Date(start).toISOString(),
+  opensAt: new Date(start + 119_000).toISOString(),
   closesAt: new Date(start + 60 * 60_000).toISOString(),
 });
 function tempDb(run: (path: string) => void) {
@@ -98,7 +98,7 @@ test("published ballot is closed immediately if the review record is revoked, an
 test("window, snapshot and identity checks fail closed", () => tempDb(path => {
   const early = make(path, { reviews, now: () => start - 30_000 });
   const pub = early.publish(bill.id, window(), "Human publisher");
-  const cast = (requestId: string, choice: unknown, user=browser1) =>
+  const cast = (requestId: string, choice: unknown, user: string = browser1) =>
     early.cast(bill.id, { revision: bill.revision, publicationId: pub.publicationId, requestId, choice }, user);
   expect(early.status(bill.id).state).toBe("scheduled");
   errorCode(() => cast(randomUUID(), "support"), "voting_window_closed");
@@ -116,5 +116,16 @@ test("an unreviewed separate legislative supplement cannot be published as revie
   const store = make(path, { reviews });
   const supplement = billCollection.bills.find(b => b.id === "HFL-051")!;
   errorCode(() => store.publish(supplement.id, { ...window(), revision: supplement.revision }, "Human publisher"), "separate_supplement_review_required");
+  store.close();
+}));
+
+test("unknown bills and mismatched publication references cannot create ballot rows", () => tempDb(path => {
+  const store = make(path, { reviews });
+  const publication = store.publish(bill.id, window(), "Human publisher");
+  const wrong = { revision: bill.revision, publicationId: randomUUID(), requestId: randomUUID(), choice: "support" };
+  errorCode(() => store.cast(bill.id, wrong, browser1), "publication_revision_mismatch");
+  errorCode(() => store.status("HFL-999"), "catalog_bill_not_found");
+  expect((store.db.query("SELECT count(*) n FROM catalog_current_ballots").get() as { n: number }).n).toBe(0);
+  expect(store.status(bill.id).publication?.id).toBe(publication.publicationId);
   store.close();
 }));

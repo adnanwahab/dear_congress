@@ -159,7 +159,8 @@ export class CatalogBallotStore {
     const choice = body.choice;
     if (choice !== null && choice !== "support" && choice !== "oppose" && choice !== "unsure")
       throw new CatalogBallotError(400, "invalid_advisory_choice");
-    if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+    const requestId = body.requestId;
+    if (typeof requestId !== "string" || !uuid.test(requestId))
       throw new CatalogBallotError(400, "uuid_request_id_required");
     const voter = this.voterHash(browserId);
     const publicationId = body.publicationId;
@@ -169,7 +170,7 @@ export class CatalogBallotStore {
     return this.atomic(() => {
       const pub = this.db.query("SELECT * FROM catalog_publications WHERE id=? AND bill_id=? AND revision=?").get(publicationId, id, bill.revision) as PublicationRow | null;
       if (!pub) throw new CatalogBallotError(409, "publication_revision_mismatch");
-      const old = this.db.query("SELECT id,payload_hash,choice,created_at FROM catalog_ballot_events WHERE publication_id=? AND voter_hash=? AND request_id=?").get(publicationId, voter, body.requestId) as EventRow | null;
+      const old = this.db.query("SELECT id,payload_hash,choice,created_at FROM catalog_ballot_events WHERE publication_id=? AND voter_hash=? AND request_id=?").get(publicationId, voter, requestId) as EventRow | null;
       if (old) {
         if (old.payload_hash !== digest) throw new CatalogBallotError(409, "idempotency_key_reused");
         return { saved: true, replayed: true, receipt: { id: old.id, publicationId, revision: pub.revision, choice: old.choice, recordedAt: new Date(old.created_at).toISOString() }, ownChoice: this.choice(pub.id, voter) };
@@ -184,7 +185,7 @@ export class CatalogBallotStore {
       else
         this.db.query("INSERT INTO catalog_current_ballots VALUES(?,?,?,?) ON CONFLICT(publication_id,voter_hash) DO UPDATE SET choice=excluded.choice,changed_at=excluded.changed_at").run(pub.id, voter, choice, now);
       const receiptId = randomUUID();
-      this.db.query("INSERT INTO catalog_ballot_events VALUES(?,?,?,?,?,?,?)").run(receiptId, pub.id, voter, choice, body.requestId, digest, now);
+      this.db.query("INSERT INTO catalog_ballot_events VALUES(?,?,?,?,?,?,?)").run(receiptId, pub.id, voter, choice, requestId, digest, now);
       return { saved: true, replayed: false, receipt: { id: receiptId, publicationId, revision: pub.revision, choice, recordedAt: new Date(now).toISOString() }, ownChoice: choice };
     });
   }
