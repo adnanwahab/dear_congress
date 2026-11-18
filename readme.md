@@ -238,3 +238,8 @@ fictional sample's text, background references and illustrative outcome graph
 visible together. Drag or keyboard-resize dividers; choose Single column for a
 stacked layout. Only layout preferences are stored locally; see
 [SHE-751 verification and fallback](docs/reviews/SHE-751.md).
+
+
+### Review and voting workflow (integration branch)
+
+At `/review`, public submissions save to the SQLite review database as **pending suggestions**, not expert approvals. Four configured human review roles can record revision-specific decisions, and a publisher then attests review readiness before separately opening an advisory ballot. At `/votes?bill=HFL-001`, Yes/No/Unsure responses before publication save as **unpublished draft feedback** with a server receipt. Those responses are distinct from recorded votes on an authorized, immutable, published ballot and are never carried into it. This branch requires tests, human reviewers, and operator deployment before production use. See `docs/catalog-review-center.md` and `docs/catalog-publication-ballots.md`.
