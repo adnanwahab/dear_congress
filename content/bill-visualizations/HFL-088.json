@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-088",
+  "sourceRevision": "a0392b7887a8d716cefd2dde59ea29a6a337fc3ebe3845ae2142dadf140d7074",
+  "layout": "systems",
+  "motif": "technology",
+  "focusDimension": "Time",
+  "accent": "#acd5ff",
+  "curation": "seeded-from-catalog"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-086",
+  "sourceRevision": "c87c65b9ceed2586313867a51c556a803ad56b1673786f07233b6949ad3b92a7",
+  "layout": "systems",
+  "motif": "technology",
+  "focusDimension": "Education",
+  "accent": "#acd5ff",
+  "curation": "seeded-from-catalog"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-032",
+  "sourceRevision": "9c1c09c3c29be11477d789e23b99e0bb68049e85a3e2b8183328275ec3b15378",
+  "layout": "timeline",
+  "motif": "learning",
+  "focusDimension": "Relationships",
+  "accent": "#b8b2ff",
+  "curation": "seeded-from-catalog"
+}

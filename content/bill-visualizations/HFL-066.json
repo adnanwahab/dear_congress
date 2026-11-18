@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-066",
+  "sourceRevision": "856dbf094bdecdbe7e821ecf4802b867a86becd404114fda8ad9450363df3141",
+  "layout": "journey",
+  "motif": "justice",
+  "focusDimension": "Health",
+  "accent": "#efa9d9",
+  "curation": "seeded-from-catalog"
+}

@@ -8,6 +8,7 @@ import { GlossaryText } from './CivicGlossary';
 import { GovernancePrism } from './GovernancePrism';
 import { PolicyAtlas } from './PolicyAtlas';
 import { BillVisualizations } from './BillVisualizations';
+import { LawCarousel } from './LawCarousel';
 import { useEffect, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import { atlasBills } from '../shared/policy-atlas';
@@ -44,14 +45,14 @@ export default function BillCatalog() {
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   function update(q: string, c: string) {
-    const next = new URLSearchParams(params);
+    const next = new URLSearchParams(window.location.search);
     if (q) next.set('q', q); else next.delete('q');
     if (c) next.set('category', c); else next.delete('category');
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
     setParams(next);
   }
   function changeAtlas(key: string, value: string) {
-    const next = new URLSearchParams(params);
+    const next = new URLSearchParams(window.location.search);
     if (value) next.set(key, value); else next.delete(key);
     window.history.pushState(null, '', `${window.location.pathname}${next.size ? '?' + next : ''}`);
     setParams(next);
@@ -94,6 +95,7 @@ export default function BillCatalog() {
       <p><a href="/bills?exhibit=builder">Build a civic exhibition</a></p>
       <h1>100 Bills for Human Flourishing</h1><p><a href="/topics">Explore civic problem neighborhoods</a> · Separate illustrative needs and policy catalog; no reviewed binding to these draft bills.</p><p className="bill-lead">Searchable draft legislation catalog</p><p>100 proposals · 10 categories</p>
       <p className="bill-notice">Discussion drafts requiring legal, fiscal and evidence review. These are not introduced bills, enacted laws, official endorsements or public ballots.</p>
+      <LawCarousel bills={results} />
       <BillVisualizations bills={results} />
       <PolicyAtlas params={params} change={changeAtlas} />
       <label htmlFor="bill-search">Search bills</label>

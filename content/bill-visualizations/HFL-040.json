@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-040",
+  "sourceRevision": "56dd66f48590d79e4c1488c1498df0cbeabbb8660a303d8012d397f2bbb5ad6b",
+  "layout": "timeline",
+  "motif": "learning",
+  "focusDimension": "Education",
+  "accent": "#b8b2ff",
+  "curation": "seeded-from-catalog"
+}

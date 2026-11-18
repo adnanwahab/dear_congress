@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-043",
+  "sourceRevision": "38f88f515d5e615963d4558a661e9b8e6a285b7d81ab5d7bf73a240214ea848a",
+  "layout": "comparison",
+  "motif": "work",
+  "focusDimension": "Relationships",
+  "accent": "#8bd4f6",
+  "curation": "seeded-from-catalog"
+}

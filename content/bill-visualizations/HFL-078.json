@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-078",
+  "sourceRevision": "e1b4deb53eaf156b3e2f384696ef1046ffebf000577ad9f3f9be2751d2b40d05",
+  "layout": "timeline",
+  "motif": "democracy",
+  "focusDimension": "Time",
+  "accent": "#85e3d7",
+  "curation": "seeded-from-catalog"
+}
