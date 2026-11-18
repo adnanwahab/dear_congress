@@ -33,8 +33,18 @@ test('pinned HBL housing fixture matches published canonical SHA256; exact text 
   expect(() => validatePolicyPreview(f)).toThrow();
 });
 
-test('transport caps initial rollout at ten pairs while the pinned schema accepts 100', async () => {
-  expect((await createPolicyPreview(fixture(), options())).status).toBe('invalid');
+test('transport preserves legitimate 100-pair requests and rejects mismatched remote totals', async () => {
+  const input = fixture();
+  const config = options(reply(100));
+  let sent: unknown;
+  config.fetch = (async (_url, init) => {
+    sent = JSON.parse(init!.body as string);
+    return Response.json(reply(100), {status:202});
+  }) as typeof fetch;
+  expect(await createPolicyPreview(input, config)).toEqual({status:'accepted',preview:reply(100)});
+  expect(sent).toEqual(input);
+  expect(input.simulation.runs).toBe(100);
+  expect((await createPolicyPreview(input, options(reply(10)))).status).toBe('invalid');
 });
 
 test('POST sends exact ten-pair payload server-to-server, accepts queued and idempotent responses', async () => {

@@ -68,8 +68,7 @@ function submission(v: unknown, origin: string, runs: number): PolicyPreviewSubm
 export async function createPolicyPreview(input: PolicyPreviewRequest, options: PreviewClientOptions): Promise<PreviewCreateResult> {
   let body: string, origin: URL, runs: number;
   try {
-    // Local rollout cap; provider schema supports 100, pending measured integration performance.
-    validatePolicyPreview(input); check(input.simulation.runs <= 10); body = JSON.stringify(input); runs = input.simulation.runs;
+    validatePolicyPreview(input); body = JSON.stringify(input); runs = input.simulation.runs;
     if (!options.origin || !options.token) return { status: 'disconnected' };
     origin = httpUrl(options.origin); check(origin.pathname === '/' && !origin.search && !origin.hash);
     check(!/[\r\n]/.test(options.token));

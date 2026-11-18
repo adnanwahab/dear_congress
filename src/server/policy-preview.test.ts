@@ -13,7 +13,33 @@ function revision(p: CitizenProposalRecord, extra = {}) {
 }
 function preview() { const p=proposal(); p.provenance='synthetic';saveVersion(p,owner,revision(p,{clauses:[{clauseId:'section-0',text:HOUSING_DEMO_TEXT[0]},{clauseId:'section-1',text:HOUSING_DEMO_TEXT[1]}]}));return {p, result:createPreview(p,owner,2,{baseVersion:1,confirmedPublicTransfer:true},'https://civic.example')}; }
 describe('versioned policy previews',()=>{
+  test('remote lifecycle states remain distinct and failed jobs retry the frozen identity',async()=>{
+    const {result}=preview();
+    for(const status of ['queued','running','partial','failed','unavailable'] as const) {
+      const patch=await submitPreview(result,{url:'https://happybearlandia.fly.dev',token:'SECRET'},(async()=>Response.json({id:'job',url:'https://happybearlandia.fly.dev/world/impact?preview=job',job:{status}})) as unknown as typeof fetch);
+      expect(patch.status).toBe(status);
+      expect(patch.url).toBe('https://happybearlandia.fly.dev/world/impact?preview=job');
+      expect((patch.remoteMetadata?.job as {status:string}).status).toBe(status);
+    }
+    const failed={...result,status:'failed' as const,remoteId:'job'};
+    const patch=await submitPreview(failed,{url:'https://happybearlandia.fly.dev',token:'SECRET'},(async(url,init)=>{
+      expect(String(url)).toBe('https://happybearlandia.fly.dev/api/policy-previews/job/retry');
+      expect(init?.method).toBe('POST');expect(init?.body).toBe('{}');
+      return Response.json({id:'job',url:'https://happybearlandia.fly.dev/world/impact?preview=job',job:{status:'running'}});
+    }) as typeof fetch);
+    expect(patch.status).toBe('running');
+    expect(failed.payload).toEqual(result.payload);
+  });
   test('canonical handoff hash matches the companion executable validator golden',()=>{expect(policyPreviewFixture().previews[0]!.payload.source.contentHash).toBe('65c7ae6ce5facb992265593464b790aae5a484b68a9f2ef6e8911abb5261a9fd');});
+  test('refresh rejects model or frozen input mismatch without reinterpreting the saved preview',async()=>{
+    const {result}=preview();
+    const saved={...result,remoteId:'job',remoteMetadata:{modelVersion:'pinned-model'},status:'running' as const};
+    for(const change of [{modelVersion:'different-model'},{input:{...result.payload,simulation:{seed:43,runs:100,months:24}}}]) {
+      const patch=await submitPreview(saved,{url:'https://happybearlandia.fly.dev',token:'SECRET'},(async()=>Response.json({id:'job',url:'https://happybearlandia.fly.dev/world/impact?preview=job',job:{status:'running'},...change})) as unknown as typeof fetch);
+      expect(patch.status).toBe('unavailable');expect(patch.remoteMetadata).toBeUndefined();
+      expect(saved.remoteMetadata.modelVersion).toBe('pinned-model');expect(saved.payload.simulation.seed).toBe(42);
+    }
+  });
   test('owner, consent, stale revisions, immutable snapshots, retry keys and original ballots',()=>{
     const p=proposal(); p.votesByVoterHash.original='support'; const input=revision(p);
     expect(()=>saveVersion(p,'another-browser',input)).toThrow('publishing browser');
