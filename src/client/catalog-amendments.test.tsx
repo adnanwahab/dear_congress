@@ -56,7 +56,7 @@ test("proposal editor saves to the API, restores after remount and withdraws wit
   const host = win.document.createElement("div");
   win.document.body.append(host);
   let root = createRoot(host as unknown as HTMLElement);
-  const q = () => within(host);
+  const q = () => within(host as unknown as HTMLElement);
   try {
     await act(async () => root.render(<Harness />));
     expect(host.textContent).toContain("no saved amendments");
