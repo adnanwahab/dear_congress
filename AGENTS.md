@@ -19,6 +19,13 @@ merging a review document does not establish implementation or acceptance. If
 Linear closes all linked issues on merge, the integration must be configured by
 its administrator before analysis PRs are merged.
 
+## Mini Symphony parallel-PR hygiene
+
+- `mini/*` and `symphony/*` feature workers must not edit shared `readme.md` or `src/client/public-guide.ts`. Put proposed copy/integration changes and actual acceptance in `docs/reviews/<ISSUE-ID>.md` for the integration coordinator.
+- Reserve exact files and shared source interfaces before dispatch. When another active PR owns the same interface, park the ticket rather than producing duplicate conflicting changes.
+- Do not commit generated screenshots, `.mini-symphony-evidence/`, `artifacts/` or `test-results/` output. Use trusted GitHub Actions artifacts tied to the exact tested head SHA, and preserve historical evidence before removing it from tracked branches.
+- Follow [PR hygiene](docs/pr-hygiene.md). Existing approval, branch protection, merge and release policies remain authoritative.
+
 Run bun test, bun run typecheck and bun run test:routes for changed behavior.
 Required main checks are `bun test`, `bun run typecheck`, and `route smoke test`.
 GitHub protection must require at least one human approval; repository files alone

@@ -21,3 +21,8 @@ data/legislation/
 
 # Portable browser accessibility evidence
 artifacts/
+
+# Browser and Mini Symphony evidence must be retained as CI artifacts
+/.mini-symphony-evidence/
+**/test-results/
+**/playwright-report/
