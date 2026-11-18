@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-046",
+  "sourceRevision": "eabf7f4886a4ff610f3fb8821ea0e0858fd7d27271c76f66bf5fd49ce812f70e",
+  "layout": "comparison",
+  "motif": "work",
+  "focusDimension": "Agency",
+  "accent": "#8bd4f6",
+  "curation": "seeded-from-catalog"
+}

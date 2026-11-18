@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-089",
+  "sourceRevision": "cc46bbf95e84ace834f660db3a4a6879c530f480775942fa11bc4a8a19562a6b",
+  "layout": "systems",
+  "motif": "technology",
+  "focusDimension": "Justice",
+  "accent": "#acd5ff",
+  "curation": "seeded-from-catalog"
+}

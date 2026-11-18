@@ -1,0 +1,159 @@
+/* One detailed, catalog-backed scene is rendered at a time. Everything else is a tiny text preview. */
+.law-carousel {
+  background: radial-gradient(ellipse at 72% -20%, rgba(102,210,184,.17), transparent 54%), #0d1b28;
+  border: 1px solid #456377;
+  border-radius: 22px;
+  color: #eef9fb;
+  padding: clamp(1rem,2.7vw,2rem);
+  margin: 2.5rem 0;
+  overflow: hidden;
+  position: relative;
+}
+.bill-catalog .law-carousel h2 {
+  font-size: clamp(1.45rem,3.7vw,2.5rem);
+  line-height: 1.12;
+  margin: .2rem 0 .6rem;
+  letter-spacing: -.035em;
+}
+.law-carousel__header { display: flex; justify-content: space-between; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.law-carousel__header > div:first-child { flex: 1 1 290px; }
+.law-carousel__header p { margin: .4rem 0; color: #b9d0d8; font-size: .92rem; }
+.law-carousel__eyebrow { letter-spacing: .17em; font-size: .71rem!important; color: #80dccc!important; font-weight: 700; }
+.law-carousel__progress { display: flex; align-items: baseline; gap: .45rem; }
+.law-carousel__progress strong { font-size: clamp(2rem,4.8vw,3rem); line-height: 1; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.law-carousel__progress span { font-size: .79rem; color: #a2bbc8; font-variant-numeric: tabular-nums; }
+.law-carousel__controls { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: 1.25rem 0 .7rem; }
+.law-carousel__controls p { min-width: 0; margin: 0; flex: 1; color: #a8c9cc; font-size: .77rem; text-align: center; overflow-wrap: anywhere; }
+.bill-catalog .law-carousel__controls button { border-radius: 9px; flex: none; background: #1b3341; border: 1px solid #527282; color: #e1f5f7; padding: .55rem .8rem; min-height: 44px; font-weight: 650; font-size: .82rem; }
+.bill-catalog .law-carousel__controls button:hover { background: #2a4b57; }
+.bill-catalog .law-carousel__controls button:disabled { opacity: .5; cursor: not-allowed; }
+.law-carousel__stage { touch-action: pan-y; }
+.law-scene {
+  --scene-accent: #8be5b7;
+  position: relative;
+  padding: clamp(1.05rem, 2.6vw, 2rem);
+  border-radius: 17px;
+  border: 1px solid #476575;
+  background: radial-gradient(ellipse at 90% 6%, color-mix(in srgb, var(--scene-accent), transparent 82%), transparent 49%),
+    linear-gradient(140deg, #172c39, #101f2c);
+  min-height: 360px;
+  overflow-wrap: anywhere;
+}
+.law-scene::before {
+  position: absolute;
+  top: -90px;
+  right: -70px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid color-mix(in srgb, var(--scene-accent), transparent 65%);
+  border-radius: 100%;
+  box-shadow: 0 0 0 35px color-mix(in srgb,var(--scene-accent), transparent 96%), 0 0 0 90px color-mix(in srgb,var(--scene-accent),transparent 98%);
+  content: '';
+  pointer-events: none;
+}
+.law-scene__heading { display: flex; gap: .85rem; align-items: start; max-width: 780px; position: relative; }
+.law-scene__motif { width: 54px; height: 54px; flex: none; display: grid; place-items: center; border: 1px solid var(--scene-accent); border-radius: 14px; color: var(--scene-accent); font-size: 2rem; font-weight: 500; background: rgba(7,20,30,.5); }
+.law-scene__eyebrow { color: var(--scene-accent); letter-spacing: .13em; text-transform: uppercase; font-size: .65rem; font-weight: 800; margin: .15rem 0 .35rem!important; }
+.law-scene__heading h3 { margin: 0 0 .3rem; color: #fff; font-size: clamp(1.15rem,2.5vw,1.6rem); line-height: 1.2; letter-spacing: -.02em; }
+.law-scene__category { color: #adbdc9; margin: 0!important; font-size: .76rem; }
+.law-scene__flow { display: grid; grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1.25fr) 30px minmax(0, 1fr); gap: .5rem; align-items: center; margin-top: 1.3rem; position: relative; }
+.bill-catalog .law-scene__stage {
+  margin: 0;
+  border: 1px solid #486474;
+  background: rgba(6,20,31,.5);
+  padding: 1rem;
+  border-radius: 13px;
+  min-width: 0;
+  min-height: 165px;
+  align-self: stretch;
+}
+.law-scene__stage--change { border-color: var(--scene-accent)!important; background: color-mix(in srgb, var(--scene-accent), #142c37 91%)!important; }
+.law-scene__stage-head { display: flex; align-items: center; gap: .5rem; color: #a7c8d2; letter-spacing: .09em; font-size: .61rem; line-height: 1.2; }
+.law-scene__stage-head span { color: var(--scene-accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+.law-scene__stage p { font-size: .83rem; line-height: 1.55; margin: .75rem 0 0; color: #e6f2f5; }
+.law-scene__stage ul { font-size: .81rem; line-height: 1.5; padding-left: 1.2rem; margin: .6rem 0 0; }
+.law-scene__stage li { padding: .12rem 0; }
+.law-scene__arrow { text-align: center; color: var(--scene-accent); font-size: 1.7rem; font-weight: 300; }
+.law-scene__footer { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px solid #405a68; padding-top: 1rem; margin-top: 1.2rem; position: relative; }
+.law-scene__safeguard { display: flex; flex: 1 1 260px; align-items: start; gap: .65rem; max-width: 60ch; font-size: .77rem; }
+.law-scene__safeguard > span { color: var(--scene-accent); font-size: 1.3rem; line-height: 1; }
+.law-scene__safeguard strong { color: #d9edf0; }
+.law-scene__safeguard p { margin: .1rem 0 0; color: #adc3ce; line-height: 1.45; }
+.law-scene__dimensions { flex: 0 1 auto; display: flex; flex-wrap: wrap; gap: .35rem; }
+.law-scene__dimensions span { font-size: .69rem; color: #bcd4d9; border: 1px solid #58717b; padding: .27rem .6rem; border-radius: 99px; }
+.law-scene__dimensions .law-scene__dimension--focus { border-color: var(--scene-accent); color: var(--scene-accent); }
+.law-scene__disclaimer { color: #9bb4c2; font-size: .68rem; line-height: 1.45; margin: 1rem 0 0; }
+.law-scene__stale { border: 1px solid #c38a61; color: #ffe5c8; padding: .55rem; font-size: .77rem; }
+/* Each layout changes how readers understand the same source-grounded story. */
+.law-scene--comparison .law-scene__flow { grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr); }
+.law-scene--comparison .law-scene__stage--metrics { grid-column: 1/-1; min-height: auto; }
+.law-scene--comparison .law-scene__stage--metrics ul { display: flex; flex-wrap: wrap; gap: .4rem 1.8rem; }
+.law-scene--comparison .law-scene__arrow--second { display: none; }
+.law-scene--systems .law-scene__flow { grid-template-columns: minmax(0,.85fr) 24px minmax(0,1.4fr) 24px minmax(0,.85fr); }
+.law-scene--systems .law-scene__stage--change { min-height: 200px; box-shadow: 0 0 0 4px color-mix(in srgb,var(--scene-accent),transparent 92%); }
+.law-scene--timeline .law-scene__flow { grid-template-columns: 1fr; gap: .35rem; max-width: 740px; margin-inline: auto; }
+.law-scene--timeline .law-scene__stage { min-height: auto; }
+.law-scene--timeline .law-scene__arrow { transform: rotate(90deg); line-height: .8; }
+.law-carousel__below { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: .9rem 0 .6rem; }
+.law-carousel__below > span { font-size: .68rem; letter-spacing: .13em; font-weight: 750; color: #85e1ca; }
+.law-carousel__below a { font-size: .81rem; font-weight: 700; }
+.law-carousel__rail {
+  position: relative;
+  display: flex;
+  gap: .7rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  padding: .7rem 0 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #5b8f9b transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.bill-catalog .law-carousel__thumb {
+  --scene-accent: #8be5b7;
+  display: flex; flex-direction: column; align-items: flex-start;
+  text-align: left;
+  flex: 0 0 170px;
+  min-width: 0; height: 140px;
+  background: #132835;
+  border: 1px solid #416171;
+  border-top: 3px solid var(--scene-accent);
+  border-radius: 10px;
+  scroll-snap-align: center;
+  padding: .72rem;
+  color: #e0edf0;
+  gap: .4rem;
+}
+.bill-catalog .law-carousel__thumb:hover { background: #1b3c49; }
+.bill-catalog .law-carousel__thumb--active { background: #244953; border-color: #c7f6e9; border-top-color: var(--scene-accent); box-shadow: inset 0 0 0 1px #d6f8ef; }
+.law-carousel__thumb-id { color: var(--scene-accent); letter-spacing: .065em; font-size: .66rem; font-weight: 850; }
+.law-carousel__thumb-mark { display: flex; align-items: center; gap: 4px; height: 10px; }
+.law-carousel__thumb-mark i { display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--scene-accent); opacity: .7; }
+.law-carousel__thumb-mark i:nth-child(2) { width: 18px; height: 3px; border-radius: 99px; }
+.bill-catalog .law-carousel__thumb strong { font-size: .73rem; font-weight: 700; line-height: 1.25; max-height: 2.6em; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.law-carousel__thumb-counter { margin-top: auto; color: #94b1bf; font-size: .64rem; font-variant-numeric: tabular-nums; }
+.law-carousel__help { margin: .7rem 0 0; color: #a2bbc8; font-size: .73rem; line-height: 1.5; }
+.law-carousel__help code { background: #243742; border-radius: 4px; padding: .1rem .3rem; }
+.bill-catalog .law-carousel :is(button,a):focus-visible,
+.law-carousel:focus-visible { outline: 3px solid #ffe39c; outline-offset: 3px; }
+@media(max-width: 900px) {
+  .law-scene__flow, .law-scene--comparison .law-scene__flow, .law-scene--systems .law-scene__flow {
+    display: grid; grid-template-columns: minmax(0,1fr); gap: .45rem;
+  }
+  .law-scene--comparison .law-scene__stage--metrics { grid-column: auto; }
+  .law-scene--comparison .law-scene__arrow--second { display: block; }
+  .law-scene__arrow { transform: rotate(90deg); line-height: .65; }
+  .bill-catalog .law-scene__stage { min-height: 0; }
+}
+@media(max-width: 520px) {
+  .law-carousel { border-radius: 16px; }
+  .law-carousel__controls p { display: none; }
+  .law-scene__heading { align-items: center; }
+  .law-scene__motif { width: 42px; height: 42px; font-size: 1.45rem; }
+  .law-carousel__rail { gap: .52rem; }
+  .bill-catalog .law-carousel__thumb { flex-basis: 150px; height: 130px; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .law-carousel *, .law-carousel *::before, .law-carousel *::after { scroll-behavior: auto!important; animation: none!important; transition: none!important; }
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-009",
+  "sourceRevision": "b7a4297b9ba6cd46d3f58785bc005cf40db43a459946c621224ada2db9ac0d94",
+  "layout": "journey",
+  "motif": "security",
+  "focusDimension": "Agency",
+  "accent": "#8be5b7",
+  "curation": "seeded-from-catalog"
+}

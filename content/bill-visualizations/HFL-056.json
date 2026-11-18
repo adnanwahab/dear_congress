@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-056",
+  "sourceRevision": "27b03744e3b778c3296dee4a29320a5e364da0c35a2853c12ceb69d71814a6f1",
+  "layout": "systems",
+  "motif": "community",
+  "focusDimension": "Relationships",
+  "accent": "#f6be96",
+  "curation": "seeded-from-catalog"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-013",
+  "sourceRevision": "01b7d5b8cae84c8ba1235edada11f14ff96facb3b775d9b9f7cb708d7f5a1c5c",
+  "layout": "comparison",
+  "motif": "home",
+  "focusDimension": "Economic security",
+  "accent": "#ffcf9c",
+  "curation": "seeded-from-catalog"
+}

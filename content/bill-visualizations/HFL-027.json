@@ -1,0 +1,10 @@
+{
+  "schema": "civic-synthesis/bill-visualization/v1",
+  "billId": "HFL-027",
+  "sourceRevision": "5d029c5276256ef66434af3325beee8d92201091b8c81cc3fba6f822dadd3875",
+  "layout": "systems",
+  "motif": "health",
+  "focusDimension": "Health",
+  "accent": "#f8a8b8",
+  "curation": "seeded-from-catalog"
+}
