@@ -1,0 +1,50 @@
+# Catalog publication and advisory ballots — implementation candidate
+
+**Status:** Review branch only. Not merged, deployed, or authorized. All original 100 HFL bills remain blocked until legitimate human reviews are recorded.
+
+## Separation and persistence
+
+The existing Markdown and generated JSON are still the original source of the 100 editorial draft concepts. A **separate SQLite database** holds exact published bill/review snapshots, current browser advisory choices, ballot events and publication audit entries. The default path is DB_PATH + ".catalog.sqlite" (on Fly normally /data/db.json.catalog.sqlite), or the operator may set CATALOG_DB_PATH to a persistent mounted location.
+
+The new tables are catalog_publications, catalog_publication_audit, catalog_current_ballots, and catalog_ballot_events. The backend uses WAL, foreign keys, busy timeout and transactional writes. It does not migrate, reset or overwrite /data/db.json, existing citizen proposal records, or the HBL developer-governance database.
+
+SQLite with one attached Fly volume is an early single-writer pilot, **not** a global-scale distributed ballot system.
+
+## Requirements for publication
+
+Only an authorized human operator with a configured ADMIN_TOKEN can call the publication endpoint. The server also needs CATALOG_PUBLISHER_ID for a trusted configured actor label, not a name supplied in the HTTP request. Publication requires a same-origin request, an immutable current HFL source revision, a specified UTC opening/closing window and all four human review categories approved for that exact text and jurisdiction.
+
+The current reviewer lookup still comes from src/shared/bill-editorial.ts and its source-controlled editorial ledger. **There is no production database-backed review center or independently verified expert-identity system yet**. Do not claim the publisher credential proves legal/fiscal/research qualifications. The next work needs authenticated, assigned reviewers and durable approval receipts wired into this lookup; until then, all 100 real source records fail the human review gate. Do not add fake approvals or set advisoryPublicationAllowed to unconditional true.
+
+HFL-051 is additionally held until its separate legislative supplement receives a revision-specific review binding; the catalog digest alone does not cover that supplement.
+
+## Read-only and ballot endpoints
+
+- GET /api/catalog-bills/:id — current publication status and the browser's own choice, if any
+- GET /api/catalog-bills/:id/results — publication state and aggregate counts without any individual choice
+- GET /api/catalog-bills/:id/ballot — publication state and the current browser's own advisory choice
+- PUT /api/catalog-bills/:id/ballot — current choice upsert or withdrawal for an open, reviewed, exact publication
+- POST /api/catalog-bills/:id/publications — protected human-publisher publication of an approved revision
+
+Publication POST payload: revision, opensAt and closesAt (UTC timestamps). Ballot PUT payload: revision, publicationId, choice and requestId. Choices are support, oppose, unsure, or null for withdrawal; requestId is a stable UUID used for idempotent retries. Status responses are non-cacheable.
+
+Shared middleware replaces any untrusted voter header with the signed-cookie browser identity; the ballot store retains a secret-keyed hash rather than that raw identity. Public write rate and origin controls apply. A saved receipt ID only appears after transactional commit.
+
+Changes to an approved bill or a revoked/replaced review make the existing publication non-votable, even though its historical record and choices remain auditable. A new substantive revision requires a new publication and fresh explicit choices; no old votes are transferred. Aggregates represent **unverified browser identifiers**, not validated electorate turnout, representative polling, or legally binding votes. The new catalog tables remain separate from actual citizen proposals, demo residents, legislation metadata, and GitHub developer PR voting.
+
+## Local verification
+
+Use an isolated test directory and stable ANON_COOKIE_SECRET (32+ characters). Run:
+
+    bun test src/server/catalog-ballots.test.ts src/server/catalog-ballots-api.test.ts
+    bun run typecheck
+    bun test
+    bun run test:routes
+
+Test fixtures inject synthetic complete reviews; they **do not** authorize production bills. Also verify an isolated server restart, current-vote restoration, replayed idempotent request receipts, rejection of stale revisions and unauthorized publishers, and protection against cross-origin writes.
+
+Actual deployment/browser acceptance, real reviewer identity verification, public voting windows, reviewer UI, multi-writer behavior, migrations from static catalog to edited versions, and scale testing are separate human-reviewed milestones.
+
+## Safe deployment / rollback
+
+Before any authorized release, back up Fly's persistent volume, including a consistent snapshot of the catalog SQLite database and its WAL/SHM files, and verify restore on an isolated machine. Rolling back code must retain the new database and its history. Never delete existing JSON records, reset public votes, fake source approvals, automatically publish bills, or use this feature to enact legislation.
