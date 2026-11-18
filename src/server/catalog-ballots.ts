@@ -251,14 +251,15 @@ export class CatalogBallotStore {
     const text = body.text.trim();
     if (text.length < 20 || text.length > 4000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text))
       throw new CatalogBallotError(400, "amendment_text_must_be_20_to_4000_characters");
-    if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+    const requestId = body.requestId;
+    if (typeof requestId !== "string" || !uuid.test(requestId))
       throw new CatalogBallotError(400, "uuid_request_id_required");
     const owner = this.voterHash(browserId);
     const payloadHash = createHash("sha256").update(JSON.stringify([bill.id, bill.revision, text])).digest("hex");
     return this.atomic(() => {
       const previous = this.db.query(
         "SELECT * FROM catalog_amendments WHERE bill_id=? AND revision=? AND owner_hash=? AND request_id=?"
-      ).get(bill.id, bill.revision, owner, body.requestId) as AmendmentRow | null;
+      ).get(bill.id, bill.revision, owner, requestId) as AmendmentRow | null;
       if (previous) {
         if (previous.body_hash !== payloadHash)
           throw new CatalogBallotError(409, "idempotency_key_reused");
@@ -277,10 +278,10 @@ export class CatalogBallotStore {
       const id = randomUUID(), eventId = randomUUID(), now = this.now();
       this.db.query(
         "INSERT INTO catalog_amendments (id,bill_id,revision,jurisdiction,owner_hash,body,body_hash,status,request_id,created_at,withdrawn_at) VALUES (?,?,?,?,?,?,?,?,?,?,NULL)"
-      ).run(id, bill.id, bill.revision, bill.jurisdiction, owner, text, payloadHash, "pending_review", body.requestId, now);
+      ).run(id, bill.id, bill.revision, bill.jurisdiction, owner, text, payloadHash, "pending_review", requestId, now);
       this.db.query(
         "INSERT INTO catalog_amendment_events (id,amendment_id,actor_hash,action,request_id,payload_hash,created_at) VALUES (?,?,?,?,?,?,?)"
-      ).run(eventId, id, owner, "submit", body.requestId, payloadHash, now);
+      ).run(eventId, id, owner, "submit", requestId, payloadHash, now);
       const saved = this.db.query("SELECT * FROM catalog_amendments WHERE id=?").get(id) as AmendmentRow;
       return { saved: true, replayed: false,
         amendment: amendmentView(saved),
@@ -295,7 +296,8 @@ export class CatalogBallotStore {
       throw new CatalogBallotError(400, "unsupported_amendment_field");
     if (typeof body.revision !== "string" || !hex.test(body.revision))
       throw new CatalogBallotError(400, "amendment_revision_required");
-    if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+    const requestId = body.requestId;
+    if (typeof requestId !== "string" || !uuid.test(requestId))
       throw new CatalogBallotError(400, "uuid_request_id_required");
     if (!uuid.test(amendmentId))
       throw new CatalogBallotError(404, "amendment_not_found");
@@ -311,7 +313,7 @@ export class CatalogBallotStore {
         throw new CatalogBallotError(409, "stale_amendment_revision");
       const previous = this.db.query(
         "SELECT id,created_at,payload_hash FROM catalog_amendment_events WHERE amendment_id=? AND action='withdraw' AND request_id=?"
-      ).get(amendmentId, body.requestId) as { id: string; created_at: number; payload_hash: string } | null;
+      ).get(amendmentId, requestId) as { id: string; created_at: number; payload_hash: string } | null;
       if (previous) {
         if (previous.payload_hash !== payloadHash) throw new CatalogBallotError(409, "idempotency_key_reused");
         return { saved: true, replayed: true,
@@ -330,7 +332,7 @@ export class CatalogBallotStore {
         .run(now, row.id);
       this.db.query(
         "INSERT INTO catalog_amendment_events (id,amendment_id,actor_hash,action,request_id,payload_hash,created_at) VALUES (?,?,?,?,?,?,?)"
-      ).run(eventId, row.id, owner, "withdraw", body.requestId, payloadHash, now);
+      ).run(eventId, row.id, owner, "withdraw", requestId, payloadHash, now);
       return { saved: true, replayed: false,
         receipt: { id: eventId, recordedAt: new Date(now).toISOString() } };
     });
