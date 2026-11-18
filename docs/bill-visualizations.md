@@ -1,11 +1,11 @@
 # One visualization per draft law
 
-Each of the 100 HFL editorial draft proposals has a **small, independent, versioned scene definition** in `content/bill-visualizations/HFL-NNN.json`. The UI reads a generated JSON manifest (`src/generated/bill-visualizations.json`) and uses the canonical bill catalog for actual policy text. This avoids copying legal claims across 100 scenes or loading 100 renderers at once.
+Each of the 110 HFL editorial draft proposals has a **small, independent, versioned scene definition** in `content/bill-visualizations/HFL-NNN.json`. The UI reads a generated JSON manifest (`src/generated/bill-visualizations.json`) and uses the canonical bill catalog for actual policy text. This avoids copying legal claims across 100 scenes or loading 100 renderers at once.
 
 ## Repository organization
 
 ```
-content/bill-visualizations/HFL-001.json ... HFL-100.json
+content/bill-visualizations/HFL-001.json ... HFL-110.json
 src/generated/bill-visualizations.json    # deterministic manifest; commit this
 src/client/LawVisualization.tsx           # shared renderer: source-grounded steps
 src/client/LawCarousel.tsx                # focusable, scrollable, deep-linked viewer
@@ -42,10 +42,13 @@ To seed **missing only** definitions for newly imported HFL laws, run `bun scrip
 
 ## Browsing
 
+The expanded collection has eleven illustration categories. HFL-101–HFL-110 use seeded, revision-pinned illustrative scenes; no simulated outcomes, evidence scores or public support are implied. The legacy generator path includes `eudaimonia-100` for stable source provenance, but the current collection title and count are 110.
+
+
 Open `/bills?law=HFL-051` to focus a specific law. The gallery respects the main catalog search/category filters and preserves them when navigating. With focus in the gallery, Left/Right and Page Up/Down move by one; Home/End jump to the first/last; arrow navigation wraps. The thumbnail strip supports horizontal scroll, touchpad gestures and mouse wheel scrolling over the strip; touch devices may swipe on the large scene. Buttons and links are semantic and keyboard accessible.
 
-Only **one** full visual is rendered. All 100 previews are lightweight text buttons; no canvas, iframe, third-party media, map tiles or network requests. If richer per-law animations are developed later, lazy-import the active law's renderer and prefetch only its neighbors, storing compressed thumbnails as **build outputs/CI artifacts** instead of committing bulky screenshots or videos.
+Only **one** full visual is rendered. All 110 previews are lightweight text buttons; no canvas, iframe, third-party media, map tiles or network requests. If richer per-law animations are developed later, lazy-import the active law's renderer and prefetch only its neighbors, storing compressed thumbnails as **build outputs/CI artifacts** instead of committing bulky screenshots or videos.
 
 ## Critical editorial distinction
 
-The 100 catalog entries are unreviewed editorial policy concepts, **not** introduced bills, enacted laws, endorsements or public ballots. The visualization uses a proposed-change flow and candidate success metrics; it is not a forecast, simulation validation, funding estimate or evidence of actual public support. This gallery is read-only.
+The 110 catalog entries are unreviewed editorial policy concepts, **not** introduced bills, enacted laws, endorsements or public ballots. The visualization uses a proposed-change flow and candidate success metrics; it is not a forecast, simulation validation, funding estimate or evidence of actual public support. This gallery is read-only.
