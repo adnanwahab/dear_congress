@@ -13,7 +13,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",
   "/journals": "Journal", "/api-docs": "Journal API",
   "/privacy": "Privacy & removal",
-  "/": "Overview", "/journal": "Journal", "/needs": "Shared needs",
+  "/": "Civic Renaissance — 100 Bills for Human Flourishing", "/dashboard": "Original dashboard", "/journal": "Journal", "/needs": "Shared needs",
   "/proposals/new": "Propose a law",
   "/synth": "Explore civic plans", "/embed": "Civic synthesis demo",
   ...Object.fromEntries(CIVIC_STAGES.map(s => [s.route, s.title])),
