@@ -26,7 +26,6 @@ import { MutationError } from './mutation-status';
 import { JurisdictionPicker, useJurisdiction } from './JurisdictionPicker';
 const MapScreen = lazy(() => import("./MapScreen"));
 import { ScoreInspector } from "./ScoreInspector";
-import { BottomNavigation } from "./Navigation";
 import { Dashboard } from "./Dashboard";
 import { pageTitle, SITE_URL } from "../shared/page-metadata";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -47,7 +46,7 @@ const LawBehaviorExplorer = lazy(() => import("./LawBehaviorExplorer").then(m =>
 const CitizenProposalsApp = lazy(() => import("./CitizenProposals").then(m => ({ default: m.CitizenProposalsApp })));
 const isCitizenProposalPath = (pathname: string) => {
   const path = pathname.replace(/\/+$/, "") || "/";
-  return path === "/votes" || path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+$/.test(path);
+  return path === "/feed" || path === "/proposals/new" || /^\/proposals\/[^/]+$/.test(path);
 };
 
 type PublishStage = "journal" | "needs" | "vote" | "synthesize";
@@ -183,6 +182,7 @@ export function App() {
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
+    : path === "/votes" ? <BillCatalog masterDetail />
     : path === "/bills" || path.startsWith("/bills/") ? <BillCatalog />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
@@ -191,7 +191,8 @@ export function App() {
     : stages[path] ? <WorkflowScreen stage={stages[path]!} request={api} />
     : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
     : path === "/" ? <CivicLanding /> : path === "/dashboard" ? <Dashboard request={api} /> : <LegacyApp />;
-  return <JournalLiveProvider><div className="product-shell"><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><BottomNavigation /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
+  const isLanding = path === "/" && new URLSearchParams(window.location.search).get("house") !== "1";
+  return <JournalLiveProvider><div className={`product-shell${isLanding ? " product-shell-landing" : ""}`}><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {

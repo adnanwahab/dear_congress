@@ -49,7 +49,7 @@ export default function CivicLanding() {
       <div className="csh-container csh-nav-inner">
         <a className="csh-brand" href="/" aria-label="Civic Synthesis homepage"><span className="csh-brand-icon" aria-hidden="true">✳</span><span>civic synthesis<span className="csh-brand-dot">.</span></span></a>
         <nav className="csh-links" aria-label="Homepage navigation">
-          <a href="#vision">Our vision</a><a href="#how">How it works</a><a href="#studio">Civic Lab</a><a href="#ideas">100 ideas</a>
+          <a href="/votes">Explore 100 Bills</a>
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
@@ -183,6 +183,6 @@ export default function CivicLanding() {
       </section>
       <section className="csh-end"><div className="csh-container csh-end-inner"><div><p className="csh-section-kicker">05 / WRITE THE NEXT CHAPTER</p><h2>The future isn’t fixed.<br/><em>It’s a conversation.</em></h2><p>What would you change first? Start with the experience you know, propose a concrete idea, or explore how different choices could change everyday life.</p></div><a className="csh-button" href="/proposals/new">Start a proposal ↗</a></div></section>
     </main>
-    <footer className="csh-footer"><div className="csh-container"><div className="csh-footer-top"><a className="csh-brand" href="/"><span className="csh-brand-icon" aria-hidden="true">✳</span>Civic Synthesis</a><nav aria-label="More Civic Synthesis links"><a href="/dashboard">Original dashboard</a><a href="/bills">All 100 bills</a><a href="/votes">Advisory voting</a><a href="https://happybearlandia.fly.dev/world" target="_blank" rel="noopener noreferrer">Simulated futures ↗</a><a href="https://github.com/adnanwahab/dear_congress" target="_blank" rel="noopener noreferrer">Source code ↗</a></nav></div><p className="csh-footnote">The 100 source proposals are unreviewed editorial discussion drafts, not introduced legislation, enacted laws, official endorsements or official votes. Fiscal costs, projected effects, and jurisdictional authority have not been independently verified. Advisory participation is not a government election. New R&amp;D funding concepts shown above are separate ideas to develop.</p><p className="csh-credit">Built for curiosity, evidence, and a more creative civic life. ✳</p></div></footer>
+    <footer className="csh-footer"><div className="csh-container"><p className="csh-credit">Built for curiosity, evidence, and a more creative civic life. ✳</p></div></footer>
   </div>;
 }

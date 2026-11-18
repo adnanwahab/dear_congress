@@ -204,3 +204,16 @@ For project scope and safeguards, see [Data model and proposed API](04_DATA_MODE
 That is what Dear Congress / Civic Synthesis is exploring. **Consensus is earned, legality is respected, and outcomes matter more than a unanimous-looking dashboard.**
 
 hypothesis: if the plan is good enough, hopefully everyone wants to support it. so we can iterate till it gets 100% support and carefully design to save iteration cycles.
+
+## Page directory
+
+Start with [Home](/) to explore the project, then open [Votes and proposals](/votes) to browse the current advisory proposal experience. The [100-bill catalog](/bills) contains unreviewed discussion drafts; individual drafts use `/bills/<bill-id>` (for example [HFL-059](/bills/HFL-059)). Citizen proposals can be [published](/proposals/new), reviewed on the [feed](/feed), and opened at `/proposals/<proposal-id>`.
+
+Other application pages:
+
+- Civic stages: [Published](/published), [Draft](/draft), [Sponsors](/sponsors), [Outcomes](/outcomes), [Needs](/needs), and [Synthesis](/synth).
+- Discovery and participation: [Topics](/topics), [Map](/map), [Journal](/journal), [Account and privacy settings](/account), and [Privacy and removal](/privacy).
+- Project tools: [Dashboard](/dashboard), [Documentation](/documentation), and the [API reference](/journal?tab=api).
+- Experiments: [Civic House](/?house=1), [Civic Adventure](/?quest=1), and [Sample proposal presenter](/feed?presenter=1).
+
+These links describe routes available in the application; availability of data and actions varies by page. Advisory participation is not an official vote, and catalog drafts remain subject to their displayed editorial review gates.

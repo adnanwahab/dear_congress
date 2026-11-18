@@ -77,14 +77,12 @@ function Shell({ children, current }: { children: ReactNode; current: "votes" | 
       <span className="cp-advisory"><span aria-hidden="true">●</span> Advisory · not binding</span>
     </header>
     <nav className="cp-nav" aria-label="Main navigation">
-      <a href="/journal">Journal</a>
-      <a href="/feed" aria-current={current === "feed" ? "page" : undefined}>Feed</a>
-      <a href="/votes" aria-current={current === "votes" || current === "detail" ? "page" : undefined}>Votes</a>
-      <a href="/synth">Synthesis</a>
-      <a className="cp-nav-propose" href="/proposals/new" aria-current={current === "new" ? "page" : undefined}>＋ Propose a law</a>
+      <a href="/" aria-label="Home">Home</a>
+      <a href="/votes" aria-current={current === "votes" || current === "detail" ? "page" : undefined}>Explore proposals</a>
+      <a href="/account">My activity</a>
     </nav>
     <main id="proposal-main" tabIndex={-1}>{children}</main>
-    <footer className="cp-footer"><a href="/privacy">Privacy &amp; removal</a><span>Civic Synthesis</span><p>Anonymous, non-binding advisory participation; one vote per browser ID, not one verified person. Publishing here does not enact a law or send anything to an official.</p></footer>
+    <footer className="cp-footer"><a href="/privacy">Privacy &amp; removal</a><a href="/documentation">Documentation</a><a href="/bills">100-bill catalog</a><a href="/proposals/new">Propose an idea</a><span>Civic Synthesis</span><p>Anonymous, non-binding advisory participation; one vote per browser ID, not one verified person. Publishing here does not enact a law or send anything to an official.</p></footer>
   </div>;
 }
 
