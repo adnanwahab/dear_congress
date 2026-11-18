@@ -189,34 +189,11 @@ These systems must remain separate. See [repository voting](docs/repository-voti
 
 No phase is complete simply because a mockup, generated text, or demonstration exists. Each needs tested behavior and, for public impact claims, real evidence.
 
-## Run locally
+## Usage and participation
 
-Requires [Bun](https://bun.sh/).
+**[Read the practical usage guide](docs/usage.md)** for public participation, interpreting advisory votes and prototype data, policy staff research workflows, local development commands, tests, and contributor guidance.
 
-```bash
-git clone https://github.com/adnanwahab/dear_congress.git
-cd dear_congress
-bun install
-bun dev
-```
-
-Open `http://localhost:3000`. The other repository scripts include:
-
-```bash
-bun test               # tests
-bun run typecheck      # TypeScript checks
-bun run test:routes    # production route smoke tests
-```
-
-Do not use private production journals, authentic ballot data, or official-sounding results as sample fixtures. Demo data must be labeled as demo data.
-
-## Contributing
-
-We need civic designers, community organizers, policy researchers, accessibility specialists, engineers, statisticians, lawyers, and people willing to point out where a proposal could harm them.
-
-Start with a problem and a measurable goal. For policy ideas, include the jurisdiction, existing rule and primary sources, alternatives (including no change), affected people, funding/implementation assumptions, known objections, and possible safety constraints. For code, use a focused PR and follow [AGENTS.md](AGENTS.md). Human review, required checks, and release controls remain in force.
-
-**Useful starting documents:** [Data model and proposed API](04_DATA_MODEL_AND_API.md) · [Privacy and security](05_PRIVACY_SECURITY.md) · [Reform concepts](08_REFORM_CONCEPTS.md) · [Private need-cluster pilot](docs/need-cluster-pilot.md) · [Repository voting](docs/repository-voting.md) · [Launch controls](docs/launch-merge-policy.md).
+For project scope and safeguards, see [Data model and proposed API](04_DATA_MODEL_AND_API.md), [Privacy and security](05_PRIVACY_SECURITY.md), [Reform concepts](08_REFORM_CONCEPTS.md), [Repository voting](docs/repository-voting.md), and [Launch controls](docs/launch-merge-policy.md).
 
 ---
 
