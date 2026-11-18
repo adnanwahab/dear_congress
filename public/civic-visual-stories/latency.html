@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civic Synthesis — From latency to learning</title>
+<style>
+:root { color-scheme:light; }
+* { box-sizing:border-box; }
+html {scroll-behavior:smooth}
+body { margin:0; background:#f8f8f6; font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#141414; }
+button, input {font:inherit}
+button {cursor:pointer}
+.demo { max-width:1150px; margin:0 auto; padding:0 25px 35px; }
+.eyebrow {font-size:11px; font-weight:850; letter-spacing:.16em; text-transform:uppercase}
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:22px 0 15px; border-bottom:1px solid #171717; gap:10px; }
+.brand {display:flex;gap:9px;align-items:center; font-size:11px;font-weight:850;letter-spacing:.1em;}
+.brand-mark {width:16px;height:16px;display:inline-grid;place-items:center;background:#f00093;color:white;font-size:13px;border-radius:2px;}
+.topbar .aside {font-size:11px; color:#707070; text-transform:uppercase; letter-spacing:.08em}
+.hero {padding:63px 0 50px;}
+.hero h1 {font-size:clamp(43px,6.8vw,86px); max-width:950px; line-height:.99; margin:14px 0 24px; letter-spacing:-.075em; font-weight:890;}
+.hero h1 .accent {color:#eb008b;}
+.hero p {max-width:660px;font-size:clamp(15px,1.5vw,18px);line-height:1.6;margin:0;color:#4f4f4f;}
+.hero .topline {display:flex; align-items:center; gap:12px;color:#6b6b6b}
+.hero .topline::before {content:'';width:24px;height:3px;background:#eb008b}
+.chart-card {background:white;border:1px solid #dededb;box-shadow:0 8px 26px #00000005; padding:clamp(20px,3.4vw,42px);}
+.section-heading {display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.section-heading h2 {margin:8px 0 0;font-size:clamp(25px,3vw,36px);letter-spacing:-.055em;line-height:1.08}
+.picker {display:inline-flex;align-items:center;gap:3px;background:#f1f1ef;padding:4px;border:1px solid #e3e3e0;border-radius:5px;}
+.picker button {background:transparent;border:0;color:#555;padding:8px 11px;font-size:12px;font-weight:800;border-radius:3px;}
+.picker button.active {background:#111;color:#fff}
+.bar-row {display:grid;grid-template-columns:206px minmax(0,1fr) 156px;gap:17px;align-items:center;min-height:89px;border-bottom:1px solid #eee;}
+.bar-row:last-child {border-bottom:0}
+.bar-name strong {font-size:15px;display:block;letter-spacing:-.03em}
+.bar-name small {font-size:11px;display:block;margin-top:5px;color:#777;line-height:1.45}
+.bar-track {height:24px; background:repeating-linear-gradient(90deg,#ececea 0px,#ececea 1px,transparent 1px,transparent 20%);position:relative;}
+.bar-track::before {content:'';position:absolute;left:0;top:-4px;bottom:-4px;border-left:1px solid #9a9a97;}
+.bar-fill {height:100%;transform-origin:left center;transform:scaleX(0);background:#bdbdbd;width:var(--bar-width,0%); transition:transform 1.35s cubic-bezier(.22,.83,.19,1), width .65s cubic-bezier(.18,.78,.16,1);position:relative;}
+.bar-row:nth-child(2) .bar-fill {background:#858585}
+.bar-row:nth-child(3) .bar-fill {background:#ed0095;min-width:4px;box-shadow:0 0 0 1px #fff}
+.bars.is-visible .bar-fill {transform:scaleX(1)}
+.bar-value {text-align:right;font-variant-numeric:tabular-nums; white-space:nowrap;}
+.bar-value strong {font-size:20px;letter-spacing:-.06em;}
+.bar-value span {display:block;color:#777;font-size:11px;margin-top:2px}
+.bar-row:last-child .bar-value strong {color:#dd0088}
+.axis {display:flex;justify-content:space-between;margin:14px 155px 0 223px;color:#858585;font-size:10px;font-variant-numeric:tabular-nums;}
+.ratio {margin-top:30px;display:grid;grid-template-columns:minmax(210px,1fr) minmax(250px,2fr);background:#fae6f1;border-left:6px solid #ed0095;align-items:center;gap:28px;padding:26px 27px;}
+.ratio > div strong {display:block;font-weight:900;font-size:clamp(28px,3.4vw,47px);letter-spacing:-.06em;line-height:1;}
+.ratio small {color:#864061;display:block;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.12em;margin-top:6px;}
+.ratio p {line-height:1.5;margin:0;color:#613149;font-size:14px;}
+.note {margin:17px 0 0;font-size:11px;color:#797979;line-height:1.6;}
+.bridge {display:grid;grid-template-columns:130px 1fr;align-items:start;gap:22px;padding:75px 0 65px;border-bottom:1px solid #d4d4d2;}
+.bridge .digit {font-size:92px;font-weight:900;letter-spacing:-.09em;line-height:.9;color:#ed0095;}
+.bridge h2 {font-size:clamp(28px,4.1vw,49px);letter-spacing:-.07em;line-height:1.12;max-width:880px;margin:0 0 20px;}
+.bridge p {font-size:16px;max-width:750px;line-height:1.65;color:#595959;margin:0;}
+.system {padding:55px 0 36px;}
+.system-head {display:flex;align-items:start;justify-content:space-between;gap:24px;margin:0 0 30px;}
+.system-head h2 {font-size:clamp(33px,4.2vw,56px);line-height:1.04;letter-spacing:-.068em;margin:12px 0 14px;}
+.system-head p {max-width:610px;line-height:1.55;color:#626262;margin:0}
+.system-marker {border:1px solid #222;border-radius:99px;padding:8px 13px;font-size:11px;font-weight:800;white-space:nowrap;margin-top:5px}
+.learning-card {background:#191919;color:#fff;padding:clamp(22px,3.4vw,40px);border:1px solid #2b2b2b}
+.learning-card .caps {color:#b0b0b0;font-size:11px;letter-spacing:.14em;font-weight:850;text-transform:uppercase;}
+.process {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;position:relative;margin-top:24px;}
+.process::before {content:'';position:absolute;top:32px;left:0;right:0;height:1px;background:#555;}
+.process-stage {position:relative;min-height:115px;background:#272727;border:1px solid #3b3b3b;padding:17px 13px;transition:border-color .4s,background .4s}
+.process-stage.on {border-color:#ed0095;background:#3b1830;}
+.stage-no {display:block;font-size:11px;color:#999;font-weight:850;letter-spacing:.1em;}
+.process-stage.on .stage-no {color:#ffa5db;}
+.stage-title {font-size:clamp(15px,1.8vw,22px);font-weight:850;margin:12px 0 4px;letter-spacing:-.045em;}
+.stage-desc {font-size:11px;color:#aaa;line-height:1.4;}
+.process-stage.on .stage-desc {color:#f0c5de;}
+.pulse-line {height:3px;background:#444;margin:14px 0 26px;position:relative;overflow:hidden;}
+.pulse-line::after {content:'';position:absolute;left:-15%;top:0;width:17%;height:100%;background:#f00093;animation:flowAcross var(--flow-duration,3.4s) linear infinite;box-shadow:0 0 16px #f00093;}
+@keyframes flowAcross {to {left:110%;}}
+.controls-grid {display:grid;grid-template-columns:1.1fr 1fr;gap:31px;align-items:start;}
+.control-area {border:1px solid #494949;padding:21px 22px;}
+.preset-bar {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 22px;}
+.preset-bar button {border:1px solid #666;color:#ddd;background:transparent;padding:9px 12px;border-radius:3px;font-weight:800;font-size:12px;}
+.preset-bar button.active {background:#ed0095;color:#fff;border-color:#ed0095;}
+.range-row {margin-top:21px;}
+.range-row label {display:flex;justify-content:space-between;gap:15px;align-items:baseline;color:#d9d9d9;font-size:12px;line-height:1.5;}
+.range-row label output {color:#fff;font-weight:850;font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.range-row input {display:block;width:100%;accent-color:#eb008b;margin-top:10px;cursor:pointer;}
+.metrics {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.metric {background:#f3f3f0;color:#101010;min-height:118px;padding:17px;}
+.metric.pink {background:#ed0095;color:#fff;}
+.metric .n {font-size:43px;font-weight:900;letter-spacing:-.07em;line-height:1;display:block;font-variant-numeric:tabular-nums;}
+.metric .m {display:block;font-size:11px;line-height:1.35;margin-top:9px;font-weight:750;}
+.evidence {background:#2c2c2c; border:1px solid #494949; min-height:260px;padding:22px;display:flex;flex-direction:column;gap:10px;}
+.evidence .tag {display:inline-flex;align-self:start;border:1px solid #777;color:#d5d5d5;border-radius:12px;padding:5px 10px;font-size:10px;font-weight:850;letter-spacing:.05em;}
+.evidence h3 {margin:6px 0 2px;letter-spacing:-.035em;font-size:23px;}
+.evidence .evidence-text {font-size:14px;line-height:1.52;color:#ddd;}
+.evidence .response {font-size:13px;line-height:1.55;color:#fac4e1;padding-top:10px;border-top:1px solid #505050;}
+.evidence .evidence-bottom {margin-top:auto;padding-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.evidence button {padding:10px 13px;border:0;background:#f00093;color:white;font-weight:850;font-size:12px;}
+.evidence .small {font-size:10px;color:#aeaeae;max-width:185px;line-height:1.4;}
+.timeline-card {background:#fff;border:1px solid #dededb;padding:30px 35px;margin-top:19px;}
+.timeline-head {display:flex;justify-content:space-between;align-items:end;gap:25px;flex-wrap:wrap;}
+.timeline-head h3 {font-size:25px;letter-spacing:-.045em;margin:8px 0;}
+.timeline-head p {font-size:12px;color:#737373;max-width:320px;line-height:1.45;margin:0;}
+.tl-row {display:grid;grid-template-columns:176px minmax(0,1fr);gap:24px;align-items:center;margin-top:33px;}
+.tl-row-name strong {font-size:14px;display:block}
+.tl-row-name small {display:block;color:#777;line-height:1.5;font-size:11px;margin-top:4px;}
+.tl-line {height:21px;border-radius:0;position:relative;background:linear-gradient(#dedede,#dedede) center/100% 2px no-repeat;}
+.tl-line::before {content:'';height:13px;width:13px;border-radius:50%;background:#121212;position:absolute;top:4px;left:0;transform:translateX(-50%);}
+.tl-marker {width:11px;height:11px;background:#8d8d8d;border:2px solid #fff;border-radius:50%;position:absolute;top:5px;transform:translateX(-50%);box-shadow:0 0 0 2px #888;transition:left .45s;}
+.tl-line.dynamic .tl-marker {background:#ee0095;box-shadow:0 0 0 2px #ed0095;}
+.tl-line.dynamic::before {background:#ed0095;}
+.tl-labels {display:flex;justify-content:space-between;margin:10px 0 0 200px;font-size:10px;color:#888;}
+.disclosure {display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:18px;}
+.disclosure .mini {background:#eaeae7;padding:19px;border-top:3px solid #151515;}
+.disclosure .mini strong {font-size:14px;letter-spacing:-.02em;}
+.disclosure .mini p {font-size:12px;color:#656565;line-height:1.5;margin:8px 0 0;}
+.footer {display:flex;align-items:start;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid #d8d8d6;margin-top:34px;padding:21px 0;color:#7a7a7a;font-size:11px;line-height:1.6}
+.footer strong {color:#353535}
+.fade-in {opacity:0;transform:translateY(21px);transition:opacity .7s ease,transform .7s ease}
+.fade-in.is-visible {opacity:1;transform:translateY(0)}
+@media(max-width:800px){
+ .bar-row {grid-template-columns:160px minmax(0,1fr) 118px;gap:10px;} .axis {margin-left:170px;margin-right:120px}
+ .bar-value strong {font-size:17px} .controls-grid {grid-template-columns:1fr;} .system-head {flex-direction:column;gap:0}
+ .bridge {grid-template-columns:70px 1fr;gap:12px;} .bridge .digit{font-size:58px}
+ .ratio {gap:15px;grid-template-columns:1fr 1.35fr;}
+}
+@media(max-width:600px){
+ .demo{padding:0 14px 22px;} .topbar .aside {display:none} .hero{padding:44px 0 33px;} .chart-card{padding:18px 13px;}
+ .bar-row {grid-template-columns:1fr 90px;gap:4px 8px;min-height:99px;padding:13px 0;}
+ .bar-name{grid-column:1/2;grid-row:1}.bar-value{grid-column:2/3;grid-row:1}
+ .bar-track{grid-column:1/-1;grid-row:2;height:20px;margin-top:8px;}
+ .axis{margin:12px 0 0;} .ratio{grid-template-columns:1fr;gap:13px;padding:23px}
+ .bridge{padding:50px 0;} .bridge .digit{font-size:44px}
+ .process{grid-template-columns:repeat(2,minmax(0,1fr));} .process::before{display:none}
+ .tl-row{grid-template-columns:1fr;gap:13px;margin-top:25px}.tl-labels{margin-left:0}
+ .timeline-card{padding:22px 17px}.disclosure{grid-template-columns:1fr;gap:9px}
+}
+@media(prefers-reduced-motion:reduce) { html{scroll-behavior:auto}.fade-in{transition:none;opacity:1;transform:none}.bar-fill{transition:none}.pulse-line::after{animation:none;left:50%} }
+</style>
+</head>
+<body>
+<div class="demo" id="demo">
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">↗</span>CIVIC SYNTHESIS <span style="color:#888;font-weight:450">/ EXPLAINER 01</span></div>
+    <div class="aside">Communication → experimentation → learning</div>
+  </div>
+  <header class="hero fade-in">
+    <div class="topline eyebrow">The speed of civic feedback</div>
+    <h1>Ideas can travel faster.<br><span class="accent">Can decisions learn faster?</span></h1>
+    <p>Technology reduces the time to send a message. The democratic opportunity is to shorten the time between <strong>listening, testing, learning and responsibly revising a plan</strong>.</p>
+  </header>
+  <section class="chart-card fade-in" id="latency-chart" aria-labelledby="chart-title">
+    <div class="section-heading">
+      <div><div class="eyebrow" style="color:#ec008e">01 / Then and now</div><h2 id="chart-title">How long does a signal take?</h2></div>
+      <div class="picker" role="group" aria-label="Chart scale"><button class="active" type="button" data-scale="log" aria-pressed="true">Log scale</button><button type="button" data-scale="linear" aria-pressed="false">True scale</button></div>
+    </div>
+    <div class="bars" id="bars" role="img" aria-label="A comparison of illustrative 3 million seconds, 1869 railroad mail approximately 604800 seconds, and an example network round-trip of 0.02 seconds">
+      <div class="bar-row" data-seconds="3000000"><div class="bar-name"><strong>Mail-era benchmark</strong><small>Illustrative comparison · ~34.7 days</small></div><div class="bar-track"><div class="bar-fill"></div></div><div class="bar-value"><strong>3,000,000</strong><span>seconds</span></div></div>
+      <div class="bar-row" data-seconds="604800"><div class="bar-name"><strong>Railroad mail · 1869</strong><small>New York → San Francisco · ~7 days</small></div><div class="bar-track"><div class="bar-fill"></div></div><div class="bar-value"><strong>604,800</strong><span>seconds</span></div></div>
+      <div class="bar-row" data-seconds="0.02"><div class="bar-name"><strong>Network RTT · example</strong><small>Modern short-distance request / response</small></div><div class="bar-track"><div class="bar-fill"></div></div><div class="bar-value"><strong>0.02</strong><span>seconds (20 ms)</span></div></div>
+    </div>
+    <div class="axis" id="axis"><span>0.01 s</span><span>10 s</span><span>10k s</span><span>3m s</span></div>
+    <div class="ratio"><div><strong>150,000,000×</strong><small>Illustrative latency contrast</small></div><p>What used to require weeks of transmission can now be communicated in milliseconds. That does <strong>not</strong> mean governing should happen in milliseconds.</p></div>
+    <p class="note">Comparison notes: 3,000,000 seconds is a chosen benchmark, <strong>not</strong> a documented 1776 New York–California mail time; six months would be about 15.8 million seconds. The 20 ms RTT is an example network measurement, not a measured New York–San Francisco RTT. Bars use a logarithmic scale by default.</p>
+  </section>
+  <section class="bridge fade-in"><div class="digit">02</div><div><h2>The next breakthrough isn't faster voting.<br>It's <em>faster learning.</em></h2><p>Instead of writing a plan once and defending it forever, we can gather public input, run limited pilots, measure what actually happened, and revise proposals. Rights, representation, legal authority, and human review remain essential.</p></div></section>
+  <section class="system fade-in" id="system" aria-labelledby="system-title">
+    <div class="system-head"><div><span class="eyebrow" style="color:#eb008b">02 / A government that can learn</span><h2 id="system-title">Decisions as a feedback loop.</h2><p>Change the time it takes to gather evidence and conduct human review. Watch how often a hypothetical policy could complete a learning cycle within a year.</p></div><div class="system-marker">FICTIONAL MODEL / NOT A PREDICTION</div></div>
+    <div class="learning-card">
+      <div class="caps">The learning loop · always with human oversight</div>
+      <div class="process" id="process">
+        <div class="process-stage on"><span class="stage-no">01 / PUBLIC INPUT</span><div class="stage-title">Listen</div><div class="stage-desc">Hear needs and objections</div></div>
+        <div class="process-stage"><span class="stage-no">02 / LIMITED PILOT</span><div class="stage-title">Test</div><div class="stage-desc">Try a reversible change</div></div>
+        <div class="process-stage"><span class="stage-no">03 / NEW EVIDENCE</span><div class="stage-title">Measure</div><div class="stage-desc">Observe effects, including harms</div></div>
+        <div class="process-stage"><span class="stage-no">04 / PUBLIC DECISION</span><div class="stage-title">Revise</div><div class="stage-desc">Review, approve or reject</div></div>
+      </div>
+      <div class="pulse-line" aria-hidden="true"></div>
+      <div class="controls-grid">
+        <div>
+          <div class="control-area">
+            <div class="caps">Set the decision cadence</div>
+            <div class="preset-bar" role="group" aria-label="Example review cadence presets"><button type="button" id="annual">Slow feedback</button><button type="button" id="continuous" class="active">Learning cycles</button></div>
+            <div class="range-row"><label for="frequency">Evidence gathering / follow-up interval <output id="frequency-out">4 weeks</output></label><input type="range" id="frequency" min="2" max="40" step="2" value="4"></div>
+            <div class="range-row"><label for="review">Public deliberation + human review <output id="review-out">2 weeks</output></label><input type="range" id="review" min="1" max="8" step="1" value="2"></div>
+            <p style="font-size:11px;color:#aaa;line-height:1.55;margin:20px 0 0">Each cycle also assumes a 4-week pilot. Adjusting communication speed does not remove evaluation time or legal safeguards.</p>
+          </div>
+          <div class="metrics" aria-live="polite"><div class="metric pink"><span class="n" id="cycles">5</span><span class="m">Possible learning cycles in 52 weeks</span></div><div class="metric"><span class="n" id="cycle-weeks">10</span><span class="m">Weeks per listen–test–review cycle</span></div></div>
+        </div>
+        <div class="evidence" aria-live="polite"><span class="tag">A HYPOTHETICAL POLICY PILOT</span><h3 id="evidence-title">Bus-lane pilot</h3><div class="evidence-text" id="observed">New data: bus commute times improve, but nearby deliveries experience longer delays.</div><div class="response" id="revision"><strong>Possible revision:</strong> Add time-limited loading zones, then test again. Seek public comment and required approval before expanding.</div><div class="evidence-bottom"><button type="button" id="next-case">See new evidence ↻</button><span class="small">Experiment results inform proposals. They never enact laws on their own.</span></div></div>
+      </div>
+    </div>
+    <div class="timeline-card fade-in" id="timeline" aria-labelledby="timeline-title">
+      <div class="timeline-head"><div><div class="eyebrow" style="color:#e8008b">Same year · two approaches</div><h3 id="timeline-title">How many chances to reconsider?</h3></div><p>The marks show potential review milestones, not guaranteed policy changes.</p></div>
+      <div class="tl-row"><div class="tl-row-name"><strong>Fixed annual plan</strong><small>One scheduled review at year end</small></div><div class="tl-line" id="annual-line"></div></div>
+      <div class="tl-row"><div class="tl-row-name"><strong>Evidence-responsive plan</strong><small id="learning-description">Recheck after each pilot + review cycle</small></div><div class="tl-line dynamic" id="learning-line"></div></div>
+      <div class="tl-labels"><span>Week 0</span><span>13</span><span>26</span><span>39</span><span>52</span></div>
+    </div>
+    <div class="disclosure fade-in"><div class="mini"><strong>Fast signals</strong><p>Residents and researchers can surface needs and observations quickly.</p></div><div class="mini"><strong>Deliberate decisions</strong><p>Validate evidence, hear dissent, and have authorized people review changes.</p></div><div class="mini"><strong>Reversible experiments</strong><p>Use bounded trials, published measures, and a route to correct unexpected harms.</p></div></div>
+  </section>
+  <footer class="footer"><div><strong>Civic Synthesis · interactive concept</strong><br>Network latency ≠ democratic decision latency. Illustrative model; not empirical outcomes.</div><div>Historical rail mail: Geography of Transport Systems (1869, approx. 7 days).<br>Animation: scroll to reveal; toggle scale and vary review cadence.</div></footer>
+</div>
+<script>
+(()=>{
+ const doc=document;
+ const root=doc.getElementById('demo');
+ if(!root) return;
+ const rows=[...root.querySelectorAll('.bar-row')];
+ const bars=root.querySelector('#bars');
+ const axis=root.querySelector('#axis');
+ let scale='log';
+ function showBars(){bars.classList.add('is-visible')}
+ function pct(v){
+  if(scale==='linear') return v/3000000*100;
+  const min=.01,max=3000000;
+  return Math.max(2, ((Math.log10(v)-Math.log10(min))/(Math.log10(max)-Math.log10(min)))*100);
+ }
+ function setScale(mode){
+  scale=mode;
+  rows.forEach(row=>row.querySelector('.bar-fill').style.setProperty('--bar-width',pct(Number(row.dataset.seconds))+'%'));
+  root.querySelectorAll('[data-scale]').forEach(b=>{ const active=b.dataset.scale===mode;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active)); });
+  axis.innerHTML=mode==='linear'?'<span>0 sec</span><span>1m sec</span><span>2m sec</span><span>3m sec</span>':'<span>0.01 sec</span><span>10 sec</span><span>10k sec</span><span>3m sec</span>';
+ }
+ root.querySelectorAll('[data-scale]').forEach(b=>b.addEventListener('click',()=>setScale(b.dataset.scale)));
+ setScale('log');
+ const observed=root.querySelector('#observed'), revision=root.querySelector('#revision'), title=root.querySelector('#evidence-title');
+ const cases=[
+ {name:'Bus-lane pilot',observation:'New data: bus commute times improve, but nearby deliveries experience longer delays.',change:'Add time-limited loading zones, then test again. Seek public comment and required approval before expanding.'},
+ {name:'Housing pilot',observation:'New data: allowing more homes increases supply, but construction activity disrupts a few streets.',change:'Add construction-hour protections and monitor housing costs, permits, and neighborhood impacts.'},
+ {name:'Flood prevention pilot',observation:'New data: improved drainage reduces flooding on one block but redirects some water toward another.',change:'Redesign the drainage layout, run another bounded test, and publish the newly identified risk.'},
+ {name:'Public-health outreach pilot',observation:'New data: reminder messages raise appointment attendance, but some people lack reliable internet access.',change:'Add an accessible offline option, monitor participation gaps, and seek feedback before expansion.'}
+ ];
+ let caseIndex=0,stage=0;
+ function setStage(i){stage=i;root.querySelectorAll('.process-stage').forEach((e,j)=>e.classList.toggle('on',j===i))}
+ root.querySelector('#next-case').addEventListener('click',()=>{
+  caseIndex=(caseIndex+1)%cases.length;
+  const c=cases[caseIndex];title.textContent=c.name;observed.textContent=c.observation;
+  revision.innerHTML='<strong>Possible revision:</strong> '+c.change;
+  setStage((stage+1)%4);
+ });
+ const freq=root.querySelector('#frequency'), review=root.querySelector('#review');
+ const freqOut=root.querySelector('#frequency-out'),reviewOut=root.querySelector('#review-out');
+ const cyclesOut=root.querySelector('#cycles'), weeksOut=root.querySelector('#cycle-weeks');
+ const learningLine=root.querySelector('#learning-line');
+ const annualLine=root.querySelector('#annual-line');
+ const learnDesc=root.querySelector('#learning-description');
+ function mark(el,week,kind){const m=doc.createElement('span');m.className='tl-marker';m.style.left=Math.min(99,100*week/52)+'%';m.title=kind+' at week '+week;m.setAttribute('aria-label',m.title);el.appendChild(m)}
+ function renderModel(){
+  const f=+freq.value, r=+review.value, weeks=4+f+r, n=Math.floor(52/weeks);
+  freqOut.textContent=f+' weeks';reviewOut.textContent=r+' weeks';
+  cyclesOut.textContent=n;weeksOut.textContent=weeks;
+  const slow=f===40&&r===8, fast=f===4&&r===2;
+  root.querySelector('#annual').classList.toggle('active',slow);
+  root.querySelector('#continuous').classList.toggle('active',fast);
+  annualLine.innerHTML='';mark(annualLine,52,'Annual review');
+  learningLine.innerHTML='';for(let i=1;i<=n;i++)mark(learningLine,i*weeks,'Public recheck');
+  learnDesc.textContent=n===0?'No complete cycles in one year':n+' possible reviews; '+weeks+' weeks per cycle';
+  root.querySelector('.pulse-line').style.setProperty('--flow-duration',(Math.min(5,1.1+weeks/16))+'s');
+ }
+ root.querySelector('#annual').addEventListener('click',()=>{freq.value='40';review.value='8';renderModel();});
+ root.querySelector('#continuous').addEventListener('click',()=>{freq.value='4';review.value='2';renderModel();});
+ freq.addEventListener('input',renderModel);review.addEventListener('input',renderModel);
+ renderModel();
+ const fades=[...root.querySelectorAll('.fade-in')];
+ if('IntersectionObserver' in window){
+   const io=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');if(e.target===root.querySelector('#latency-chart'))showBars();io.unobserve(e.target)}})},{threshold:.1,rootMargin:'0px 0px -25px 0px'});
+   fades.forEach(el=>io.observe(el));
+ }else{fades.forEach(el=>el.classList.add('is-visible'));showBars()}
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){fades.forEach(el=>el.classList.add('is-visible'));showBars()}
+})();
+</script>
+</body>
+</html>

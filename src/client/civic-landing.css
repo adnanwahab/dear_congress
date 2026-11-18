@@ -220,3 +220,13 @@
 .csh-foundation-footnote a{font-weight:750;text-underline-offset:3px}
 @media(max-width:980px){.csh-home .csh-principles{grid-template-columns:1fr}.csh-home .csh-principles .csh-feature,.csh-home .csh-principles .csh-feature:first-child{grid-row:auto;min-height:0}}
 @media(max-width:650px){.csh-home .csh-tape .csh-container{grid-template-columns:1fr;min-height:0;padding:10px 0;gap:0}.csh-home .csh-tape .csh-container>div{padding:11px 0;gap:17px}.csh-home .csh-tape .csh-container>div+div{border-top:1px solid #35513a33}.csh-home .csh-tape span{max-width:none;font-size:12px}.csh-home .csh-principles .csh-feature{padding:24px 20px}}
+
+/* A hopeful invitation that distinguishes fast prototypes from formal lawmaking. */
+.csh-contributor-invite{margin-top:24px;padding:22px 24px;background:#e9f2df;border:1px solid #c6dcbf;border-left:4px solid #e77150;border-radius:15px}
+.csh-contributor-kicker{color:#ae604c;font-size:10px;font-weight:850;letter-spacing:.14em}
+.csh-home .csh-contributor-invite h2{font:normal clamp(24px,2.6vw,34px)/1.12 Georgia,serif;letter-spacing:-.04em;margin:9px 0 10px}
+.csh-contributor-invite h2 em{font-style:italic;color:#c7654b}
+.csh-home .csh-contributor-invite p{font-size:13px;line-height:1.62;color:#405b47;margin:0 0 9px}
+.csh-home .csh-contributor-invite .csh-contributor-caveat{font-size:11px;color:#667767}
+.csh-contributor-invite a{font-size:12px;font-weight:850;display:inline-block;margin-top:3px;text-underline-offset:3px}
+@media(max-width:650px){.csh-contributor-invite{padding:18px 16px;margin-top:20px}}

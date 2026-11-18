@@ -16,6 +16,7 @@ import { readLegislation } from './src/server/legislation/import';
 import { journalFeed, migrateJournalOrigins, type JournalOrigin } from "./src/shared/journal-origin";
 import { buildIdentity } from "./src/server/build-identity";
 import { publicJournal, ownJournalIds, claimJournal, deleteJournal } from "./src/server/journal-privacy";
+import { serveVisualDemo } from "./src/server/visual-demos";
 import { createStatsHTTP } from "./src/server/launch-stats-http";
 import { LaunchStats, observePublicResponse, type VoteActivity } from "./src/server/launch-stats";
 import { publicEntry } from "./src/shared/moderation";
@@ -988,6 +989,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/robots.txt": () => new Response(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /embed\nDisallow: /proposals/new\nSitemap: ${SITE_URL}/sitemap.xml\n`, { headers: { "Content-Type": "text/plain; charset=utf-8" } }),
     "/sitemap.xml": () => new Response(sitemap(db.citizenProposals ?? []), { headers: { "Content-Type": "application/xml; charset=utf-8" } }),
     "/social-preview.png": () => new Response(Bun.file(new URL("./public/social-preview.png", import.meta.url))),
+    "/visual-lab/:id": (req) => serveVisualDemo(req.params.id ?? "", req.method),
     "/assets/maplibre-worker.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs")),
     "/assets/maplibre-gl-shared.mjs": () => new Response(Bun.file("node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs")),
 

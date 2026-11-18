@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import './civic-landing.css';
+import { CivicVisualStories } from './CivicVisualStories';
 
 const CATEGORY_LABELS: Record<string, string> = {
   'Economic security and freedom from desperation': 'Economic freedom',
@@ -49,6 +50,7 @@ export default function CivicLanding() {
       <div className="csh-container csh-nav-inner">
         <a className="csh-brand" href="/" aria-label="Civic Synthesis homepage"><span className="csh-brand-icon" aria-hidden="true">✳</span><span>civic synthesis<span className="csh-brand-dot">.</span></span></a>
         <nav className="csh-links" aria-label="Homepage navigation">
+          <a href="#visual-stories">Visual stories</a>
           <a href="/votes">Explore {ideaCount} Bills</a>
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>
@@ -66,6 +68,13 @@ export default function CivicLanding() {
               <a className="csh-button csh-light" href="/proposals/new">Propose your own <span aria-hidden="true">↗</span></a>
             </div>
             <p className="csh-hero-note"><span className="csh-green-dot" aria-hidden="true"/>Open for imagination. Grounded in evidence, review, and real people.</p>
+            <div className="csh-contributor-invite">
+              <span className="csh-contributor-kicker">YOUR IDEA → REAL-WORLD POSSIBILITY</span>
+              <h2>Your idea today. <em>A prototype tomorrow.</em></h2>
+              <p>A thoughtful contribution could inspire something useful as soon as the next day—a prototype, a local experiment, or a better proposal. Great contributors could receive public credit, opportunities to collaborate, and, if a future program is established, other incentives.</p>
+              <p className="csh-contributor-caveat">Possibilities, not promises: rewards and turnaround times are not guaranteed. Changing laws requires evidence, public participation, human review, and legal approval.</p>
+              <a href="/proposals/new">Share an idea ↗</a>
+            </div>
           </div>
           <div className="csh-hero-art" role="img" aria-label="An illustrated orbit of arts, science, nature and community around an editable future">
             <span className="csh-scene-title">THE FUTURE MACHINE · IDEA SPACE</span>
@@ -78,11 +87,6 @@ export default function CivicLanding() {
           </div>
         </div>
       </section>
-      <div className="csh-tape"><div className="csh-container" aria-label="Three civic design ideas">
-        <div><strong>40d</strong><span>historical Georgia–Maine letter + reply (1799)</span></div>
-        <div><strong>&lt;1s</strong><span>illustrative Georgia–Shenzhen network round trip today</span></div>
-        <div><strong>100%</strong><span>voluntary consensus: an aspiration, not an achieved result</span></div>
-      </div></div>
       <section className="csh-section csh-imagine" id="vision" aria-labelledby="csh-vision-title">
         <div className="csh-container">
           <p className="csh-section-kicker">01 / THREE IDEAS FOR A FASTER, WISER DEMOCRACY</p>
@@ -119,6 +123,7 @@ export default function CivicLanding() {
           <div className="csh-idea-banner"><div><strong>Speed up learning. Keep democracy accountable.</strong><p>People need time to understand, disagree, and change their minds. Expert review, publication checks, rights, and legal processes remain essential.</p></div><a href="/proposals/new">Propose an improvement ↗</a></div>
         </div>
       </section>
+      <CivicVisualStories />
       <section className="csh-section" id="how">
         <div className="csh-container">
           <p className="csh-section-kicker">02 / HOW WE BUILD TOGETHER</p>

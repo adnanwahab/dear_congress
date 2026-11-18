@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Why Did This Happen? — Civic Provenance Explorer</title>
+<style>
+:root{color-scheme:dark;--bg:#08111b;--panel:#0e1a28;--panel2:#101e2c;--line:#283b4d;--muted:#90a4b8;--text:#ecf5fc;--mint:#66e6c4;--blue:#8fbdff;--gold:#f0c985;--pink:#eab1da;--red:#fd9b9c}
+*{box-sizing:border-box}
+body{margin:0;background:#050d16;color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.shell{margin:0 auto;max-width:1410px;min-height:100vh;padding:27px clamp(16px,3vw,44px) 34px;background:radial-gradient(ellipse 840px 390px at 72% -5%,#11364e8a,transparent 80%),radial-gradient(ellipse 670px 420px at 0% 95%,#12343270,transparent 80%),#08121e}
+.mast{display:flex;gap:20px;align-items:center;justify-content:space-between;padding-bottom:23px;border-bottom:1px solid #ffffff18}
+.brand{display:flex;gap:12px;align-items:center;font-size:12px;font-weight:700;letter-spacing:.19em;color:#dfecf7}
+.brand-icon{display:grid;place-items:center;width:36px;height:36px;border:1px solid #65e6c550;border-radius:11px;background:#122d33}
+.brand-icon svg{width:26px;height:26px}
+.top-tag{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);border:1px solid #ffffff20;border-radius:100px;padding:9px 12px}
+.hero{padding:23px 0 22px;display:flex;justify-content:space-between;gap:24px;align-items:end;flex-wrap:wrap}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--mint);text-transform:uppercase}
+h1{font-size:clamp(30px,4.3vw,53px);line-height:1.09;letter-spacing:-.046em;margin:9px 0 11px;font-weight:690}
+.lede{font-size:14px;line-height:1.65;max-width:670px;color:#a9bacb;margin:0}
+.counters{display:flex;gap:9px;flex-wrap:wrap}
+.mini-stat{min-width:99px;padding:10px 12px;background:#ffffff07;border:1px solid #ffffff12;border-radius:11px}
+.mini-stat strong{font-size:20px;display:block;line-height:1.2;font-variant-numeric:tabular-nums}
+.mini-stat span{display:block;font-size:10px;color:#a6bbca;margin-top:4px}
+.graph-card{background:linear-gradient(165deg,#101e2dfc,#0b1624);border:1px solid #35506388;box-shadow:0 22px 95px #01090f70;border-radius:18px;overflow:hidden}
+.graph-head{padding:16px 21px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #ffffff13;background:#ffffff03}
+.graph-caption{font-size:11px;letter-spacing:.16em;color:#bdcddb;font-weight:750}
+.graph-caption small{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:normal;margin-left:8px}
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.controls .label{font-size:10px;color:#91a8bc;margin-right:3px}
+button{font:inherit;cursor:pointer}
+.control{font-size:11px;color:#aebfd0;background:#162635;border:1px solid #314457;border-radius:7px;padding:8px 11px;transition:.18s}
+.control:hover{border-color:#80d8c6;color:white}
+.control[aria-pressed=true]{background:#1c3f3f;color:#baffec;border-color:#3e9788}
+.graph-viewport{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#466072 transparent;cursor:default}
+#network{display:block;width:100%;min-width:950px;height:auto;min-height:385px}
+.stage-label{fill:#9fb4c7;letter-spacing:2px;font-size:11px;font-weight:700}
+.stage-line{stroke:#ffffff14;stroke-width:1}
+.stage-band{fill:#fff;opacity:.014}
+.edge{fill:none;stroke:#3c5364;stroke-width:1.6;opacity:.58;transition:stroke .26s,opacity .26s,stroke-width .26s}
+.edge.muted{opacity:.07;stroke-width:1}
+.edge.active{stroke:var(--mint);stroke-width:2.2;opacity:.84;stroke-dasharray:7 5;animation:flow 14s linear infinite}
+.edge.after{stroke:#7bafff}
+@keyframes flow{to{stroke-dashoffset:-240}}
+.node{cursor:pointer;outline:none}
+.node .node-bg{fill:#152635;stroke:#355066;stroke-width:1.2;transition:.22s}
+.node .accent{opacity:1}
+.node .name{fill:#e8f2fa;font-size:14px;font-weight:690;letter-spacing:-.25px}
+.node .subtitle{fill:#99adbf;font-size:11px}
+.node .glyph{font-size:11px;fill:#051321;font-weight:900;dominant-baseline:middle;text-anchor:middle}
+.node .glyph-ring{stroke:none}
+.node.muted{opacity:.25}
+.node.muted .node-bg{fill:#11202c}
+.node.selected .node-bg{fill:#173d43;stroke:#7bffe0;stroke-width:2;filter:drop-shadow(0 0 11px #44ecbd35)}
+.node.in-path .node-bg{stroke:#457985;fill:#162d3a}
+.node .focus-ring{fill:none;stroke:#fff;stroke-width:2;opacity:0}
+.node:focus-visible .focus-ring{opacity:1}
+.node .picked{opacity:0;fill:#b2ffe9;font-size:8px;font-weight:700;letter-spacing:1px}
+.node.selected .picked{opacity:1}
+.gridlines{pointer-events:none}
+.legend{padding:12px 21px;border-top:1px solid #ffffff16;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.legend-left{display:flex;gap:15px;flex-wrap:wrap}
+.legend-item{font-size:11px;color:#9eb3c5;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.legend-dot{width:7px;height:7px;display:inline-block;border-radius:50%}
+.legend-note{font-size:10px;color:#6f8a9e}
+.info-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(290px,.7fr);gap:14px;margin-top:15px}
+.detail,.privacy{background:#0d1b29;border:1px solid #2c4355;border-radius:15px;padding:21px;min-height:267px}
+.section-kicker{font-size:10px;color:#74e1c4;letter-spacing:.16em;font-weight:760;text-transform:uppercase}
+.detail h2{font-size:23px;letter-spacing:-.028em;margin:10px 0 6px;font-weight:700}
+.detail p{font-size:13px;color:#bac8d6;line-height:1.7;margin:10px 0}
+.detail-intro{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+.detail-id{display:inline-block;color:#94b9c8;border:1px solid #405465;border-radius:5px;font:11px ui-monospace,SFMono-Regular,Consolas,monospace;padding:4px 7px}
+.state{color:#f2d39d;font-size:10px;background:#7b542824;border:1px solid #ac85455a;border-radius:5px;padding:5px 7px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.chip{display:inline-block;font-size:11px;border-radius:5px;border:1px solid #345567;background:#172d3a;color:#b4cad9;padding:6px 8px}
+.fact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid #ffffff15}
+.fact span{color:#7c9bac;font-size:10px;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:7px}
+.fact strong{font-size:12px;font-weight:610;line-height:1.5;color:#d2e2eb}
+.privacy h3{margin:10px 0;font-size:17px;letter-spacing:-.02em}
+.privacy p{font-size:12px;color:#aebfcf;line-height:1.65;margin:0 0 14px}
+.rule{padding:12px 0;display:flex;gap:12px;align-items:start;border-top:1px solid #ffffff17}
+.rule-emoji{background:#1c3140;padding:8px;border-radius:9px;font-size:15px;flex:0 0 auto}
+.rule strong{font-size:12px;display:block;color:#d9e7f0}
+.rule small{color:#91aabd;font-size:11px;line-height:1.5;display:block;margin-top:3px}
+.footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:#6f8799;margin-top:16px}
+.footer strong{color:#a3bfd0;font-weight:600}
+@media(max-width:800px){.hero{align-items:start}.info-grid{grid-template-columns:1fr}.detail,.privacy{min-height:unset}.graph-head{padding:14px}.mast{padding-bottom:17px}.graph-viewport:after{content:''}.legend{gap:8px}.mini-stat{min-width:86px}}
+@media(prefers-reduced-motion:reduce){.edge.active{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="mast"><div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18 10 5l4 7 6-6" fill="none" stroke="#7fe8ce" stroke-width="1.7" stroke-linecap="round"/><circle cx="4" cy="18" r="2" fill="#7fe8ce"/><circle cx="10" cy="5" r="2" fill="#7fe8ce"/><circle cx="14" cy="12" r="2" fill="#98bfff"/><circle cx="20" cy="6" r="2" fill="#98bfff"/></svg></div><span>CIVIC SYNTHESIS&nbsp; / &nbsp;EXPLAINABILITY LAB</span></div><div class="top-tag">08 / PUBLIC REASONING</div></header>
+  <section class="hero"><div><div class="eyebrow">An inspectable decision history</div><h1>Why did this happen<span style="color:var(--mint)">?</span></h1><p class="lede">Follow a civic decision backward — from the action taken to the people, evidence, disputed assumptions, amendments and humans accountable for it.</p></div><div class="counters"><div class="mini-stat"><strong id="record-count">13</strong><span>public graph nodes</span></div><div class="mini-stat"><strong style="color:var(--gold)">2</strong><span>open objections*</span></div><div class="mini-stat"><strong style="color:var(--mint)">0</strong><span>private notes exposed</span></div></div></section>
+  <section class="graph-card" aria-label="Interactive decision provenance graph"><div class="graph-head"><div class="graph-caption">HOUSING ACCESS PILOT <small>Fictional walkthrough · not a live law</small></div><div class="controls"><span class="label">TRACE</span><button class="control" data-mode="up" aria-pressed="true">← Causes</button><button class="control" data-mode="down" aria-pressed="false">Consequences →</button><button class="control" data-mode="all" aria-pressed="false">Full graph</button><button class="control" id="reset" title="Inspect the main decision">↺ Reset</button></div></div>
+  <div class="graph-viewport"><svg id="network" viewBox="0 0 1220 508" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Decision provenance network. Tab to any node and press enter to inspect it."><defs><marker id="arrow-muted" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#476071"/></marker><marker id="arrow-mint" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#66e6c4"/></marker><marker id="arrow-blue" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7Z" fill="#7bafff"/></marker></defs><g id="guides"></g><g id="links"></g><g id="nodes"></g></svg></div>
+  <div class="legend"><div class="legend-left"><div class="legend-item"><span class="legend-dot" style="background:#8fbdff"></span> Public evidence</div><div class="legend-item"><span class="legend-dot" style="background:#f0c985"></span> Contested assumption</div><div class="legend-item"><span class="legend-dot" style="background:#eab1da"></span> Human review</div><div class="legend-item"><span class="legend-dot" style="background:#66e6c4"></span> Decision path</div></div><div class="legend-note">Click a node · Tab / Enter also works · arrows show provenance direction</div></div></section>
+  <section class="info-grid"><article class="detail" aria-live="polite"><div class="detail-intro"><span class="section-kicker" id="detail-kind">DECISION / EXPLANATION</span><span class="detail-id" id="detail-id">D-01</span><span class="state" id="detail-state">Demonstration only</span></div><h2 id="detail-title">Advance revised housing draft</h2><p id="detail-desc">The amended draft was advanced for another round of public consideration, after human review and an illustrative advisory ballot. This is not enactment.</p><div class="tags" id="detail-tags"></div><div class="fact-grid"><div class="fact"><span>Responsible human / authority</span><strong id="detail-owner">Authorized policy editor (role, demo)</strong></div><div class="fact"><span id="trace-label">Supporting upstream records</span><strong id="detail-trace">—</strong></div><div class="fact"><span>Evidence / uncertainty</span><strong id="detail-uncertainty">Rent-effect assumption is contested</strong></div><div class="fact"><span>Next accountability step</span><strong id="detail-next">Publish explanation and request additional review</strong></div></div></article>
+  <aside class="privacy"><div class="section-kicker">PROVENANCE GUARDRAILS</div><h3>Visible reasoning. Protected people.</h3><p>Traceable public decisions do not require publishing people's private thoughts. These rules apply to every node in this illustrative graph.</p><div class="rule"><span class="rule-emoji" aria-hidden="true">🔒</span><div><strong>Private journals are excluded</strong><small>Never reveal journal text, identity or inferred beliefs without specific, revocable authorization.</small></div></div><div class="rule"><span class="rule-emoji" aria-hidden="true">◈</span><div><strong>Disagreement remains inspectable</strong><small>Disputed modeling assumptions and unresolved objections stay attached to the decision.</small></div></div><div class="rule"><span class="rule-emoji" aria-hidden="true">✓</span><div><strong>Humans own the final action</strong><small>Reviewer decisions, delegation, source dates, and public ballots are distinct records.</small></div></div></aside></section>
+  <footer class="footer"><span>*Illustrative counts and records only — not actual public input, votes, approvals, or observed effects.</span><span><strong>PROPOSE → LISTEN → REVISE → REVIEW → RECHECK</strong></span></footer>
+</div>
+<script>
+(() => {
+ const NS='http://www.w3.org/2000/svg';
+ const stages=[['need','01 / NEED'],['evidence','02 / EVIDENCE'],['text','03 / POLICY TEXT'],['review','04 / REVIEW'],['decision','05 / DECISION'],['outcome','06 / OUTCOME']];
+ const xpos={need:24,evidence:227,text:430,review:633,decision:836,outcome:1039};
+ const colors={need:'#81aaff',evidence:'#8fbdff',assumption:'#f0c985',clause:'#86d7dc',amendment:'#f0c985',review:'#eab1da',objection:'#f0c985',ballot:'#b49eff',decision:'#66e6c4',outcome:'#8bacc9',pending:'#9babbc'};
+ const raw=[
+ {id:'n1',stage:'need',kind:'need',label:'Housing costs',sub:'Resident concern',y:112,code:'N-01',status:'Reported need',detail:'Residents report that rising housing costs make it harder to remain in their neighborhoods. This is the public problem the policy attempts to address.',owner:'Residents and community advocates',uncertainty:'Needs corroboration with representative data',next:'Keep original public concern linked to future revisions',tags:['Community need','Public record']},
+ {id:'n2',stage:'need',kind:'need',label:'Displacement risk',sub:'Resident concern',y:313,code:'N-02',status:'Open concern',detail:'Residents warn that a housing supply proposal could unintentionally contribute to displacement without accompanying protections.',owner:'Public commenters (identities protected as needed)',uncertainty:'Neighborhood impacts vary widely',next:'Test anti-displacement protections',tags:['Community need','Unresolved']},
+ {id:'e1',stage:'evidence',kind:'evidence',label:'Housing survey',sub:'Public evidence',y:88,code:'E-01',status:'Example source',detail:'A hypothetical public housing-cost survey supports investigating affordability. A real system would link its methodology, collection period, sample size, license, and immutable source snapshot.',owner:'Evidence steward / statistical reviewer',uncertainty:'Selection and nonresponse bias must be assessed',next:'Attach source hash and independent review',tags:['Source citation','Methodology','Illustrative']},
+ {id:'e2',stage:'evidence',kind:'evidence',label:'Permit backlog',sub:'Administrative data',y:222,code:'E-02',status:'Example source',detail:'Illustrative permit-processing records suggest barriers to adding homes. This source should be independently checked and separated from assumptions about housing prices.',owner:'Public records custodian',uncertainty:'Administrative backlog is not causal proof',next:'Publish collection dates and limitations',tags:['Administrative record','Not causal proof']},
+ {id:'a1',stage:'evidence',kind:'assumption',label:'Rent impact model',sub:'Disputed assumption',y:367,code:'A-01',status:'Contested',detail:'The model assumes increased supply eventually moderates rents. The size, timing, and distribution of effects remain contested. Opposition evidence stays connected rather than being erased.',owner:'Model author; independent reviewers',uncertainty:'High — scenario assumptions not verified',next:'Run sensitivity analyses and publish dissent',tags:['Disputed','Sensitivity needed','No certainty claim']},
+ {id:'c1',stage:'text',kind:'clause',label:'Allow duplexes',sub:'Proposed clause § 2',y:118,code:'C-02',status:'Proposed text',detail:'An illustrative clause would permit duplexes in specified areas subject to safety, accessibility, and local infrastructure requirements.',owner:'Drafting team; public editor',uncertainty:'Depends on local constraints and authority',next:'Publish exact text and tracked redline',tags:['Versioned clause','Not yet law']},
+ {id:'m1',stage:'text',kind:'amendment',label:'Tenant guardrail',sub:'Amendment #03',y:308,code:'M-03',status:'Proposed revision',detail:'A proposed amendment adds tenant anti-displacement measures in response to public objections and uncertain neighborhood-level effects.',owner:'Amendment proposer and reviewing editor',uncertainty:'Implementation and enforcement require scrutiny',next:'Open a new revision-specific advisory ballot',tags:['Amendment','Responds to concern','New ballot required']},
+ {id:'r1',stage:'review',kind:'review',label:'Expert review',sub:'Human accountability',y:82,code:'R-01',status:'Review checkpoint',detail:'A fictional independent planning review checks the draft against public evidence, assumptions, authority, and known downstream risks. This checkpoint is not the same as legal approval.',owner:'Named authorized reviewer in a live system',uncertainty:'Expert review does not eliminate disagreement',next:'Record signature, scope, time and decision',tags:['Human-in-the-loop','Auditable','Not approval']},
+ {id:'r2',stage:'review',kind:'objection',label:'Public objections',sub:'2 still open · demo',y:226,code:'O-02',status:'Two unresolved',detail:'Two fictional objections remain unresolved: possible displacement and uncertainty about how quickly additional supply affects rents. Both remain permanently discoverable.',owner:'Public consultation moderator',uncertainty:'Two objections unresolved in this example',next:'Request revisions; preserve dissent',tags:['Protected dissent','Unresolved','Public reply']},
+ {id:'v1',stage:'review',kind:'ballot',label:'Advisory ballot',sub:'Illustrative only',y:372,code:'V-01',status:'Nonbinding example',detail:'A demonstration of how one revision-specific advisory ballot would attach to the draft. No votes have been collected or displayed here. Actual voting must be authenticated and separately audited.',owner:'Ballot publisher and election administrators',uncertainty:'Advisory feedback cannot replace legal adoption',next:'Publish count, eligibility and revision ID',tags:['Nonbinding','Revision-specific','No real votes']},
+ {id:'d1',stage:'decision',kind:'decision',label:'Advance draft',sub:'Public review step',y:150,code:'D-01',status:'Illustrative decision',detail:'In this fictional example an authorized editor advances an amended housing draft for another public-review stage after consulting evidence, reviewer notes, objections, and an advisory ballot. The policy is not enacted.',owner:'Authorized policy editor (role, demo)',uncertainty:'Rent effects and objections remain unresolved',next:'Disclose reasoning; reopen consultation and review',tags:['Human decision','Not enacted','Reviewable']},
+ {id:'d2',stage:'decision',kind:'decision',label:'Request study',sub:'Dispute resolution',y:337,code:'D-02',status:'Illustrative decision',detail:'The unresolved displacement concern triggers an additional local-impact study. A responsible human must determine whether the new evidence warrants revising the draft before it progresses.',owner:'Independent impact reviewer (role, demo)',uncertainty:'Displacement risk remains open',next:'Publish sensitivity analyses and a response to objections',tags:['Dispute escalated','Further review','Human-owned']},
+ {id:'o1',stage:'outcome',kind:'outcome',label:'Simulated future',sub:'Modeled, not measured',y:150,code:'S-01',status:'Projection only',detail:'A possible model result can compare rent, housing supply, and people helped or harmed across assumptions and random seeds. It is a scenario — not observed evidence of policy success.',owner:'Simulation operator and external validators',uncertainty:'Model error, omitted variables, causal limits',next:'Compare against actual measurements if adopted',tags:['Simulation','Not observation','Uncertain']},
+ {id:'o2',stage:'outcome',kind:'pending',label:'Observed effects',sub:'Not available yet',y:337,code:'X-01',status:'No field observations',detail:'There are no observed post-enactment effects because this is a fictional proposal, not an implemented law. A live system must never fill this gap with simulated numbers.',owner:'Independent outcomes evaluator',uncertainty:'Not measurable until implementation',next:'Define measurements before enactment',tags:['No results yet','Evidence pending']}
+ ];
+ const links=[['n1','e1'],['n1','e2'],['n2','e1'],['n2','a1'],['e1','c1'],['e1','m1'],['e2','c1'],['a1','m1'],['c1','r1'],['m1','r1'],['m1','r2'],['r2','v1'],['r1','d1'],['v1','d1'],['r2','d2'],['a1','d2'],['d1','o1'],['d1','o2']];
+ const nodesById=Object.fromEntries(raw.map(n=>[n.id,n]));
+ const guides=document.getElementById('guides'),edgesG=document.getElementById('links'),nodesG=document.getElementById('nodes');
+ const make=(tag,atts,parent)=>{let el=document.createElementNS(NS,tag);Object.entries(atts||{}).forEach(([k,v])=>el.setAttribute(k,v));if(parent)parent.appendChild(el);return el};
+ stages.forEach(([name,text],i)=>{let x=xpos[name];make('rect',{x:x-9,y:56,width:195,height:439,rx:14,class:'stage-band'},guides);make('text',{x:x+4,y:31,class:'stage-label'},guides).textContent=text;make('line',{x1:x,y1:45,x2:x+176,y2:45,class:'stage-line'},guides)});
+ const edgeElements=links.map(([from,to])=>{const a=nodesById[from],b=nodesById[to],x1=xpos[a.stage]+178,y1=a.y+42,x2=xpos[b.stage]-7,y2=b.y+42,mid=(x1+x2)/2;let el=make('path',{d:`M${x1} ${y1} C${mid} ${y1},${mid} ${y2},${x2} ${y2}`,class:'edge','marker-end':'url(#arrow-muted)'},edgesG);return {from,to,el}});
+ const glyph={need:'!',evidence:'≡',assumption:'?',clause:'§',amendment:'+',review:'✓',objection:'!',ballot:'✓',decision:'→',outcome:'∿',pending:'·'};
+ const nodeElements={};
+ raw.forEach(n=>{
+   const g=make('g',{class:'node',transform:`translate(${xpos[n.stage]},${n.y})`,role:'button',tabindex:'0','aria-label':`${n.label}. ${n.sub}`,'data-id':n.id},nodesG);
+   make('rect',{x:-3,y:-3,width:184,height:90,rx:13,class:'focus-ring'},g);
+   make('rect',{width:178,height:84,rx:11,class:'node-bg'},g);
+   make('rect',{width:3,height:48,x:0,y:18,rx:1.5,fill:colors[n.kind],opacity:'.86'},g);
+   make('circle',{cx:21,cy:25,r:10,fill:colors[n.kind],class:'glyph-ring'},g);
+   make('text',{x:21,y:25,class:'glyph'},g).textContent=glyph[n.kind];
+   make('text',{x:37,y:30,class:'name'},g).textContent=n.label;
+   make('text',{x:16,y:58,class:'subtitle'},g).textContent=n.sub;
+   make('text',{x:16,y:74,class:'picked'},g).textContent='SELECTED';
+   g.addEventListener('click',()=>select(n.id));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(n.id)}});nodeElements[n.id]=g;
+ });
+ let current='d1',mode='up';
+ function reach(start,reverse){let out=new Set([start]),queue=[start];while(queue.length){let u=queue.shift();for(let [a,b] of links){let next=null;if(reverse&&b===u)next=a;if(!reverse&&a===u)next=b;if(next&&!out.has(next)){out.add(next);queue.push(next)}}}return out}
+ function update(){
+    let active=mode==='all'?new Set(raw.map(n=>n.id)):reach(current,mode==='up');
+    raw.forEach(n=>{let g=nodeElements[n.id];g.classList.toggle('muted',!active.has(n.id));g.classList.toggle('in-path',active.has(n.id)&&n.id!==current&&mode!=='all');g.classList.toggle('selected',n.id===current);g.setAttribute('aria-pressed',String(n.id===current))});
+    edgeElements.forEach(({from,to,el})=>{let on=mode==='all'||(active.has(from)&&active.has(to));el.classList.toggle('muted',!on);el.classList.toggle('active',on&&mode!=='all');el.classList.toggle('after',mode==='down');el.setAttribute('marker-end',on&&mode!=='all'?(mode==='down'?'url(#arrow-blue)':'url(#arrow-mint)'):'url(#arrow-muted)')});
+    document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+    let n=nodesById[current],count=mode==='all'?raw.length:active.size-1;
+    document.getElementById('detail-kind').textContent=n.kind.toUpperCase()+' / EXPLANATION';
+    document.getElementById('detail-id').textContent=n.code;
+    document.getElementById('detail-state').textContent=n.status;
+    document.getElementById('detail-title').textContent=n.label;
+    document.getElementById('detail-desc').textContent=n.detail;
+    document.getElementById('detail-owner').textContent=n.owner;
+    document.getElementById('detail-uncertainty').textContent=n.uncertainty;
+    document.getElementById('detail-next').textContent=n.next;
+    document.getElementById('trace-label').textContent=mode==='up'?'Linked upstream records':mode==='down'?'Linked downstream records':'Visible graph records';
+    document.getElementById('detail-trace').textContent=mode==='all'?`${count} records in this example`:`${count} connected ${mode==='up'?'upstream':'downstream'} ${count===1?'record':'records'}`;
+    document.getElementById('detail-tags').replaceChildren(...n.tags.map(t=>{let s=document.createElement('span');s.className='chip';s.textContent=t;return s}));
+ }
+ function select(id){current=id;update()}
+ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;update()}));
+ document.getElementById('reset').addEventListener('click',()=>{mode='up';current='d1';update()});
+ document.getElementById('record-count').textContent=raw.length;
+ update();
+})();
+</script>
+</body>
+</html>
