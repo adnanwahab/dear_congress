@@ -9,7 +9,7 @@ describe('the historical and illustrative latency comparison', () => {
 
   it('recomputes the ratio when the adjustable network RTT changes', () => {
     expect(durationRatio(250)).toBe(13_824_000);
-    expect(durationRatio(150)).toBe(23_040_000);
+    expect(durationRatio(200)).toBe(17_280_000);
     expect(durationRatio(500)).toBe(6_912_000);
   });
 
