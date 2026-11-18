@@ -74,6 +74,8 @@ export class CatalogBallotStore {
       "CREATE TABLE IF NOT EXISTS catalog_ballot_events(id TEXT PRIMARY KEY,publication_id TEXT NOT NULL REFERENCES catalog_publications(id),voter_hash TEXT NOT NULL,choice TEXT CHECK(choice IN ('support','oppose','unsure') OR choice IS NULL),request_id TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at INTEGER NOT NULL,UNIQUE(publication_id,voter_hash,request_id));",
       "CREATE INDEX IF NOT EXISTS catalog_ballot_events_history ON catalog_ballot_events(publication_id,voter_hash,created_at);",
       "CREATE TABLE IF NOT EXISTS catalog_publication_audit(id TEXT PRIMARY KEY,publication_id TEXT NOT NULL REFERENCES catalog_publications(id),action TEXT NOT NULL CHECK(action IN ('publish','supersede')),actor TEXT NOT NULL,created_at INTEGER NOT NULL);",
+      "CREATE TABLE IF NOT EXISTS catalog_draft_choices(bill_id TEXT NOT NULL,revision TEXT NOT NULL,voter_hash TEXT NOT NULL,choice TEXT NOT NULL CHECK(choice IN ('support','oppose','unsure')),changed_at INTEGER NOT NULL,PRIMARY KEY(bill_id,revision,voter_hash));",
+      "CREATE TABLE IF NOT EXISTS catalog_draft_choice_events(id TEXT PRIMARY KEY,bill_id TEXT NOT NULL,revision TEXT NOT NULL,voter_hash TEXT NOT NULL,choice TEXT CHECK(choice IN ('support','oppose','unsure') OR choice IS NULL),request_id TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at INTEGER NOT NULL,UNIQUE(bill_id,revision,voter_hash,request_id));",
     ].join("\n"));
   }
   close() { this.db.close(); }
@@ -124,6 +126,71 @@ export class CatalogBallotStore {
       ownChoice: browserId ? this.choice(pub.id, this.voterHash(browserId)) : null,
       electorate: "unverified_browser_identities" as const, binding: false as const,
     };
+  }
+
+  /**
+   * Early feedback is a distinct, revision-bound participation lane. It can be
+   * submitted before publication but must never be transferred into ballots.
+   */
+  draftStatus(id: string, browserId?: string) {
+    const bill = getBill(id);
+    const counts = { support: 0, oppose: 0, unsure: 0 };
+    const rows = this.db.query(
+      "SELECT choice,COUNT(*) AS total FROM catalog_draft_choices WHERE bill_id=? AND revision=? GROUP BY choice"
+    ).all(id, bill.revision) as { choice: AdvisoryChoice; total: number }[];
+    for (const row of rows) counts[row.choice] = row.total;
+    const hash = browserId ? this.voterHash(browserId) : null;
+    const own = hash ? this.db.query(
+      "SELECT choice FROM catalog_draft_choices WHERE bill_id=? AND revision=? AND voter_hash=?"
+    ).get(id, bill.revision, hash) as { choice: AdvisoryChoice } | null : null;
+    return {
+      billId: id, revision: bill.revision,
+      state: this.latest(id)?.revision === bill.revision ? "closed" as const : "accepting" as const,
+      counts: { ...counts, total: counts.support + counts.oppose + counts.unsure },
+      ownChoice: own?.choice ?? null,
+      electorate: "unverified_browser_identities" as const,
+      kind: "unpublished_draft_feedback" as const, binding: false as const,
+    };
+  }
+  saveDraftChoice(id: string, payload: unknown, browserId: string) {
+    const bill = getBill(id), body = object(payload);
+    if (body.revision !== bill.revision)
+      throw new CatalogBallotError(409, "stale_catalog_revision");
+    const choice = body.choice;
+    if (choice !== null && choice !== "support" && choice !== "oppose" && choice !== "unsure")
+      throw new CatalogBallotError(400, "invalid_advisory_choice");
+    const requestId = body.requestId;
+    if (typeof requestId !== "string" || !uuid.test(requestId))
+      throw new CatalogBallotError(400, "uuid_request_id_required");
+    const voter = this.voterHash(browserId);
+    const hash = createHash("sha256").update(JSON.stringify([id, bill.revision, choice])).digest("hex");
+    return this.atomic(() => {
+      const old = this.db.query(
+        "SELECT id,payload_hash,choice,created_at FROM catalog_draft_choice_events WHERE bill_id=? AND revision=? AND voter_hash=? AND request_id=?"
+      ).get(id, bill.revision, voter, requestId) as EventRow | null;
+      if (old) {
+        if (old.payload_hash !== hash) throw new CatalogBallotError(409, "idempotency_key_reused");
+        return { saved: true, replayed: true, kind: "unpublished_draft_feedback" as const, receipt: {
+          id: old.id, revision: bill.revision, choice: old.choice, recordedAt: new Date(old.created_at).toISOString(),
+        } };
+      }
+      if (this.latest(id)?.revision === bill.revision)
+        throw new CatalogBallotError(409, "draft_feedback_closed_after_publication");
+      const now = this.now();
+      if (choice === null)
+        this.db.query("DELETE FROM catalog_draft_choices WHERE bill_id=? AND revision=? AND voter_hash=?").run(id, bill.revision, voter);
+      else
+        this.db.query(
+          "INSERT INTO catalog_draft_choices VALUES(?,?,?,?,?) ON CONFLICT(bill_id,revision,voter_hash) DO UPDATE SET choice=excluded.choice,changed_at=excluded.changed_at"
+        ).run(id, bill.revision, voter, choice, now);
+      const receiptId = randomUUID();
+      this.db.query("INSERT INTO catalog_draft_choice_events VALUES(?,?,?,?,?,?,?,?)").run(
+        receiptId, id, bill.revision, voter, choice, requestId, hash, now
+      );
+      return { saved: true, replayed: false, kind: "unpublished_draft_feedback" as const, receipt: {
+        id: receiptId, revision: bill.revision, choice, recordedAt: new Date(now).toISOString(),
+      } };
+    });
   }
   /** HTTP layer must separately authenticate an authorized human publisher. */
   publish(id: string, payload: unknown, publisher: string) {
