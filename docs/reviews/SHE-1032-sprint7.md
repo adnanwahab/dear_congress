@@ -97,3 +97,7 @@ Broad accessibility remains unresolved; the full legacy suite is not claimed gre
 Final local required suite: PASS, 984 tests / 0 failures / 140770 assertions (32.41s).
 Final typecheck and route smoke: PASS. Dedicated hosted browser workflow added;
 its result must be reviewed separately at the pushed head.
+
+First hosted browser attempt failed before tests: ubuntu-latest resolved to Ubuntu26.04,
+unsupported by pinned Playwright1.56.1. Dedicated workflow now pins Ubuntu24.04;
+no assertion, dependency or timeout was weakened. Exact new-head rerun required.
