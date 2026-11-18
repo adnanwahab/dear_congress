@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const metadata = {
   schema: 'civic-synthesis-bill-collection/v1', collection_id: 'eudaimonia-100',
-  collection_title: '100 Bills for Human Flourishing', version: '1', date: '2026-11-13',
+  collection_title: '110 Bills for Human Flourishing', version: '2', date: '2026-11-18',
   language: 'en-US', source_type: 'editorial_policy_concepts', record_type: 'draft_proposals_not_enacted_law',
   initial_publication: 'unreviewed_catalog', votes: 'advisory_only', costs: 'unestimated', impact_evidence: 'requires_independent_review',
 };
@@ -15,6 +15,7 @@ const expectedCategories = [
   'Meaningful work, autonomy, and time', 'Friendship, community, and belonging',
   'Justice, dignity, and second chances', 'Democracy, wisdom, and government',
   'Technology, AI, and digital freedom', 'Nature, safety, and future generations',
+  'Global cooperation and future institutions',
 ];
 const fields = ['Jurisdiction', 'Problem', 'Proposed change', 'Trade-offs and safeguards', 'Success metrics', 'Flourishing dimensions'];
 const keys = ['jurisdiction', 'problem', 'proposedChange', 'safeguards', 'metrics', 'dimensions'];
@@ -38,7 +39,7 @@ export function parseCollection(source) {
   function finish() {
     if (!bill) return;
     if (keys.some(key => !Object.hasOwn(bill, key))) throw new Error(`${bill.id}: expected exactly six fields`);
-    if (!['federal', 'state', 'city', 'county'].includes(bill.jurisdiction)) throw new Error(`${bill.id}: invalid jurisdiction`);
+    if (!['federal', 'state', 'city', 'county', 'international'].includes(bill.jurisdiction)) throw new Error(`${bill.id}: invalid jurisdiction`);
     records.push({ ...bill, revision: hash(bill), status: 'unreviewed_catalog', sourceType: 'editorial_policy_concepts' });
     bill = undefined;
   }
@@ -58,11 +59,11 @@ export function parseCollection(source) {
   }
   finish();
   records.sort((a,b) => a.id.localeCompare(b.id));
-  if (records.length !== 100 || records.some((b,i) => b.id !== `HFL-${String(i+1).padStart(3,'0')}`)) throw new Error('Expected each ID HFL-001–HFL-100 exactly once');
-  if (new Set(records.map(b => b.title.toLowerCase())).size !== 100) throw new Error('Duplicate bill title');
-  if (records.some((b, i) => b.category !== expectedCategories[Math.floor(i / 10)])) throw new Error('Bill category does not match the HFL ID range in collection version 1');
+  if (records.length !== 110 || records.some((b,i) => b.id !== `HFL-${String(i+1).padStart(3,'0')}`)) throw new Error('Expected each ID HFL-001–HFL-110 exactly once');
+  if (new Set(records.map(b => b.title.toLowerCase())).size !== 110) throw new Error('Duplicate bill title');
+  if (records.some((b, i) => b.category !== expectedCategories[Math.floor(i / 10)])) throw new Error('Bill category does not match the HFL ID range in collection version 2');
   const categories = [...new Set(records.map(b => b.category))];
-  if (categories.length !== 10 || categories.some(c => records.filter(b => b.category === c).length !== 10)) throw new Error('Expected exactly 10 categories with 10 bills each');
+  if (categories.length !== 11 || categories.some(c => records.filter(b => b.category === c).length !== 10)) throw new Error('Expected exactly 11 categories with 10 bills each');
   return { metadata, categories, bills: records };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
