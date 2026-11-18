@@ -32,6 +32,19 @@ What if eight billion people could help write a better plan—and we could test,
 
 Participation is voluntary. Disagreement is protected. AI proposes; people decide.
 
+### From a good idea to something real
+
+**Eyebrow:** YOUR IDEA → REAL-WORLD POSSIBILITY
+
+**Headline:** Your idea today. *A prototype tomorrow.*
+
+A thoughtful contribution could inspire something useful as soon as the next day—a prototype, a local experiment, or a better proposal. Great contributors could receive public credit, opportunities to collaborate, and, if a future program is established, other incentives.
+
+**Important disclosure:** Possibilities, not promises: rewards and turnaround times are not guaranteed. Changing laws requires evidence, public participation, human review, and legal approval.
+
+**Link:** Share an idea ↗
+
+
 ## Section navigation
 
 **Label:** EXPLORE THE IDEAS / 07
