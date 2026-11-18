@@ -40,6 +40,7 @@ export default function BillCatalog({ masterDetail = false }: { masterDetail?: b
   const [params, setParams] = useState(read);
   const [amendments, setAmendments] = useState<Record<string, string>>({});
   const [previewed, setPreviewed] = useState<Record<string, boolean>>({});
+  const [amendmentStatus, setAmendmentStatus] = useState<Record<string, { state: 'loading' | 'saved' | 'saving' | 'error'; message: string }>>({});
   useEffect(() => {
     const update = () => setParams(read());
     window.addEventListener('popstate', update);
@@ -66,7 +67,43 @@ export default function BillCatalog({ masterDetail = false }: { masterDetail?: b
   const results = atlasBills(searchBills(query, category), params);
   const back = `/bills${params.size ? '?' + params : ''}`;
   const selectedBill = masterDetail ? billCollection.bills.find(item => item.id === params.get('bill')) : undefined;
-  if (masterDetail) return <div className="bill-catalog votes-explorer"><header className="votes-top"><a href="/" aria-label="Civic Synthesis home">✳ Civic Synthesis</a><nav><a href="/votes" aria-current="page">Explore {billCollection.bills.length} Bills</a><a href="/account" aria-label="My activity">My activity</a></nav></header><main><div className="votes-master-detail"><nav className="votes-list" aria-label="Bill proposals">{results.map(b => <a key={b.id} href={`/votes?bill=${encodeURIComponent(b.id)}${query ? `&q=${encodeURIComponent(query)}` : ''}${category ? `&category=${encodeURIComponent(category)}` : ''}`} onClick={event => { event.preventDefault(); const next = new URLSearchParams(params); next.set('bill', b.id); window.history.pushState(null, '', `/votes?${next}`); setParams(next); }} aria-current={params.get('bill') === b.id ? 'true' : undefined}><small>{b.category} · {b.id}</small><strong>{b.title}</strong></a>)}</nav><article className="votes-detail">{selectedBill ? <><p className="bill-eyebrow">PROPOSAL · ILLUSTRATIVE / NON-BINDING · {selectedBill.id}</p><h2>{selectedBill.title}</h2><p className="bill-lead">{selectedBill.proposedChange}</p><h3>What would this change?</h3><p>{selectedBill.problem}</p><details><summary>How could this work?</summary><p>{selectedBill.safeguards}</p></details><details><summary>How could we evaluate it?</summary><p>{selectedBill.metrics} These are proposed metrics, not measured results.</p></details><p className="votes-simulation-note">◉ &nbsp;Interactive before/after simulation — planned</p><details><summary>Evidence, costs, and jurisdiction</summary><p>Evidence has not been independently assessed. Fiscal estimate: unknown. Proposed jurisdiction: {selectedBill.jurisdiction}. Legal authority is unverified.</p></details><CatalogAdvisoryBallot key={selectedBill.id} billId={selectedBill.id} revision={selectedBill.revision} /><section className="votes-amendment"><h3>Help improve this bill</h3><p>What would you change? Suggestions are welcome regardless of your choice.</p><label htmlFor={`amendment-${selectedBill.id}`}>Proposed amendment</label><textarea id={`amendment-${selectedBill.id}`} rows={4} value={amendments[selectedBill.id] ?? ""} onChange={event => setAmendments(current => ({ ...current, [selectedBill.id]: event.target.value }))} placeholder="I would change this bill by…" /><button type="button" disabled={!amendments[selectedBill.id]?.trim()} onClick={() => setPreviewed(current => ({ ...current, [selectedBill.id]: true }))}>Preview amendment</button>{previewed[selectedBill.id] && <div className="amendment-preview"><strong>Your proposed amendment</strong><p>{amendments[selectedBill.id]}</p><small>Local draft only. Not published or submitted.</small></div>}<p><a href={`/bills/${selectedBill.id}`}>Review draft status and sources →</a></p></section></> : <><p className="bill-eyebrow">SELECT A PROPOSAL</p><h2>Browse ideas for a better world.</h2><p>Choose a title to read its plain-language summary, possible measures, evidence status, and review gate.</p></>}</article></div></main></div>;
+  useEffect(() => {
+    if (!selectedBill) return;
+    const billId = selectedBill.id;
+    let active = true;
+    setAmendmentStatus(current => ({ ...current, [billId]: { state: 'loading', message: 'Loading your private draft…' } }));
+    fetch(`/api/catalog-bills/${encodeURIComponent(billId)}/amendment-draft`, { credentials: 'same-origin' })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Draft load failed (${response.status})`);
+        if (!active || data.revision !== selectedBill.revision) return;
+        if (data.draft) setAmendments(current => ({ ...current, [billId]: data.draft.text }));
+        setAmendmentStatus(current => ({ ...current, [billId]: { state: 'saved', message: data.draft ? `Private draft loaded · last saved ${new Date(data.draft.updatedAt).toLocaleString()}` : 'No saved private draft for this bill yet.' } }));
+      })
+      .catch(error => {
+        if (active) setAmendmentStatus(current => ({ ...current, [billId]: { state: 'error', message: error instanceof Error ? error.message : 'Could not load your private draft.' } }));
+      });
+    return () => { active = false; };
+  }, [selectedBill?.id, selectedBill?.revision]);
+  async function saveAmendment(billId: string) {
+    const text = amendments[billId]?.trim();
+    const target = billCollection.bills.find(item => item.id === billId);
+    if (!target || !text) return;
+    setAmendmentStatus(current => ({ ...current, [billId]: { state: 'saving', message: 'Saving private draft…' } }));
+    try {
+      const response = await fetch(`/api/catalog-bills/${encodeURIComponent(billId)}/amendment-draft`, {
+        method: 'PUT', credentials: 'same-origin', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ revision: target.revision, text, requestId: crypto.randomUUID() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Draft save failed (${response.status})`);
+      if (data.saved !== true || !data.receipt?.id) throw new Error('The server did not confirm this draft save.');
+      setAmendmentStatus(current => ({ ...current, [billId]: { state: 'saved', message: `Private draft saved to the database · receipt ${data.receipt.id}` } }));
+    } catch (error) {
+      setAmendmentStatus(current => ({ ...current, [billId]: { state: 'error', message: error instanceof Error ? error.message : 'Could not save your private draft.' } }));
+    }
+  }
+  if (masterDetail) return <div className="bill-catalog votes-explorer"><header className="votes-top"><a href="/" aria-label="Civic Synthesis home">✳ Civic Synthesis</a><nav><a href="/votes" aria-current="page">Explore {billCollection.bills.length} Bills</a><a href="/account" aria-label="My activity">My activity</a></nav></header><main><div className="votes-master-detail"><nav className="votes-list" aria-label="Bill proposals">{results.map(b => <a key={b.id} href={`/votes?bill=${encodeURIComponent(b.id)}${query ? `&q=${encodeURIComponent(query)}` : ''}${category ? `&category=${encodeURIComponent(category)}` : ''}`} onClick={event => { event.preventDefault(); const next = new URLSearchParams(params); next.set('bill', b.id); window.history.pushState(null, '', `/votes?${next}`); setParams(next); }} aria-current={params.get('bill') === b.id ? 'true' : undefined}><small>{b.category} · {b.id}</small><strong>{b.title}</strong></a>)}</nav><article className="votes-detail">{selectedBill ? <><p className="bill-eyebrow">PROPOSAL · ILLUSTRATIVE / NON-BINDING · {selectedBill.id}</p><h2>{selectedBill.title}</h2><p className="bill-lead">{selectedBill.proposedChange}</p><h3>What would this change?</h3><p>{selectedBill.problem}</p><details><summary>How could this work?</summary><p>{selectedBill.safeguards}</p></details><details><summary>How could we evaluate it?</summary><p>{selectedBill.metrics} These are proposed metrics, not measured results.</p></details><p className="votes-simulation-note">◉ &nbsp;Interactive before/after simulation — planned</p><details><summary>Evidence, costs, and jurisdiction</summary><p>Evidence has not been independently assessed. Fiscal estimate: unknown. Proposed jurisdiction: {selectedBill.jurisdiction}. Legal authority is unverified.</p></details><CatalogAdvisoryBallot key={selectedBill.id} billId={selectedBill.id} revision={selectedBill.revision} /><section className="votes-amendment"><h3>Help improve this bill</h3><p>What would you change? Suggestions are welcome regardless of your choice.</p><label htmlFor={`amendment-${selectedBill.id}`}>Proposed amendment</label><textarea id={`amendment-${selectedBill.id}`} rows={4} maxLength={10000} value={amendments[selectedBill.id] ?? ""} onChange={event => { setAmendments(current => ({ ...current, [selectedBill.id]: event.target.value })); setAmendmentStatus(current => ({ ...current, [selectedBill.id]: { state: 'error', message: 'Unsaved changes' } })); }} placeholder="Describe a change you would make…" /><button type="button" disabled={!amendments[selectedBill.id]?.trim()} onClick={() => setPreviewed(current => ({ ...current, [selectedBill.id]: true }))}>Preview amendment</button><button type="button" disabled={!amendments[selectedBill.id]?.trim() || amendmentStatus[selectedBill.id]?.state === 'saving'} onClick={() => saveAmendment(selectedBill.id)}>{amendmentStatus[selectedBill.id]?.state === 'saving' ? 'Saving…' : 'Save private draft'}</button><p role="status" aria-live="polite">{amendmentStatus[selectedBill.id]?.message}</p>{previewed[selectedBill.id] && <div className="amendment-preview"><strong>Your proposed amendment</strong><p>{amendments[selectedBill.id]}</p><small>Private draft, stored for this browser. Not submitted for review or a vote.</small></div>}<p><a href={`/bills/${selectedBill.id}`}>Review draft status and sources →</a></p></section></> : <><p className="bill-eyebrow">SELECT A PROPOSAL</p><h2>Browse ideas for a better world.</h2><p>Choose a title to read its plain-language summary, possible measures, evidence status, and review gate.</p></>}</article></div></main></div>;
   return <div className="bill-catalog"><CivicHeader stage="Draft catalog" dataLabel="CURATED DRAFTS" /><main id="main-content" tabIndex={-1}>{params.has('exhibit') ? <Exhibition /> : <><BudgetShock /><OutcomeMetricPuzzle /><MissingVoice /><PolicyPinball />
     <CivicCrossword /><p className="bill-eyebrow">CIVIC SYNTHESIS · CURATED DRAFTS</p>
     {id ? bill ? <>

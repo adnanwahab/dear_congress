@@ -31,6 +31,14 @@ export function catalogBallotHandlers(store: CatalogBallotStore, config: {
     }),
     ballot: (req: Request, id: string) => response(() => store.status(id, viewer(req))),
     draftFeedback: (req: Request, id: string) => response(() => store.draftStatus(id, viewer(req))),
+    amendmentDraft: (req: Request, id: string) => response(() => store.amendmentDraft(id, viewer(req))),
+    saveAmendmentDraft: (req: Request, id: string) => response(async () => {
+      if (req.headers.get("origin") !== config.expectedOrigin(req))
+        throw new CatalogBallotError(403, "same_origin_required");
+      const browser = viewer(req);
+      if (!browser) throw new CatalogBallotError(401, "browser_identity_required");
+      return store.saveAmendmentDraft(id, await boundedJson(req, 12_000), browser);
+    }),
     saveDraftFeedback: (req: Request, id: string) => response(async () => {
       if (req.headers.get("origin") !== config.expectedOrigin(req))
         throw new CatalogBallotError(403, "same_origin_required");

@@ -1047,6 +1047,10 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
       GET: (req) => catalogHandlers.draftFeedback(req, req.params.id!),
       PUT: (req) => catalogHandlers.saveDraftFeedback(req, req.params.id!),
     },
+    "/api/catalog-bills/:id/amendment-draft": {
+      GET: (req) => catalogHandlers.amendmentDraft(req, req.params.id!),
+      PUT: (req) => catalogHandlers.saveAmendmentDraft(req, req.params.id!),
+    },
 
     "/api/citizen-proposals": {
       GET: (req) => citizenProposalHandlers.list(req),

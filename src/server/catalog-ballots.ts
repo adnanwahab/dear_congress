@@ -76,6 +76,8 @@ export class CatalogBallotStore {
       "CREATE TABLE IF NOT EXISTS catalog_publication_audit(id TEXT PRIMARY KEY,publication_id TEXT NOT NULL REFERENCES catalog_publications(id),action TEXT NOT NULL CHECK(action IN ('publish','supersede')),actor TEXT NOT NULL,created_at INTEGER NOT NULL);",
       "CREATE TABLE IF NOT EXISTS catalog_draft_choices(bill_id TEXT NOT NULL,revision TEXT NOT NULL,voter_hash TEXT NOT NULL,choice TEXT NOT NULL CHECK(choice IN ('support','oppose','unsure')),changed_at INTEGER NOT NULL,PRIMARY KEY(bill_id,revision,voter_hash));",
       "CREATE TABLE IF NOT EXISTS catalog_draft_choice_events(id TEXT PRIMARY KEY,bill_id TEXT NOT NULL,revision TEXT NOT NULL,voter_hash TEXT NOT NULL,choice TEXT CHECK(choice IN ('support','oppose','unsure') OR choice IS NULL),request_id TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at INTEGER NOT NULL,UNIQUE(bill_id,revision,voter_hash,request_id));",
+      "CREATE TABLE IF NOT EXISTS catalog_amendment_drafts(bill_id TEXT NOT NULL,revision TEXT NOT NULL,owner_hash TEXT NOT NULL,proposed_text TEXT NOT NULL CHECK(length(proposed_text)>0 AND length(proposed_text)<=10000),created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,PRIMARY KEY(bill_id,revision,owner_hash));",
+      "CREATE TABLE IF NOT EXISTS catalog_amendment_events(id TEXT PRIMARY KEY,bill_id TEXT NOT NULL,revision TEXT NOT NULL,owner_hash TEXT NOT NULL,request_id TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at INTEGER NOT NULL,UNIQUE(bill_id,revision,owner_hash,request_id));",
     ].join("\n"));
   }
   close() { this.db.close(); }
@@ -93,6 +95,10 @@ export class CatalogBallotStore {
   private voterHash(id: string): string {
     if (!uuid.test(id)) throw new CatalogBallotError(401, "browser_identity_required");
     return createHmac("sha256", this.secret).update("catalog-ballot:v1:" + id).digest("hex");
+  }
+  private amendmentOwnerHash(id: string): string {
+    if (!uuid.test(id)) throw new CatalogBallotError(401, "browser_identity_required");
+    return createHmac("sha256", this.secret).update("catalog-amendment-draft:v1:" + id).digest("hex");
   }
   private latest(billId: string): PublicationRow | null {
     return (this.db.query("SELECT * FROM catalog_publications WHERE bill_id=? ORDER BY published_at DESC, id DESC LIMIT 1").get(billId) as PublicationRow | null) ?? null;
@@ -190,6 +196,45 @@ export class CatalogBallotStore {
       return { saved: true, replayed: false, kind: "unpublished_draft_feedback" as const, receipt: {
         id: receiptId, revision: bill.revision, choice, recordedAt: new Date(now).toISOString(),
       } };
+    });
+  }
+  amendmentDraft(id: string, browserId?: string) {
+    const bill = getBill(id);
+    const owner = browserId ? this.amendmentOwnerHash(browserId) : null;
+    const row = owner ? this.db.query(
+      "SELECT proposed_text,created_at,updated_at FROM catalog_amendment_drafts WHERE bill_id=? AND revision=? AND owner_hash=?"
+    ).get(id, bill.revision, owner) as { proposed_text: string; created_at: number; updated_at: number } | null : null;
+    return {
+      billId: id, revision: bill.revision,
+      draft: row ? { text: row.proposed_text, createdAt: new Date(row.created_at).toISOString(), updatedAt: new Date(row.updated_at).toISOString() } : null,
+      storage: "private_browser_bound_draft" as const,
+    };
+  }
+  saveAmendmentDraft(id: string, payload: unknown, browserId: string) {
+    const bill = getBill(id), body = object(payload);
+    if (body.revision !== bill.revision) throw new CatalogBallotError(409, "stale_catalog_revision");
+    if (typeof body.text !== "string" || !body.text.trim() || body.text.trim().length > 10_000)
+      throw new CatalogBallotError(400, "amendment_text_required_max_10000");
+    const text = body.text.trim(), requestId = body.requestId;
+    if (typeof requestId !== "string" || !uuid.test(requestId))
+      throw new CatalogBallotError(400, "uuid_request_id_required");
+    const owner = this.amendmentOwnerHash(browserId);
+    const digest = createHash("sha256").update(JSON.stringify([id, bill.revision, text])).digest("hex");
+    return this.atomic(() => {
+      const old = this.db.query(
+        "SELECT id,payload_hash,created_at FROM catalog_amendment_events WHERE bill_id=? AND revision=? AND owner_hash=? AND request_id=?"
+      ).get(id, bill.revision, owner, requestId) as { id: string; payload_hash: string; created_at: number } | null;
+      if (old) {
+        if (old.payload_hash !== digest) throw new CatalogBallotError(409, "idempotency_key_reused");
+        return { saved: true, replayed: true, receipt: { id: old.id, billId: id, revision: bill.revision, recordedAt: new Date(old.created_at).toISOString() } };
+      }
+      const now = this.now(), receiptId = randomUUID();
+      this.db.query(
+        "INSERT INTO catalog_amendment_drafts VALUES(?,?,?,?,?,?) ON CONFLICT(bill_id,revision,owner_hash) DO UPDATE SET proposed_text=excluded.proposed_text,updated_at=excluded.updated_at"
+      ).run(id, bill.revision, owner, text, now, now);
+      this.db.query("INSERT INTO catalog_amendment_events VALUES(?,?,?,?,?,?,?)")
+        .run(receiptId, id, bill.revision, owner, requestId, digest, now);
+      return { saved: true, replayed: false, receipt: { id: receiptId, billId: id, revision: bill.revision, recordedAt: new Date(now).toISOString() } };
     });
   }
   /** HTTP layer must separately authenticate an authorized human publisher. */
