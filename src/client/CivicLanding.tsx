@@ -68,6 +68,13 @@ export default function CivicLanding() {
               <a className="csh-button csh-light" href="/proposals/new">Propose your own <span aria-hidden="true">↗</span></a>
             </div>
             <p className="csh-hero-note"><span className="csh-green-dot" aria-hidden="true"/>Open for imagination. Grounded in evidence, review, and real people.</p>
+            <div className="csh-contributor-invite">
+              <span className="csh-contributor-kicker">YOUR IDEA → REAL-WORLD POSSIBILITY</span>
+              <h2>Your idea today. <em>A prototype tomorrow.</em></h2>
+              <p>A thoughtful contribution could inspire something useful as soon as the next day—a prototype, a local experiment, or a better proposal. Great contributors could receive public credit, opportunities to collaborate, and, if a future program is established, other incentives.</p>
+              <p className="csh-contributor-caveat">Possibilities, not promises: rewards and turnaround times are not guaranteed. Changing laws requires evidence, public participation, human review, and legal approval.</p>
+              <a href="/proposals/new">Share an idea ↗</a>
+            </div>
           </div>
           <div className="csh-hero-art" role="img" aria-label="An illustrated orbit of arts, science, nature and community around an editable future">
             <span className="csh-scene-title">THE FUTURE MACHINE · IDEA SPACE</span>
