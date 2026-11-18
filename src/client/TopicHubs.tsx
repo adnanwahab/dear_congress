@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PlaceCosts } from './PlaceCosts';
 import { TOPICS } from '../shared/topics';
 import { topicById, topicStageUrl, type TopicHubData } from '../shared/topic-hubs';
 import type { DemoItem, DemoPayload } from '../engine/demo';
@@ -59,6 +60,7 @@ export function TopicHubs({ request }: { request: <T>(path: string) => Promise<T
       <section className="panel"><h2>Simulated experiences</h2><p>Not yet available for curated topic hubs. Simulated journals are excluded from the sample and human sections.</p></section>
       <section className="panel"><h2>Verified outcome evidence</h2><p>Not yet available. No verified implemented policy is registered. Sample outreach and synthetic measurements do not demonstrate an outcome.</p></section>
     </>}
+    {topic && ['housing', 'childcare', 'transit'].includes(topic.id) && <details><summary>Compare local cost context</summary><PlaceCosts /></details>}
   </main>;
 }
 export function TopicReturn() {
