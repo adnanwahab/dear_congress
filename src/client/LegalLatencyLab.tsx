@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import './legal-latency-lab.css';
 
-const HISTORICAL_DAYS = 40;
-const HISTORICAL_MS = HISTORICAL_DAYS * 24 * 60 * 60 * 1000;
+import { HISTORICAL_MS, durationRatio, logPosition } from './legal-latency-math';
+
 const NUMBER = new Intl.NumberFormat('en-US');
 
 const LOG_TICKS = [
@@ -13,21 +13,12 @@ const LOG_TICKS = [
   { label: '40 days', durationMs: HISTORICAL_MS },
 ];
 
-function logPosition(durationMs: number): number {
-  const fraction = Math.log10(Math.max(durationMs, 1)) / Math.log10(HISTORICAL_MS);
-  return Math.max(0, Math.min(100, fraction * 100));
-}
-
-/**
- * Educational comparison of communication round trips, NOT measured legal latency.
- * The modern example is adjustable by the reader; no network probe is performed.
- */
 export default function LegalLatencyLab() {
   const [roundTripMs, setRoundTripMs] = useState(250);
   const [playing, setPlaying] = useState(true);
   const [replay, setReplay] = useState(0);
 
-  const durationRatio = Math.round(HISTORICAL_MS / roundTripMs);
+  const durationRatio = durationRatio(roundTripMs);
   const networkPosition = logPosition(roundTripMs);
 
   return (
