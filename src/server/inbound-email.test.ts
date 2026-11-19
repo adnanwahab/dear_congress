@@ -111,7 +111,7 @@ test("refuses oversized events and never accepts webhooks without signing secret
   const handler = receiver();
   const large = request({ type: "email.received", data: { ...event().data, subject: "x".repeat(140_000) } });
   expect((await handler.webhook(large)).status).toBe(413);
-  expect((await handler.list(admin()).then(r => r.json())).messages).toHaveLength(0);
+  expect((await handler.list(admin()).json()).messages).toHaveLength(0);
   handler.close();
   const disabled = receiver({ webhookSecret: "" });
   expect((await disabled.webhook(request())).status).toBe(503);
