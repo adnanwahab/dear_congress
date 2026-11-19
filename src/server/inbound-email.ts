@@ -139,8 +139,8 @@ export function createResendInbound(options: ReceiverOptions) {
 
   function authorized(req: Request) {
     const token = options.adminToken ?? "";
-    const supplied = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
-    return !!token && equal(supplied, token);
+    const match = /^Bearer ([^\s]+)$/i.exec(req.headers.get("authorization") ?? "");
+    return !!token && !!match && equal(match[1]!, token);
   }
 
   async function webhook(req: Request): Promise<Response> {
