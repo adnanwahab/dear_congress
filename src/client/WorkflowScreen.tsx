@@ -173,12 +173,12 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     if (publicTopic) url.searchParams.set('topic', publicTopic.id);
     else url.searchParams.delete('topic');
     window.history.replaceState(window.history.state, '', url);
-    window.dispatchEvent?.(new Event('civic:location-changed'));
+    window.dispatchEvent?.(new window.Event('civic:location-changed'));
   }, [item?.id, stage, topic]);
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
-  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); window.dispatchEvent?.(new Event('civic:location-changed')); }); }
+  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); window.dispatchEvent?.(new window.Event('civic:location-changed')); }); }
   function saveTracker(next: Tracked[]) { try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; } catch { setError('Could not save the walkthrough in this browser. Enable local storage and try again.'); return false; } }
   async function submitVote(stance?: number) {
     if (mutation.pending || (stance !== undefined && !item)) return;

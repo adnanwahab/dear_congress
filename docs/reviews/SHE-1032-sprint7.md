@@ -210,3 +210,12 @@ PASS across desktop, mobile390 and reflow (19.5s). Focused history/navigation un
 8 PASS / 96 assertions. Typecheck and route smoke rerun after the test typing fix.
 The earlier full diagnostic was 400 PASS / 10 FAIL; its failure records are kept,
 not relabeled green. A fresh complete final-source matrix is required.
+
+CI at a927e80 caught an introduced notification regression: the global Event
+constructor differed from the owning HappyDOM window. Fixed the notification to
+use `window.Event`; no fixture or assertion was weakened. The provenance harness
+also had pending lazy resources resolving after act teardown; settle those actual
+requested modules inside act, preserving its loading/retry and empty-stderr checks.
+Fresh affected integrations: 20 PASS / 627 assertions. Full Bun suite: 985 PASS /
+0 FAIL / 140772 assertions (33.37s). Typecheck PASS. These supersede the prior
+six failing DOM integration receipts; final committed browser matrix follows.
