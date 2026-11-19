@@ -1325,3 +1325,6 @@ html:is(:active-view-transition-type(priority-history), [data-motion-type="prior
 /* Reserve the measured fixed navigation, including wrapped utilities and safe areas. */
 .product-shell, .product-shell.product-shell-landing { padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }
 html { scroll-padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }
+/* Keep chapter preview actions above fixed navigation at narrow/zoomed heights. */
+.chapter-peek { z-index: 110; max-height: min(60vh, max(120px, calc(75dvh - var(--civic-navigation-height, 180px) - 1rem))); }
+.chapter-edge { z-index: 111; }

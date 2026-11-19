@@ -189,3 +189,10 @@ verification: all 6 desktop/mobile cases PASS (24.7s), unchanged axe/focus/value
 assertions and timeouts. Full broad acceptance still requires a completed run at
 the final pushed head. At prior cceb3ed all hosted required checks, dedicated
 browser and immutable preview replay passed; broad job was still installing deps.
+
+The reflow matrix additionally exposed fixed navigation intercepting a chapter
+preview's Open-stage link at 720x500. Bound the preview using the measured
+navigation height and place its controls above navigation. Original pointer and
+keyboard/cancellation reflow cases PASS on a fresh server (2/2, 3.2s), with no
+assertion/timeout change. All known failing classes have a concrete repair;
+full final-head matrix verification remains mandatory.
