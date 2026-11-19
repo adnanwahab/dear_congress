@@ -119,7 +119,7 @@ test("refuses oversized events and never accepts webhooks without signing secret
 });
 
 test("admin detail does not expose Resend upstream failures or body HTML", async () => {
-  const handler = receiver({ fetch: (async () => new Response("down", { status: 503 })) as typeof fetch });
+  const handler = receiver({ fetch: (async () => new Response("down", { status: 503 })) as unknown as typeof fetch });
   await handler.webhook(request());
   const detail = await handler.detail(admin(), emailId);
   expect(detail.status).toBe(502);
