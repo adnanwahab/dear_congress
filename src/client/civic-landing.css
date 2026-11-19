@@ -72,7 +72,7 @@
 .csh-feature h3{font-size:clamp(26px,2.6vw,37px);max-width:290px;margin:22px 0 10px;position:relative;z-index:2}
 .csh-feature p{font-size:14px;line-height:1.65;max-width:310px;color:#3b4a47;position:relative;z-index:2}
 .csh-feature a{font-size:13px;font-weight:850;margin-top:auto;position:relative;z-index:3}
-.csh-feature-bg{font-size:125px;position:absolute;right:-11px;bottom:24px;opacity:.13;transform:rotate(13deg);pointer-events:none}
+.csh-feature-bg{font-size:125px;position:absolute;right:24px;bottom:24px;opacity:.13;transform:rotate(13deg);pointer-events:none}
 .csh-idea-banner{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:20px;padding:20px 24px;border:1px dashed #afb7ad;border-radius:18px;background:#fff}
 .csh-idea-banner strong{font-size:17px;letter-spacing:-.025em}
 .csh-idea-banner p{font-size:13px;color:var(--csh-muted);margin-top:5px}

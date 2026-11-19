@@ -117,6 +117,8 @@ test('Map searchable county alternative exposes identity and synthetic requireme
 test('Synth keyboard parameter editing announces stale results with read-only previews', async ({ page }) => {
   await page.goto('/synth');
   const strength = page.getByRole('slider', { name: /Implementation strength/ });
+  // Wait for the existing lazy route before starting native tab traversal.
+  await expect(strength).toBeVisible();
   await reach(page, strength);
   await page.keyboard.press('Home');
   await expect(strength).toHaveValue('0');
