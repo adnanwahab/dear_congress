@@ -24,6 +24,7 @@ import { contactReasons, isPublicEntry, moderate, moderationAuthorized, moderati
 import { boundedJson, embedCsp, PublicInputError } from "./src/server/public-security";
 import { createPublicSecurity, publicHandler, securityHeaders, validateVotes } from "./src/server/public-security";
 import { handleHblGovernance } from "./src/server/hbl/api";
+import { createResendInbound } from "./src/server/inbound-email";
 import { renderPage, sitemap } from "./src/server/pages";
 import { buildBrowser, transitionShell } from "./src/server/browser-build";
 import { SITE_URL } from "./src/shared/page-metadata";
@@ -908,6 +909,13 @@ const catalogHandlers = catalogBallotHandlers(catalogBallots, {
 });
 const planRoomsHandler = roomHandler(new PlanRooms(), req => publicSecurity.origin(req));
 const statsHTTP = createStatsHTTP({ stats: launchStats, token: ADMIN_TOKEN, healthy: () => statsHealthy, record: recordStats, env: process.env });
+const resendInbound = createResendInbound({
+  dbPath: process.env.RESEND_INBOUND_DB_PATH ?? `${DB_PATH}.resend.sqlite`,
+  webhookSecret: process.env.RESEND_WEBHOOK_SECRET ?? "",
+  apiKey: process.env.RESEND_API_KEY ?? "",
+  adminToken: ADMIN_TOKEN,
+  allowedRecipients: process.env.RESEND_INBOUND_TO ?? "",
+});
 const serverOptions: Parameters<typeof Bun.serve>[0] = {
   port: Number(process.env.PORT ?? 8000),
   // Bun defaults to 10s, which is shorter than our quiet SSE streams.
@@ -996,6 +1004,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     "/api/hbl/*": (req) => handleHblGovernance(req, observeRepositoryVote),
     "/api/internal/hbl/batch": (req) => handleHblGovernance(req),
     "/api/webhooks/github": (req) => handleHblGovernance(req),
+    "/api/webhooks/resend": { POST: req => resendInbound.webhook(req) },
+    "/api/admin/inbound-email": { GET: req => resendInbound.list(req) },
+    "/api/admin/inbound-email/:id": { GET: req => resendInbound.detail(req, req.params.id!) },
 
     "/api/debug/request": {
       GET: (req) => {
