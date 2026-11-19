@@ -32,7 +32,11 @@ test.beforeEach(async ({ page }) => {
   const writes: string[] = [];
   await page.route('**/*', async route => {
     const request = route.request();
-    if (!['GET', 'HEAD'].includes(request.method())) {
+    // Editing now debounces an existing read-only server preview. Validate its
+    // exact flag; committed synthesis and every civic write remain forbidden.
+    if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/synthesize' && request.postDataJSON()?.preview === true) {
+      await route.continue();
+    } else if (!['GET', 'HEAD'].includes(request.method())) {
       writes.push(request.url());
       await route.abort();
     } else await route.continue();
@@ -110,7 +114,7 @@ test('Map searchable county alternative exposes identity and synthetic requireme
   await expect(page.locator('.county-selected')).toContainText('Plan revision 2');
 });
 
-test('Synth keyboard parameter editing announces stale results without running model', async ({ page }) => {
+test('Synth keyboard parameter editing announces stale results with read-only previews', async ({ page }) => {
   await page.goto('/synth');
   const strength = page.getByRole('slider', { name: /Implementation strength/ });
   await reach(page, strength);

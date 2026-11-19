@@ -1,3 +1,4 @@
+import { RealityLens } from './RealityLens';
 import { useMemo, useState } from 'react';
 import { billCollection, searchBills } from '../shared/bill-catalog';
 import './civic-landing.css';
@@ -55,6 +56,7 @@ export default function CivicLanding() {
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
+      <RealityLens />
     </header>
     <main id="main-content" tabIndex={-1}>
       <section className="csh-hero">

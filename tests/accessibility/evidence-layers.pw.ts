@@ -28,7 +28,10 @@ test('peel evidence with keyboard and retain proposal through interrupted chapte
   });
   expect(overflow.scrollWidth, JSON.stringify(overflow, null, 2)).toBeLessThanOrEqual(overflow.viewport);
   // Leave while the slow enhancement may still be running. Native links own routing.
-  await page.locator('.bottom-destinations a[href^="/draft"]').click();
+  const draftLink = page.getByRole('navigation', { name: 'Main navigation', exact: true }).getByRole('link', { name: 'Draft', exact: true });
+  await expect(draftLink).toHaveAttribute('href', '/draft?proposal=demo-food');
+  await draftLink.focus();
+  await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/draft\?proposal=demo-food/);
   await expect(page.locator('main')).toContainText('Food Access Research Atlas');
   await page.goBack();

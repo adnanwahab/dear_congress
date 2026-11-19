@@ -7,8 +7,10 @@ test('uncertainty keyboard, API failure, offline, export and print fallbacks', a
   await expect(stack).toBeVisible();
   const select = stack.getByLabel('Example case');
   await select.focus();
-  await page.keyboard.press('ArrowDown');
+  const label = await select.locator('option').nth(1).textContent();
+  await page.keyboard.type(label!);
   await page.keyboard.press('Enter');
+  await expect(select).toHaveValue('conflicting');
   await expect(stack.getByRole('status')).toContainText('No combined interval');
   await context.setOffline(true);
   await select.selectOption('missing');

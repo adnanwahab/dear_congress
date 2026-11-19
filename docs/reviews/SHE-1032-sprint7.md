@@ -101,3 +101,82 @@ its result must be reviewed separately at the pushed head.
 First hosted browser attempt failed before tests: ubuntu-latest resolved to Ubuntu26.04,
 unsupported by pinned Playwright1.56.1. Dedicated workflow now pins Ubuntu24.04;
 no assertion, dependency or timeout was weakened. Exact new-head rerun required.
+
+## Sprint 8 — compatibility implementation and independent review order
+
+The user explicitly authorized **compatibility repairs only** in App.tsx/server.ts.
+This is not permission to mount the new policy workflow or accept dependencies.
+All fixes continue existing PR #463; no independent Civic feature PR was created.
+
+Implemented compatibility repairs:
+- Preserve `/votes` master-detail index and 308 retirement of `/bills`; preserve
+  exact query parameters in that redirect, checked by actual production route smoke.
+- Restore the prior sample voting experience only for explicit `?proposal=...`,
+  using existing WorkflowScreen. Catalog identities remain separate from samples.
+- Restore existing BottomNavigation; measure its wrapped height to reserve space
+  and keep controls reachable above it. Restore existing RealityLens in the newer
+  headers and the catalog's existing search/category/atlas controls, sharing code.
+- Correct actual measured color-contrast defects in the home, visual stories,
+  constellation controls and county status. No axe rules or impact thresholds changed.
+- Replace retired grid browser expectations with master-detail counts, keyboard
+  selection, exact source-detail navigation, filtering, native history, reflow,
+  no-write and axe coverage. Games still run on retained bill detail routes;
+  moved discovery controls are tested at their real `/dashboard` entrypoint.
+- Use exact links/region status locators where restoring navigation introduces
+  legitimate second matches. Native type-ahead replaces platform-specific select
+  Arrow-key assumptions while retaining real keyboard input, exact values/focus.
+  A minimal macOS Chromium153 reproduction did not change native select values
+  for ArrowDown/Enter; actual keyboard type-ahead worked. Preview-enabled synthesis
+  tests allow only the existing exact `preview:true` POST; every civic write and
+  committed synthesis request still fails their no-write assertion.
+
+The first full repaired desktop diagnostic reached 79/82 PASS; its three remaining
+cases were corrected (contrast specificity, keyboard case selection, explicit
+budget slider boundaries). A later simultaneous full Bun/browser run had resource
+contention, including a screenshot hook timeout. It is not a PASS receipt. Final
+checks run sequentially with unchanged timeouts. Full five-project acceptance is
+NOT PASS unless the final local or hosted receipt explicitly records completion.
+
+### Seven-candidate decisions
+
+| PR / owned implementation | Current source identity before this compatibility push | Specific independent reviewer decision |
+| --- | --- | --- |
+| #454 / review authorization | `f6d18880641a` on `mini/SHE-1026`, base main | First independent security review: persistent revocation, active token rotation and stale-process rejection, role removal, separate publisher, exact four-decision attestation, fail-closed publication, operator secrets/backup/rollback. New focused 7 tests / 232 assertions and full 964 tests PASS; hosted required checks PASS. Human approval NOT RUN. |
+| #461 / persisted catalog ballots | `ea9f4c28fae0`, base `mini/SHE-1026` | Accept #454 first. Review existing real two-browser SQLite/restart/withdraw/retry/timeout receipt, exact revision/publication separation and historical records. Do not retarget or absorb parent review on behalf of a human. Dedicated hosted acceptance PASS; rerun required checks on the eventually accepted base. |
+| #452 / isolated HELIOS workbench | `26959fcae11f`, base main | Review exact source/revision/round binding, public consent and privacy, no denominator inference and minority objections. Fresh 5 tests / 25 assertions PASS. UI fixtures do not prove objection persistence: integrator must use authenticated durable adapter responses; actual mounted persistence NOT RUN. |
+| #453 / HELIOS service | `1dff9463ff3d`, base main | Review consent to public output and external processing, source/hash binding, unsupported/missing evidence, citation validation, model/version and human authority. Fresh 13 tests / 63 assertions PASS. Authenticated trusted-source route composition remains integrator-owned; no automatic human approval. |
+| #460 / exact catalog and picker | `43f38ee4ce03`, base main | Review exact legal source/provenance, mapping identity, pinned software model/seeds and unsupported effects. Software mapping review does not establish legal applicability. Merged HBL fixture remains byte-identical, SHA-256 `1baf5434cd1f4d28107890e74ce0a06d3da6124617f3ca406e8935a90ef1bf2c`. |
+| #462 / durable origin binding | `af043ed15ee3`, base `codex/civic-policy-demo-catalog` | Accept #460 first. Review immutable v1 baseline/v2 source and actual legal hashes, trusted persisted origin, publishing-browser ownership, public-transfer consent, recovery and separate v3 histories. Fresh catalog+origin 8 tests / 214 assertions PASS. Browser identity must come from the existing authenticated server boundary when mounted. |
+| #463 / this compatibility repair | previous head `bfff656ce51a`, final head in PR checks | Review intended retired-index behavior, restored existing routes/navigation, equivalent browser coverage and actual axe repairs. Final required and broad receipts must bind the pushed head; earlier green required checks do not cover these new changes. |
+
+All seven had zero submitted reviews at the refreshed audit. Existing #452/#453/
+#460 broad runs and prior #463 broad run are CANCELLED with recorded failures;
+#454's current broad run was still in progress at audit time. No all-CI-green claim.
+Exact complete SHAs and check links are retained in the PR snapshots/updated workpads.
+
+Dependency order: independent human review of #454 and compatibility #463; #461
+only after accepted #454. Independently review #452/#453 and #460; #462 only after
+accepted #460. A human must verify required checks on accepted integration heads.
+Keep SHE-1032/SHE-1044 dispatch labels and dependency relations until their actual
+acceptance. #452/#453 keep exclusive module ownership; this patch edits none of them.
+
+First review-ready security candidate: #454. No new shared policy integration is
+currently dispatchable. The first integration task after legitimate acceptance is
+SHE-1032's designated owner mounting the existing PolicyDemoPicker callback into
+the existing proposal save, invoking PolicyOriginStore create/prepare with trusted
+browser identity and explicit public consent, then calling the existing server HBL
+client and using its actual returned URL/lifecycle. Revisions must retain prior
+previews and independent advisory histories. No new engine/editor/catalog/client.
+
+Remote three-policy staging, native WebGPU per demo, production durability,
+deployment and human acceptance remain NOT RUN. No production mutation occurred.
+
+Final local evidence update before push: typecheck PASS; production route smoke
+PASS. The full Bun suite was run at standard timeouts; resource-sensitive UI tests
+(reality-lens and then the Map walkthrough) timed out on separate full attempts.
+The isolated reality-lens recheck passed in 545ms. Retain these as FAIL receipts,
+not a full-suite PASS; exact pushed-head hosted required checks must rerun.
+The complete five-project browser attempt was interrupted after contention and
+is NOT RUN to completion. Latest desktop diagnostic: 79/82 PASS before the last
+three corrections; no broad accessibility PASS is asserted. New source and tests
+must be evaluated by the existing broad CI job on this pushed revision.

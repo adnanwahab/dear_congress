@@ -20,6 +20,7 @@ test('briefing controls and transcript remain usable across access modes', async
   await play.focus(); await page.keyboard.press('Enter');
   await expect(briefing.getByRole('status')).toContainText('Loading');
   await page.evaluate(() => (window as any).briefingUtterance.onstart());
+  await expect(briefing.getByRole('status')).toContainText('Playing:');
   await page.keyboard.press('Tab');
   await expect(briefing.getByRole('button', { name: 'Pause', exact: true })).toBeFocused();
   await page.keyboard.press('Space');

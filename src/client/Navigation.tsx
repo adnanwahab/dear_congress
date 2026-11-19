@@ -26,6 +26,16 @@ function Icon({ name }: { name: string }) {
 }
 export function BottomNavigation() {
   const sheet = useRef<HTMLDialogElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = bar.current;
+    if (!element) return;
+    const update = () => document.documentElement.style.setProperty('--civic-navigation-height', `${element.getBoundingClientRect().height}px`);
+    update();
+    const observer = new window.ResizeObserver(update);
+    observer.observe(element);
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--civic-navigation-height'); };
+  }, []);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 600px)');
@@ -47,5 +57,5 @@ export function BottomNavigation() {
   })()} onClick={e => { if (!e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && current !== d.href) playSound('navigation'); }} key={d.href} aria-current={current === d.href || (d.href === "/votes" && current === "/vote") ? "page" : undefined}><Icon name={d.icon} /><span>{d.label}</span></a>;
     return CIVIC_STAGES.some(s => s.route === d.href) ? <StagePreview key={d.href} route={d.href} title={d.label}>{link}</StagePreview> : link;
   };
-  return <><ChapterPeek path={current} /><div className="bottom-bar"><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<button className="bottom-more" aria-haspopup="dialog" aria-controls="mobile-more" aria-expanded={open} onClick={() => { sheet.current?.showModal(); setOpen(true); }}><Icon name="more" /><span>More</span></button></nav><div className="desktop-utilities">{utilities}</div><dialog ref={sheet} id="mobile-more" className="more-sheet" aria-labelledby="more-title" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close(); } }}><div className="more-heading"><h2 id="more-title">More destinations</h2><button autoFocus onClick={() => sheet.current?.close()} aria-label="Close more destinations">Close</button></div><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</dialog></div></>;
+  return <><ChapterPeek path={current} /><div className="bottom-bar" ref={bar}><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<button className="bottom-more" aria-haspopup="dialog" aria-controls="mobile-more" aria-expanded={open} onClick={() => { sheet.current?.showModal(); setOpen(true); }}><Icon name="more" /><span>More</span></button></nav><div className="desktop-utilities">{utilities}</div><dialog ref={sheet} id="mobile-more" className="more-sheet" aria-labelledby="more-title" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close(); } }}><div className="more-heading"><h2 id="more-title">More destinations</h2><button autoFocus onClick={() => sheet.current?.close()} aria-label="Close more destinations">Close</button></div><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</dialog></div></>;
 }

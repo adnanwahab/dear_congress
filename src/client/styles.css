@@ -1321,3 +1321,7 @@ html:is(:active-view-transition-type(priority-history), [data-motion-type="prior
 
 /* The editorial homepage ends at its own footer, without the app navigation dock. */
 .product-shell.product-shell-landing { padding-bottom: 0; }
+
+/* Reserve the measured fixed navigation, including wrapped utilities and safe areas. */
+.product-shell, .product-shell.product-shell-landing { padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }
+html { scroll-padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }

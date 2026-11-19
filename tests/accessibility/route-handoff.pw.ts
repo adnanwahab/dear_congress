@@ -15,7 +15,7 @@ for (const failure of [false, true]) test(`native route handoff ${failure ? 'fai
   await expect(page).toHaveURL(/\/votes$/);
   await expect(page.locator('main h1')).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/\/feed\?motion=slow$/);
+  await expect(page).toHaveURL(/\/feed\?motion=slow&proposal=demo-housing$/);
   await page.goForward();
   await expect(page).toHaveURL(/\/votes$/);
   await expect(page.locator('main h1')).toBeVisible();

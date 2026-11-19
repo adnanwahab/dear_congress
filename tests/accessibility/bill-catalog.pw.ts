@@ -1,6 +1,6 @@
 import { test, expect, type Locator } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-test('catalog keyboard search, categories, history and deep link', async ({ page }) => {
+test('master-detail catalog keyboard search, categories, history and exact source deep link', async ({ page }) => {
   let writes = 0;
   page.on('request', r => { if (r.method() === 'POST' && /\/(votes|citizen-proposals)/.test(r.url())) writes++; });
   async function activate(target: Locator) {
@@ -14,8 +14,8 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
     }
     throw new Error('Catalog control unreachable by keyboard');
   }
-  await page.goto('/bills');
-  await expect(page.locator('.bill-grid article')).toHaveCount(110);
+  await page.goto('/votes');
+  await expect(page.locator('.votes-list a')).toHaveCount(110);
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to main content', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
@@ -24,17 +24,19 @@ test('catalog keyboard search, categories, history and deep link', async ({ page
   for (let i = 0; i < 20 && !(await search.evaluate(el => el === document.activeElement)); i++) await page.keyboard.press('Tab');
   await expect(search).toBeFocused();
   await page.keyboard.type('HFL-051');
-  await expect(page.locator('.bill-grid article')).toHaveCount(1);
+  await expect(page.locator('.votes-list a')).toHaveCount(1);
   await expect(search).toBeFocused();
   const share = page.url();
   await activate(page.getByRole('button', { name: 'Housing and livable cities', exact: true }));
   await expect(page.locator('main')).toContainText('No draft concepts match');
   await page.goBack();
-  await expect(page.locator('.bill-grid article')).toHaveCount(1);
+  await expect(page.locator('.votes-list a')).toHaveCount(1);
   await page.goForward();
-  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await expect(page.locator('.votes-list a')).toHaveCount(0);
   await page.goto(share);
-  await activate(page.getByRole('link', { name: /Explore proposal HFL-051/ }));
+  await activate(page.locator('.votes-list a').filter({ hasText: 'HFL-051' }));
+  await expect(page.locator('main h1')).toHaveText('Third Places for Everyone Act');
+  await activate(page.getByRole('link', { name: 'Review draft status and sources →' }));
   await expect(page).toHaveURL(/\/bills\/HFL-051/);
   await expect(page.getByRole('heading', { name: 'Statutory text' })).toBeVisible();
   await expect(page.locator('main')).toContainText('Unknown until assessed');
@@ -68,32 +70,33 @@ test('governance prism retains selection, history and keyboard focus in reduced 
   await next.click();
   await expect(prism.getByRole('region', { name: 'Time lens', exact: true })).toContainText('Missing data');
   await page.getByRole('link', { name: '← All 110 proposals' }).click();
+  await expect(page).toHaveURL(/\/votes/);
   await expect(page.getByRole('searchbox', { name: 'Search bills' })).toHaveValue('HFL-051');
-  await expect(page.locator('.bill-grid article')).toHaveCount(1);
+  await expect(page.locator('.votes-list a')).toHaveCount(1);
 });
 
 test('atlas text navigation preserves filters and history under reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/bills?view=atlas&scope=federal');
-  const region = page.getByLabel('Browse region', { exact: true });
+  await page.goto('/votes?view=atlas&scope=federal');
+  const region = page.getByRole('combobox', { name: 'Browse region', exact: true });
   await region.focus();
   await region.selectOption('south');
   await expect(region).toBeFocused();
-  const ids = await page.locator('.bill-grid .bill-meta').allTextContents();
+  const ids = await page.locator('.votes-list a small').allTextContents();
   expect(ids.length).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Use text-only regions / low power', exact: true }).click();
   await expect(page.locator('.atlas-overview')).toHaveCount(0);
-  expect(await page.locator('.bill-grid .bill-meta').allTextContents()).toEqual(ids);
-  await page.getByLabel('Proposed decision scope', { exact: true }).selectOption('city');
-  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  expect(await page.locator('.votes-list a small').allTextContents()).toEqual(ids);
+  await page.getByRole('combobox', { name: 'Proposed decision scope', exact: true }).selectOption('city');
+  await expect(page.locator('.votes-list a')).toHaveCount(0);
   await page.goBack();
-  await expect(page.getByLabel('Proposed decision scope', { exact: true })).toHaveValue('federal');
+  await expect(page.getByRole('combobox', { name: 'Proposed decision scope', exact: true })).toHaveValue('federal');
   await expect(region).toHaveValue('south');
   await page.goForward();
-  await expect(page.locator('.bill-grid article')).toHaveCount(0);
+  await expect(page.locator('.votes-list a')).toHaveCount(0);
   await page.getByRole('button', { name: 'Clear / reset', exact: true }).click();
-  await expect(page.locator('.bill-grid article')).toHaveCount(110);
-  await expect(page).toHaveURL(/\/bills$/);
+  await expect(page.locator('.votes-list a')).toHaveCount(110);
+  await expect(page).toHaveURL(/\/votes$/);
 });
 
 test('static policy questions retain focus, filters and history with reduced motion', async ({ page }) => {
@@ -103,7 +106,7 @@ test('static policy questions retain focus, filters and history with reduced mot
   const search = page.getByRole('searchbox', { name: 'Search questions' });
   await search.fill('no matching question');
   await expect(search).toBeFocused();
-  await expect(page.getByRole('status')).toContainText('No questions match');
+  await expect(page.locator('main').getByRole('status')).toContainText('No questions match');
   await page.getByRole('button', { name: 'Clear question search' }).click();
   await questions.getByRole('button', { name: 'What could it cost?' }).click();
   await expect(page.getByRole('heading', { name: 'What could it cost?' })).toBeFocused();
