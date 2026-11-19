@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('stage lens stays inert, dismisses, and preserves the destination identity', async ({ page }) => {
   let writes = 0;
   page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) writes++; });
-  await page.goto('/feed?proposal=sample-identity&topic=housing');
+  await page.goto('/feed?proposal=demo-housing&topic=housing');
   const link = page.locator('.bottom-destinations a').filter({ hasText: 'Votes' });
   const href = await link.getAttribute('href');
   await link.focus();
@@ -45,6 +45,6 @@ test('failed lazy summary keeps the real link available without submission', asy
   // Native keyboard activation remains usable even when the summary script fails.
   await link.focus();
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/votes$/);
+  await expect(page).toHaveURL(/\/votes\?proposal=demo-housing$/);
   expect(writes).toBe(0);
 });

@@ -11,25 +11,31 @@ for (const failure of [false, true]) test(`native route handoff ${failure ? 'fai
     })));
   });
   await page.goto('/feed?motion=slow');
-  await page.locator('.bottom-destinations a[href="/votes"]').click();
-  await expect(page).toHaveURL(/\/votes$/);
+  await expect(page).toHaveURL(/\/feed\?motion=slow&proposal=demo-housing$/);
+  const navigation = page.getByRole('navigation', { name: 'Main navigation', exact: true });
+  const votes = navigation.getByRole('link', { name: 'Votes', exact: true });
+  await expect(votes).toHaveAttribute('href', '/votes?proposal=demo-housing');
+  await votes.click();
+  await expect(page).toHaveURL(/\/votes\?proposal=demo-housing$/);
   await expect(page.locator('main h1')).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/feed\?motion=slow&proposal=demo-housing$/);
   await page.goForward();
-  await expect(page).toHaveURL(/\/votes$/);
+  await expect(page).toHaveURL(/\/votes\?proposal=demo-housing$/);
   await expect(page.locator('main h1')).toBeVisible();
-  await page.locator('.bottom-destinations a[href="/draft"]').focus();
-  await expect(page.locator('.bottom-destinations a[href="/draft"]')).toBeFocused();
+  const draft = navigation.getByRole('link', { name: 'Draft', exact: true });
+  await expect(draft).toHaveAttribute('href', '/draft?proposal=demo-housing');
+  await draft.focus();
+  await expect(draft).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/draft(?:\?[^#]*)?$/);
   await expect(page.locator('main h1')).toBeVisible();
   await page.evaluate(() => {
     // Several taps within one task while the incoming transition is still live.
     for (const href of ['/feed', '/votes', '/draft'])
-      (document.querySelector(`.bottom-destinations a[href="${href}"]`) as HTMLAnchorElement).click();
+      ([...document.querySelectorAll<HTMLAnchorElement>('.bottom-destinations .stage-peek-link > a')].find(link => new URL(link.href).pathname === href)!).click();
   });
   await expect(page).toHaveURL(/\/draft(?:\?[^#]*)?$/);
-  await expect(page.locator('.bottom-destinations a[aria-current="page"]')).toHaveAttribute('href', '/draft');
+  await expect(page.locator('.bottom-destinations a[aria-current="page"]')).toHaveAttribute('href', '/draft?proposal=demo-housing');
   expect(writes).toBe(0);
 });

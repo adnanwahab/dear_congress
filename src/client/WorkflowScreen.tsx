@@ -10,7 +10,7 @@ import { BudgetShock } from './BudgetShock';
 import { OutcomeMetricPuzzle } from './OutcomeMetricPuzzle';
 import { PersonalPriorities } from './PriorityAllocation';
 import { JourneyRibbon } from './JourneyRibbon';
-import { readJourney, restoreJourney, writeJourney } from "./journey-history";
+import { readJourney, restoreJourneyIfUnclaimed, writeJourney } from "./journey-history";
 import { CivicMarbleRun } from './CivicMarbleRun';
 import { CivicSampler } from './CivicSampler';
 import { CouncilRoleplay } from './CouncilRoleplay';
@@ -127,7 +127,7 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
   }, [selected, query, topic, outcomeFilter, jurisdiction.value]);
   useEffect(() => {
     if (loading || !journey) return;
-    const frame = window.requestAnimationFrame(() => restoreJourney());
+    const frame = window.requestAnimationFrame(() => restoreJourneyIfUnclaimed());
     return () => window.cancelAnimationFrame(frame);
   }, [loading, journey]);
   const route = (destination: Stage, proposal?: string | null) => {
@@ -173,11 +173,12 @@ export default function WorkflowScreen({ stage, request }: { stage: Stage; reque
     if (publicTopic) url.searchParams.set('topic', publicTopic.id);
     else url.searchParams.delete('topic');
     window.history.replaceState(window.history.state, '', url);
+    window.dispatchEvent?.(new Event('civic:location-changed'));
   }, [item?.id, stage, topic]);
   useEffect(() => { setOffice(''); setStatus(''); }, [item?.id, jurisdiction.value]);
   const choice = item ? data?.votes[item.id] : undefined;
   const selectedOffice = office || item?.sponsors[0] || '';
-  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); }); }
+  function choose(id: string) { if (id === item?.id) return; transitionProposal(() => { setSelected(id); setOffice(''); setStatus(''); window.history.replaceState(window.history.state, '', route(stage,id)); window.dispatchEvent?.(new Event('civic:location-changed')); }); }
   function saveTracker(next: Tracked[]) { try { localStorage.setItem(TRACKER_KEY, JSON.stringify(next)); setTracker(next); return true; } catch { setError('Could not save the walkthrough in this browser. Enable local storage and try again.'); return false; } }
   async function submitVote(stance?: number) {
     if (mutation.pending || (stance !== undefined && !item)) return;

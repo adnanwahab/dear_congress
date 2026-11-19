@@ -196,3 +196,17 @@ navigation height and place its controls above navigation. Original pointer and
 keyboard/cancellation reflow cases PASS on a fresh server (2/2, 3.2s), with no
 assertion/timeout change. All known failing classes have a concrete repair;
 full final-head matrix verification remains mandatory.
+
+Final route handoff investigation found two more actual defects, now repaired:
+summary popovers used a fixed bottom offset and covered the link opening them;
+and deferred history/data-load restoration could steal focus already claimed by
+an incoming visitor. Position summary windows using measured navigation height,
+and share guarded restoration between native BFCache and delayed workflow data.
+Add the pre-pageshow claimed-focus regression. Navigation also refreshes its
+selected-source query after the workflow canonicalizes the URL; native tests now
+assert the same actual demo proposal ID across back/forward and draft stages.
+Fresh isolated-server verification: all 18 native history/summary/navigation cases
+PASS across desktop, mobile390 and reflow (19.5s). Focused history/navigation units:
+8 PASS / 96 assertions. Typecheck and route smoke rerun after the test typing fix.
+The earlier full diagnostic was 400 PASS / 10 FAIL; its failure records are kept,
+not relabeled green. A fresh complete final-source matrix is required.

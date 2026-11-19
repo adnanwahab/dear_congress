@@ -65,7 +65,7 @@ test('Home navigation exposes named destinations and mobile modal restores focus
   const feed = page.locator('.bottom-destinations a[href="/feed"]');
   await reach(page, feed);
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/feed$/);
+  await expect(page).toHaveURL(/\/feed\?proposal=demo-housing$/);
   await expect(page.locator('main h1')).toBeVisible();
 });
 

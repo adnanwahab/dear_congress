@@ -43,12 +43,17 @@ export function BottomNavigation() {
     media.addEventListener('change', close);
     return () => media.removeEventListener('change', close);
   }, []);
-  const [path, setPath] = useState(window.location.pathname);
-  useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
-  const current = path.replace(/\/+$/, '') || '/';
+  const [routeLocation, setRouteLocation] = useState(() => ({ pathname: window.location.pathname, search: window.location.search }));
+  useEffect(() => {
+    const update = () => setRouteLocation(previous => previous.pathname === window.location.pathname && previous.search === window.location.search ? previous : { pathname: window.location.pathname, search: window.location.search });
+    window.addEventListener('popstate', update);
+    window.addEventListener('civic:location-changed', update);
+    return () => { window.removeEventListener('popstate', update); window.removeEventListener('civic:location-changed', update); };
+  }, []);
+  const current = routeLocation.pathname.replace(/\/+$/, '') || '/';
   const utilities = <nav className="bottom-utilities" aria-label="Page actions"><button onClick={() => { if (window.history.length > 1) window.history.back(); else window.location.assign('/'); }}>← Back</button><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button><a href="/">Overview</a><a href="/?house=1">Civic House</a><a href="/account" aria-current={current === "/account" ? "page" : undefined}>Participation &amp; privacy</a><a href="/account#graphics">Graphics quality</a><a href="/outcomes#watchlist">Watchlist</a><a href="/topics">Topics</a><a href="/bills">110 Bills</a><a href="/needs">Needs</a><a href="/synth">Synthesis</a><a href="/feed?presenter=1">Present sample proposals</a><a href="/documentation" aria-current={current === "/documentation" || current === "/docs" ? "page" : undefined}>Documentation</a><a href="/journal?tab=api">API docs ↗</a><HapticPreference /><span className="bottom-app-links"><a href="https://happybearlandia.fly.dev/world" target="_blank" rel="noopener noreferrer" aria-label="HBL — HappyBearLandia (opens in a new tab)">HBL ↗</a><a href="https://digital-pensieve.fly.dev/" target="_blank" rel="noopener noreferrer" aria-label="Digital Pensieve (opens in a new tab)">digital-pensieve ↗</a></span></nav>;
   const destination = (d: typeof DESTINATIONS[number], index: number) => { const link = <a className={index >= 5 ? "secondary-destination" : undefined} href={(() => {
-    const query = new URLSearchParams(window.location.search);
+    const query = new URLSearchParams(routeLocation.search);
     const topic = topicById(query.get('topic') ?? '');
     const proposal = query.get('proposal');
     return CIVIC_STAGES.some(s => s.route === d.href)
