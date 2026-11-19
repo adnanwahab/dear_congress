@@ -180,3 +180,12 @@ The complete five-project browser attempt was interrupted after contention and
 is NOT RUN to completion. Latest desktop diagnostic: 79/82 PASS before the last
 three corrections; no broad accessibility PASS is asserted. New source and tests
 must be evaluated by the existing broad CI job on this pushed revision.
+
+Final three-case correction: scoped the synthesis test to the engine's actual
+Synthesis settings section (another component has its own Annual budget slider),
+fixed the shared hover cascade overriding constellation contrast, and contained
+Tab/Shift+Tab at the mobile More dialog boundaries. Fresh isolated-server native
+verification: all 6 desktop/mobile cases PASS (24.7s), unchanged axe/focus/value
+assertions and timeouts. Full broad acceptance still requires a completed run at
+the final pushed head. At prior cceb3ed all hosted required checks, dedicated
+browser and immutable preview replay passed; broad job was still installing deps.

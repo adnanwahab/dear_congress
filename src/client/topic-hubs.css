@@ -25,3 +25,5 @@
 .constellation-controls button { background: #17334e; color: #fff; }
 
 .constellation .constellation-controls button[aria-pressed=true] { background: #17334e; color: #fff; }
+/* Keep the pressed control readable under the shared hover/active cascade. */
+:root .constellation .constellation-controls button:not(:disabled, [aria-disabled=true]):is(:hover, :active) { background: #17334e; color: #fff; }

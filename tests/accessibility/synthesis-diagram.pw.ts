@@ -20,7 +20,7 @@ test('assumption diagram calculates, fails honestly, and leaves navigation and p
   // Wait for the first synthetic preview to render before changing assumptions.
   // Otherwise the new request can abort the baseline and no comparable figures exist.
   await expect(page.locator('.synthesis-package')).toHaveCount(1);
-  const slider = page.getByRole('slider', { name: 'Annual budget', exact: true });
+  const slider = page.getByRole('heading', { name: 'Synthesis settings', exact: true }).locator('..').getByRole('slider').last();
   cost = 15;
   await slider.focus();
   await expect(slider).toBeFocused();
