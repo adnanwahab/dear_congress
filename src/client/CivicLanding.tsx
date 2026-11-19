@@ -51,6 +51,7 @@ export default function CivicLanding() {
         <a className="csh-brand" href="/" aria-label="Civic Synthesis homepage"><span className="csh-brand-icon" aria-hidden="true">✳</span><span>civic synthesis<span className="csh-brand-dot">.</span></span></a>
         <nav className="csh-links" aria-label="Homepage navigation">
           <a href="#visual-stories">Visual stories</a>
+          <a href="/helios">HELIOS ensemble</a>
           <a href="/votes">Explore {ideaCount} Bills</a>
           <a className="csh-button csh-small csh-dark" href="/votes">Join the conversation <span aria-hidden="true">↗</span></a>
         </nav>

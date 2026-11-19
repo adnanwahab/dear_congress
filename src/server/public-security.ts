@@ -122,7 +122,7 @@ export async function publicHandler(publicSecurity: ReturnType<typeof createPubl
   };
   const write = ["POST", "PATCH", "PUT", "DELETE"].includes(method);
   const journal = ["/api/journal", "/api/entries", "/api/publish_draft"].includes(path);
-  const protectedWrite = write && (path === "/api/live" || path.startsWith("/api/live/") || journal || path === "/api/reports" || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path.startsWith("/api/catalog-bills/") || path.startsWith("/api/catalog-review/") || path.startsWith("/api/review/") || path === "/api/publish_labels" || path === "/api/journal/:id" || path === "/api/forks/:id/undo");
+  const protectedWrite = write && (path === "/api/live" || path.startsWith("/api/live/") || journal || path === "/api/reports" || path === "/api/answers" || path === "/api/votes" || path.startsWith("/api/citizen-proposals") || path.startsWith("/api/catalog-bills/") || path.startsWith("/api/catalog-review/") || path.startsWith("/api/review/") || path === "/api/helios/ensemble" || path === "/api/publish_labels" || path === "/api/journal/:id" || path === "/api/forks/:id/undo");
   try {
     if (protectedWrite) {
       const limited = publicSecurity.check(req, peer, identity.id, journal);

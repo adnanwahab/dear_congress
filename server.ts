@@ -38,6 +38,7 @@ import type { Context } from "./src/engine/engine";
 import type { DB, JournalEntry, NeedDef, Proposal, SynthesisOutcomes, UserVote, Weights } from "./src/engine/types";
 import { publishLabelsOptions, publishLabelsPost } from "./src/server/publish-labels";
 import { completeJSON, extractWithLLM } from "./src/server/llm-extract";
+import { handleHeliosEnsemble } from "./src/server/helios-ensemble";
 import { interpretIdea, recordVariantChoice } from "./src/server/make-possible";
 import { journalClientSchema } from "./src/server/publish-draft";
 import { handlePublishDraftPost, PublishDraftInputError, type PublishDraftBody } from "./src/server/publish-draft-handler";
@@ -1021,6 +1022,9 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
         try { return Response.json({ ...await readLegislation(process.env.LEGISLATION_PATH ?? "data/legislation"), coverage: "metadata-only" }, { headers }); }
         catch { return Response.json({ error: "Official metadata unavailable" }, { status: 503, headers }); }
       },
+    },
+    "/api/helios/ensemble": {
+      POST: (req) => handleHeliosEnsemble(req),
     },
     "/api/demo": {
       GET: (req) => Response.json(dashboardState(resolveVoterId(req)), { headers: { "cache-control": "private, no-store" } }),
