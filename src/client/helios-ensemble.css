@@ -23,7 +23,7 @@
 .helios-input-panel textarea,.helios-input-panel input[type=password]{display:block;width:100%;background:#08131d;color:var(--h-text);border:1px solid #466171;border-radius:10px;padding:13px 14px;font:inherit;resize:vertical}
 .helios-input-panel textarea:focus-visible,.helios-input-panel input:focus-visible,.helios-button:focus-visible,.helios-operator summary:focus-visible{outline:3px solid var(--h-accent);outline-offset:3px}
 .helios-form-note,.helios-operator p{color:var(--h-muted);font-size:.81rem;line-height:1.6;margin:12px 0}
-.helios-button{display:inline-block;width:100%;padding:13px 16px;border-radius:9px;font:650 .9rem/1.4 inherit;cursor:pointer;margin:12px 0 3px}
+.helios-button{display:inline-block;width:100%;padding:13px 16px;border-radius:9px;font-weight:650;font-size:.9rem;line-height:1.4;font-family:inherit;cursor:pointer;margin:12px 0 3px}
 .helios-primary{color:#04160e;background:var(--h-accent);border:1px solid var(--h-accent)}.helios-primary:hover{background:#c0ffe1}
 .helios-secondary{color:var(--h-text);background:#17313a;border:1px solid #619d90}.helios-secondary:disabled{opacity:.55;cursor:not-allowed}
 .helios-operator{border-top:1px solid var(--h-line);margin-top:22px;padding-top:14px}

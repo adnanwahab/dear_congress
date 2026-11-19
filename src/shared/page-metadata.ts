@@ -9,6 +9,7 @@ export const PAGE_TITLES: Record<string, string> = {
   ...Object.fromEntries(TOPICS.map(t => [`/topics/${t.id}`, `${t.label} topic hub`])),
   "/account": "Participation & privacy",
   "/review": "Expert review center",
+  "/helios": "HELIOS five-transformer ensemble",
   "/bills": "Draft bill catalog", // legacy deep links redirect to /votes at the HTTP edge
   "/map": "County map",
   "/documentation": "How Civic Synthesis works", "/docs": "How Civic Synthesis works",

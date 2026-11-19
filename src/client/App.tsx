@@ -164,6 +164,7 @@ const PriorityHistory = lazy(() => import("./PriorityHistory").then(m => ({ defa
 const Presenter = lazy(() => import("./Presenter"));
 const BillCatalog = lazy(() => import("./BillCatalog"));
 const CivicLanding = lazy(() => import("./CivicLanding"));
+const HeliosEnsemble = lazy(() => import("./HeliosEnsemble").then(m => ({ default: m.HeliosEnsemble })));
 const ReviewCenter = lazy(() => import("./ReviewCenter"));
 const Documentation = lazy(() => import("./Documentation"));
 const GamePatches = lazy(() => import("./GamePatches"));
@@ -186,6 +187,7 @@ export function App() {
     : path === "/votes" ? <BillCatalog masterDetail />
     : path === "/bills" || path.startsWith("/bills/") ? <BillCatalog />
     : path === "/review" ? <ReviewCenter />
+    : path === "/helios" ? <HeliosEnsemble />
     : path === "/account" ? <AccountScreen />
     : path === "/map" ? <MapScreen />
     : ["/journal", "/journals", "/api-docs"].includes(path) ? <JournalScreen request={api} />
