@@ -68,5 +68,15 @@ assert.equal(container.querySelector('.governance-prism')?.getAttribute('data-st
 await act(async () => { window.history.replaceState(null, '', '/bills/HFL-051?lens=0'); window.dispatchEvent(new dom.PopStateEvent('popstate')); });
 assert(container.querySelector('[aria-label="Cost lens"]'));
 await act(async () => detailRoot.unmount());
+
+for (const query of ['', '?bill=HFL-051']) {
+  window.history.replaceState(null, '', '/votes' + query);
+  const masterRoot = createRoot(container);
+  await act(async () => masterRoot.render(<BillCatalog masterDetail />));
+  assert.equal(container.querySelectorAll('main h1').length, 1);
+  assert.match(container.querySelector('main h1')!.textContent!, query ? /Third Places/ : /Browse ideas/);
+  await act(async () => masterRoot.unmount());
+}
+
 await dom.happyDOM.close();
 console.log('PASS catalog: 110 cards, search, category intersection, reset, history restoration, detail and zero writes');

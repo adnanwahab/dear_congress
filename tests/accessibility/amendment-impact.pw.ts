@@ -21,8 +21,11 @@ test('private impact comparison keyboard, touch-sized controls and reduced motio
   const before = compare.getByLabel('Before revision ID');
   const after = compare.getByLabel('After revision ID');
   await before.focus();
-  await page.keyboard.press('ArrowDown');
+  const firstRevision = await before.locator('option').nth(1).getAttribute('value');
+  // Native type-ahead works across Chromium's platform-owned select menus.
+  await page.keyboard.type(firstRevision!);
   await page.keyboard.press('Enter');
+  await expect(before).toHaveValue(firstRevision!);
   await after.selectOption({ index: 2 });
   await expect(compare).toContainText('Scope · Needs review');
   await expect(compare).toContainText('No effect inferred');

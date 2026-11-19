@@ -20,16 +20,19 @@ test('assumption diagram calculates, fails honestly, and leaves navigation and p
   // Wait for the first synthetic preview to render before changing assumptions.
   // Otherwise the new request can abort the baseline and no comparable figures exist.
   await expect(page.locator('.synthesis-package')).toHaveCount(1);
-  const slider = page.locator('.controls input[type=range]').last();
+  const slider = page.getByRole('heading', { name: 'Synthesis settings', exact: true }).locator('..').getByRole('slider').last();
   cost = 15;
   await slider.focus();
-  await slider.press('ArrowRight');
+  await expect(slider).toBeFocused();
+  await slider.press('End');
+  await expect(slider).toHaveValue('150');
   const diagram = page.getByRole('region', { name: 'Assumption to calculated figures' });
   await expect(diagram.getByRole('status')).toContainText('Changed fields: real package A spending ($B)');
   await expect(diagram.locator('[data-changed]')).toHaveCount(1);
   await expect(slider).toBeFocused();
   fail = true;
-  await slider.press('ArrowRight');
+  await slider.press('Home');
+  await expect(slider).toHaveValue('5');
   await expect(diagram.getByRole('status')).toContainText('Calculation unavailable');
   await expect(diagram.locator('[data-connected]')).toHaveCount(0);
   await page.goto('/needs');

@@ -52,6 +52,14 @@ export function restoreJourney(target: Window = window) {
   (focus ?? target.document.getElementById('main-content'))?.focus({ preventScroll: true });
   target.scrollTo({ left: entry.scroll[0], top: entry.scroll[1], behavior: 'instant' });
 }
+/** Native restoration and a visitor's newer focus always win over deferred work. */
+export function restoreJourneyIfUnclaimed(target: Window = window) {
+  const doc = target.document, focused = doc.activeElement;
+  if (focused && focused !== doc.body && focused !== doc.documentElement && focused !== doc.getElementById('main-content')) return false;
+  if (!readJourney(target)) return false;
+  restoreJourney(target);
+  return true;
+}
 export function installJourneyHistory(target: Window) {
   // Keep native scroll restoration as the fallback, including unsupported engines.
   // Capture before native navigation snapshots; pagehide also covers touch/location.assign.
@@ -69,14 +77,6 @@ export function installJourneyHistory(target: Window) {
   });
   target.addEventListener('pageshow', event => {
     if (!event.persisted) return;
-    const focusedAtReveal = target.document.activeElement;
-    target.requestAnimationFrame(() => {
-      // BFCache restoration must not steal a visitor's new keyboard focus.
-      // A key press can arrive before the deferred restoration frame runs.
-      const currentFocus = target.document.activeElement;
-      if (currentFocus !== focusedAtReveal && currentFocus !== target.document.body
-        && currentFocus !== target.document.documentElement) return;
-      restoreJourney(target);
-    });
+    target.requestAnimationFrame(() => restoreJourneyIfUnclaimed(target));
   });
 }

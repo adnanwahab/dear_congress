@@ -15,7 +15,7 @@ for (const touch of [false, true]) test(`town hall full ${touch ? 'touch' : 'key
   const page = await context.newPage();
   const writes: string[] = [];
   page.on('request', r => { if (!['GET', 'HEAD'].includes(r.method())) writes.push(r.url()); });
-  await page.goto('/bills');
+  await page.goto('/bills/HFL-051');
   const activate = async (name: string) => touch ? page.getByRole('button', { name, exact: true }).tap() : keyboardActivate(page, name);
   await activate('Start town-hall practice');
   for (const [i, pick] of [0, 1, 0].entries()) {

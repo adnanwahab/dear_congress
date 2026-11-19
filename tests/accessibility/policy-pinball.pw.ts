@@ -6,7 +6,7 @@ for (const mode of ['keyboard', 'touch'] as const) {
     const page = await context.newPage();
     const writes: string[] = [];
     page.on('request', r => { if (!['GET', 'HEAD'].includes(r.method())) writes.push(r.url()); });
-    await page.goto(`${baseURL}/bills`);
+    await page.goto(`${baseURL}/bills/HFL-051`);
     const panel = page.getByRole('region', { name: 'Policy systems pinball', exact: true });
     async function activate(name: string) {
       const button = panel.getByRole('button', { name, exact: true });
@@ -57,7 +57,7 @@ for (const mode of ['keyboard', 'touch'] as const) {
 }
 
 test('pinball is opt-in at each entry and pauses tour', async ({ page }) => {
-  for (const route of ['/bills', '/votes', '/votes?demo=1&paused=1']) {
+  for (const route of ['/bills/HFL-051', '/votes?proposal=demo-housing', '/votes?demo=1&paused=1']) {
     await page.goto(route);
     const panel = page.getByRole('region', { name: 'Policy systems pinball', exact: true }).last();
     await expect(panel.getByRole('status')).toHaveCount(0);

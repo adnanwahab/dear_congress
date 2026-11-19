@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('crossword keyboard-only full playthrough', async ({ page }) => {
-  await page.goto('/bills');
+  await page.goto('/bills/HFL-051');
   const launch = page.getByRole('button', { name: 'Play Civic Chronicle crossword' });
   for (let i=0; i<40 && !await launch.evaluate(el => el === document.activeElement); i++) await page.keyboard.press('Tab');
   await expect(launch).toBeFocused();
@@ -24,7 +24,7 @@ test('crossword touch playthrough offline, explanations and reset', async ({ bro
   const page = await context.newPage();
   let writes = 0;
   page.on('request', r => { if (r.method() !== 'GET') writes++; });
-  await page.goto(`${baseURL}/bills`);
+  await page.goto(`${baseURL}/bills/HFL-051`);
   await page.getByRole('button', { name:'Play Civic Chronicle crossword' }).tap();
   await context.setOffline(true);
   for (const id of ['1-across','2-down','3-across']) {

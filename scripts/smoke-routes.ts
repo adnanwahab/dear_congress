@@ -30,6 +30,10 @@ try {
     assert.equal((await hub.json()).topic.id, topic);
   }
   assert.equal((await get('/topics/unknown')).status, 404);
+  const retired: Response = await fetch(new URL('/bills?q=HFL-051&bill=HFL-051', server!.url), { redirect: 'manual' });
+  assert.equal(retired.status, 308);
+  assert.equal(new URL(retired.headers.get('location')!).pathname, '/votes');
+  assert.equal(new URL(retired.headers.get('location')!).search, '?q=HFL-051&bill=HFL-051');
   assert.equal((await get('/bills/HFL-110')).status, 200);
   assert.equal((await get('/bills/HFL-111')).status, 404);
   assert.equal((await get('/api/topics/unknown')).status, 404);

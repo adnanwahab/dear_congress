@@ -13,7 +13,7 @@ for (const mode of ['keyboard', 'touch'] as const) {
     const page = await context.newPage();
     const writes: string[] = [];
     page.on('request', r => { if (!['GET','HEAD'].includes(r.method())) writes.push(r.url()); });
-    await page.goto('http://127.0.0.1:3107/bills');
+    await page.goto('http://127.0.0.1:3107/bills/HFL-051');
     const exercise = page.getByRole('region', { name: 'Fictional budget shock exercise' });
     const activate = async (target: Locator) => mode === 'touch' ? await target.tap() : await keyboardActivate(page, target);
     const button = (name: string) => exercise.getByRole('button', { name, exact: true });

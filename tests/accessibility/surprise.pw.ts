@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('surprise explorer keyboard, pointer, no writes and stable focus', async ({ page }) => {
   const writes: string[] = [];
   page.on('request', r => { if (r.method() !== 'GET') writes.push(r.url()); });
-  await page.goto('/');
+  await page.goto('/dashboard');
   const explorer = page.getByRole('region', { name: 'Follow your curiosity' });
   const button = explorer.getByRole('button', { name: 'Surprise me', exact: true });
   await expect(button).toBeEnabled();

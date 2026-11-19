@@ -1901,7 +1901,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     const url = new URL(req.url);
     const path = url.pathname;
     if (path.replace(/\/+$/, "") === "/bills") {
-      return securityHeaders(Response.redirect(new URL("/votes", url.origin), 308));
+      return securityHeaders(Response.redirect(new URL("/votes" + url.search, url.origin), 308));
     }
     if (path === '/embed/v1') {
       if (req.method !== 'GET' && req.method !== 'HEAD') return securityHeaders(new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } }));

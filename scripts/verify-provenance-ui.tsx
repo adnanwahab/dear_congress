@@ -144,7 +144,20 @@ for (const stage of ['published', 'feed', 'votes', 'draft'] as const) {
       assert(map.compareDocumentPosition(buttons[0]!) & 4, 'arguments precede voting');
     }
   }
-  await act(async () => { root.unmount(); });
+  await act(async () => {
+    root.unmount();
+    // Settle resources requested by the mounted workflow before leaving act.
+    // Preserve the loading/retry assertions above and the empty-stderr contract.
+    await Promise.all([
+      import('../src/client/LawBehaviorExplorer'), import('../src/client/CitizenJury'),
+      import('../src/client/ProposalPaper'), import('../src/client/ProposalDuet'),
+      import('../src/client/JurisdictionComparison'), import('../src/client/CooperativeMission'),
+      import('../src/client/civic-house-return'), import('../src/client/ResponsibilityExplorer'),
+      import('../src/client/EvidenceNotebook'), import('../src/client/PolicyMeasurements'),
+      import('../src/client/ResponseComposition'), import('../src/client/DataGapsAtlas'),
+      import('../src/client/FactCheckGame'),
+    ]);
+  });
   container.remove();
   console.log(`PASS ${stage}: provenance and API failure recovery`);
 }
