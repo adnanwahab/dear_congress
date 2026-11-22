@@ -86,6 +86,13 @@ const FRAME_ANCESTORS = normalizeFrameAncestors(
     ?? (process.env.NODE_ENV === "production" ? "'self'" : DEFAULT_DEV_FRAME_ANCESTORS)).trim(),
 ) || "'self'";
 const EMBED_CSP = embedCsp(FRAME_ANCESTORS);
+/** Partner origins allowed to iframe regular pages (/, /votes, ...). Kept to an allowlist, not "*", because these pages carry vote/journal actions. */
+const DEFAULT_PAGE_FRAME_ANCESTORS = "'self' https://helios-ai-laws.fly.dev";
+const PAGE_FRAME_ANCESTORS = normalizeFrameAncestors(
+  (process.env.PAGE_FRAME_ANCESTORS
+    ?? (process.env.NODE_ENV === "production" ? DEFAULT_PAGE_FRAME_ANCESTORS : `${DEFAULT_DEV_FRAME_ANCESTORS} https://helios-ai-laws.fly.dev`)).trim(),
+) || "'self'";
+const PAGE_CSP = embedCsp(PAGE_FRAME_ANCESTORS);
 const DEBUG_REQUEST_LOGS = (process.env.DEBUG_REQUEST_LOGS ?? "0") !== "0";
 const PUBLISH_CORS_ALLOW_ORIGIN = (process.env.PUBLISH_CORS_ALLOW_ORIGIN ?? "*").trim() || "*";
 const READ_CORS_ALLOW_ORIGIN = (process.env.READ_CORS_ALLOW_ORIGIN ?? PUBLISH_CORS_ALLOW_ORIGIN).trim() || "*";
@@ -1913,7 +1920,7 @@ const serverOptions: Parameters<typeof Bun.serve>[0] = {
     if (req.method !== "GET" && req.method !== "HEAD") return securityHeaders(new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } }));
     const response = renderPage(shell, path, db.citizenProposals ?? []);
     const secured = securityHeaders(response);
-    if (path === "/embed") secured.headers.set("content-security-policy", EMBED_CSP);
+    secured.headers.set("content-security-policy", path === "/embed" ? EMBED_CSP : PAGE_CSP);
     return req.method === "HEAD" ? new Response(null, { status: secured.status, headers: secured.headers }) : secured;
   },
   error(error: Error) {
@@ -1977,4 +1984,4 @@ for (const [path, route] of Object.entries(serverOptions.routes ?? {})) {
 export const server = Bun.serve({ ...serverOptions, hostname: "0.0.0.0" });
 
 console.log(`Civic Synthesis prototype running at ${server.url}`);
-console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | publishDraftDefaultKind=${PUBLISH_DRAFT_DEFAULT_KIND} | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);
+console.log(`[CONFIG] frame-ancestors=${FRAME_ANCESTORS} | page-frame-ancestors=${PAGE_FRAME_ANCESTORS} | embed-csp="${EMBED_CSP}" | publishDraftDefaultKind=${PUBLISH_DRAFT_DEFAULT_KIND} | debugRequestLogs=${DEBUG_REQUEST_LOGS}`);
