@@ -8,6 +8,7 @@ export const VISUAL_DEMOS = {
   helios: 'helios.html',
   clocks: 'clocks.html',
   why: 'why.html',
+  consensus: 'consensus-grid.html',
 } as const;
 
 /**

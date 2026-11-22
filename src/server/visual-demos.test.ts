@@ -21,6 +21,15 @@ describe('read-only, opaque-origin visual demos', () => {
     expect((await response.text())).toContain('CIVIC SYNTHESIS');
   });
 
+  test('serves the consensus grid world map', async () => {
+    const response = serveVisualDemo('consensus');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-security-policy')).toBe(VISUAL_DEMO_CSP);
+    const html = await response.text();
+    expect(html).toContain('CIVIC SYNTHESIS');
+    expect(html).toContain('not recorded votes');
+  });
+
   test('rejects traversal, unknown names, and methods that could write', () => {
     expect(serveVisualDemo('../server.ts').status).toBe(404);
     expect(serveVisualDemo('world/../../server.ts').status).toBe(404);
