@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Helios AI: resource allocation for HFL-001 to HFL-100</title>
+<style>
+:root{--fg:#1a1a1a;--muted:#5b5b5b;--line:#d9d9d9;--bg:#ffffff;--accent:#2563eb}
+@media (prefers-color-scheme:dark){:root{--fg:#eeeeee;--muted:#a3a3a3;--line:#3a3a3a;--bg:#121212;--accent:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:20px;margin:0 0 6px}
+h2{font-size:16px;margin:28px 0 8px}
+.note{color:var(--muted);max-width:110ch;margin:4px 0}
+.controls{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin:14px 0}
+.controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.controls input[type=range]{width:200px}
+select,input{font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0}
+.card{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.card span{display:block;font-size:12px;color:var(--muted)}
+.card b{font-size:18px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1400px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{white-space:nowrap;font-size:12px;color:var(--muted)}
+th[data-sort]{cursor:pointer;color:var(--accent)}
+td:first-child{white-space:nowrap}
+td.num,th.num{text-align:right;white-space:nowrap}
+.conf{white-space:nowrap;font-size:12px}
+.conf.anchored{color:#15803d;font-weight:600}
+.conf.partly-anchored{color:#a16207;font-weight:600}
+.conf.assumed{color:var(--muted)}
+table.small{min-width:0;width:auto}
+table.small th,table.small td{padding:4px 14px}
+.anchors li,.method li{margin:6px 0}
+</style>
+</head>
+<body>
+<h1>Helios AI: resource allocation for HFL-001 to HFL-100</h1>
+<p class="note">Every money and staffing figure here is a planning estimate unless a row is marked anchored or partly anchored; the anchors are listed below. The source site gives no fiscal estimate for any of these bills, so read the ranges as orders of magnitude, not forecasts. Annual figures include the staff a program needs. FTE is shown as capacity and is not costed again.</p>
+
+<div class="controls">
+<label>Scenario
+<select id="scen">
+<option value="low">Low end of each range</option>
+<option value="mid" selected>Midpoint</option>
+<option value="high">High end of each range</option>
+</select></label>
+<label>Year-1 share of annual cost: <output id="phaseOut">50%</output>
+<input id="phase" type="range" min="25" max="100" step="5" value="50"></label>
+<label>Level<select id="fLevel"><option value="">All</option></select></label>
+<label>Confidence<select id="fConf">
+<option value="">All</option>
+<option value="anchored">Anchored</option>
+<option value="partly anchored">Partly anchored</option>
+<option value="assumed">Assumed</option>
+</select></label>
+<label>Kind<select id="fKind"><option value="">All</option></select></label>
+<label>Search<input id="q" type="search" placeholder="ID or title"></label>
+</div>
+
+<div class="cards">
+<div class="card"><span>Recurring annual cost</span><b id="cAnnual">-</b></div>
+<div class="card"><span>One-time build or capital</span><b id="cOneTime">-</b></div>
+<div class="card"><span>Year-1 spend</span><b id="cYear1">-</b></div>
+<div class="card"><span>New staff capacity (FTE)</span><b id="cFte">-</b></div>
+<div class="card"><span>Laws shown</span><b id="cShown">-</b></div>
+<div class="card"><span>Anchored laws shown</span><b id="cAnch">-</b></div>
+</div>
+<p class="note" id="allLine"></p>
+
+<div class="wrap">
+<table>
+<thead><tr>
+<th data-sort="id">ID</th>
+<th data-sort="title">Law</th>
+<th data-sort="level">Level</th>
+<th data-sort="kind">Kind</th>
+<th>What it would do</th>
+<th>Watch-out</th>
+<th class="num" data-sort="annual">Annual</th>
+<th class="num" data-sort="oneTime">One-time</th>
+<th class="num" data-sort="fte">FTE</th>
+<th>Main resource</th>
+<th data-sort="conf">Confidence</th>
+<th>Basis</th>
+</tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+
+<h2>By kind (all 100 at this setting)</h2>
+<table class="small"><thead><tr><th>Kind</th><th class="num">Laws</th><th class="num">Annual</th><th class="num">One-time</th></tr></thead><tbody id="tKind"></tbody></table>
+
+<h2>By level</h2>
+<table class="small"><thead><tr><th>Level</th><th class="num">Laws</th><th class="num">Annual</th><th class="num">One-time</th></tr></thead><tbody id="tLevel"></tbody></table>
+
+<h2>Anchors (sourced figures)</h2>
+<ol class="anchors">
+<li><b>A1, child credit (HFL-002):</b> The Joint Committee on Taxation puts full refundability of the $2,000 credit for low-income families at about $12B a year through 2025. A Tax Policy Center model puts full refundability of the 2021-expanded credit at about $53B a year. The IRS issued nearly $94B of expanded credits for 2021.</li>
+<li><b>A2, EITC (HFL-003):</b> The Joint Committee on Taxation puts total EITC cost at about $67B in 2025, and the temporary 2021 expansion for workers without children at about $12B.</li>
+<li><b>A3, school meals (HFL-036):</b> Preliminary FY2024 figures put the National School Lunch Program at about $17.7B for 4.8B lunches, and the School Breakfast Program at about $5.7B for 2.5B breakfasts.</li>
+<li><b>A4, lead lines (HFL-091):</b> EPA's average replacement cost is $4,700 per line, with a range from $1,200 to $12,300. A late-2025 EPA update counts about 4 million lead service lines, down from 9 million. CDM Smith, an engineering firm, puts the national average at $12,500 per line, slightly above the top of this range.</li>
+<li><b>A5, broadband (HFL-086):</b> The BEAD program totals $42.45B.</li>
+<li><b>A6, error risk (HFL-002, HFL-003):</b> For FY2022 the IRS put the EITC improper payment rate at 32%, with overpayments of about $18.2B against $57.5B in outlays. A later estimate for tax year 2022, from the FY2024 agency financial report, puts the rate at 27%.</li>
+</ol>
+
+<h2>Method</h2>
+<ul class="method">
+<li>Low, Mid and High are the bottom, midpoint and top of each range. HFL-091's midpoint is set to $18.8B (about 4M lines at $4,700).</li>
+<li>Annual is the recurring cost once a program runs, staff included. FTE is capacity and is not costed again.</li>
+<li>Year-1 spend is the one-time cost plus the chosen share of annual cost.</li>
+<li>Private compliance costs (employers, lenders, platforms) appear in the Watch-out column and are not totaled.</li>
+<li>Not counted: benefit payouts to newly enrolled people (HFL-001), drug-price savings (HFL-029), avoided emergency and police costs (HFL-024), lost fine or land-sale revenue (HFL-007, HFL-014), and the local infrastructure that growth requires (HFL-011).</li>
+<li>HFL-101 to HFL-110 (the international moonshot set) are not included.</li>
+</ul>
+
+<script>
+/*__LAWS__*/
+/*__APP__*/
+</script>
+</body>
+</html>
