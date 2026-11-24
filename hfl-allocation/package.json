@@ -1,0 +1,11 @@
+{
+  "name": "hfl-allocation",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
