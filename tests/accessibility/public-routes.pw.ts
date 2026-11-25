@@ -46,7 +46,7 @@ test('keyboard advisory journey confirms once and returns', async ({ page }) => 
   await tabTo(search);
   await page.keyboard.type('housing');
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/feed$/);
+  await expect(page).toHaveURL(/\/feed\?proposal=demo-housing$/);
   await expect(page.locator('.proposal-search [role="status"]').first()).toContainText('proposals');
   expect(writes).toBe(0);
   // Sample proposal links retain the selected source ID across civic stages.

@@ -75,3 +75,23 @@ test('deferred BFCache restoration does not steal a new keyboard target', async 
     expect(dom.document.activeElement).toBe(link);
   } finally { await dom.happyDOM.close(); }
 });
+
+
+test('deferred BFCache restoration respects focus claimed before pageshow', async () => {
+  const dom = new DOMWindow({ url: 'https://example.test/feed' });
+  const target = dom as unknown as Window;
+  try {
+    dom.document.body.innerHTML = '<main id="main-content" tabindex="-1"><button id="saved">Saved target</button><button id="new">Visitor target</button></main>';
+    writeJourney({ ...entry(), focus: '#saved' }, target);
+    let frame: FrameRequestCallback | undefined;
+    target.requestAnimationFrame = callback => { frame = callback; return 1; };
+    installJourneyHistory(target);
+    const visitor = dom.document.querySelectorAll('button')[1]!;
+    visitor.focus();
+    const event = new dom.Event('pageshow');
+    Object.defineProperty(event, 'persisted', { value: true });
+    dom.dispatchEvent(event);
+    frame?.(0);
+    expect(dom.document.activeElement).toBe(visitor);
+  } finally { await dom.happyDOM.close(); }
+});

@@ -1321,3 +1321,12 @@ html:is(:active-view-transition-type(priority-history), [data-motion-type="prior
 
 /* The editorial homepage ends at its own footer, without the app navigation dock. */
 .product-shell.product-shell-landing { padding-bottom: 0; }
+
+/* Reserve the measured fixed navigation, including wrapped utilities and safe areas. */
+.product-shell, .product-shell.product-shell-landing { padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }
+html { scroll-padding-bottom: calc(var(--civic-navigation-height, 180px) + 1rem); }
+/* Keep chapter preview actions above fixed navigation at narrow/zoomed heights. */
+.chapter-peek { z-index: 110; max-height: min(60vh, max(120px, calc(75dvh - var(--civic-navigation-height, 180px) - 1rem))); }
+.chapter-edge { z-index: 111; }
+/* A destination summary must never cover the link that opened it. */
+.stage-peek-window { bottom: calc(var(--civic-navigation-height, 180px) + 12px); max-height: max(80px, calc(100dvh - var(--civic-navigation-height, 180px) - 24px)); overflow: auto; }

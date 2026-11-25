@@ -1,3 +1,4 @@
+import { BottomNavigation } from './Navigation';
 import { GlossaryText } from './CivicGlossary';
 import { useLocalUndo } from "./LocalUndo";
 import { needEvidence, type GeoCell } from "./need-geography";
@@ -183,7 +184,7 @@ export function App() {
   const screen = /^\/vote\/(?:happybearlandia|dear_congress|digital_pensieve)(?:\/(?:pr|issue)\/[1-9]\d*)?\/?$/.test(path) ? <GamePatches />
     : ["/documentation", "/docs"].includes(path) ? <Documentation />
     : path === "/topics" || path.startsWith("/topics/") ? <TopicHubs request={api} />
-    : path === "/votes" ? <BillCatalog masterDetail />
+    : path === "/votes" ? (new URLSearchParams(window.location.search).has("proposal") ? <WorkflowScreen stage="votes" request={api} /> : <BillCatalog masterDetail />)
     : path === "/bills" || path.startsWith("/bills/") ? <BillCatalog />
     : path === "/review" ? <ReviewCenter />
     : path === "/account" ? <AccountScreen />
@@ -194,7 +195,7 @@ export function App() {
     : path === "/" && new URLSearchParams(window.location.search).get("house") === "1" ? <CivicHouse request={api} />
     : path === "/" ? <CivicLanding /> : path === "/dashboard" ? <Dashboard request={api} /> : <LegacyApp />;
   const isLanding = path === "/" && new URLSearchParams(window.location.search).get("house") !== "1";
-  return <JournalLiveProvider><div className={`product-shell${isLanding ? " product-shell-landing" : ""}`}><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><QuickSwitcher /></div><DemoTour /></div></JournalLiveProvider>;
+  return <JournalLiveProvider><div className={`product-shell${isLanding ? " product-shell-landing" : ""}`}><div inert={!!tourState(new URL(window.location.href))}><Suspense fallback={<PageSkeleton path={path} />}>{screen}</Suspense><TopicReturn /><QuickSwitcher /><BottomNavigation /></div><DemoTour /></div></JournalLiveProvider>;
 }
 
 function LegacyApp() {

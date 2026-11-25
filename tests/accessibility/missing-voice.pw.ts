@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('missing voice keyboard full playthrough and controls', async ({ page }) => {
-  await page.goto('/bills');
+  await page.goto('/bills/HFL-051');
   const game = page.getByRole('region', { name: 'Spot the missing voice', exact: true });
   const start = game.getByRole('button', { name: /Optional puzzle/ });
   // Reach the entry using only the keyboard.
@@ -42,7 +42,7 @@ test('missing voice touch full playthrough has no writes', async ({ browser }) =
   const page = await context.newPage();
   const writes: string[] = [];
   page.on('request', req => { if (req.method() !== 'GET') writes.push(req.url()); });
-  await page.goto('http://127.0.0.1:3107/bills');
+  await page.goto('http://127.0.0.1:3107/bills/HFL-051');
   const game = page.getByRole('region', { name: 'Spot the missing voice', exact: true });
   await game.getByRole('button', { name: /Optional puzzle/ }).tap();
   for (let i = 0; i < 3; i++) {

@@ -16,7 +16,7 @@ for (const mode of ['keyboard', 'touch'] as const) {
         await page.keyboard.press('Enter');
       }
     }
-    await page.goto('/bills');
+    await page.goto('/bills/HFL-051');
     await activate('Try the metric puzzle');
     for (let step = 0; step < 5; step++) {
       const select = page.locator('[data-metric-choice]');
@@ -28,8 +28,10 @@ for (const mode of ['keyboard', 'touch'] as const) {
       } else {
         await page.keyboard.press('Tab');
         await expect(select).toBeFocused();
-        await page.keyboard.press('ArrowDown');
+        const label = await select.locator('option').nth(1).textContent();
+        await page.keyboard.type(label!);
         await page.keyboard.press('Enter');
+        await expect(select).not.toHaveValue('');
       }
       await activate('Continue');
     }

@@ -111,7 +111,7 @@ button {cursor:pointer}
 .disclosure .mini {background:#eaeae7;padding:19px;border-top:3px solid #151515;}
 .disclosure .mini strong {font-size:14px;letter-spacing:-.02em;}
 .disclosure .mini p {font-size:12px;color:#656565;line-height:1.5;margin:8px 0 0;}
-.footer {display:flex;align-items:start;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid #d8d8d6;margin-top:34px;padding:21px 0;color:#7a7a7a;font-size:11px;line-height:1.6}
+.footer {display:flex;align-items:start;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid #d8d8d6;margin-top:34px;padding:21px 0;color:#626262;font-size:11px;line-height:1.6}
 .footer strong {color:#353535}
 .fade-in {opacity:0;transform:translateY(21px);transition:opacity .7s ease,transform .7s ease}
 .fade-in.is-visible {opacity:1;transform:translateY(0)}
@@ -138,7 +138,7 @@ button {cursor:pointer}
 <body>
 <div class="demo" id="demo">
   <div class="topbar">
-    <div class="brand"><span class="brand-mark">↗</span>CIVIC SYNTHESIS <span style="color:#888;font-weight:450">/ EXPLAINER 01</span></div>
+    <div class="brand"><span class="brand-mark">↗</span>CIVIC SYNTHESIS <span style="color:#626262;font-weight:450">/ EXPLAINER 01</span></div>
     <div class="aside">Communication → experimentation → learning</div>
   </div>
   <header class="hero fade-in">
@@ -240,7 +240,7 @@ button {cursor:pointer}
  const learningLine=root.querySelector('#learning-line');
  const annualLine=root.querySelector('#annual-line');
  const learnDesc=root.querySelector('#learning-description');
- function mark(el,week,kind){const m=doc.createElement('span');m.className='tl-marker';m.style.left=Math.min(99,100*week/52)+'%';m.title=kind+' at week '+week;m.setAttribute('aria-label',m.title);el.appendChild(m)}
+ function mark(el,week,kind){const m=doc.createElement('span');m.className='tl-marker';m.style.left=Math.min(99,100*week/52)+'%';m.title=kind+' at week '+week;m.setAttribute('role','img');m.setAttribute('aria-label',m.title);el.appendChild(m)}
  function renderModel(){
   const f=+freq.value, r=+review.value, weeks=4+f+r, n=Math.floor(52/weeks);
   freqOut.textContent=f+' weeks';reviewOut.textContent=r+' weeks';

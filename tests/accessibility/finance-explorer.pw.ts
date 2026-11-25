@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('finance keyboard selection, real history and reduced-motion text parity', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/bills?finance=1');
+  await page.goto('/votes?finance=1');
   const explorer = page.locator('.finance-explorer');
   const search = explorer.getByRole('searchbox', { name: 'Search agencies and programs' });
   await search.focus();

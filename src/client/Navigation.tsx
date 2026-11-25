@@ -26,6 +26,16 @@ function Icon({ name }: { name: string }) {
 }
 export function BottomNavigation() {
   const sheet = useRef<HTMLDialogElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = bar.current;
+    if (!element) return;
+    const update = () => document.documentElement.style.setProperty('--civic-navigation-height', `${element.getBoundingClientRect().height}px`);
+    update();
+    const observer = new window.ResizeObserver(update);
+    observer.observe(element);
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--civic-navigation-height'); };
+  }, []);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 600px)');
@@ -33,12 +43,17 @@ export function BottomNavigation() {
     media.addEventListener('change', close);
     return () => media.removeEventListener('change', close);
   }, []);
-  const [path, setPath] = useState(window.location.pathname);
-  useEffect(() => { const update = () => setPath(window.location.pathname); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
-  const current = path.replace(/\/+$/, '') || '/';
+  const [routeLocation, setRouteLocation] = useState(() => ({ pathname: window.location.pathname, search: window.location.search }));
+  useEffect(() => {
+    const update = () => setRouteLocation(previous => previous.pathname === window.location.pathname && previous.search === window.location.search ? previous : { pathname: window.location.pathname, search: window.location.search });
+    window.addEventListener('popstate', update);
+    window.addEventListener('civic:location-changed', update);
+    return () => { window.removeEventListener('popstate', update); window.removeEventListener('civic:location-changed', update); };
+  }, []);
+  const current = routeLocation.pathname.replace(/\/+$/, '') || '/';
   const utilities = <nav className="bottom-utilities" aria-label="Page actions"><button onClick={() => { if (window.history.length > 1) window.history.back(); else window.location.assign('/'); }}>← Back</button><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button><a href="/">Overview</a><a href="/?house=1">Civic House</a><a href="/account" aria-current={current === "/account" ? "page" : undefined}>Participation &amp; privacy</a><a href="/account#graphics">Graphics quality</a><a href="/outcomes#watchlist">Watchlist</a><a href="/topics">Topics</a><a href="/bills">110 Bills</a><a href="/needs">Needs</a><a href="/synth">Synthesis</a><a href="/feed?presenter=1">Present sample proposals</a><a href="/documentation" aria-current={current === "/documentation" || current === "/docs" ? "page" : undefined}>Documentation</a><a href="/journal?tab=api">API docs ↗</a><HapticPreference /><span className="bottom-app-links"><a href="https://happybearlandia.fly.dev/world" target="_blank" rel="noopener noreferrer" aria-label="HBL — HappyBearLandia (opens in a new tab)">HBL ↗</a><a href="https://digital-pensieve.fly.dev/" target="_blank" rel="noopener noreferrer" aria-label="Digital Pensieve (opens in a new tab)">digital-pensieve ↗</a></span></nav>;
   const destination = (d: typeof DESTINATIONS[number], index: number) => { const link = <a className={index >= 5 ? "secondary-destination" : undefined} href={(() => {
-    const query = new URLSearchParams(window.location.search);
+    const query = new URLSearchParams(routeLocation.search);
     const topic = topicById(query.get('topic') ?? '');
     const proposal = query.get('proposal');
     return CIVIC_STAGES.some(s => s.route === d.href)
@@ -47,5 +62,11 @@ export function BottomNavigation() {
   })()} onClick={e => { if (!e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && current !== d.href) playSound('navigation'); }} key={d.href} aria-current={current === d.href || (d.href === "/votes" && current === "/vote") ? "page" : undefined}><Icon name={d.icon} /><span>{d.label}</span></a>;
     return CIVIC_STAGES.some(s => s.route === d.href) ? <StagePreview key={d.href} route={d.href} title={d.label}>{link}</StagePreview> : link;
   };
-  return <><ChapterPeek path={current} /><div className="bottom-bar"><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<button className="bottom-more" aria-haspopup="dialog" aria-controls="mobile-more" aria-expanded={open} onClick={() => { sheet.current?.showModal(); setOpen(true); }}><Icon name="more" /><span>More</span></button></nav><div className="desktop-utilities">{utilities}</div><dialog ref={sheet} id="mobile-more" className="more-sheet" aria-labelledby="more-title" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close(); } }}><div className="more-heading"><h2 id="more-title">More destinations</h2><button autoFocus onClick={() => sheet.current?.close()} aria-label="Close more destinations">Close</button></div><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</dialog></div></>;
+  return <><ChapterPeek path={current} /><div className="bottom-bar" ref={bar}><JournalTicker /><nav className="bottom-destinations" aria-label="Main navigation">{DESTINATIONS.map(destination)}<button className="bottom-more" aria-haspopup="dialog" aria-controls="mobile-more" aria-expanded={open} onClick={() => { sheet.current?.showModal(); setOpen(true); }}><Icon name="more" /><span>More</span></button></nav><div className="desktop-utilities">{utilities}</div><dialog onKeyDown={event => {
+    if (event.key !== 'Tab') return;
+    const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')].filter(node => node.tabIndex >= 0 && node.getClientRects().length > 0);
+    const first = controls[0], last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first && last) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last && first) { event.preventDefault(); first.focus(); }
+  }} ref={sheet} id="mobile-more" className="more-sheet" aria-labelledby="more-title" onClose={() => setOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const r = e.currentTarget.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close(); } }}><div className="more-heading"><h2 id="more-title">More destinations</h2><button autoFocus onClick={() => sheet.current?.close()} aria-label="Close more destinations">Close</button></div><nav className="more-destinations" aria-label="Other destinations">{DESTINATIONS.slice(5).map((d, i) => destination(d, i + 5))}</nav>{utilities}</dialog></div></>;
 }

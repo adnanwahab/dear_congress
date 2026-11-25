@@ -54,7 +54,7 @@
 .csh-tape strong{font-size:43px;font-weight:900;line-height:1;letter-spacing:-.07em}
 .csh-tape span{line-height:1.2;font-size:13px;font-weight:750;max-width:140px}
 .csh-section{padding:103px 0}
-.csh-section-kicker{font-size:12px;font-weight:850;letter-spacing:.17em;color:#b45b47;margin-bottom:20px!important}
+.csh-section-kicker{font-size:12px;font-weight:850;letter-spacing:.17em;color:#93412e;margin-bottom:20px!important}
 .csh-section-head{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:38px}
 .csh-section-head h2{max-width:750px;margin:0}
 .csh-section-head>p{max-width:360px;color:var(--csh-muted);font-size:16px;line-height:1.7}
@@ -72,14 +72,14 @@
 .csh-feature h3{font-size:clamp(26px,2.6vw,37px);max-width:290px;margin:22px 0 10px;position:relative;z-index:2}
 .csh-feature p{font-size:14px;line-height:1.65;max-width:310px;color:#3b4a47;position:relative;z-index:2}
 .csh-feature a{font-size:13px;font-weight:850;margin-top:auto;position:relative;z-index:3}
-.csh-feature-bg{font-size:125px;position:absolute;right:-11px;bottom:24px;opacity:.13;transform:rotate(13deg);pointer-events:none}
+.csh-feature-bg{font-size:125px;position:absolute;right:24px;bottom:24px;opacity:.13;transform:rotate(13deg);pointer-events:none}
 .csh-idea-banner{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-top:20px;padding:20px 24px;border:1px dashed #afb7ad;border-radius:18px;background:#fff}
 .csh-idea-banner strong{font-size:17px;letter-spacing:-.025em}
 .csh-idea-banner p{font-size:13px;color:var(--csh-muted);margin-top:5px}
 .csh-idea-banner>a{font-size:13px;font-weight:850;white-space:nowrap}
 .csh-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .csh-steps article{padding:26px 24px;border-top:3px solid var(--csh-ink);background:#fff;border-radius:0 0 20px 20px;min-height:230px}
-.csh-steps article>span{display:block;color:#b86456;font-weight:850;font-size:12px;letter-spacing:.14em;margin-bottom:32px}
+.csh-steps article>span{display:block;color:#934637;font-weight:850;font-size:12px;letter-spacing:.14em;margin-bottom:32px}
 .csh-steps h3{font-size:21px;margin:0 0 10px}
 .csh-steps p{font-size:13px;line-height:1.65;color:#5d6765}
 .csh-catalog{background:#e9efea;padding-bottom:114px}
@@ -118,7 +118,7 @@
 .csh-webgpu-arrow{margin-left:auto;font-weight:800;color:#68599b}
 .csh-no-results{text-align:center;background:#fff;border:1px dashed #9eafa7;border-radius:16px;padding:40px}
 .csh-more-row{display:flex;justify-content:center;margin-top:28px}
-.csh-provenance{font-size:12px;color:#75837a;margin-top:16px!important}
+.csh-provenance{font-size:12px;color:#536057;margin-top:16px!important}
 .csh-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .csh-end{background:var(--csh-dark);color:#e8f2e8;padding:90px 0}
 .csh-end-inner{display:flex;align-items:center;justify-content:space-between;gap:25px}
@@ -161,7 +161,7 @@
 .csh-lab-panel:nth-child(2){background:linear-gradient(153deg,#172a47,#1d3450 55%,#26344d);color:#eaf2f5}
 .csh-lab-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #adb9b850;padding-bottom:18px;margin-bottom:24px;text-transform:uppercase;letter-spacing:.14em;font:800 11px ui-monospace,Menlo,Consolas,monospace}
 .csh-lab-panel:nth-child(2) .csh-lab-top{border-color:#6c829063;color:#d7e7ea}
-.csh-lab-status{color:#668074;background:#e5f1e9;border:1px solid #b4cfb8;border-radius:99px;padding:5px 9px;letter-spacing:.06em}
+.csh-lab-status{color:#486253;background:#e5f1e9;border:1px solid #b4cfb8;border-radius:99px;padding:5px 9px;letter-spacing:.06em}
 .csh-lab-caption{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.14em;font-weight:800;color:#5c6480}
 .csh-lab-caption i{width:7px;height:7px;border-radius:100px;background:#79b99c;box-shadow:0 0 0 4px #79b99c20}
 .csh-home .csh-lab-panel h3{font-size:clamp(24px,3vw,38px);letter-spacing:-.055em;margin:8px 0 10px}
@@ -170,7 +170,7 @@
 .csh-lab-slider>div{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px;font-weight:800;margin-bottom:11px}
 .csh-lab-slider output{font:800 14px ui-monospace,Menlo,monospace;color:#735cac}
 .csh-lab-slider input{display:block;width:100%;accent-color:#7d6ac6;cursor:pointer}
-.csh-lab-slider small{display:block;color:#727f7b;font-size:12px;line-height:1.5;margin-top:6px}
+.csh-lab-slider small{display:block;color:#52635b;font-size:12px;line-height:1.5;margin-top:6px}
 .csh-lab-readonly{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:5px}
 .csh-lab-readonly>div{background:#e8efeb;border-radius:10px;padding:11px 12px;color:#526762;font-size:12px}
 .csh-lab-readonly strong{display:block;color:#203d40;font-size:16px;margin-top:4px}
@@ -192,7 +192,7 @@
 .csh-lab-ledger{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid #d9dfdd;border-radius:16px;background:#fff;margin-top:24px;overflow:hidden}
 .csh-lab-ledger article{padding:21px 23px}
 .csh-lab-ledger article+article{border-left:1px solid #d9dfdd}
-.csh-lab-ledger small{display:block;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#ad6d5c;margin-bottom:7px}
+.csh-lab-ledger small{display:block;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:#874b3c;margin-bottom:7px}
 .csh-home .csh-lab-ledger h3{font-size:16px;letter-spacing:-.025em;margin:0 0 6px;line-height:1.35}
 .csh-home .csh-lab-ledger p{color:#677570;font-size:12px;line-height:1.55;margin:0}
 .csh-lab-ledger a{font-size:12px;font-weight:800}
@@ -223,10 +223,10 @@
 
 /* A hopeful invitation that distinguishes fast prototypes from formal lawmaking. */
 .csh-contributor-invite{margin-top:24px;padding:22px 24px;background:#e9f2df;border:1px solid #c6dcbf;border-left:4px solid #e77150;border-radius:15px}
-.csh-contributor-kicker{color:#ae604c;font-size:10px;font-weight:850;letter-spacing:.14em}
+.csh-contributor-kicker{color:#874531;font-size:10px;font-weight:850;letter-spacing:.14em}
 .csh-home .csh-contributor-invite h2{font:normal clamp(24px,2.6vw,34px)/1.12 Georgia,serif;letter-spacing:-.04em;margin:9px 0 10px}
 .csh-contributor-invite h2 em{font-style:italic;color:#c7654b}
 .csh-home .csh-contributor-invite p{font-size:13px;line-height:1.62;color:#405b47;margin:0 0 9px}
-.csh-home .csh-contributor-invite .csh-contributor-caveat{font-size:11px;color:#667767}
+.csh-home .csh-contributor-invite .csh-contributor-caveat{font-size:11px;color:#4e5d4f}
 .csh-contributor-invite a{font-size:12px;font-weight:850;display:inline-block;margin-top:3px;text-underline-offset:3px}
 @media(max-width:650px){.csh-contributor-invite{padding:18px 16px;margin-top:20px}}
