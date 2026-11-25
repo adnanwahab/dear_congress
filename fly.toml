@@ -17,6 +17,8 @@ primary_region = 'iad'
   HBL_PUBLIC_ORIGIN = 'https://civic-synthesis.fly.dev'
   HBL_DB_PATH = '/data/db.json.hbl.sqlite'
   FRAME_ANCESTORS = "*"
+  # Who may iframe regular pages (/, /votes, ...). Space-separated origins.
+  PAGE_FRAME_ANCESTORS = "'self' https://helios-ai-laws.fly.dev"
 
 [[mounts]]
   source = 'civic_data'
