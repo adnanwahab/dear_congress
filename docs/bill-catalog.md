@@ -285,6 +285,12 @@ explicitly unassessed; catalog goals and alternatives are illustrative/hypotheti
 Streets describe stored associations, not causation, public support or outcomes.
 
 
+## Arrival estimates
+
+Each draft shows an estimated arrival date: when it could finish human review and a
+one-week advisory ballot at an assumed pace. Planning estimate only; it reads the
+review ledger and writes nothing. See [arrival-estimates.md](arrival-estimates.md).
+
 ## Review-to-ballot integration (current implementation candidate)
 
 Draft feedback may be saved to SQLite immediately for the current source revision, but is not a vote on a published ballot. Four role-authorized expert approvals plus a publisher's durable review-ready attestation are required before a publisher opens a separate, time-limited advisory ballot. The two types of participation remain isolated and previous choices do not transfer. HFL-051 retains an additional legislative-supplement review hold.
